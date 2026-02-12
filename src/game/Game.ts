@@ -110,34 +110,50 @@ export class Game {
     }
 
     if (this.state.scene === 'paused') {
-      this.setScene('playing');
+      this.resumeGame();
       return;
     }
 
-    if (this.state.scene === 'gameover' || this.state.scene === 'clear' || this.state.scene === 'start') {
-      this.state.score = 0;
-      this.state.lives = this.config.initialLives;
-      this.state.elapsedSec = 0;
-      this.state.bricks = buildBricks();
-      this.state.ball = this.createServeBall();
+    if (this.state.scene === 'start' || this.state.scene === 'gameover' || this.state.scene === 'clear') {
+      this.resetRound();
+      this.startRound();
+      return;
     }
-
-    if (this.state.scene === 'gameover' || this.state.scene === 'clear') {
-      this.state.lives = this.config.initialLives;
-    }
-
-    this.setScene('playing');
   }
 
   private togglePause(): void {
     if (this.state.scene === 'playing') {
-      this.setScene('paused');
+      this.pauseGame();
       return;
     }
 
     if (this.state.scene === 'paused') {
-      this.setScene('playing');
+      this.resumeGame();
     }
+  }
+
+  private startRound(): void {
+    this.lastFrameTime = 0;
+    this.accumulator = 0;
+    this.setScene('playing');
+  }
+
+  private pauseGame(): void {
+    this.setScene('paused');
+  }
+
+  private resumeGame(): void {
+    this.lastFrameTime = 0;
+    this.accumulator = 0;
+    this.setScene('playing');
+  }
+
+  private resetRound(): void {
+    this.state.score = 0;
+    this.state.lives = this.config.initialLives;
+    this.state.elapsedSec = 0;
+    this.state.bricks = buildBricks();
+    this.state.ball = this.createServeBall();
   }
 
   private setScene(next: Scene): void {
@@ -187,6 +203,23 @@ export class Game {
   };
 
   private handlePhysicsResult(result: PhysicsResult): void {
+    this.playCollisionSound(result);
+
+    if (result.collision.brick > 0) {
+      this.state.score += result.scoreGain;
+    }
+
+    if (result.livesLost > 0) {
+      this.handleLifeLoss(result.livesLost);
+      return;
+    }
+
+    if (result.cleared) {
+      this.handleClear();
+    }
+  }
+
+  private playCollisionSound(result: PhysicsResult): void {
     if (result.collision.wall) {
       void this.sfx.play('wall');
     }
@@ -196,26 +229,24 @@ export class Game {
     }
 
     if (result.collision.brick > 0) {
-      this.state.score += result.scoreGain;
       void this.sfx.play('brick');
     }
+  }
 
-    if (result.livesLost > 0) {
-      this.state.lives -= result.livesLost;
-      void this.sfx.play('miss');
-      if (this.state.lives <= 0) {
-        this.setScene('gameover');
-        return;
-      }
-      this.state.ball = this.createServeBall();
+  private handleLifeLoss(livesLost: number): void {
+    this.state.lives -= livesLost;
+    void this.sfx.play('miss');
+    if (this.state.lives <= 0) {
+      this.setScene('gameover');
       return;
     }
+    this.state.ball = this.createServeBall();
+  }
 
-    if (result.cleared) {
-      this.state.score += this.state.lives * CLEAR_BONUS_PER_LIFE;
-      void this.sfx.play('clear');
-      this.setScene('clear');
-    }
+  private handleClear(): void {
+    this.state.score += this.state.lives * CLEAR_BONUS_PER_LIFE;
+    void this.sfx.play('clear');
+    this.setScene('clear');
   }
 
   private movePaddleByMouse(clientX: number): void {
