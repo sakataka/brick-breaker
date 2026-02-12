@@ -1,12 +1,12 @@
 import './styles.css';
+import { getRequiredElement } from './util/dom';
 import { Game } from './game/Game';
 import { getOverlayElements } from './ui/overlay';
 
-const canvas = document.querySelector('#game-canvas') as HTMLCanvasElement;
-const scoreEl = document.querySelector('#score') as HTMLSpanElement;
-const livesEl = document.querySelector('#lives') as HTMLSpanElement;
-const timeEl = document.querySelector('#time') as HTMLSpanElement;
-
+const canvas = getRequiredElement<HTMLCanvasElement>(document, '#game-canvas', 'canvas要素が見つかりません');
+const scoreEl = getRequiredElement<HTMLSpanElement>(document, '#score', 'score要素が見つかりません');
+const livesEl = getRequiredElement<HTMLSpanElement>(document, '#lives', 'lives要素が見つかりません');
+const timeEl = getRequiredElement<HTMLSpanElement>(document, '#time', 'time要素が見つかりません');
 const overlayElements = getOverlayElements(document);
 
 const game = new Game(

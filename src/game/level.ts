@@ -1,27 +1,20 @@
+import { BRICK_LAYOUT } from './config';
 import type { Brick } from './types';
 
 export function buildBricks(): Brick[] {
-  const cols = 10;
-  const rows = 6;
-  const marginX = 50;
-  const marginY = 80;
-  const gap = 8;
-  const width = 840;
-  const brickW = (width - gap * (cols - 1)) / cols;
-  const brickH = 24;
-  const startX = marginX;
-  const startY = marginY;
-
+  const { cols, rows, marginX, marginY, gapX, gapY, boardWidth, brickHeight } = BRICK_LAYOUT;
+  const brickWidth = (boardWidth - gapX * (cols - 1)) / cols;
   const bricks: Brick[] = [];
   let id = 0;
+
   for (let row = 0; row < rows; row += 1) {
     for (let col = 0; col < cols; col += 1) {
       bricks.push({
         id: id++,
-        x: startX + col * (brickW + gap),
-        y: startY + row * (brickH + 10),
-        width: brickW,
-        height: brickH,
+        x: marginX + col * (brickWidth + gapX),
+        y: marginY + row * (brickHeight + gapY),
+        width: brickWidth,
+        height: brickHeight,
         alive: true,
         row,
         color: getBrickColor(row),

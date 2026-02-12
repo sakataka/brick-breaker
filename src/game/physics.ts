@@ -67,11 +67,8 @@ export function stepPhysics(
     const hitPaddle = resolvePaddleCollision(ball, paddle);
     if (hitPaddle) {
       ball.pos.y = paddle.y - ball.radius;
-      const impact = Math.max(
-        -1,
-        Math.min(1, (ball.pos.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2)),
-      );
-      const angle = impact * (Math.PI / 3); // 60deg
+      const impact = Math.max(-1, Math.min(1, (ball.pos.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2)));
+      const angle = impact * (Math.PI / 3);
       const speed = Math.min(config.maxBallSpeed, Math.max(config.initialBallSpeed, Math.hypot(ball.vel.x, ball.vel.y)));
       ball.vel.x = Math.sin(angle) * speed;
       ball.vel.y = -Math.cos(angle) * speed;

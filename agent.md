@@ -8,6 +8,7 @@
 - 技術構成:
   - TypeScript
   - Vite
+  - Bun
   - HTML5 Canvas
 - 実装済みの主ファイル:
   - `index.html`
@@ -16,18 +17,22 @@
   - `src/game/Game.ts`
   - `src/game/physics.ts`
   - `src/game/level.ts`
+  - `src/game/config.ts`
+  - `src/game/renderer.ts`
+  - `src/game/input.ts`
   - `src/game/types.ts`
   - `src/ui/overlay.ts`
   - `src/audio/sfx.ts`
+  - `src/util/dom.ts`
   - `PLAN.md`
 
 ## 2) 実行コマンド
-- 開発サーバ起動: `npm run dev`
-- 本番ビルド: `npm run build`
-- プレビュー: `npm run preview`
-- 依存関係: `npm install`
+- 開発サーバ起動: `bun run dev`
+- 本番ビルド: `bun run build`
+- プレビュー: `bun run preview`
+- 依存関係: `bun install`
 
-## 3) コードの基本方針（これまでの仕様）
+## 3) コードの基本方針（仕様）
 - マウス移動でパドルを操作
 - 物理更新は固定タイムステップ
 - 1ステージ（初期版）
@@ -37,12 +42,13 @@
 ## 4) 変更時の優先ルール
 - `PLAN.md` を変更対象範囲の基準として優先参照
 - 物理挙動（衝突・速度処理）は慎重に変更し、`src/game/physics.ts` を最優先で確認
-- UIだけの変更を優先し、ゲーム中断や再開など状態管理は `src/game/Game.ts` で集中管理
-- 既存のスタイル・アニメーション方向（ガラスモーフィズム）を維持しつつ、必要最小の差分で改善
+- UI変更は `src/game/renderer.ts` / `src/styles.css` を主体にし、状態管理は `src/game/Game.ts` に集約
+- 共通設定は `src/game/config.ts` にまとめる
+- DOM取得は `src/util/dom.ts` を経由して欠損を明示
 
 ## 5) Git運用（このプロジェクト固有）
 - コミット運用: `main` と `codex/` 系ブランチを使用
-- この実装で有効だったブランチ: `codex/brick-breaker-initial-web`
+- 有効ブランチ: `codex/brick-breaker-initial-web`
 - リモート先: `https://github.com/sakataka/brick-breaker.git`
 - 例: 
   - `git add -A`
@@ -56,5 +62,4 @@
 4. ステージ追加機能
 
 ## 7) 注意事項
-- ネットワークが必要な操作（GitHub認証/Push）は環境で権限確認が必要な場合がある
-- この環境では `.git/config` への一部ロック権限で `git remote add` が失敗することがあるため、`git push <url>` 形式での運用が有効
+- 環境依存で `.git/config` 更新が制限される場合があるため、リモート追加は `git remote add` よりも `git push https://github.com/...` を優先

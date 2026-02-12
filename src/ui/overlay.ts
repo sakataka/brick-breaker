@@ -1,4 +1,4 @@
-export type Scene = 'start' | 'playing' | 'paused' | 'gameover' | 'clear';
+import type { Scene } from '../game/types';
 
 export interface OverlayElements {
   overlay: HTMLDivElement;
