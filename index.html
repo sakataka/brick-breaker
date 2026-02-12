@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Brick Breaker</title>
+    <script type="module" src="/src/main.ts"></script>
+  </head>
+  <body>
+    <div id="game-shell">
+      <div id="stage-wrap">
+        <canvas id="game-canvas" width="960" height="540" aria-label="ブロック崩しのゲーム画面"></canvas>
+        <div id="hud" aria-live="polite">
+          <span id="score">SCORE: 0</span>
+          <span id="lives">LIVES: 3</span>
+          <span id="time">TIME: 00:00</span>
+        </div>
+        <div id="overlay" class="overlay hidden">
+          <div class="card">
+            <h1>Brick Breaker</h1>
+            <p id="overlay-message">クリックしてゲーム開始</p>
+            <p id="overlay-sub" class="subtle">マウスでバーを動かしてボールを反射してください。</p>
+            <button id="overlay-button" type="button">ゲーム開始</button>
+            <p class="subtle">Pキーで一時停止</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
