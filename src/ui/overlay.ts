@@ -1,3 +1,4 @@
+import { getRequiredElement } from '../util/dom';
 import type { Scene } from '../game/types';
 
 export interface OverlayElements {
@@ -8,10 +9,14 @@ export interface OverlayElements {
 }
 
 export function getOverlayElements(documentRef: Document): OverlayElements {
-  const overlay = documentRef.querySelector('#overlay') as HTMLDivElement;
-  const message = documentRef.querySelector('#overlay-message') as HTMLParagraphElement;
-  const sub = documentRef.querySelector('#overlay-sub') as HTMLParagraphElement;
-  const button = documentRef.querySelector('#overlay-button') as HTMLButtonElement;
+  const overlay = getRequiredElement<HTMLDivElement>(documentRef, '#overlay', 'overlay要素が見つかりません');
+  const message = getRequiredElement<HTMLParagraphElement>(
+    documentRef,
+    '#overlay-message',
+    'overlay-message要素が見つかりません',
+  );
+  const sub = getRequiredElement<HTMLParagraphElement>(documentRef, '#overlay-sub', 'overlay-sub要素が見つかりません');
+  const button = getRequiredElement<HTMLButtonElement>(documentRef, '#overlay-button', 'overlay-button要素が見つかりません');
 
   return { overlay, message, sub, button };
 }
