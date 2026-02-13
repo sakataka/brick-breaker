@@ -18,6 +18,7 @@ import { InputController } from './input';
 
 const MIN_CANVAS_CSS_WIDTH = 320;
 const MIN_CANVAS_CSS_HEIGHT = 180;
+const MAX_RENDER_SCALE = 4;
 const MAX_PARTICLES = 220;
 const MAX_TRAIL_POINTS = 8;
 
@@ -65,6 +66,20 @@ export function shouldAutoPauseOnVisibility(scene: Scene, visibilityState: Docum
   return scene === 'playing' && visibilityState === 'hidden';
 }
 
+export function computeRenderScale(
+  cssWidth: number,
+  cssHeight: number,
+  worldWidth: number,
+  worldHeight: number,
+  devicePixelRatio = window.devicePixelRatio || 1,
+  maxRenderScale = MAX_RENDER_SCALE,
+): number {
+  const widthScale = cssWidth * devicePixelRatio / worldWidth;
+  const heightScale = cssHeight * devicePixelRatio / worldHeight;
+  const idealScale = Math.min(widthScale, heightScale);
+  return clamp(idealScale, 1, maxRenderScale);
+}
+
 export function nextDensityScale(current: number, deltaSec: number, scene: Scene): number {
   if (scene !== 'playing') {
     return current;
@@ -96,6 +111,7 @@ export class Game {
   private isRunning = false;
   private resizeObserver: ResizeObserver | null = null;
   private lifecycleBound = false;
+  private renderScale = 1;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -467,10 +483,17 @@ export class Game {
 
     const ratio = this.config.width / this.config.height;
     const fit = computeCanvasFit(wrapper.clientWidth, wrapper.clientHeight, ratio);
-    this.canvas.width = this.config.width;
-    this.canvas.height = this.config.height;
+    this.renderScale = computeRenderScale(
+      fit.cssWidth,
+      fit.cssHeight,
+      this.config.width,
+      this.config.height,
+    );
+    this.canvas.width = Math.round(this.config.width * this.renderScale);
+    this.canvas.height = Math.round(this.config.height * this.renderScale);
     this.canvas.style.width = `${fit.cssWidth}px`;
     this.canvas.style.height = `${fit.cssHeight}px`;
+    this.renderer.setRenderScale(this.renderScale);
   }
 
   private updateVfxDensity(deltaSec: number): void {
@@ -481,20 +504,20 @@ export class Game {
     for (const event of events) {
       if (event.kind === 'brick') {
         this.spawnParticles(event, 14, 260, event.color ?? 'rgba(255, 196, 118, 0.95)');
-        this.bumpShake(4, 90);
+        this.bumpShake(1.4, 45);
         continue;
       }
 
       if (event.kind === 'paddle' || event.kind === 'wall') {
         this.spawnParticles(event, 4, 140, 'rgba(180, 230, 255, 0.95)');
-        this.bumpShake(4, 70);
+        this.bumpShake(0, 0);
         continue;
       }
 
       if (event.kind === 'miss') {
         this.spawnParticles(event, 18, 220, 'rgba(255, 108, 108, 0.95)');
         this.state.vfx.flashMs = Math.max(this.state.vfx.flashMs, this.state.vfx.reducedMotion ? 90 : 180);
-        this.bumpShake(8, this.state.vfx.reducedMotion ? 0 : 140);
+        this.bumpShake(4, this.state.vfx.reducedMotion ? 0 : 90);
       }
     }
   }

@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 
-import { computeCanvasFit, computeParticleSpawnCount, nextDensityScale, shouldAutoPauseOnVisibility } from './Game';
+import {
+  computeCanvasFit,
+  computeParticleSpawnCount,
+  computeRenderScale,
+  nextDensityScale,
+  shouldAutoPauseOnVisibility,
+} from './Game';
 
 describe('computeCanvasFit', () => {
   test('falls back to minimum size when wrapper is zero', () => {
@@ -37,5 +43,20 @@ describe('VFX helpers', () => {
     expect(computeParticleSpawnCount(14, 1, true)).toBe(7);
     expect(computeParticleSpawnCount(14, 0.5, false)).toBe(7);
     expect(computeParticleSpawnCount(1, 0.1, true)).toBe(1);
+  });
+});
+
+describe('computeRenderScale', () => {
+  test('uses higher backing scale for large displays and clamps to max', () => {
+    const scaleRegular = computeRenderScale(960, 540, 960, 540, 1);
+    expect(scaleRegular).toBe(1);
+
+    const scale4k = computeRenderScale(3840, 2160, 960, 540, 2);
+    expect(scale4k).toBe(4);
+  });
+
+  test('stays at least 1 for tiny layouts', () => {
+    const scale = computeRenderScale(320, 180, 960, 540, 1);
+    expect(scale).toBe(1);
   });
 });

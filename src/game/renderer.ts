@@ -35,11 +35,20 @@ export const DEFAULT_RENDER_THEME: RenderTheme = {
 };
 
 export class Renderer {
+  private renderScale = 1;
+
   constructor(
     private readonly ctx: CanvasRenderingContext2D,
     private readonly config: GameConfig,
     private readonly theme: RenderTheme = DEFAULT_RENDER_THEME,
   ) {}
+
+  setRenderScale(next: number): void {
+    this.renderScale = Math.max(1, next);
+    this.ctx.setTransform(this.renderScale, 0, 0, this.renderScale, 0, 0);
+    this.ctx.imageSmoothingEnabled = true;
+    this.ctx.imageSmoothingQuality = 'high';
+  }
 
   render(state: GameState): void {
     this.ctx.clearRect(0, 0, this.config.width, this.config.height);
