@@ -1,5 +1,6 @@
-export type Scene = "start" | "playing" | "paused" | "gameover" | "clear" | "error";
+export type Scene = "start" | "playing" | "paused" | "gameover" | "stageclear" | "clear" | "error";
 export type Difficulty = "casual" | "standard" | "hard";
+export type ItemType = "paddle_plus" | "slow_ball" | "multiball" | "shield";
 
 export interface Vector2 {
   x: number;
@@ -46,4 +47,10 @@ export interface GameConfig {
   assistDurationSec: number;
   assistPaddleScale: number;
   assistMaxSpeedScale: number;
+}
+
+export interface StageDefinition {
+  id: number;
+  speedScale: number;
+  layout: number[][];
 }

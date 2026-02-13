@@ -1,19 +1,37 @@
 import { SfxManager } from "../audio/sfx";
 import { type getOverlayElements, setSceneUI } from "../ui/overlay";
 import { applyAssistToPaddle, getCurrentMaxBallSpeed } from "./assistSystem";
-import { applyPhysicsResultScore, playCollisionSounds } from "./collisionEffects";
+import { playCollisionSounds } from "./collisionEffects";
 import { GAME_BALANCE, GAME_CONFIG } from "./config";
 import { type HudElements, formatTime, updateHud } from "./hud";
 import { InputController } from "./input";
+import {
+  applyItemPickup,
+  consumeShield,
+  ensureMultiballCount,
+  getPaddleScale,
+  getSlowBallMaxSpeedScale,
+  spawnDropsFromBrickEvents,
+  trimBallsWhenMultiballEnds,
+  updateFallingItems,
+  updateItemTimers,
+} from "./itemSystem";
 import { LifecycleController } from "./lifecycle";
 import { clamp } from "./math";
-import { type PhysicsResult, stepPhysics } from "./physics";
+import { stepPhysics } from "./physics";
 import { defaultRandomSource } from "./random";
 import { Renderer } from "./renderer";
-import { applyLifeLoss, resetRoundState } from "./roundSystem";
+import {
+  advanceStage,
+  applyLifeLoss,
+  getStageInitialBallSpeed,
+  getStageMaxBallSpeed,
+  resetRoundState,
+  retryCurrentStage,
+} from "./roundSystem";
 import { type SceneEvent, SceneMachine } from "./sceneMachine";
 import { createInitialGameState } from "./stateFactory";
-import type { GameConfig, GameState, RandomSource, Scene } from "./types";
+import type { Ball, CollisionEvent, GameConfig, GameState, RandomSource, Scene } from "./types";
 import { applyCollisionEvents, nextDensityScale, recordTrailPoint, updateVfxState } from "./vfxSystem";
 import { applyCanvasViewport } from "./viewport";
 
@@ -130,9 +148,12 @@ export class Game {
       return;
     }
 
-    if (previous === "start" || previous === "gameover" || previous === "clear") {
+    if (previous === "start" || previous === "clear") {
       resetRoundState(this.state, this.config, this.state.vfx.reducedMotion, this.random);
+    } else if (previous === "stageclear") {
+      advanceStage(this.state, this.config, this.random);
     }
+
     this.lastFrameTime = this.accumulator = 0;
   }
 
@@ -155,6 +176,7 @@ export class Game {
 
   private syncSceneUI(): void {
     const clearTime = this.state.scene === "clear" ? formatTime(this.state.elapsedSec) : undefined;
+    const stageLabel = `STAGE ${this.state.campaign.stageIndex + 1} / ${this.state.campaign.totalStages}`;
     setSceneUI(
       this.overlay,
       this.state.scene,
@@ -162,6 +184,7 @@ export class Game {
       this.state.lives,
       clearTime,
       this.state.errorMessage ?? undefined,
+      stageLabel,
     );
   }
 
@@ -183,31 +206,7 @@ export class Game {
         this.accumulator += delta;
         while (this.accumulator >= this.config.fixedDeltaSec) {
           this.accumulator -= this.config.fixedDeltaSec;
-          this.state.elapsedSec += this.config.fixedDeltaSec;
-          applyAssistToPaddle(
-            this.state.paddle,
-            GAME_BALANCE.paddleWidth,
-            this.config.width,
-            this.state.assist,
-            this.state.elapsedSec,
-          );
-
-          const result = stepPhysics(
-            this.state.ball,
-            this.state.paddle,
-            this.state.bricks,
-            this.config,
-            this.config.fixedDeltaSec,
-            {
-              maxBallSpeed: getCurrentMaxBallSpeed(
-                this.config.maxBallSpeed,
-                this.state.assist,
-                this.state.elapsedSec,
-              ),
-            },
-          );
-
-          this.handlePhysicsResult(result);
+          this.stepPlayingTick();
           updateVfxState(this.state.vfx, this.config.fixedDeltaSec, this.random);
           if (this.state.scene !== "playing") {
             break;
@@ -217,7 +216,7 @@ export class Game {
         updateVfxState(this.state.vfx, delta, this.random);
       }
 
-      recordTrailPoint(this.state.vfx, this.state.scene, this.state.ball.pos);
+      recordTrailPoint(this.state.vfx, this.state.scene, this.state.balls[0]?.pos);
       this.renderer.render(this.state);
       updateHud(this.hud, this.state);
     } catch (error) {
@@ -233,20 +232,124 @@ export class Game {
     }
   };
 
-  private handlePhysicsResult(result: PhysicsResult): void {
-    playCollisionSounds(this.sfx, result.events);
-    applyCollisionEvents(this.state.vfx, result.events, this.random);
-    const outcome = applyPhysicsResultScore(this.state, result, GAME_BALANCE.clearBonusPerLife);
-    if (outcome === "lifeLost") {
-      if (!applyLifeLoss(this.state, result.livesLost, this.config, this.random)) {
-        this.sendScene({ type: "GAME_OVER" });
+  private stepPlayingTick(): void {
+    this.state.elapsedSec += this.config.fixedDeltaSec;
+    updateItemTimers(this.state.items, this.state.elapsedSec);
+
+    const stageInitialSpeed = getStageInitialBallSpeed(this.config, this.state.campaign.stageIndex);
+    const stageMaxSpeed = getStageMaxBallSpeed(this.config, this.state.campaign.stageIndex);
+    const maxWithAssist = getCurrentMaxBallSpeed(stageMaxSpeed, this.state.assist, this.state.elapsedSec);
+    const effectiveMaxSpeed =
+      maxWithAssist * getSlowBallMaxSpeedScale(this.state.items, this.state.elapsedSec);
+
+    const basePaddleWidth =
+      GAME_BALANCE.paddleWidth * getPaddleScale(this.state.items, this.state.elapsedSec);
+    applyAssistToPaddle(
+      this.state.paddle,
+      basePaddleWidth,
+      this.config.width,
+      this.state.assist,
+      this.state.elapsedSec,
+    );
+
+    const events: CollisionEvent[] = [];
+    const survivors: Ball[] = [];
+    let scoreGain = 0;
+    let hasClear = false;
+
+    for (const ball of this.state.balls) {
+      const result = stepPhysics(
+        ball,
+        this.state.paddle,
+        this.state.bricks,
+        this.config,
+        this.config.fixedDeltaSec,
+        {
+          maxBallSpeed: effectiveMaxSpeed,
+          initialBallSpeed: stageInitialSpeed,
+          onMiss: (target) => this.tryShieldRescue(target, effectiveMaxSpeed),
+        },
+      );
+
+      events.push(...result.events);
+      if (result.collision.brick > 0) {
+        scoreGain += result.scoreGain;
       }
+      if (result.cleared) {
+        hasClear = true;
+      }
+      if (result.livesLost <= 0) {
+        survivors.push(ball);
+      }
+    }
+
+    this.state.score += scoreGain;
+    playCollisionSounds(this.sfx, events);
+    applyCollisionEvents(this.state.vfx, events, this.random);
+    spawnDropsFromBrickEvents(this.state.items, events, this.random);
+
+    const picks = updateFallingItems(
+      this.state.items,
+      this.state.paddle,
+      this.config.height,
+      this.config.fixedDeltaSec,
+    );
+    for (const type of picks) {
+      applyItemPickup(this.state.items, type, this.state.elapsedSec, survivors);
+    }
+    if (picks.length > 0) {
+      void this.sfx.play("paddle");
+    }
+
+    updateItemTimers(this.state.items, this.state.elapsedSec);
+    this.state.balls = trimBallsWhenMultiballEnds(this.state.items, this.state.elapsedSec, survivors);
+    this.state.balls = ensureMultiballCount(
+      this.state.items,
+      this.state.elapsedSec,
+      this.state.balls,
+      this.random,
+    );
+
+    if (hasClear) {
+      this.handleStageClear();
       return;
     }
-    if (outcome === "cleared") {
+
+    if (this.state.balls.length <= 0) {
+      this.handleBallLoss();
+    }
+  }
+
+  private handleStageClear(): void {
+    this.state.score += this.state.lives * GAME_BALANCE.clearBonusPerLife;
+    if (this.state.campaign.stageIndex >= this.state.campaign.totalStages - 1) {
       void this.sfx.play("clear");
       this.sendScene({ type: "GAME_CLEAR" });
+      return;
     }
+    void this.sfx.play("clear");
+    this.sendScene({ type: "STAGE_CLEAR" });
+  }
+
+  private handleBallLoss(): void {
+    if (!applyLifeLoss(this.state, 1, this.config, this.random)) {
+      retryCurrentStage(this.state, this.config, this.random);
+      this.sendScene({ type: "GAME_OVER" });
+    }
+  }
+
+  private tryShieldRescue(ball: Ball, fallbackSpeed: number): boolean {
+    if (!consumeShield(this.state.items, this.state.elapsedSec)) {
+      return false;
+    }
+
+    ball.pos.y = this.config.height - ball.radius - 10;
+    ball.vel.y = -Math.max(120, Math.abs(ball.vel.y));
+    if (Math.abs(ball.vel.x) < 40) {
+      const spread = Math.max(40, fallbackSpeed * 0.28);
+      ball.vel.x = (this.random.next() * 2 - 1) * spread;
+    }
+    return true;
   }
 
   private movePaddleByMouse(clientX: number): void {

@@ -87,11 +87,15 @@ export function updateVfxState(vfx: VfxState, deltaSec: number, random: RandomSo
   });
 }
 
-export function recordTrailPoint(vfx: VfxState, scene: Scene, point: Vector2): void {
+export function recordTrailPoint(vfx: VfxState, scene: Scene, point?: Vector2): void {
   if (scene !== "playing") {
     if (scene !== "paused") {
       vfx.trail = [];
     }
+    return;
+  }
+
+  if (!point) {
     return;
   }
 

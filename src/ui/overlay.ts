@@ -40,6 +40,11 @@ export const OVERLAY_COPY: Record<Scene, OverlayCopy> = {
     sub: "",
     button: "やり直す",
   },
+  stageclear: {
+    message: "ステージクリア！",
+    sub: "次のステージへ進みます。",
+    button: "次へ",
+  },
   error: {
     message: "エラーが発生しました",
     sub: "画面を再読み込みして再開してください。",
@@ -75,6 +80,7 @@ export function setSceneUI(
   lives: number,
   clearTime?: string,
   errorMessage?: string,
+  stageLabel?: string,
 ): void {
   if (scene === "playing") {
     elements.overlay.classList.add("hidden");
@@ -99,7 +105,12 @@ export function setSceneUI(
   }
 
   if (scene === "clear") {
-    elements.sub.textContent = `${score}点 ${clearTime ? `・${clearTime}` : ""} クリアしました。`;
+    elements.sub.textContent = `${stageLabel ?? ""} ${score}点 ${clearTime ? `・${clearTime}` : ""} クリアしました。`;
+    return;
+  }
+
+  if (scene === "stageclear") {
+    elements.sub.textContent = `${stageLabel ?? ""} ${score}点`;
     return;
   }
 

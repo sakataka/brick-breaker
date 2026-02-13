@@ -1,7 +1,7 @@
 # Brick Breaker Local
 
-TypeScript + Vite + Canvas で作ったローカル向けブロック崩しです。 
-マウス操作のみで遊べ、物理演算ベースの挙動を採用しています。
+TypeScript + Vite + Canvas で作ったローカル向けブロック崩しです。
+マウス操作中心、物理演算ベースで動作します。
 
 ## 使い方
 
@@ -9,7 +9,7 @@ TypeScript + Vite + Canvas で作ったローカル向けブロック崩しで�
 # 依存をインストール
 bun install
 
-# 開発サーバ起動（ローカル実行）
+# 開発サーバ起動
 bun run dev
 
 # 本番ビルド
@@ -18,76 +18,49 @@ bun run build
 # 型チェック（app + test）
 bun run typecheck
 
-# lint/check
-bun run lint
+# lint / build / typecheck をまとめて実行
 bun run check
 
-# ビルド確認サーバ起動
-bun run preview
-
-# 物理テスト
+# テスト
 bun test
 ```
 
-## ゲームの遊び方
+## 遊び方
 
-- 左クリック / キーボード `Enter` / `Space`: 開始・再開
-- `P`: 一時停止/再開トグル
-- マウス移動: パドル（画面下部バー）を左右に追従
+- 左クリック / `Enter` / `Space`: 開始・次ステージ・再開
+- `P`: 一時停止 / 再開
+- マウス移動: パドルを左右に移動
 
-## バランス調整（運用中の値）
+## キャンペーン仕様
 
-現在のバランスは `src/game/config.ts` の `DIFFICULTY_PRESETS` / `GAME_CONFIG` / `GAME_BALANCE` で一元管理しています。
-デフォルト難易度は `casual` です。
+- 12ステージの直線キャンペーン
+- ステージクリア時は `STAGE CLEAR` オーバーレイを表示し、次ステージへ進行
+- 最終ステージ（12面）クリアで `CLEAR`
+- ライフが尽きると同ステージ再挑戦（スコアはそのステージ開始時に巻き戻し）
 
-- 画面サイズ: `960x540`
-- 初速: `260 px/s`
-- 最大速: `520 px/s`
-- ブロック衝突時速度上昇: `+1.2`
-- パドル幅: `148`
-- パドル高さ: `16`
-- アシスト時間: `6.0秒`（ミス後）
-- アシスト中パドル倍率: `x1.15`
-- アシスト中速度上限倍率: `x0.88`
-- 1ブロック得点: `100`
-- 残ライフボーナス: `500 / ライフ`
+## アイテム仕様（落下取得）
 
-値を変更する場合は `DIFFICULTY_PRESETS` を編集してください。`GAME_CONFIG` と `GAME_BALANCE` は選択中難易度から自動解決されます。
+- ブロック破壊時 `18%` でドロップ判定
+- 同時落下上限 `3`
+- 種類:
+  - `paddle_plus`: パドル幅 `x1.28`（12秒）
+  - `slow_ball`: 速度上限 `x0.82` + 取得直後速度 `x0.9`（10秒）
+  - `multiball`: 2球化（12秒）
+  - `shield`: 画面下バリア1回（14秒）
+- 同種再取得は効果量を増やさず、時間のみ延長（+基本時間の75%、上限24秒）
 
-## 安定化対応
+## 主要モジュール
 
-- `ResizeObserver` でステージリサイズ時にキャンバス縮尺を再計算
-- ゼロサイズ時の最小寸法フォールバック（`320x180`）
-- タブ非表示でプレイ中なら自動一時停止
-- 例外発生時は `error` オーバーレイを表示し、白画面化を回避
+- `src/game/Game.ts`: ループ・進行・入力・遷移のオーケストレーション
+- `src/game/roundSystem.ts`: ステージ進行と再挑戦
+- `src/game/itemSystem.ts`: ドロップ・取得・効果時間管理
+- `src/game/sceneMachine.ts`: Scene遷移（xstate）
+- `src/game/physics.ts`: 衝突と反射
+- `src/game/renderer.ts`: Canvas描画
+- `src/ui/overlay.ts`: シーン別オーバーレイ文言
 
-## レベル構成と描画
+## 補足
 
-- ブロック配置: `src/game/level.ts` の `buildBricks(layout)`
-- レイアウト定数: `src/game/config.ts` の `BRICK_LAYOUT`
-- レンダー設定: `src/game/renderer.ts` の `DEFAULT_RENDER_THEME`
-- VFX: ヒットパーティクル / 画面シェイク / 赤フラッシュ / ボール残像
-
-## リファクタリング後の責務
-
-- `src/game/Game.ts`: オーケストレーションとループ
-- `src/game/sceneMachine.ts`: Scene 遷移（xstate）
-- `src/game/viewport.ts`: 画面フィットと高解像度スケール
-- `src/game/vfxSystem.ts`: VFX状態更新・イベント適用
-- `src/game/assistSystem.ts`: アシスト有効化と反映
-- `src/game/domainTypes.ts`, `src/game/runtimeTypes.ts`: 型定義の分離
-
-## ディレクトリ構成
-
-- `src/main.ts`: エントリ
-- `src/game/Game.ts`: ゲーム状態・ループ・シーン管理
-- `src/game/physics.ts`: 衝突・反射・速度更新
-- `src/game/level.ts`: ブロック生成
-- `src/ui/overlay.ts`: オーバーレイUI文言
-- `src/audio/sfx.ts`: 効果音合成
-- `src/styles.css`: モダンUI/CSS
-
-## 開発メモ
-
-Git はこのリポジトリで `git` 管理しています。Bun 前提で、
-`bun run dev` / `bun run build` / `bun test` が標準運用です。
+- 高解像度表示（高DPR）対応
+- `prefers-reduced-motion` 対応（演出抑制）
+- Bun 前提運用（`bun run dev/build/test`）

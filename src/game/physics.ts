@@ -21,6 +21,8 @@ export interface PhysicsConfig {
   maxMove?: number;
   maxSubSteps?: number;
   maxBallSpeed?: number;
+  initialBallSpeed?: number;
+  onMiss?: (ball: Ball) => boolean;
   balance?: GameplayBalance;
 }
 
@@ -35,6 +37,7 @@ export function stepPhysics(
   const maxMove = stepConfig?.maxMove ?? MAX_MOVE;
   const maxSubSteps = stepConfig?.maxSubSteps ?? MAX_SUBSTEPS;
   const maxBallSpeed = stepConfig?.maxBallSpeed ?? config.maxBallSpeed;
+  const initialBallSpeed = stepConfig?.initialBallSpeed ?? config.initialBallSpeed;
   const balance = stepConfig?.balance ?? GAME_BALANCE;
 
   const distance = Math.hypot(ball.vel.x, ball.vel.y) * deltaSec;
@@ -56,13 +59,13 @@ export function stepPhysics(
   for (let i = 0; i < iterations; i += 1) {
     integratePosition(ball, subDt);
 
-    if (resolveWallCollision(ball, config, result.collision, result.events)) {
+    if (resolveWallCollision(ball, config, result.collision, result.events, stepConfig?.onMiss)) {
       result.livesLost = 1;
       return result;
     }
 
     if (resolvePaddleCollision(ball, paddle)) {
-      applyPaddleCollision(ball, paddle, config, balance, maxBallSpeed);
+      applyPaddleCollision(ball, paddle, initialBallSpeed, balance, maxBallSpeed);
       result.collision.paddle = true;
       result.events.push({
         kind: "paddle",
@@ -98,6 +101,7 @@ function resolveWallCollision(
   config: GameConfig,
   collision: PhysicsResult["collision"],
   events: CollisionEvent[],
+  onMiss?: (ball: Ball) => boolean,
 ): boolean {
   let hasWallHit = false;
   if (ball.pos.x - ball.radius < 0) {
@@ -128,6 +132,15 @@ function resolveWallCollision(
   }
 
   if (ball.pos.y - ball.radius > config.height) {
+    if (onMiss?.(ball)) {
+      collision.wall = true;
+      events.push({
+        kind: "wall",
+        x: ball.pos.x,
+        y: config.height,
+      });
+      return false;
+    }
     events.push({
       kind: "miss",
       x: ball.pos.x,
@@ -164,7 +177,7 @@ function resolvePaddleCollision(ball: Ball, paddle: Paddle): boolean {
 function applyPaddleCollision(
   ball: Ball,
   paddle: Paddle,
-  config: GameConfig,
+  initialBallSpeed: number,
   balance: GameplayBalance,
   maxBallSpeed: number,
 ): void {
@@ -172,7 +185,7 @@ function applyPaddleCollision(
   const relativeX = (ball.pos.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2);
   const impact = Math.max(-1, Math.min(1, relativeX));
   const angle = impact * balance.paddleMaxBounceAngle;
-  const speed = Math.min(maxBallSpeed, Math.max(config.initialBallSpeed, Math.hypot(ball.vel.x, ball.vel.y)));
+  const speed = Math.min(maxBallSpeed, Math.max(initialBallSpeed, Math.hypot(ball.vel.x, ball.vel.y)));
   ball.vel.x = Math.sin(angle) * speed;
   ball.vel.y = -Math.cos(angle) * speed;
 }

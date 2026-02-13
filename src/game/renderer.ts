@@ -1,4 +1,4 @@
-import type { Ball, Brick, GameConfig, GameState, Particle, Vector2 } from "./types";
+import type { Ball, Brick, FallingItem, GameConfig, GameState, Particle, Vector2 } from "./types";
 
 export interface RenderTheme {
   backdropStart: string;
@@ -15,6 +15,8 @@ export interface RenderTheme {
   ballStroke: string;
   trail: string;
   flash: string;
+  itemText: string;
+  shield: string;
 }
 
 export const DEFAULT_RENDER_THEME: RenderTheme = {
@@ -32,6 +34,8 @@ export const DEFAULT_RENDER_THEME: RenderTheme = {
   ballStroke: "rgba(255, 255, 255, 0.8)",
   trail: "rgba(153, 220, 255, 0.22)",
   flash: "rgba(255, 100, 100, 1)",
+  itemText: "rgba(235, 244, 255, 1)",
+  shield: "rgba(116, 255, 229, 0.66)",
 };
 
 export class Renderer {
@@ -56,8 +60,11 @@ export class Renderer {
     this.drawBackdrop();
     this.drawBricks(state.bricks);
     this.drawPaddle(state.paddle);
-    this.drawTrail(state.vfx.trail, state.ball.radius);
-    this.drawBall(state.ball);
+    this.drawShield(state);
+    const leadBallRadius = state.balls[0]?.radius ?? 8;
+    this.drawTrail(state.vfx.trail, leadBallRadius);
+    this.drawBalls(state.balls);
+    this.drawFallingItems(state.items.falling);
     this.drawParticles(state.vfx.particles);
     this.drawFlash(state.vfx.flashMs);
 
@@ -137,6 +144,12 @@ export class Renderer {
     this.ctx.quadraticCurveTo(x, y, x + r, y);
   }
 
+  private drawBalls(balls: Ball[]): void {
+    for (const ball of balls) {
+      this.drawBall(ball);
+    }
+  }
+
   private drawBall(ball: Ball): void {
     const radial = this.ctx.createRadialGradient(
       ball.pos.x - 2,
@@ -191,6 +204,73 @@ export class Renderer {
     const alpha = Math.min(0.28, (flashMs / 180) * 0.28);
     this.ctx.fillStyle = withAlpha(this.theme.flash, alpha);
     this.ctx.fillRect(0, 0, this.config.width, this.config.height);
+  }
+
+  private drawFallingItems(items: FallingItem[]): void {
+    for (const item of items) {
+      const half = item.size / 2;
+      this.ctx.fillStyle = this.itemColor(item.type);
+      this.ctx.beginPath();
+      if (this.ctx.roundRect) {
+        this.ctx.roundRect(item.pos.x - half, item.pos.y - half, item.size, item.size, 5);
+      } else {
+        this.ctx.rect(item.pos.x - half, item.pos.y - half, item.size, item.size);
+      }
+      this.ctx.fill();
+      this.ctx.strokeStyle = "rgba(255, 255, 255, 0.56)";
+      this.ctx.lineWidth = 1;
+      this.ctx.stroke();
+
+      this.ctx.fillStyle = this.theme.itemText;
+      this.ctx.font = "600 9px Avenir Next";
+      this.ctx.textAlign = "center";
+      this.ctx.textBaseline = "middle";
+      this.ctx.fillText(this.itemShort(item.type), item.pos.x, item.pos.y + 0.5);
+    }
+  }
+
+  private drawShield(state: GameState): void {
+    if (
+      state.items.active.shield.remainingHits <= 0 ||
+      state.items.active.shield.untilSec <= state.elapsedSec
+    ) {
+      return;
+    }
+
+    const baseY = this.config.height - 8;
+    const pulse = 0.45 + ((Math.sin(state.elapsedSec * 8) + 1) / 2) * 0.35;
+    this.ctx.strokeStyle = withAlpha(this.theme.shield, pulse);
+    this.ctx.lineWidth = 4;
+    this.ctx.beginPath();
+    this.ctx.moveTo(14, baseY);
+    this.ctx.lineTo(this.config.width - 14, baseY);
+    this.ctx.stroke();
+  }
+
+  private itemShort(type: FallingItem["type"]): string {
+    if (type === "paddle_plus") {
+      return "P+";
+    }
+    if (type === "slow_ball") {
+      return "SL";
+    }
+    if (type === "multiball") {
+      return "MB";
+    }
+    return "SH";
+  }
+
+  private itemColor(type: FallingItem["type"]): string {
+    if (type === "paddle_plus") {
+      return "rgba(104, 216, 255, 0.8)";
+    }
+    if (type === "slow_ball") {
+      return "rgba(255, 191, 112, 0.85)";
+    }
+    if (type === "multiball") {
+      return "rgba(197, 143, 255, 0.82)";
+    }
+    return "rgba(112, 255, 210, 0.78)";
   }
 }
 

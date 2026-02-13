@@ -169,4 +169,30 @@ describe("stepPhysics", () => {
     expect(result.collision.paddle).toBe(true);
     expect(ball.vel.y).toBeLessThan(0);
   });
+
+  test("onMiss handler can rescue ball without losing life", () => {
+    const ball: Ball = {
+      pos: { x: 120, y: 178 },
+      vel: { x: 30, y: 140 },
+      radius: 6,
+      speed: 320,
+    };
+    const paddle: Paddle = { x: 60, y: 155, width: 90, height: 14 };
+    const bricks: Brick[] = [];
+    const rescued: { value: boolean } = { value: false };
+
+    const result = stepPhysics(ball, paddle, bricks, baseConfig, 1 / 8, {
+      onMiss: (target) => {
+        rescued.value = true;
+        target.pos.y = baseConfig.height - target.radius - 10;
+        target.vel.y = -Math.abs(target.vel.y);
+        return true;
+      },
+    });
+
+    expect(rescued.value).toBe(true);
+    expect(result.livesLost).toBe(0);
+    expect(result.events.some((event) => event.kind === "wall")).toBe(true);
+    expect(ball.vel.y).toBeLessThan(0);
+  });
 });

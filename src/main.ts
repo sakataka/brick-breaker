@@ -7,6 +7,8 @@ const canvas = getRequiredElement<HTMLCanvasElement>(document, "#game-canvas", "
 const scoreEl = getRequiredElement<HTMLSpanElement>(document, "#score", "score要素が見つかりません");
 const livesEl = getRequiredElement<HTMLSpanElement>(document, "#lives", "lives要素が見つかりません");
 const timeEl = getRequiredElement<HTMLSpanElement>(document, "#time", "time要素が見つかりません");
+const stageEl = getRequiredElement<HTMLSpanElement>(document, "#stage", "stage要素が見つかりません");
+const itemsEl = getRequiredElement<HTMLSpanElement>(document, "#items", "items要素が見つかりません");
 const overlayElements = getOverlayElements(document);
 
 const game = new Game(
@@ -15,6 +17,8 @@ const game = new Game(
     score: scoreEl,
     lives: livesEl,
     time: timeEl,
+    stage: stageEl,
+    items: itemsEl,
   },
   overlayElements,
 );

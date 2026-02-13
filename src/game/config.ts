@@ -1,4 +1,4 @@
-import type { Difficulty, GameConfig } from "./types";
+import type { Difficulty, GameConfig, ItemType, StageDefinition } from "./types";
 
 export interface BrickTheme {
   palette: readonly string[];
@@ -42,6 +42,28 @@ interface DifficultyPreset {
     GameplayBalance,
     "paddleWidth" | "serveSpreadRatio" | "brickHitSpeedGain" | "paddleMaxBounceAngle"
   >;
+}
+
+export interface ItemRule {
+  type: ItemType;
+  durationSec: number;
+  weight: number;
+  label: string;
+}
+
+export interface DropConfig {
+  chance: number;
+  maxFalling: number;
+  fallSpeed: number;
+  maxDurationSec: number;
+  extendRatio: number;
+}
+
+export interface ItemBalance {
+  paddlePlusScale: number;
+  slowBallMaxSpeedScale: number;
+  slowBallInstantSpeedScale: number;
+  multiballMaxBalls: number;
 }
 
 const BASE_CONFIG: Omit<
@@ -156,6 +178,96 @@ export const BRICK_LAYOUT: BrickLayout = {
   brickHeight: 24,
 };
 
+const STAGE_ROW_DEFINITIONS: readonly (readonly string[])[] = [
+  ["0011111100", "0011111100", "0001111000", "0000110000", "0000000000", "0000000000"],
+  ["0111111110", "0011111100", "0010110100", "0001111000", "0000100000", "0000000000"],
+  ["0111111110", "0110110110", "0011111100", "0010011000", "0001111000", "0000000000"],
+  ["0111111110", "0101111010", "0110110110", "0011111100", "0001111000", "0000100000"],
+  ["1111111111", "1011111101", "0111111110", "0011111100", "0010110100", "0001111000"],
+  ["1111111111", "1101111011", "0111111110", "0110110110", "0011111100", "0010011000"],
+  ["1111111111", "1011111101", "1110110111", "0111111110", "0101111010", "0011111100"],
+  ["1111111111", "1110110111", "1101111011", "0111111110", "0110110110", "0011111100"],
+  ["1111111111", "1111111111", "1011111101", "1110110111", "0111111110", "0101111010"],
+  ["1111111111", "1111111111", "1101111011", "1110110111", "0111111110", "0110110110"],
+  ["1111111111", "1111111111", "1111111111", "1011111101", "1110110111", "0111111110"],
+  ["1111111111", "1111111111", "1111111111", "1110110111", "1111111111", "0111111110"],
+];
+
+function parseStageLayout(rows: readonly string[]): number[][] {
+  return rows.map((row) =>
+    row.split("").map((cell) => {
+      if (cell === "1") {
+        return 1;
+      }
+      return 0;
+    }),
+  );
+}
+
+function computeStageSpeedScale(index: number, total: number): number {
+  if (total <= 1) {
+    return 1;
+  }
+
+  const min = 1;
+  const max = 1.18;
+  const ratio = index / (total - 1);
+  return min + (max - min) * ratio;
+}
+
+export const STAGE_CATALOG: StageDefinition[] = STAGE_ROW_DEFINITIONS.map((rows, index, all) => ({
+  id: index + 1,
+  speedScale: Number(computeStageSpeedScale(index, all.length).toFixed(3)),
+  layout: parseStageLayout(rows),
+}));
+
+export const ITEM_CONFIG: Record<ItemType, ItemRule> = {
+  paddle_plus: {
+    type: "paddle_plus",
+    durationSec: 12,
+    weight: 0.35,
+    label: "PADDLE+",
+  },
+  slow_ball: {
+    type: "slow_ball",
+    durationSec: 10,
+    weight: 0.3,
+    label: "SLOW",
+  },
+  shield: {
+    type: "shield",
+    durationSec: 14,
+    weight: 0.2,
+    label: "SHIELD",
+  },
+  multiball: {
+    type: "multiball",
+    durationSec: 12,
+    weight: 0.15,
+    label: "MULTI",
+  },
+};
+
+export const ITEM_BALANCE: ItemBalance = {
+  paddlePlusScale: 1.28,
+  slowBallMaxSpeedScale: 0.82,
+  slowBallInstantSpeedScale: 0.9,
+  multiballMaxBalls: 2,
+};
+
+export const DROP_CONFIG: DropConfig = {
+  chance: 0.18,
+  maxFalling: 3,
+  fallSpeed: 160,
+  maxDurationSec: 24,
+  extendRatio: 0.75,
+};
+
 export function getBrickPaletteColor(row: number, palette: BrickTheme["palette"] = BRICK_PALETTE): string {
   return palette[row % palette.length];
+}
+
+export function getStageByIndex(stageIndex: number): StageDefinition {
+  const safeIndex = Math.max(0, Math.min(STAGE_CATALOG.length - 1, stageIndex));
+  return STAGE_CATALOG[safeIndex];
 }

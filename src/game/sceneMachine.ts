@@ -4,6 +4,7 @@ import type { Scene } from "./types";
 export type SceneEvent =
   | { type: "START_OR_RESUME" }
   | { type: "TOGGLE_PAUSE" }
+  | { type: "STAGE_CLEAR" }
   | { type: "GAME_OVER" }
   | { type: "GAME_CLEAR" }
   | { type: "RUNTIME_ERROR" }
@@ -22,6 +23,7 @@ const sceneMachineDefinition = createMachine({
     playing: {
       on: {
         TOGGLE_PAUSE: "paused",
+        STAGE_CLEAR: "stageclear",
         GAME_CLEAR: "clear",
         GAME_OVER: "gameover",
         RUNTIME_ERROR: "error",
@@ -41,6 +43,12 @@ const sceneMachineDefinition = createMachine({
       },
     },
     clear: {
+      on: {
+        START_OR_RESUME: "playing",
+        RUNTIME_ERROR: "error",
+      },
+    },
+    stageclear: {
       on: {
         START_OR_RESUME: "playing",
         RUNTIME_ERROR: "error",

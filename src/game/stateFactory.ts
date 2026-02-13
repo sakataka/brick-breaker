@@ -1,6 +1,7 @@
 import { createAssistState } from "./assistSystem";
-import { GAME_BALANCE } from "./config";
-import { buildBricks } from "./level";
+import { GAME_BALANCE, STAGE_CATALOG, getStageByIndex } from "./config";
+import { createItemState } from "./itemSystem";
+import { buildBricksFromStage } from "./level";
 import { clamp } from "./math";
 import type { Ball, GameConfig, GameState, Paddle, RandomSource, Scene } from "./types";
 import { createVfxState } from "./vfxSystem";
@@ -14,7 +15,7 @@ export function createBasePaddle(config: GameConfig): Paddle {
   };
 }
 
-export function createRestingBall(config: GameConfig, paddle: Paddle): Ball {
+export function createRestingBall(config: GameConfig, paddle: Paddle, speed = config.initialBallSpeed): Ball {
   return {
     pos: {
       x: config.width / 2,
@@ -22,7 +23,7 @@ export function createRestingBall(config: GameConfig, paddle: Paddle): Ball {
     },
     vel: { x: 0, y: 0 },
     radius: GAME_BALANCE.ballRadius,
-    speed: config.initialBallSpeed,
+    speed,
   };
 }
 
@@ -31,8 +32,8 @@ export function createServeBall(
   paddle: Paddle,
   radius: number,
   random: RandomSource,
+  speed = config.initialBallSpeed,
 ): Ball {
-  const speed = config.initialBallSpeed;
   const spread = (random.next() - 0.5) * speed * GAME_BALANCE.serveSpreadRatio;
   const vx = clamp(spread, -speed * 0.45, speed * 0.45);
   const vy = -Math.sqrt(speed * speed - vx * vx);
@@ -49,17 +50,25 @@ export function createServeBall(
 }
 
 export function createInitialGameState(config: GameConfig, reducedMotion: boolean, scene: Scene): GameState {
+  const stage = getStageByIndex(0);
+  const stageSpeed = config.initialBallSpeed * stage.speedScale;
   const paddle = createBasePaddle(config);
-  const ball = createRestingBall(config, paddle);
+  const ball = createRestingBall(config, paddle, stageSpeed);
 
   return {
     scene,
     score: 0,
     lives: config.initialLives,
     elapsedSec: 0,
-    ball,
+    balls: [ball],
     paddle,
-    bricks: buildBricks(),
+    bricks: buildBricksFromStage(stage),
+    campaign: {
+      stageIndex: 0,
+      totalStages: STAGE_CATALOG.length,
+      stageStartScore: 0,
+    },
+    items: createItemState(),
     assist: createAssistState(config),
     vfx: createVfxState(reducedMotion),
     errorMessage: null,

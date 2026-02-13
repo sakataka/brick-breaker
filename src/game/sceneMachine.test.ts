@@ -18,4 +18,20 @@ describe("sceneMachine", () => {
     expect(machine.send({ type: "START_OR_RESUME" })).toBe("error");
     machine.stop();
   });
+
+  test("supports playing -> stageclear -> playing", () => {
+    const machine = new SceneMachine();
+    expect(machine.send({ type: "START_OR_RESUME" })).toBe("playing");
+    expect(machine.send({ type: "STAGE_CLEAR" })).toBe("stageclear");
+    expect(machine.send({ type: "START_OR_RESUME" })).toBe("playing");
+    machine.stop();
+  });
+
+  test("moves stageclear to error on runtime error", () => {
+    const machine = new SceneMachine();
+    expect(machine.send({ type: "START_OR_RESUME" })).toBe("playing");
+    expect(machine.send({ type: "STAGE_CLEAR" })).toBe("stageclear");
+    expect(machine.send({ type: "RUNTIME_ERROR" })).toBe("error");
+    machine.stop();
+  });
 });

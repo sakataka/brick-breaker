@@ -1,4 +1,4 @@
-import type { Ball, Brick, Paddle, Scene, Vector2 } from "./domainTypes";
+import type { Ball, Brick, ItemType, Paddle, Scene, Vector2 } from "./domainTypes";
 
 export interface AssistState {
   untilSec: number;
@@ -35,14 +35,53 @@ export interface CollisionEvent {
   color?: string;
 }
 
+export interface CampaignState {
+  stageIndex: number;
+  totalStages: number;
+  stageStartScore: number;
+}
+
+export interface FallingItem {
+  id: number;
+  type: ItemType;
+  pos: Vector2;
+  size: number;
+  speed: number;
+}
+
+export interface ActiveTimedEffect {
+  type: Exclude<ItemType, "shield">;
+  untilSec: number;
+}
+
+export interface ShieldState {
+  untilSec: number;
+  remainingHits: number;
+}
+
+export interface ActiveItemState {
+  paddlePlus: ActiveTimedEffect;
+  slowBall: ActiveTimedEffect;
+  multiball: ActiveTimedEffect;
+  shield: ShieldState;
+}
+
+export interface ItemState {
+  falling: FallingItem[];
+  active: ActiveItemState;
+  nextId: number;
+}
+
 export interface GameState {
   scene: Scene;
   score: number;
   lives: number;
   elapsedSec: number;
-  ball: Ball;
+  balls: Ball[];
   paddle: Paddle;
   bricks: Brick[];
+  campaign: CampaignState;
+  items: ItemState;
   assist: AssistState;
   vfx: VfxState;
   errorMessage: string | null;
