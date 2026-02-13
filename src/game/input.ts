@@ -18,16 +18,22 @@ export class InputController {
   ) {}
 
   attach(): void {
+    this.canvas.addEventListener('mousemove', this.handleMouseMove);
     this.canvas.addEventListener('pointermove', this.handlePointerMove);
     window.addEventListener('keydown', this.handleKeyDown);
     window.addEventListener('resize', this.handlers.resize);
   }
 
   detach(): void {
+    this.canvas.removeEventListener('mousemove', this.handleMouseMove);
     this.canvas.removeEventListener('pointermove', this.handlePointerMove);
     window.removeEventListener('keydown', this.handleKeyDown);
     window.removeEventListener('resize', this.handlers.resize);
   }
+
+  private readonly handleMouseMove = (event: MouseEvent): void => {
+    this.handlers.moveByMouseX(event.clientX);
+  };
 
   private readonly handlePointerMove = (event: PointerEvent): void => {
     event.preventDefault();

@@ -87,10 +87,34 @@ export class Renderer {
 
     this.ctx.fillStyle = grad;
     this.ctx.beginPath();
-    this.ctx.roundRect(paddle.x, paddle.y, paddle.width, paddle.height, 9);
+    if (this.ctx.roundRect) {
+      this.ctx.roundRect(paddle.x, paddle.y, paddle.width, paddle.height, 9);
+    } else {
+      this.drawRoundedRectFallback(paddle.x, paddle.y, paddle.width, paddle.height, 9);
+    }
+    this.ctx.closePath();
     this.ctx.fill();
     this.ctx.strokeStyle = this.theme.paddleStroke;
     this.ctx.stroke();
+  }
+
+  private drawRoundedRectFallback(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    radius: number,
+  ): void {
+    const r = Math.min(radius, width / 2, height / 2);
+    this.ctx.moveTo(x + r, y);
+    this.ctx.lineTo(x + width - r, y);
+    this.ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+    this.ctx.lineTo(x + width, y + height - r);
+    this.ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+    this.ctx.lineTo(x + r, y + height);
+    this.ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+    this.ctx.lineTo(x, y + r);
+    this.ctx.quadraticCurveTo(x, y, x + r, y);
   }
 
   private drawBall(ball: Ball): void {
