@@ -22,12 +22,7 @@ export class Game {
   private readonly config: GameConfig;
   private readonly renderer: Renderer;
   private readonly sfx = new SfxManager();
-  private readonly input = new InputController(this.canvas, {
-    moveByMouseX: (clientX) => this.movePaddleByMouse(clientX),
-    pauseToggle: () => this.togglePause(),
-    startOrRestart: () => this.startOrResume(),
-    resize: () => this.adjustCanvasScale(),
-  });
+  private readonly input: InputController;
 
   private state: GameState;
   private lastFrameTime = 0;
@@ -49,6 +44,12 @@ export class Game {
       ...GAME_CONFIG,
       ...deps?.config,
     };
+    this.input = new InputController(this.canvas, {
+      moveByMouseX: (clientX) => this.movePaddleByMouse(clientX),
+      pauseToggle: () => this.togglePause(),
+      startOrRestart: () => this.startOrResume(),
+      resize: () => this.adjustCanvasScale(),
+    });
     this.renderer = new Renderer(context, this.config);
     this.state = this.createInitialState();
     this.adjustCanvasScale();

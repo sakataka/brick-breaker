@@ -2,7 +2,7 @@ const START_KEYS = [' ', 'enter'] as const;
 const PAUSE_KEYS = ['p'] as const;
 
 const isStartKey = (key: string): boolean => START_KEYS.includes(key as (typeof START_KEYS)[number]);
-const isPauseKey = (key: string): boolean => PAUSE_KEYS.includes(key);
+const isPauseKey = (key: string): boolean => PAUSE_KEYS.includes(key as (typeof PAUSE_KEYS)[number]);
 
 export interface InputHandlers {
   moveByMouseX: (clientX: number) => void;
