@@ -1,4 +1,5 @@
 import type { Ball, Brick, Paddle, GameConfig } from './types';
+import { GAME_BALANCE, type GameplayBalance } from './config';
 
 const MAX_SUBSTEPS = 12;
 const MAX_MOVE = 4;
@@ -17,6 +18,7 @@ export interface PhysicsResult {
 export interface PhysicsConfig {
   maxMove?: number;
   maxSubSteps?: number;
+  balance?: GameplayBalance;
 }
 
 export function stepPhysics(
@@ -29,6 +31,7 @@ export function stepPhysics(
 ): PhysicsResult {
   const maxMove = stepConfig?.maxMove ?? MAX_MOVE;
   const maxSubSteps = stepConfig?.maxSubSteps ?? MAX_SUBSTEPS;
+  const balance = stepConfig?.balance ?? GAME_BALANCE;
 
   const distance = Math.hypot(ball.vel.x, ball.vel.y) * deltaSec;
   const iterations = Math.min(maxSubSteps, Math.max(1, Math.ceil(distance / maxMove)));
@@ -54,13 +57,13 @@ export function stepPhysics(
     }
 
     if (resolvePaddleCollision(ball, paddle)) {
-      applyPaddleCollision(ball, paddle, config);
+      applyPaddleCollision(ball, paddle, config, balance);
       result.collision.paddle = true;
     }
 
     const hitBrickIndex = resolveBrickCollision(ball, bricks);
     if (hitBrickIndex >= 0) {
-      const clearGain = applyBrickCollision(ball, bricks, hitBrickIndex, config);
+      const clearGain = applyBrickCollision(ball, bricks, hitBrickIndex, config, balance);
       result.scoreGain += clearGain.scoreGain;
       result.collision.brick += 1;
       if (clearGain.cleared) {
@@ -130,11 +133,11 @@ function resolvePaddleCollision(ball: Ball, paddle: Paddle): boolean {
   return dx * dx + dy * dy <= ball.radius * ball.radius;
 }
 
-function applyPaddleCollision(ball: Ball, paddle: Paddle, config: GameConfig): void {
+function applyPaddleCollision(ball: Ball, paddle: Paddle, config: GameConfig, balance: GameplayBalance): void {
   ball.pos.y = paddle.y - ball.radius;
   const relativeX = (ball.pos.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2);
   const impact = Math.max(-1, Math.min(1, relativeX));
-  const angle = impact * (Math.PI / 3);
+  const angle = impact * balance.paddleMaxBounceAngle;
   const speed = Math.min(config.maxBallSpeed, Math.max(config.initialBallSpeed, Math.hypot(ball.vel.x, ball.vel.y)));
   ball.vel.x = Math.sin(angle) * speed;
   ball.vel.y = -Math.cos(angle) * speed;
@@ -176,10 +179,11 @@ function applyBrickCollision(
   bricks: Brick[],
   hitBrickIndex: number,
   config: GameConfig,
+  balance: GameplayBalance,
 ): { scoreGain: number; cleared: boolean } {
   const brick = bricks[hitBrickIndex];
   brick.alive = false;
-  ball.speed = Math.min(config.maxBallSpeed, ball.speed + 4);
+  ball.speed = Math.min(config.maxBallSpeed, ball.speed + balance.brickHitSpeedGain);
 
   const hitX = clamp(ball.pos.x, brick.x, brick.x + brick.width);
   const hitY = clamp(ball.pos.y, brick.y, brick.y + brick.height);
@@ -204,7 +208,7 @@ function applyBrickCollision(
 
   const nextAlive = bricks.some((b) => b.alive);
   return {
-    scoreGain: 100,
+    scoreGain: balance.scorePerBrick,
     cleared: !nextAlive,
   };
 }

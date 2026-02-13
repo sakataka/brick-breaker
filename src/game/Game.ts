@@ -1,5 +1,5 @@
 import type { Ball, GameConfig, GameState, Scene } from './types';
-import { GAME_CONFIG, CLEAR_BONUS_PER_LIFE } from './config';
+import { GAME_CONFIG, GAME_BALANCE } from './config';
 import { buildBricks } from './level';
 import { Renderer } from './renderer';
 import { type PhysicsResult, stepPhysics } from './physics';
@@ -77,19 +77,20 @@ export class Game {
 
   private createInitialState(): GameState {
     const paddle = {
-      x: this.config.width / 2 - 60,
-      y: this.config.height - 44,
-      width: 120,
-      height: 16,
+      x: this.config.width / 2 - GAME_BALANCE.paddleWidth / 2,
+      y: this.config.height - GAME_BALANCE.paddleBottomOffset,
+      width: GAME_BALANCE.paddleWidth,
+      height: GAME_BALANCE.paddleHeight,
     };
+    const halfBallGap = (GAME_BALANCE.paddleHeight + GAME_BALANCE.ballRadius + 2);
 
     const ball: Ball = {
       pos: {
         x: this.config.width / 2,
-        y: paddle.y - 24,
+        y: paddle.y - halfBallGap,
       },
       vel: { x: 0, y: 0 },
-      radius: 8,
+      radius: GAME_BALANCE.ballRadius,
       speed: this.config.initialBallSpeed,
     };
 
@@ -244,7 +245,7 @@ export class Game {
   }
 
   private handleClear(): void {
-    this.state.score += this.state.lives * CLEAR_BONUS_PER_LIFE;
+    this.state.score += this.state.lives * GAME_BALANCE.clearBonusPerLife;
     void this.sfx.play('clear');
     this.setScene('clear');
   }
@@ -259,14 +260,14 @@ export class Game {
 
   private createServeBall(): Ball {
     const speed = this.config.initialBallSpeed;
-    const randomSpread = (Math.random() - 0.5) * speed * 0.6;
-    const vx = Math.max(-speed * 0.45, Math.min(speed * 0.45, randomSpread));
+    const spread = (Math.random() - 0.5) * speed * GAME_BALANCE.serveSpreadRatio;
+    const vx = Math.max(-speed * 0.45, Math.min(speed * 0.45, spread));
     const vy = -Math.sqrt(speed * speed - vx * vx);
 
     return {
       pos: {
         x: this.state.paddle.x + this.state.paddle.width / 2,
-        y: this.state.paddle.y - 18,
+        y: this.state.paddle.y - GAME_BALANCE.serveYOffset,
       },
       vel: {
         x: vx,
