@@ -1,4 +1,4 @@
-import type { Ball, Brick, GameConfig, GameState, Particle, Vector2 } from './types';
+import type { Ball, Brick, GameConfig, GameState, Particle, Vector2 } from "./types";
 
 export interface RenderTheme {
   backdropStart: string;
@@ -18,25 +18,23 @@ export interface RenderTheme {
 }
 
 export const DEFAULT_RENDER_THEME: RenderTheme = {
-  backdropStart: 'rgba(255, 255, 255, 0.25)',
-  backdropEnd: 'rgba(255, 255, 255, 0.04)',
-  backdropStroke: 'rgba(255, 255, 255, 0.2)',
-  overlayTint: 'rgba(255, 255, 255, 0.04)',
-  brickGlow: 'rgba(255, 255, 255, 0.08)',
-  brickStroke: 'rgba(255, 255, 255, 0.45)',
-  paddleStart: 'rgba(255, 255, 255, 0.94)',
-  paddleEnd: 'rgba(160, 200, 255, 0.86)',
-  paddleStroke: 'rgba(255, 255, 255, 0.7)',
-  paddleText: 'rgba(255, 255, 255, 1)',
-  ballCore: 'rgba(77, 165, 255, 0.9)',
-  ballStroke: 'rgba(255, 255, 255, 0.8)',
-  trail: 'rgba(153, 220, 255, 0.22)',
-  flash: 'rgba(255, 100, 100, 1)',
+  backdropStart: "rgba(255, 255, 255, 0.25)",
+  backdropEnd: "rgba(255, 255, 255, 0.04)",
+  backdropStroke: "rgba(255, 255, 255, 0.2)",
+  overlayTint: "rgba(255, 255, 255, 0.04)",
+  brickGlow: "rgba(255, 255, 255, 0.08)",
+  brickStroke: "rgba(255, 255, 255, 0.45)",
+  paddleStart: "rgba(255, 255, 255, 0.94)",
+  paddleEnd: "rgba(160, 200, 255, 0.86)",
+  paddleStroke: "rgba(255, 255, 255, 0.7)",
+  paddleText: "rgba(255, 255, 255, 1)",
+  ballCore: "rgba(77, 165, 255, 0.9)",
+  ballStroke: "rgba(255, 255, 255, 0.8)",
+  trail: "rgba(153, 220, 255, 0.22)",
+  flash: "rgba(255, 100, 100, 1)",
 };
 
 export class Renderer {
-  private renderScale = 1;
-
   constructor(
     private readonly ctx: CanvasRenderingContext2D,
     private readonly config: GameConfig,
@@ -44,10 +42,10 @@ export class Renderer {
   ) {}
 
   setRenderScale(next: number): void {
-    this.renderScale = Math.max(1, next);
-    this.ctx.setTransform(this.renderScale, 0, 0, this.renderScale, 0, 0);
+    const scale = Math.max(1, next);
+    this.ctx.setTransform(scale, 0, 0, scale, 0, 0);
     this.ctx.imageSmoothingEnabled = true;
-    this.ctx.imageSmoothingQuality = 'high';
+    this.ctx.imageSmoothingQuality = "high";
   }
 
   render(state: GameState): void {
@@ -63,7 +61,7 @@ export class Renderer {
     this.drawParticles(state.vfx.particles);
     this.drawFlash(state.vfx.flashMs);
 
-    if (state.scene !== 'playing') {
+    if (state.scene !== "playing") {
       this.ctx.fillStyle = this.theme.overlayTint;
       this.ctx.fillRect(0, 0, this.config.width, this.config.height);
     }
@@ -75,11 +73,7 @@ export class Renderer {
     if (state.vfx.reducedMotion || state.vfx.shakeMs <= 0 || state.vfx.shakePx <= 0) {
       return;
     }
-
-    const intensity = state.vfx.shakePx * Math.min(1, state.vfx.shakeMs / 150);
-    const offsetX = (Math.random() * 2 - 1) * intensity;
-    const offsetY = (Math.random() * 2 - 1) * intensity;
-    this.ctx.translate(offsetX, offsetY);
+    this.ctx.translate(state.vfx.shakeOffset.x, state.vfx.shakeOffset.y);
   }
 
   private drawBackdrop(): void {
@@ -95,13 +89,13 @@ export class Renderer {
   }
 
   private drawBricks(bricks: Brick[]): void {
-    bricks.forEach((brick) => {
+    for (const brick of bricks) {
       if (!brick.alive) {
-        return;
+        continue;
       }
 
       const glass = this.ctx.createLinearGradient(brick.x, brick.y, brick.x, brick.y + brick.height);
-      glass.addColorStop(0, brick.color ?? 'rgba(255, 180, 120, 0.35)');
+      glass.addColorStop(0, brick.color ?? "rgba(255, 180, 120, 0.35)");
       glass.addColorStop(1, this.theme.brickGlow);
 
       this.ctx.fillStyle = glass;
@@ -109,10 +103,10 @@ export class Renderer {
       this.ctx.strokeStyle = this.theme.brickStroke;
       this.ctx.lineWidth = 1;
       this.ctx.strokeRect(brick.x, brick.y, brick.width, brick.height);
-    });
+    }
   }
 
-  private drawPaddle(paddle: GameState['paddle']): void {
+  private drawPaddle(paddle: GameState["paddle"]): void {
     const grad = this.ctx.createLinearGradient(paddle.x, paddle.y, paddle.x, paddle.y + paddle.height);
     grad.addColorStop(0, this.theme.paddleStart);
     grad.addColorStop(1, this.theme.paddleEnd);
@@ -130,13 +124,7 @@ export class Renderer {
     this.ctx.stroke();
   }
 
-  private drawRoundedRectFallback(
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    radius: number,
-  ): void {
+  private drawRoundedRectFallback(x: number, y: number, width: number, height: number, radius: number): void {
     const r = Math.min(radius, width / 2, height / 2);
     this.ctx.moveTo(x + r, y);
     this.ctx.lineTo(x + width - r, y);
@@ -177,10 +165,10 @@ export class Renderer {
 
     for (let i = 0; i < count; i += 1) {
       const point = trail[i];
-      const alpha = (i + 1) / count * 0.5;
+      const alpha = ((i + 1) / count) * 0.5;
       this.ctx.fillStyle = withAlpha(this.theme.trail, Math.min(0.45, alpha));
       this.ctx.beginPath();
-      this.ctx.arc(point.x, point.y, Math.max(2, ballRadius * (i + 1) / count * 0.7), 0, Math.PI * 2);
+      this.ctx.arc(point.x, point.y, Math.max(2, ((ballRadius * (i + 1)) / count) * 0.7), 0, Math.PI * 2);
       this.ctx.fill();
     }
   }
@@ -200,7 +188,7 @@ export class Renderer {
       return;
     }
 
-    const alpha = Math.min(0.28, flashMs / 180 * 0.28);
+    const alpha = Math.min(0.28, (flashMs / 180) * 0.28);
     this.ctx.fillStyle = withAlpha(this.theme.flash, alpha);
     this.ctx.fillRect(0, 0, this.config.width, this.config.height);
   }
@@ -208,13 +196,14 @@ export class Renderer {
 
 function withAlpha(baseColor: string, alpha: number): string {
   const normalized = Math.max(0, Math.min(1, alpha));
-  if (baseColor.startsWith('rgba(')) {
-    return baseColor.replace(/rgba\(([^,]+),\s*([^,]+),\s*([^,]+),\s*([^)]+)\)/, `rgba($1, $2, $3, ${normalized})`);
+  if (baseColor.startsWith("rgba(")) {
+    return baseColor.replace(
+      /rgba\(([^,]+),\s*([^,]+),\s*([^,]+),\s*([^)]+)\)/,
+      `rgba($1, $2, $3, ${normalized})`,
+    );
   }
-  if (baseColor.startsWith('rgb(')) {
+  if (baseColor.startsWith("rgb(")) {
     return baseColor.replace(/rgb\(([^,]+),\s*([^,]+),\s*([^)]+)\)/, `rgba($1, $2, $3, ${normalized})`);
   }
   return baseColor;
 }
-
- 

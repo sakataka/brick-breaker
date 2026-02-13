@@ -1,5 +1,5 @@
-import type { Brick } from './types';
-import { BRICK_LAYOUT as DEFAULT_BRICK_LAYOUT, type BrickLayout, getBrickPaletteColor } from './config';
+import { type BrickLayout, BRICK_LAYOUT as DEFAULT_BRICK_LAYOUT, getBrickPaletteColor } from "./config";
+import type { Brick } from "./types";
 
 export function buildBricks(layout: BrickLayout = DEFAULT_BRICK_LAYOUT): Brick[] {
   const { cols, rows, marginX, marginY, gapX, gapY, boardWidth, brickHeight } = layout;

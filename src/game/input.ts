@@ -1,5 +1,5 @@
-const START_KEYS = [' ', 'enter'] as const;
-const PAUSE_KEYS = ['p'] as const;
+const START_KEYS = [" ", "enter"] as const;
+const PAUSE_KEYS = ["p"] as const;
 
 const isStartKey = (key: string): boolean => START_KEYS.includes(key as (typeof START_KEYS)[number]);
 const isPauseKey = (key: string): boolean => PAUSE_KEYS.includes(key as (typeof PAUSE_KEYS)[number]);
@@ -12,23 +12,20 @@ export interface InputHandlers {
 }
 
 export class InputController {
-  constructor(
-    private readonly canvas: HTMLCanvasElement,
-    private readonly handlers: InputHandlers,
-  ) {}
+  constructor(private readonly handlers: InputHandlers) {}
 
   attach(): void {
-    window.addEventListener('mousemove', this.handleMouseMove);
-    window.addEventListener('pointermove', this.handlePointerMove);
-    window.addEventListener('keydown', this.handleKeyDown);
-    window.addEventListener('resize', this.handlers.resize);
+    window.addEventListener("mousemove", this.handleMouseMove);
+    window.addEventListener("pointermove", this.handlePointerMove);
+    window.addEventListener("keydown", this.handleKeyDown);
+    window.addEventListener("resize", this.handlers.resize);
   }
 
   detach(): void {
-    window.removeEventListener('mousemove', this.handleMouseMove);
-    window.removeEventListener('pointermove', this.handlePointerMove);
-    window.removeEventListener('keydown', this.handleKeyDown);
-    window.removeEventListener('resize', this.handlers.resize);
+    window.removeEventListener("mousemove", this.handleMouseMove);
+    window.removeEventListener("pointermove", this.handlePointerMove);
+    window.removeEventListener("keydown", this.handleKeyDown);
+    window.removeEventListener("resize", this.handlers.resize);
   }
 
   private readonly handleMouseMove = (event: MouseEvent): void => {

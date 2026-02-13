@@ -1,5 +1,6 @@
-import type { Ball, Brick, CollisionEvent, GameConfig, Paddle } from './types';
-import { GAME_BALANCE, type GameplayBalance } from './config';
+import { GAME_BALANCE, type GameplayBalance } from "./config";
+import { clamp } from "./math";
+import type { Ball, Brick, CollisionEvent, GameConfig, Paddle } from "./types";
 
 const MAX_SUBSTEPS = 12;
 const MAX_MOVE = 4;
@@ -64,7 +65,7 @@ export function stepPhysics(
       applyPaddleCollision(ball, paddle, config, balance, maxBallSpeed);
       result.collision.paddle = true;
       result.events.push({
-        kind: 'paddle',
+        kind: "paddle",
         x: ball.pos.x,
         y: paddle.y,
       });
@@ -95,7 +96,7 @@ function integratePosition(ball: Ball, deltaSec: number): void {
 function resolveWallCollision(
   ball: Ball,
   config: GameConfig,
-  collision: PhysicsResult['collision'],
+  collision: PhysicsResult["collision"],
   events: CollisionEvent[],
 ): boolean {
   let hasWallHit = false;
@@ -120,7 +121,7 @@ function resolveWallCollision(
 
   if (hasWallHit) {
     events.push({
-      kind: 'wall',
+      kind: "wall",
       x: ball.pos.x,
       y: ball.pos.y,
     });
@@ -128,7 +129,7 @@ function resolveWallCollision(
 
   if (ball.pos.y - ball.radius > config.height) {
     events.push({
-      kind: 'miss',
+      kind: "miss",
       x: ball.pos.x,
       y: config.height,
     });
@@ -244,7 +245,7 @@ function applyBrickCollision(
     scoreGain: balance.scorePerBrick,
     cleared: !nextAlive,
     event: {
-      kind: 'brick',
+      kind: "brick",
       x: brick.x + brick.width / 2,
       y: brick.y + brick.height / 2,
       color: brick.color,
@@ -260,14 +261,4 @@ function normalizeVelocity(ball: Ball, maxSpeed: number): void {
   const factor = Math.min(maxSpeed, current) / current;
   ball.vel.x *= factor;
   ball.vel.y *= factor;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  if (value < min) {
-    return min;
-  }
-  if (value > max) {
-    return max;
-  }
-  return value;
 }

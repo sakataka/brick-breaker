@@ -1,0 +1,21 @@
+import { describe, expect, test } from "bun:test";
+
+import { SceneMachine } from "./sceneMachine";
+
+describe("sceneMachine", () => {
+  test("supports start -> playing -> paused -> playing", () => {
+    const machine = new SceneMachine();
+    expect(machine.value).toBe("start");
+    expect(machine.send({ type: "START_OR_RESUME" })).toBe("playing");
+    expect(machine.send({ type: "TOGGLE_PAUSE" })).toBe("paused");
+    expect(machine.send({ type: "TOGGLE_PAUSE" })).toBe("playing");
+    machine.stop();
+  });
+
+  test("does not resume from error with start event", () => {
+    const machine = new SceneMachine();
+    expect(machine.send({ type: "RUNTIME_ERROR" })).toBe("error");
+    expect(machine.send({ type: "START_OR_RESUME" })).toBe("error");
+    machine.stop();
+  });
+});

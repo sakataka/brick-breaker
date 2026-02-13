@@ -1,100 +1,28 @@
-import type {
-  Ball,
-  CollisionEvent,
-  CollisionEventKind,
-  GameConfig,
-  GameState,
-  Particle,
-  Scene,
-  VfxState,
-} from './types';
-import { GAME_CONFIG, GAME_BALANCE } from './config';
-import { buildBricks } from './level';
-import { Renderer } from './renderer';
-import { type PhysicsResult, stepPhysics } from './physics';
-import { getOverlayElements, setSceneUI } from '../ui/overlay';
-import { SfxManager } from '../audio/sfx';
-import { InputController } from './input';
+import { SfxManager } from "../audio/sfx";
+import { type getOverlayElements, setSceneUI } from "../ui/overlay";
+import { applyAssistToPaddle, getCurrentMaxBallSpeed } from "./assistSystem";
+import { applyPhysicsResultScore, playCollisionSounds } from "./collisionEffects";
+import { GAME_BALANCE, GAME_CONFIG } from "./config";
+import { type HudElements, formatTime, updateHud } from "./hud";
+import { InputController } from "./input";
+import { LifecycleController } from "./lifecycle";
+import { clamp } from "./math";
+import { type PhysicsResult, stepPhysics } from "./physics";
+import { defaultRandomSource } from "./random";
+import { Renderer } from "./renderer";
+import { applyLifeLoss, resetRoundState } from "./roundSystem";
+import { type SceneEvent, SceneMachine } from "./sceneMachine";
+import { createInitialGameState } from "./stateFactory";
+import type { GameConfig, GameState, RandomSource, Scene } from "./types";
+import { applyCollisionEvents, nextDensityScale, recordTrailPoint, updateVfxState } from "./vfxSystem";
+import { applyCanvasViewport } from "./viewport";
 
-const MIN_CANVAS_CSS_WIDTH = 320;
-const MIN_CANVAS_CSS_HEIGHT = 180;
-const MAX_RENDER_SCALE = 4;
-const MAX_PARTICLES = 220;
-const MAX_TRAIL_POINTS = 8;
-
-interface HudElements {
-  score: HTMLSpanElement;
-  lives: HTMLSpanElement;
-  time: HTMLSpanElement;
-}
-
-interface GameDeps {
-  ctx: CanvasRenderingContext2D;
+export interface GameDeps {
+  ctx?: CanvasRenderingContext2D;
   config?: Partial<GameConfig>;
-}
-
-export interface CanvasFit {
-  cssWidth: number;
-  cssHeight: number;
-}
-
-export function computeCanvasFit(
-  wrapperWidth: number,
-  wrapperHeight: number,
-  ratio: number,
-  minWidth = MIN_CANVAS_CSS_WIDTH,
-  minHeight = MIN_CANVAS_CSS_HEIGHT,
-): CanvasFit {
-  const width = Math.max(minWidth, wrapperWidth);
-  const height = Math.max(minHeight, wrapperHeight);
-
-  const fitHeight = width / ratio;
-  if (fitHeight <= height) {
-    return {
-      cssWidth: width,
-      cssHeight: fitHeight,
-    };
-  }
-
-  return {
-    cssWidth: height * ratio,
-    cssHeight: height,
-  };
-}
-
-export function shouldAutoPauseOnVisibility(scene: Scene, visibilityState: DocumentVisibilityState): boolean {
-  return scene === 'playing' && visibilityState === 'hidden';
-}
-
-export function computeRenderScale(
-  cssWidth: number,
-  cssHeight: number,
-  worldWidth: number,
-  worldHeight: number,
-  devicePixelRatio = window.devicePixelRatio || 1,
-  maxRenderScale = MAX_RENDER_SCALE,
-): number {
-  const widthScale = cssWidth * devicePixelRatio / worldWidth;
-  const heightScale = cssHeight * devicePixelRatio / worldHeight;
-  const idealScale = Math.min(widthScale, heightScale);
-  return clamp(idealScale, 1, maxRenderScale);
-}
-
-export function nextDensityScale(current: number, deltaSec: number, scene: Scene): number {
-  if (scene !== 'playing') {
-    return current;
-  }
-
-  if (deltaSec > 1 / 30) {
-    return Math.max(0.45, current - 0.14);
-  }
-
-  return Math.min(1, current + 0.04);
-}
-
-export function computeParticleSpawnCount(baseCount: number, densityScale: number, reducedMotion: boolean): number {
-  const reduction = reducedMotion ? 0.5 : 1;
-  return Math.max(1, Math.round(baseCount * densityScale * reduction));
+  random?: RandomSource;
+  documentRef?: Document;
+  windowRef?: Window;
 }
 
 export class Game {
@@ -102,208 +30,143 @@ export class Game {
   private readonly renderer: Renderer;
   private readonly sfx = new SfxManager();
   private readonly input: InputController;
-  private readonly prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  private readonly stageWrap: HTMLElement | null;
-
+  private readonly random: RandomSource;
+  private readonly sceneMachine = new SceneMachine();
+  private readonly documentRef: Document;
+  private readonly windowRef: Window;
+  private readonly lifecycle: LifecycleController;
   private state: GameState;
   private lastFrameTime = 0;
   private accumulator = 0;
   private isRunning = false;
-  private resizeObserver: ResizeObserver | null = null;
-  private lifecycleBound = false;
-  private renderScale = 1;
+  private destroyed = false;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
     private readonly hud: HudElements,
     private readonly overlay: ReturnType<typeof getOverlayElements>,
-    deps?: GameDeps,
+    deps: GameDeps = {},
   ) {
-    const context = deps?.ctx ?? this.canvas.getContext('2d');
+    const context = deps.ctx ?? this.canvas.getContext("2d");
     if (!context) {
-      throw new Error('Canvasが利用できませんでした');
+      throw new Error("Canvasが利用できませんでした");
     }
 
-    this.config = {
-      ...GAME_CONFIG,
-      ...deps?.config,
-    };
-    this.stageWrap = this.canvas.parentElement;
+    this.config = { ...GAME_CONFIG, ...deps.config };
+    this.random = deps.random ?? defaultRandomSource;
+    this.documentRef = deps.documentRef ?? document;
+    this.windowRef = deps.windowRef ?? window;
+    const reducedMotion = this.windowRef.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    this.input = new InputController(this.canvas, {
+    this.renderer = new Renderer(context, this.config);
+    this.state = createInitialGameState(this.config, reducedMotion, this.sceneMachine.value);
+    this.input = new InputController({
       moveByMouseX: (clientX) => this.movePaddleByMouse(clientX),
       pauseToggle: () => this.togglePause(),
       startOrRestart: () => this.startOrResume(),
       resize: () => this.adjustCanvasScale(),
     });
-
-    this.renderer = new Renderer(context, this.config);
-    this.state = this.createInitialState();
+    this.lifecycle = new LifecycleController(
+      this.documentRef,
+      this.canvas.parentElement,
+      () => {
+        if (this.state.scene === "playing") {
+          this.togglePause();
+        }
+      },
+      () => this.adjustCanvasScale(),
+    );
 
     this.runSafely(() => {
       this.adjustCanvasScale();
       this.bindOverlay();
-      this.bindLifecycleEvents();
-      setSceneUI(this.overlay, this.state.scene, this.state.score, this.state.lives);
-    }, '初期化中に問題が発生しました。');
+      this.lifecycle.bind();
+      this.syncSceneUI();
+      this.renderer.render(this.state);
+      updateHud(this.hud, this.state);
+    }, "初期化中に問題が発生しました。");
   }
 
   start(): void {
-    if (this.isRunning || this.state.scene === 'error') {
+    if (this.destroyed || this.isRunning || this.state.scene === "error") {
       return;
     }
 
     this.runSafely(() => {
       this.isRunning = true;
       this.input.attach();
-      this.render();
-      this.updateHud();
-      requestAnimationFrame(this.loop);
-    }, 'ゲーム開始時に問題が発生しました。');
+      this.renderer.render(this.state);
+      updateHud(this.hud, this.state);
+      this.windowRef.requestAnimationFrame(this.loop);
+    }, "ゲーム開始時に問題が発生しました。");
+  }
+
+  destroy(): void {
+    if (this.destroyed) {
+      return;
+    }
+    this.destroyed = true;
+    this.isRunning = false;
+    this.input.detach();
+    this.lifecycle.unbind();
+    this.sceneMachine.stop();
   }
 
   private bindOverlay(): void {
-    this.overlay.button.addEventListener('click', () => {
-      if (this.state.scene === 'error') {
-        window.location.reload();
+    this.overlay.button.addEventListener("click", () => {
+      if (this.state.scene === "error") {
+        this.windowRef.location.reload();
         return;
       }
-
-      void this.sfx.resumeIfNeeded().catch(() => {
-        // Audio is optional; continue gameplay even if audio context cannot be created/resumed.
-      });
-
-      this.runSafely(() => {
-        this.startOrResume();
-      }, '開始処理に失敗しました。');
+      void this.sfx.resumeIfNeeded().catch(() => {});
+      this.runSafely(() => this.startOrResume(), "開始処理に失敗しました。");
     });
   }
 
-  private bindLifecycleEvents(): void {
-    if (this.lifecycleBound) {
-      return;
-    }
-    this.lifecycleBound = true;
-
-    document.addEventListener('visibilitychange', this.handleVisibilityChange);
-    if (typeof ResizeObserver !== 'undefined' && this.stageWrap) {
-      this.resizeObserver = new ResizeObserver(() => {
-        this.adjustCanvasScale();
-      });
-      this.resizeObserver.observe(this.stageWrap);
-    }
-  }
-
-  private handleVisibilityChange = (): void => {
-    if (shouldAutoPauseOnVisibility(this.state.scene, document.visibilityState)) {
-      this.pauseGame();
-    }
-  };
-
-  private createInitialState(): GameState {
-    const paddle = {
-      x: this.config.width / 2 - GAME_BALANCE.paddleWidth / 2,
-      y: this.config.height - GAME_BALANCE.paddleBottomOffset,
-      width: GAME_BALANCE.paddleWidth,
-      height: GAME_BALANCE.paddleHeight,
-    };
-
-    const ball: Ball = {
-      pos: {
-        x: this.config.width / 2,
-        y: paddle.y - (GAME_BALANCE.paddleHeight + GAME_BALANCE.ballRadius + 2),
-      },
-      vel: { x: 0, y: 0 },
-      radius: GAME_BALANCE.ballRadius,
-      speed: this.config.initialBallSpeed,
-    };
-
-    return {
-      scene: 'start',
-      score: 0,
-      lives: this.config.initialLives,
-      elapsedSec: 0,
-      ball,
-      paddle,
-      bricks: buildBricks(),
-      assist: {
-        untilSec: 0,
-        paddleScale: this.config.assistPaddleScale,
-        maxSpeedScale: this.config.assistMaxSpeedScale,
-      },
-      vfx: this.createVfxState(),
-      errorMessage: null,
-    };
-  }
-
-  private createVfxState(): VfxState {
-    return {
-      particles: [],
-      flashMs: 0,
-      shakeMs: 0,
-      shakePx: 0,
-      trail: [],
-      densityScale: 1,
-      reducedMotion: this.prefersReducedMotion,
-    };
-  }
-
   private startOrResume(): void {
-    if (this.state.scene === 'playing' || this.state.scene === 'error') {
+    const previous = this.state.scene;
+    const next = this.sendScene({ type: "START_OR_RESUME" });
+    if (next !== "playing") {
       return;
     }
 
-    if (this.state.scene === 'paused') {
-      this.resumeGame();
-      return;
+    if (previous === "start" || previous === "gameover" || previous === "clear") {
+      resetRoundState(this.state, this.config, this.state.vfx.reducedMotion, this.random);
     }
-
-    if (this.state.scene === 'start' || this.state.scene === 'gameover' || this.state.scene === 'clear') {
-      this.resetRound();
-      this.startRound();
-    }
+    this.lastFrameTime = this.accumulator = 0;
   }
 
   private togglePause(): void {
-    if (this.state.scene === 'playing') {
-      this.pauseGame();
-      return;
-    }
-
-    if (this.state.scene === 'paused') {
-      this.resumeGame();
+    const previous = this.state.scene;
+    const next = this.sendScene({ type: "TOGGLE_PAUSE" });
+    if (previous === "paused" && next === "playing") {
+      this.lastFrameTime = this.accumulator = 0;
     }
   }
 
-  private startRound(): void {
-    this.lastFrameTime = 0;
-    this.accumulator = 0;
-    this.setScene('playing');
+  private sendScene(event: SceneEvent): Scene {
+    const next = this.sceneMachine.send(event);
+    if (next !== this.state.scene) {
+      this.state.scene = next;
+      this.syncSceneUI();
+    }
+    return next;
   }
 
-  private pauseGame(): void {
-    this.setScene('paused');
-  }
-
-  private resumeGame(): void {
-    this.lastFrameTime = 0;
-    this.accumulator = 0;
-    this.setScene('playing');
-  }
-
-  private resetRound(): void {
-    this.state = this.createInitialState();
-    this.state.ball = this.createServeBall();
-  }
-
-  private setScene(next: Scene): void {
-    this.state.scene = next;
-    const clearTime = next === 'clear' ? this.formatTime(this.state.elapsedSec) : undefined;
-    setSceneUI(this.overlay, next, this.state.score, this.state.lives, clearTime, this.state.errorMessage ?? undefined);
+  private syncSceneUI(): void {
+    const clearTime = this.state.scene === "clear" ? formatTime(this.state.elapsedSec) : undefined;
+    setSceneUI(
+      this.overlay,
+      this.state.scene,
+      this.state.score,
+      this.state.lives,
+      clearTime,
+      this.state.errorMessage ?? undefined,
+    );
   }
 
   private loop = (timeMs: number): void => {
-    if (!this.isRunning) {
+    if (!this.isRunning || this.destroyed) {
       return;
     }
 
@@ -312,135 +175,78 @@ export class Game {
       if (this.lastFrameTime === 0) {
         this.lastFrameTime = timeSec;
       }
-
       const delta = Math.min(0.25, timeSec - this.lastFrameTime);
       this.lastFrameTime = timeSec;
-      this.updateVfxDensity(delta);
+      this.state.vfx.densityScale = nextDensityScale(this.state.vfx.densityScale, delta, this.state.scene);
 
-      if (this.state.scene === 'playing') {
+      if (this.state.scene === "playing") {
         this.accumulator += delta;
-        const fixed = this.config.fixedDeltaSec;
-        while (this.accumulator >= fixed) {
-          this.accumulator -= fixed;
-          this.state.elapsedSec += fixed;
-          this.updateAssistState();
+        while (this.accumulator >= this.config.fixedDeltaSec) {
+          this.accumulator -= this.config.fixedDeltaSec;
+          this.state.elapsedSec += this.config.fixedDeltaSec;
+          applyAssistToPaddle(
+            this.state.paddle,
+            GAME_BALANCE.paddleWidth,
+            this.config.width,
+            this.state.assist,
+            this.state.elapsedSec,
+          );
 
           const result = stepPhysics(
             this.state.ball,
             this.state.paddle,
             this.state.bricks,
             this.config,
-            fixed,
+            this.config.fixedDeltaSec,
             {
-              maxBallSpeed: this.getCurrentMaxBallSpeed(),
+              maxBallSpeed: getCurrentMaxBallSpeed(
+                this.config.maxBallSpeed,
+                this.state.assist,
+                this.state.elapsedSec,
+              ),
             },
           );
 
           this.handlePhysicsResult(result);
-          this.updateVfxState(fixed);
-
-          if (this.state.scene !== 'playing') {
+          updateVfxState(this.state.vfx, this.config.fixedDeltaSec, this.random);
+          if (this.state.scene !== "playing") {
             break;
           }
         }
       } else {
-        this.updateVfxState(delta);
+        updateVfxState(this.state.vfx, delta, this.random);
       }
 
-      this.recordTrailPoint();
-      this.render();
-      this.updateHud();
+      recordTrailPoint(this.state.vfx, this.state.scene, this.state.ball.pos);
+      this.renderer.render(this.state);
+      updateHud(this.hud, this.state);
     } catch (error) {
-      this.setRuntimeError(this.toRuntimeMessage(error, '実行中にエラーが発生しました。'));
+      const message =
+        error instanceof Error && error.message
+          ? `実行中にエラーが発生しました。 (${error.message})`
+          : "実行中にエラーが発生しました。";
+      this.setRuntimeError(message);
     }
 
     if (this.isRunning) {
-      requestAnimationFrame(this.loop);
+      this.windowRef.requestAnimationFrame(this.loop);
     }
   };
 
   private handlePhysicsResult(result: PhysicsResult): void {
-    this.playCollisionSound(result.events);
-    this.applyEventsToVfx(result.events);
-
-    if (result.collision.brick > 0) {
-      this.state.score += result.scoreGain;
-    }
-
-    if (result.livesLost > 0) {
-      this.handleLifeLoss(result.livesLost);
-      return;
-    }
-
-    if (result.cleared) {
-      this.handleClear();
-    }
-  }
-
-  private playCollisionSound(events: CollisionEvent[]): void {
-    const kinds = new Set<CollisionEventKind>();
-    for (const event of events) {
-      if (kinds.has(event.kind)) {
-        continue;
+    playCollisionSounds(this.sfx, result.events);
+    applyCollisionEvents(this.state.vfx, result.events, this.random);
+    const outcome = applyPhysicsResultScore(this.state, result, GAME_BALANCE.clearBonusPerLife);
+    if (outcome === "lifeLost") {
+      if (!applyLifeLoss(this.state, result.livesLost, this.config, this.random)) {
+        this.sendScene({ type: "GAME_OVER" });
       }
-      kinds.add(event.kind);
-
-      if (event.kind === 'wall') {
-        void this.sfx.play('wall');
-      } else if (event.kind === 'paddle') {
-        void this.sfx.play('paddle');
-      } else if (event.kind === 'brick') {
-        void this.sfx.play('brick');
-      } else if (event.kind === 'miss') {
-        void this.sfx.play('miss');
-      }
-    }
-  }
-
-  private handleLifeLoss(livesLost: number): void {
-    this.state.lives -= livesLost;
-    if (this.state.lives <= 0) {
-      this.setScene('gameover');
       return;
     }
-
-    this.activateAssist();
-    this.updateAssistState();
-    this.state.ball = this.createServeBall();
-  }
-
-  private activateAssist(): void {
-    this.state.assist.untilSec = this.state.elapsedSec + this.config.assistDurationSec;
-  }
-
-  private updateAssistState(): void {
-    const active = this.state.elapsedSec < this.state.assist.untilSec;
-    const targetWidth = GAME_BALANCE.paddleWidth * (active ? this.state.assist.paddleScale : 1);
-    if (Math.abs(targetWidth - this.state.paddle.width) < 0.001) {
-      return;
+    if (outcome === "cleared") {
+      void this.sfx.play("clear");
+      this.sendScene({ type: "GAME_CLEAR" });
     }
-
-    const centerX = this.state.paddle.x + this.state.paddle.width / 2;
-    this.state.paddle.width = targetWidth;
-    this.state.paddle.x = clamp(
-      centerX - this.state.paddle.width / 2,
-      0,
-      this.config.width - this.state.paddle.width,
-    );
-  }
-
-  private getCurrentMaxBallSpeed(): number {
-    const active = this.state.elapsedSec < this.state.assist.untilSec;
-    if (!active) {
-      return this.config.maxBallSpeed;
-    }
-    return this.config.maxBallSpeed * this.state.assist.maxSpeedScale;
-  }
-
-  private handleClear(): void {
-    this.state.score += this.state.lives * GAME_BALANCE.clearBonusPerLife;
-    void this.sfx.play('clear');
-    this.setScene('clear');
   }
 
   private movePaddleByMouse(clientX: number): void {
@@ -448,201 +254,47 @@ export class Game {
     if (rect.width <= 0) {
       return;
     }
-
-    const scaleX = this.config.width / rect.width;
-    const worldX = (clientX - rect.left) * scaleX;
-    const half = this.state.paddle.width / 2;
-    this.state.paddle.x = Math.max(0, Math.min(this.config.width - this.state.paddle.width, worldX - half));
-  }
-
-  private createServeBall(): Ball {
-    const speed = this.config.initialBallSpeed;
-    const spread = (Math.random() - 0.5) * speed * GAME_BALANCE.serveSpreadRatio;
-    const vx = Math.max(-speed * 0.45, Math.min(speed * 0.45, spread));
-    const vy = -Math.sqrt(speed * speed - vx * vx);
-
-    return {
-      pos: {
-        x: this.state.paddle.x + this.state.paddle.width / 2,
-        y: this.state.paddle.y - GAME_BALANCE.serveYOffset,
-      },
-      vel: {
-        x: vx,
-        y: vy,
-      },
-      radius: this.state.ball.radius,
-      speed,
-    };
+    const worldX = (clientX - rect.left) * (this.config.width / rect.width);
+    this.state.paddle.x = clamp(
+      worldX - this.state.paddle.width / 2,
+      0,
+      this.config.width - this.state.paddle.width,
+    );
   }
 
   private adjustCanvasScale(): void {
-    const wrapper = this.stageWrap;
+    const wrapper = this.canvas.parentElement;
     if (!wrapper) {
       return;
     }
-
-    const ratio = this.config.width / this.config.height;
-    const fit = computeCanvasFit(wrapper.clientWidth, wrapper.clientHeight, ratio);
-    this.renderScale = computeRenderScale(
-      fit.cssWidth,
-      fit.cssHeight,
+    const viewport = applyCanvasViewport(
+      this.canvas,
+      wrapper,
       this.config.width,
       this.config.height,
+      this.windowRef.devicePixelRatio || 1,
     );
-    this.canvas.width = Math.round(this.config.width * this.renderScale);
-    this.canvas.height = Math.round(this.config.height * this.renderScale);
-    this.canvas.style.width = `${fit.cssWidth}px`;
-    this.canvas.style.height = `${fit.cssHeight}px`;
-    this.renderer.setRenderScale(this.renderScale);
-  }
-
-  private updateVfxDensity(deltaSec: number): void {
-    this.state.vfx.densityScale = nextDensityScale(this.state.vfx.densityScale, deltaSec, this.state.scene);
-  }
-
-  private applyEventsToVfx(events: CollisionEvent[]): void {
-    for (const event of events) {
-      if (event.kind === 'brick') {
-        this.spawnParticles(event, 14, 260, event.color ?? 'rgba(255, 196, 118, 0.95)');
-        this.bumpShake(1.4, 45);
-        continue;
-      }
-
-      if (event.kind === 'paddle' || event.kind === 'wall') {
-        this.spawnParticles(event, 4, 140, 'rgba(180, 230, 255, 0.95)');
-        this.bumpShake(0, 0);
-        continue;
-      }
-
-      if (event.kind === 'miss') {
-        this.spawnParticles(event, 18, 220, 'rgba(255, 108, 108, 0.95)');
-        this.state.vfx.flashMs = Math.max(this.state.vfx.flashMs, this.state.vfx.reducedMotion ? 90 : 180);
-        this.bumpShake(4, this.state.vfx.reducedMotion ? 0 : 90);
-      }
-    }
-  }
-
-  private bumpShake(shakePx: number, durationMs: number): void {
-    if (this.state.vfx.reducedMotion || durationMs <= 0) {
-      return;
-    }
-    this.state.vfx.shakeMs = Math.max(this.state.vfx.shakeMs, durationMs);
-    this.state.vfx.shakePx = Math.max(this.state.vfx.shakePx, shakePx);
-  }
-
-  private spawnParticles(event: CollisionEvent, baseCount: number, lifeMs: number, color: string): void {
-    const count = computeParticleSpawnCount(baseCount, this.state.vfx.densityScale, this.state.vfx.reducedMotion);
-    for (let i = 0; i < count; i += 1) {
-      if (this.state.vfx.particles.length >= MAX_PARTICLES) {
-        this.state.vfx.particles.shift();
-      }
-
-      const angle = (Math.PI * 2 * i) / count + Math.random() * 0.55;
-      const speed = 100 + Math.random() * 160;
-      const particle: Particle = {
-        pos: { x: event.x, y: event.y },
-        vel: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
-        lifeMs,
-        maxLifeMs: lifeMs,
-        size: 1.8 + Math.random() * 3.2,
-        color,
-      };
-      this.state.vfx.particles.push(particle);
-    }
-  }
-
-  private updateVfxState(deltaSec: number): void {
-    const deltaMs = deltaSec * 1000;
-    this.state.vfx.flashMs = Math.max(0, this.state.vfx.flashMs - deltaMs);
-    this.state.vfx.shakeMs = Math.max(0, this.state.vfx.shakeMs - deltaMs);
-    if (this.state.vfx.shakeMs <= 0) {
-      this.state.vfx.shakePx = 0;
-    }
-
-    this.state.vfx.particles = this.state.vfx.particles.filter((particle) => {
-      particle.lifeMs -= deltaMs;
-      if (particle.lifeMs <= 0) {
-        return false;
-      }
-
-      particle.pos.x += particle.vel.x * deltaSec;
-      particle.pos.y += particle.vel.y * deltaSec;
-      particle.vel.x *= 0.94;
-      particle.vel.y *= 0.94;
-      return true;
-    });
-  }
-
-  private recordTrailPoint(): void {
-    if (this.state.scene !== 'playing') {
-      if (this.state.scene !== 'paused') {
-        this.state.vfx.trail = [];
-      }
-      return;
-    }
-
-    this.state.vfx.trail.push({
-      x: this.state.ball.pos.x,
-      y: this.state.ball.pos.y,
-    });
-
-    while (this.state.vfx.trail.length > MAX_TRAIL_POINTS) {
-      this.state.vfx.trail.shift();
-    }
-  }
-
-  private render(): void {
-    this.renderer.render(this.state);
-  }
-
-  private updateHud(): void {
-    this.hud.score.textContent = `SCORE: ${this.state.score}`;
-    this.hud.lives.textContent = `LIVES: ${this.state.lives}`;
-    this.hud.time.textContent = `TIME: ${this.formatTime(this.state.elapsedSec)}`;
-  }
-
-  private formatTime(totalSec: number): string {
-    const min = Math.floor(totalSec / 60);
-    const sec = Math.floor(totalSec % 60);
-    return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+    this.renderer.setRenderScale(viewport.renderScale);
   }
 
   private runSafely(action: () => void, fallbackMessage: string): void {
     try {
       action();
     } catch (error) {
-      this.setRuntimeError(this.toRuntimeMessage(error, fallbackMessage));
+      const message =
+        error instanceof Error && error.message ? `${fallbackMessage} (${error.message})` : fallbackMessage;
+      this.setRuntimeError(message);
     }
   }
 
   private setRuntimeError(message: string): void {
     this.isRunning = false;
     this.state.errorMessage = message;
-    this.state.scene = 'error';
     this.input.detach();
+    this.sendScene({ type: "RUNTIME_ERROR" });
     try {
-      setSceneUI(this.overlay, 'error', this.state.score, this.state.lives, undefined, message);
-      this.render();
-      this.updateHud();
-    } catch {
-      // Last-resort fallback: if rendering itself fails, keep state.error only.
-    }
+      this.renderer.render(this.state);
+      updateHud(this.hud, this.state);
+    } catch {}
   }
-
-  private toRuntimeMessage(error: unknown, fallback: string): string {
-    if (error instanceof Error && error.message) {
-      return `${fallback} (${error.message})`;
-    }
-    return fallback;
-  }
-}
-
-function clamp(value: number, min: number, max: number): number {
-  if (value < min) {
-    return min;
-  }
-  if (value > max) {
-    return max;
-  }
-  return value;
 }

@@ -1,4 +1,4 @@
-import type { Difficulty, GameConfig } from './types';
+import type { Difficulty, GameConfig } from "./types";
 
 export interface BrickTheme {
   palette: readonly string[];
@@ -31,35 +31,38 @@ export interface GameplayBalance {
 interface DifficultyPreset {
   config: Pick<
     GameConfig,
-    | 'initialLives'
-    | 'initialBallSpeed'
-    | 'maxBallSpeed'
-    | 'assistDurationSec'
-    | 'assistPaddleScale'
-    | 'assistMaxSpeedScale'
+    | "initialLives"
+    | "initialBallSpeed"
+    | "maxBallSpeed"
+    | "assistDurationSec"
+    | "assistPaddleScale"
+    | "assistMaxSpeedScale"
   >;
   balance: Pick<
     GameplayBalance,
-    'paddleWidth' | 'serveSpreadRatio' | 'brickHitSpeedGain' | 'paddleMaxBounceAngle'
+    "paddleWidth" | "serveSpreadRatio" | "brickHitSpeedGain" | "paddleMaxBounceAngle"
   >;
 }
 
 const BASE_CONFIG: Omit<
   GameConfig,
-  | 'difficulty'
-  | 'initialLives'
-  | 'initialBallSpeed'
-  | 'maxBallSpeed'
-  | 'assistDurationSec'
-  | 'assistPaddleScale'
-  | 'assistMaxSpeedScale'
+  | "difficulty"
+  | "initialLives"
+  | "initialBallSpeed"
+  | "maxBallSpeed"
+  | "assistDurationSec"
+  | "assistPaddleScale"
+  | "assistMaxSpeedScale"
 > = {
   width: 960,
   height: 540,
   fixedDeltaSec: 1 / 120,
 };
 
-const BASE_BALANCE: Omit<GameplayBalance, 'paddleWidth' | 'serveSpreadRatio' | 'brickHitSpeedGain' | 'paddleMaxBounceAngle'> = {
+const BASE_BALANCE: Omit<
+  GameplayBalance,
+  "paddleWidth" | "serveSpreadRatio" | "brickHitSpeedGain" | "paddleMaxBounceAngle"
+> = {
   paddleHeight: 16,
   paddleBottomOffset: 44,
   ballRadius: 8,
@@ -82,7 +85,7 @@ export const DIFFICULTY_PRESETS: Record<Difficulty, DifficultyPreset> = {
       paddleWidth: 148,
       serveSpreadRatio: 0.32,
       brickHitSpeedGain: 1.2,
-      paddleMaxBounceAngle: Math.PI * 50 / 180,
+      paddleMaxBounceAngle: (Math.PI * 50) / 180,
     },
   },
   standard: {
@@ -114,12 +117,12 @@ export const DIFFICULTY_PRESETS: Record<Difficulty, DifficultyPreset> = {
       paddleWidth: 118,
       serveSpreadRatio: 0.5,
       brickHitSpeedGain: 2.5,
-      paddleMaxBounceAngle: Math.PI * 65 / 180,
+      paddleMaxBounceAngle: (Math.PI * 65) / 180,
     },
   },
 } as const;
 
-export const DEFAULT_DIFFICULTY: Difficulty = 'casual';
+export const DEFAULT_DIFFICULTY: Difficulty = "casual";
 const activePreset = DIFFICULTY_PRESETS[DEFAULT_DIFFICULTY];
 
 export const GAME_CONFIG: GameConfig = {
@@ -128,13 +131,13 @@ export const GAME_CONFIG: GameConfig = {
   ...activePreset.config,
 };
 
-export const BRICK_PALETTE: BrickTheme['palette'] = [
-  'rgba(255, 122, 122, 0.45)',
-  'rgba(255, 196, 118, 0.45)',
-  'rgba(122, 232, 176, 0.45)',
-  'rgba(125, 165, 255, 0.45)',
-  'rgba(182, 125, 255, 0.45)',
-  'rgba(255, 144, 210, 0.45)',
+export const BRICK_PALETTE: BrickTheme["palette"] = [
+  "rgba(255, 122, 122, 0.45)",
+  "rgba(255, 196, 118, 0.45)",
+  "rgba(122, 232, 176, 0.45)",
+  "rgba(125, 165, 255, 0.45)",
+  "rgba(182, 125, 255, 0.45)",
+  "rgba(255, 144, 210, 0.45)",
 ] as const;
 
 export const GAME_BALANCE: GameplayBalance = {
@@ -153,6 +156,6 @@ export const BRICK_LAYOUT: BrickLayout = {
   brickHeight: 24,
 };
 
-export function getBrickPaletteColor(row: number, palette: BrickTheme['palette'] = BRICK_PALETTE): string {
+export function getBrickPaletteColor(row: number, palette: BrickTheme["palette"] = BRICK_PALETTE): string {
   return palette[row % palette.length];
 }

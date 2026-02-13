@@ -15,6 +15,13 @@ bun run dev
 # 本番ビルド
 bun run build
 
+# 型チェック（app + test）
+bun run typecheck
+
+# lint/check
+bun run lint
+bun run check
+
 # ビルド確認サーバ起動
 bun run preview
 
@@ -60,6 +67,15 @@ bun test
 - レイアウト定数: `src/game/config.ts` の `BRICK_LAYOUT`
 - レンダー設定: `src/game/renderer.ts` の `DEFAULT_RENDER_THEME`
 - VFX: ヒットパーティクル / 画面シェイク / 赤フラッシュ / ボール残像
+
+## リファクタリング後の責務
+
+- `src/game/Game.ts`: オーケストレーションとループ
+- `src/game/sceneMachine.ts`: Scene 遷移（xstate）
+- `src/game/viewport.ts`: 画面フィットと高解像度スケール
+- `src/game/vfxSystem.ts`: VFX状態更新・イベント適用
+- `src/game/assistSystem.ts`: アシスト有効化と反映
+- `src/game/domainTypes.ts`, `src/game/runtimeTypes.ts`: 型定義の分離
 
 ## ディレクトリ構成
 

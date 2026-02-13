@@ -1,4 +1,4 @@
-export type EventName = 'wall' | 'paddle' | 'brick' | 'miss' | 'clear';
+export type EventName = "wall" | "paddle" | "brick" | "miss" | "clear";
 
 interface SfxConfig {
   freq: number;
@@ -16,7 +16,7 @@ export class SfxManager {
       return;
     }
 
-    if (context.state === 'suspended') {
+    if (context.state === "suspended") {
       try {
         await context.resume();
       } catch {
@@ -31,7 +31,7 @@ export class SfxManager {
       return;
     }
 
-    if (context.state === 'suspended') {
+    if (context.state === "suspended") {
       try {
         await context.resume();
       } catch {
@@ -63,11 +63,11 @@ export class SfxManager {
 
   private getTone(name: EventName): SfxConfig {
     const map: Record<EventName, SfxConfig> = {
-      wall: { freq: 380, type: 'square', durationMs: 60, gain: 0.07 },
-      paddle: { freq: 560, type: 'triangle', durationMs: 65, gain: 0.08 },
-      brick: { freq: 780, type: 'triangle', durationMs: 55, gain: 0.08 },
-      miss: { freq: 160, type: 'sawtooth', durationMs: 130, gain: 0.07 },
-      clear: { freq: 900, type: 'sine', durationMs: 250, gain: 0.11 },
+      wall: { freq: 380, type: "square", durationMs: 60, gain: 0.07 },
+      paddle: { freq: 560, type: "triangle", durationMs: 65, gain: 0.08 },
+      brick: { freq: 780, type: "triangle", durationMs: 55, gain: 0.08 },
+      miss: { freq: 160, type: "sawtooth", durationMs: 130, gain: 0.07 },
+      clear: { freq: 900, type: "sine", durationMs: 250, gain: 0.11 },
     };
 
     return map[name];
@@ -75,7 +75,9 @@ export class SfxManager {
 
   private async ensureContext(): Promise<AudioContext | null> {
     if (!this.context) {
-      const AudioCtor = window.AudioContext ?? (window as any).webkitAudioContext;
+      const AudioCtor =
+        window.AudioContext ??
+        (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!AudioCtor) {
         return null;
       }
