@@ -1,4 +1,4 @@
-import type { Ball, Brick, GameConfig, GameState } from './types';
+import type { Ball, Brick, GameConfig, GameState, Particle, Vector2 } from './types';
 
 export interface RenderTheme {
   backdropStart: string;
@@ -13,6 +13,8 @@ export interface RenderTheme {
   paddleText: string;
   ballCore: string;
   ballStroke: string;
+  trail: string;
+  flash: string;
 }
 
 export const DEFAULT_RENDER_THEME: RenderTheme = {
@@ -28,6 +30,8 @@ export const DEFAULT_RENDER_THEME: RenderTheme = {
   paddleText: 'rgba(255, 255, 255, 1)',
   ballCore: 'rgba(77, 165, 255, 0.9)',
   ballStroke: 'rgba(255, 255, 255, 0.8)',
+  trail: 'rgba(153, 220, 255, 0.22)',
+  flash: 'rgba(255, 100, 100, 1)',
 };
 
 export class Renderer {
@@ -39,15 +43,34 @@ export class Renderer {
 
   render(state: GameState): void {
     this.ctx.clearRect(0, 0, this.config.width, this.config.height);
+    this.ctx.save();
+    this.applyShake(state);
+
     this.drawBackdrop();
     this.drawBricks(state.bricks);
     this.drawPaddle(state.paddle);
+    this.drawTrail(state.vfx.trail, state.ball.radius);
     this.drawBall(state.ball);
+    this.drawParticles(state.vfx.particles);
+    this.drawFlash(state.vfx.flashMs);
 
     if (state.scene !== 'playing') {
       this.ctx.fillStyle = this.theme.overlayTint;
       this.ctx.fillRect(0, 0, this.config.width, this.config.height);
     }
+
+    this.ctx.restore();
+  }
+
+  private applyShake(state: GameState): void {
+    if (state.vfx.reducedMotion || state.vfx.shakeMs <= 0 || state.vfx.shakePx <= 0) {
+      return;
+    }
+
+    const intensity = state.vfx.shakePx * Math.min(1, state.vfx.shakeMs / 150);
+    const offsetX = (Math.random() * 2 - 1) * intensity;
+    const offsetY = (Math.random() * 2 - 1) * intensity;
+    this.ctx.translate(offsetX, offsetY);
   }
 
   private drawBackdrop(): void {
@@ -136,6 +159,53 @@ export class Renderer {
     this.ctx.strokeStyle = this.theme.ballStroke;
     this.ctx.stroke();
   }
+
+  private drawTrail(trail: Vector2[], ballRadius: number): void {
+    const count = trail.length;
+    if (count <= 1) {
+      return;
+    }
+
+    for (let i = 0; i < count; i += 1) {
+      const point = trail[i];
+      const alpha = (i + 1) / count * 0.5;
+      this.ctx.fillStyle = withAlpha(this.theme.trail, Math.min(0.45, alpha));
+      this.ctx.beginPath();
+      this.ctx.arc(point.x, point.y, Math.max(2, ballRadius * (i + 1) / count * 0.7), 0, Math.PI * 2);
+      this.ctx.fill();
+    }
+  }
+
+  private drawParticles(particles: Particle[]): void {
+    for (const particle of particles) {
+      const alpha = Math.max(0, particle.lifeMs / particle.maxLifeMs);
+      this.ctx.fillStyle = withAlpha(particle.color, alpha);
+      this.ctx.beginPath();
+      this.ctx.arc(particle.pos.x, particle.pos.y, particle.size * alpha, 0, Math.PI * 2);
+      this.ctx.fill();
+    }
+  }
+
+  private drawFlash(flashMs: number): void {
+    if (flashMs <= 0) {
+      return;
+    }
+
+    const alpha = Math.min(0.28, flashMs / 180 * 0.28);
+    this.ctx.fillStyle = withAlpha(this.theme.flash, alpha);
+    this.ctx.fillRect(0, 0, this.config.width, this.config.height);
+  }
+}
+
+function withAlpha(baseColor: string, alpha: number): string {
+  const normalized = Math.max(0, Math.min(1, alpha));
+  if (baseColor.startsWith('rgba(')) {
+    return baseColor.replace(/rgba\(([^,]+),\s*([^,]+),\s*([^,]+),\s*([^)]+)\)/, `rgba($1, $2, $3, ${normalized})`);
+  }
+  if (baseColor.startsWith('rgb(')) {
+    return baseColor.replace(/rgb\(([^,]+),\s*([^,]+),\s*([^)]+)\)/, `rgba($1, $2, $3, ${normalized})`);
+  }
+  return baseColor;
 }
 
  

@@ -1,12 +1,15 @@
 :root {
-  --bg-1: #e9ecff;
-  --bg-2: #f8f1ff;
-  --text-1: #17213a;
-  --panel-1: rgba(255, 255, 255, 0.32);
-  --panel-2: rgba(255, 255, 255, 0.18);
-  --line: rgba(255, 255, 255, 0.45);
-  --accent: #4cc9f0;
-  --accent-2: #7209b7;
+  --bg-0: #061125;
+  --bg-1: #0a1b3a;
+  --bg-2: #103066;
+  --text-1: #d8edff;
+  --text-2: #8fb6da;
+  --panel-1: rgba(7, 24, 51, 0.72);
+  --panel-2: rgba(16, 56, 116, 0.54);
+  --line: rgba(112, 188, 255, 0.45);
+  --accent-a: #29d3ff;
+  --accent-b: #ff9f45;
+  --danger: #ff6a6a;
 }
 
 * {
@@ -24,12 +27,26 @@ body {
   font-family: 'Avenir Next', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
   color: var(--text-1);
   background:
-    radial-gradient(circle at 20% 20%, #d9ecff 0%, transparent 40%),
-    radial-gradient(circle at 80% 70%, #ffe7ff 0%, transparent 45%),
-    linear-gradient(135deg, var(--bg-1), var(--bg-2));
+    radial-gradient(circle at 15% 18%, rgba(41, 211, 255, 0.22), transparent 34%),
+    radial-gradient(circle at 84% 76%, rgba(255, 159, 69, 0.22), transparent 38%),
+    linear-gradient(165deg, var(--bg-0), var(--bg-1), var(--bg-2));
   display: grid;
   place-items: center;
   overflow: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(
+    rgba(255, 255, 255, 0.025) 1px,
+    transparent 1px
+  );
+  background-size: 100% 3px;
+  opacity: 0.45;
+  animation: scanline 8s linear infinite;
 }
 
 #game-shell {
@@ -37,7 +54,7 @@ body {
   aspect-ratio: 16 / 9;
   max-width: 98vw;
   max-height: 98vh;
-  padding: 0.75rem;
+  padding: 0.7rem;
 }
 
 #stage-wrap {
@@ -45,9 +62,12 @@ body {
   width: 100%;
   height: 100%;
   border-radius: 24px;
-  box-shadow: 0 30px 80px rgba(22, 28, 56, 0.18);
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.15));
-  backdrop-filter: blur(10px);
+  box-shadow:
+    0 40px 100px rgba(1, 10, 24, 0.55),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  background:
+    linear-gradient(145deg, rgba(16, 46, 88, 0.9), rgba(8, 21, 44, 0.9)),
+    radial-gradient(circle at 20% 20%, rgba(41, 211, 255, 0.22), transparent 36%);
   border: 1px solid var(--line);
   overflow: hidden;
 }
@@ -56,7 +76,7 @@ body {
   width: 100%;
   height: 100%;
   display: block;
-  background: rgba(8, 12, 24, 0.02);
+  background: rgba(0, 0, 0, 0.14);
   touch-action: none;
 }
 
@@ -73,12 +93,15 @@ body {
   align-items: center;
   padding: 0 1rem;
   color: var(--text-1);
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  background: var(--panel-1);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(14px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background: linear-gradient(100deg, var(--panel-1), var(--panel-2));
+  border: 1px solid var(--line);
+  backdrop-filter: blur(12px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 12px 24px rgba(0, 0, 0, 0.24);
+  text-shadow: 0 0 10px rgba(41, 211, 255, 0.45);
 }
 
 .overlay {
@@ -86,11 +109,13 @@ body {
   inset: 0;
   display: grid;
   place-items: center;
-  background: linear-gradient(155deg, rgba(6, 10, 24, 0.22), rgba(6, 10, 24, 0.48));
+  background:
+    radial-gradient(circle at 20% 10%, rgba(41, 211, 255, 0.12), transparent 45%),
+    linear-gradient(155deg, rgba(6, 11, 28, 0.4), rgba(4, 10, 22, 0.82));
   backdrop-filter: blur(10px);
   opacity: 1;
   pointer-events: all;
-  transition: opacity 240ms ease;
+  transition: opacity 220ms ease;
 }
 
 .overlay.hidden {
@@ -99,19 +124,20 @@ body {
 }
 
 .overlay .card {
-  width: min(560px, 85vw);
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  background: var(--panel-1);
-  padding: 1.6rem;
+  width: min(580px, 88vw);
+  border-radius: 18px;
+  border: 1px solid rgba(101, 196, 255, 0.55);
+  background: linear-gradient(160deg, rgba(9, 27, 60, 0.8), rgba(16, 43, 86, 0.68));
+  padding: 1.55rem;
   text-align: center;
-  color: #16213e;
-  animation: card-in 420ms ease;
+  color: var(--text-1);
+  box-shadow: 0 16px 34px rgba(1, 10, 24, 0.5);
+  animation: card-in 360ms ease;
 }
 
 @keyframes card-in {
   from {
-    transform: translateY(8px) scale(0.98);
+    transform: translateY(8px) scale(0.985);
     opacity: 0;
   }
 
@@ -121,48 +147,72 @@ body {
   }
 }
 
+@keyframes scanline {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(3px);
+  }
+}
+
 #overlay h1 {
-  margin: 0.2rem 0 0.5rem;
+  margin: 0.2rem 0 0.56rem;
   letter-spacing: 0.08em;
-  font-size: clamp(1.6rem, 3vw, 2rem);
+  font-size: clamp(1.55rem, 3vw, 2rem);
+  text-transform: uppercase;
+  text-shadow: 0 0 14px rgba(41, 211, 255, 0.45);
 }
 
 #overlay p {
-  margin: 0.65rem 0;
+  margin: 0.62rem 0;
 }
 
 #overlay-sub {
-  opacity: 0.8;
+  color: var(--text-2);
   font-size: 0.95rem;
 }
 
 #overlay-button {
-  margin-top: 0.7rem;
+  margin-top: 0.72rem;
   appearance: none;
   border: 0;
   cursor: pointer;
   border-radius: 999px;
-  padding: 0.75rem 1.8rem;
+  padding: 0.75rem 1.85rem;
   font-size: 1rem;
-  font-weight: 700;
-  color: #f8fbff;
-  background: linear-gradient(115deg, #2b79ff, var(--accent));
-  box-shadow: 0 8px 20px rgba(58, 99, 255, 0.3);
+  font-weight: 800;
+  color: #011428;
+  background: linear-gradient(110deg, var(--accent-a), #7ce7ff);
+  box-shadow: 0 10px 24px rgba(41, 211, 255, 0.35);
+  transition: transform 120ms ease, filter 120ms ease;
 }
 
 #overlay-button:hover,
 #overlay-button:focus-visible {
-  filter: brightness(1.08);
+  transform: translateY(-1px) scale(1.01);
+  filter: brightness(1.06);
+}
+
+.overlay[data-scene='error'] #overlay-button {
+  color: #fff;
+  background: linear-gradient(110deg, #ff8a8a, var(--danger));
+  box-shadow: 0 10px 24px rgba(255, 106, 106, 0.35);
 }
 
 .subtle {
   font-size: 0.85rem;
-  opacity: 0.85;
+  opacity: 0.88;
 }
 
 @media (max-width: 768px) {
   #hud {
-    font-size: 0.85rem;
+    font-size: 0.83rem;
+  }
+
+  #overlay-button {
+    width: min(280px, 72vw);
   }
 }
 
@@ -174,6 +224,10 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  body::before {
+    display: none;
   }
 
   .overlay .card {

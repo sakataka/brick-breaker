@@ -6,10 +6,14 @@ import type { Ball, Brick, Paddle, GameConfig } from './types';
 const baseConfig: GameConfig = {
   width: 240,
   height: 180,
+  difficulty: 'standard',
   fixedDeltaSec: 1 / 120,
   initialLives: 3,
   initialBallSpeed: 320,
   maxBallSpeed: 620,
+  assistDurationSec: 3,
+  assistPaddleScale: 1.1,
+  assistMaxSpeedScale: 0.92,
 };
 
 describe('stepPhysics', () => {
@@ -29,6 +33,7 @@ describe('stepPhysics', () => {
     expect(ball.pos.x).toBeGreaterThanOrEqual(ball.radius);
     expect(ball.vel.x).toBeGreaterThan(0);
     expect(result.collision.wall).toBe(true);
+    expect(result.events.some((event) => event.kind === 'wall')).toBe(true);
   });
 
   test('paddle collision reflects upward and applies angle', () => {
@@ -46,6 +51,7 @@ describe('stepPhysics', () => {
     expect(result.livesLost).toBe(0);
     expect(result.collision.paddle).toBe(true);
     expect(ball.vel.y).toBeLessThan(0);
+    expect(result.events.some((event) => event.kind === 'paddle')).toBe(true);
   });
 
   test('brick collision removes one brick and increases score result', () => {
@@ -74,6 +80,7 @@ describe('stepPhysics', () => {
     expect(result.collision.wall).toBe(false);
     expect(result.livesLost).toBe(0);
     expect(bricks[0].alive).toBe(false);
+    expect(result.events.some((event) => event.kind === 'brick')).toBe(true);
   });
 
   test('falling below bottom loses one life and does not score/brick', () => {
@@ -100,6 +107,7 @@ describe('stepPhysics', () => {
     expect(result.livesLost).toBe(1);
     expect(result.collision.brick).toBe(0);
     expect(result.scoreGain).toBe(0);
+    expect(result.events.some((event) => event.kind === 'miss')).toBe(true);
   });
 
   test('clear becomes true when all bricks destroyed', () => {
@@ -127,5 +135,22 @@ describe('stepPhysics', () => {
     expect(result.collision.brick).toBe(1);
     expect(result.scoreGain).toBe(100);
     expect(result.cleared).toBe(true);
+    expect(result.events.some((event) => event.kind === 'brick')).toBe(true);
+  });
+
+  test('maxBallSpeed override clamps speed during update', () => {
+    const config: GameConfig = { ...baseConfig, fixedDeltaSec: 1 / 60 };
+    const ball: Ball = {
+      pos: { x: 120, y: 130 },
+      vel: { x: 320, y: 280 },
+      radius: 8,
+      speed: 320,
+    };
+    const paddle: Paddle = { x: 80, y: 150, width: 80, height: 14 };
+    const bricks: Brick[] = [];
+
+    stepPhysics(ball, paddle, bricks, config, config.fixedDeltaSec, { maxBallSpeed: 260 });
+    const speed = Math.hypot(ball.vel.x, ball.vel.y);
+    expect(speed).toBeLessThanOrEqual(260.0001);
   });
 });

@@ -40,6 +40,11 @@ export const OVERLAY_COPY: Record<Scene, OverlayCopy> = {
     sub: '',
     button: 'やり直す',
   },
+  error: {
+    message: 'エラーが発生しました',
+    sub: '画面を再読み込みして再開してください。',
+    button: '再読み込み',
+  },
 };
 
 export function getOverlayElements(documentRef: Document): OverlayElements {
@@ -61,6 +66,7 @@ export function setSceneUI(
   score: number,
   lives: number,
   clearTime?: string,
+  errorMessage?: string,
 ): void {
   if (scene === 'playing') {
     elements.overlay.classList.add('hidden');
@@ -68,6 +74,7 @@ export function setSceneUI(
   }
 
   elements.overlay.classList.remove('hidden');
+  elements.overlay.dataset.scene = scene;
   const copy = OVERLAY_COPY[scene];
   elements.message.textContent = copy.message;
   elements.button.textContent = copy.button;
@@ -85,6 +92,11 @@ export function setSceneUI(
 
   if (scene === 'clear') {
     elements.sub.textContent = `${score}点 ${clearTime ? `・${clearTime}` : ''} クリアしました。`;
+    return;
+  }
+
+  if (scene === 'error') {
+    elements.sub.textContent = errorMessage ?? copy.sub;
     return;
   }
 

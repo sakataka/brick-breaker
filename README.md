@@ -30,24 +30,36 @@ bun test
 
 ## バランス調整（運用中の値）
 
-現在のバランスは `src/game/config.ts` の `GAME_CONFIG` / `GAME_BALANCE` で一元管理しています。
+現在のバランスは `src/game/config.ts` の `DIFFICULTY_PRESETS` / `GAME_CONFIG` / `GAME_BALANCE` で一元管理しています。
+デフォルト難易度は `casual` です。
 
 - 画面サイズ: `960x540`
-- 初速: `300 px/s`
-- 最大速: `600 px/s`
-- ブロック衝突時速度上昇: `+2`
-- パドル幅: `130`
+- 初速: `260 px/s`
+- 最大速: `520 px/s`
+- ブロック衝突時速度上昇: `+1.2`
+- パドル幅: `148`
 - パドル高さ: `16`
+- アシスト時間: `6.0秒`（ミス後）
+- アシスト中パドル倍率: `x1.15`
+- アシスト中速度上限倍率: `x0.88`
 - 1ブロック得点: `100`
 - 残ライフボーナス: `500 / ライフ`
 
-値を変更する場合は、`GAME_CONFIG` と `GAME_BALANCE` を編集してください。`physics.ts` と `Game.ts` は値参照を共通化済みです。
+値を変更する場合は `DIFFICULTY_PRESETS` を編集してください。`GAME_CONFIG` と `GAME_BALANCE` は選択中難易度から自動解決されます。
+
+## 安定化対応
+
+- `ResizeObserver` でステージリサイズ時にキャンバス縮尺を再計算
+- ゼロサイズ時の最小寸法フォールバック（`320x180`）
+- タブ非表示でプレイ中なら自動一時停止
+- 例外発生時は `error` オーバーレイを表示し、白画面化を回避
 
 ## レベル構成と描画
 
 - ブロック配置: `src/game/level.ts` の `buildBricks(layout)`
 - レイアウト定数: `src/game/config.ts` の `BRICK_LAYOUT`
 - レンダー設定: `src/game/renderer.ts` の `DEFAULT_RENDER_THEME`
+- VFX: ヒットパーティクル / 画面シェイク / 赤フラッシュ / ボール残像
 
 ## ディレクトリ構成
 
