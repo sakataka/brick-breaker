@@ -1,8 +1,11 @@
 import type { Ball, GameConfig, GameState, Scene } from './types';
-import { buildBricks, getBrickColor } from './level';
+import { GAME_CONFIG, GAME_BALANCE } from './config';
+import { buildBricks } from './level';
+import { Renderer } from './renderer';
 import { type PhysicsResult, stepPhysics } from './physics';
 import { getOverlayElements, setSceneUI } from '../ui/overlay';
 import { SfxManager } from '../audio/sfx';
+import { InputController } from './input';
 
 interface HudElements {
   score: HTMLSpanElement;
@@ -10,60 +13,84 @@ interface HudElements {
   time: HTMLSpanElement;
 }
 
-export class Game {
-  private readonly config: GameConfig = {
-    width: 960,
-    height: 540,
-    fixedDeltaSec: 1 / 120,
-    initialLives: 3,
-    initialBallSpeed: 320,
-    maxBallSpeed: 620,
-  };
+interface GameDeps {
+  ctx: CanvasRenderingContext2D;
+  config?: Partial<GameConfig>;
+}
 
-  private readonly ctx: CanvasRenderingContext2D;
+export class Game {
+  private readonly config: GameConfig;
+  private readonly renderer: Renderer;
   private readonly sfx = new SfxManager();
+  private readonly input = new InputController(this.canvas, {
+    moveByMouseX: (clientX) => this.movePaddleByMouse(clientX),
+    pauseToggle: () => this.togglePause(),
+    startOrRestart: () => this.startOrResume(),
+    resize: () => this.adjustCanvasScale(),
+  });
+
   private state: GameState;
   private lastFrameTime = 0;
   private accumulator = 0;
+  private isRunning = false;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
     private readonly hud: HudElements,
     private readonly overlay: ReturnType<typeof getOverlayElements>,
+    deps?: GameDeps,
   ) {
-    const context = this.canvas.getContext('2d');
+    const context = deps?.ctx ?? this.canvas.getContext('2d');
     if (!context) {
       throw new Error('Canvasが利用できませんでした');
     }
 
-    this.ctx = context;
+    this.config = {
+      ...GAME_CONFIG,
+      ...deps?.config,
+    };
+    this.renderer = new Renderer(context, this.config);
     this.state = this.createInitialState();
     this.adjustCanvasScale();
+    this.bindOverlay();
     setSceneUI(this.overlay, this.state.scene, this.state.score, this.state.lives);
   }
 
   start(): void {
-    this.bindInputs();
+    if (this.isRunning) {
+      return;
+    }
+
+    this.isRunning = true;
+    this.input.attach();
     this.render();
     this.updateHud();
     requestAnimationFrame(this.loop);
   }
 
+  private bindOverlay(): void {
+    this.overlay.button.addEventListener('click', async () => {
+      await this.sfx.resumeIfNeeded();
+      this.startOrResume();
+    });
+  }
+
   private createInitialState(): GameState {
     const paddle = {
-      x: this.config.width / 2 - 60,
-      y: this.config.height - 44,
-      width: 120,
-      height: 16,
+      x: this.config.width / 2 - GAME_BALANCE.paddleWidth / 2,
+      y: this.config.height - GAME_BALANCE.paddleBottomOffset,
+      width: GAME_BALANCE.paddleWidth,
+      height: GAME_BALANCE.paddleHeight,
     };
+    const halfBallGap = (GAME_BALANCE.paddleHeight + GAME_BALANCE.ballRadius + 2);
 
     const ball: Ball = {
       pos: {
         x: this.config.width / 2,
-        y: paddle.y - 24,
+        y: paddle.y - halfBallGap,
       },
       vel: { x: 0, y: 0 },
-      radius: 8,
+      radius: GAME_BALANCE.ballRadius,
       speed: this.config.initialBallSpeed,
     };
 
@@ -78,61 +105,56 @@ export class Game {
     };
   }
 
-  private bindInputs(): void {
-    this.canvas.addEventListener('mousemove', (event) => {
-      this.movePaddleByMouse(event);
-    });
-
-    this.overlay.button.addEventListener('click', () => {
-      void this.sfx.resumeIfNeeded();
-      if (this.state.scene === 'paused') {
-        this.setScene('playing');
-        return;
-      }
-      this.startNewPlay();
-    });
-
-    window.addEventListener('keydown', (event) => {
-      const key = event.key.toLowerCase();
-
-      if (key === 'p') {
-        if (this.state.scene === 'playing') {
-          this.setScene('paused');
-          return;
-        }
-        if (this.state.scene === 'paused') {
-          this.setScene('playing');
-        }
-      }
-
-      if (key === ' ' || key === 'enter') {
-        if (this.state.scene === 'paused') {
-          this.setScene('playing');
-          return;
-        }
-        if (this.state.scene === 'playing') {
-          return;
-        }
-        this.startNewPlay();
-      }
-    });
-
-    window.addEventListener('resize', () => {
-      this.adjustCanvasScale();
-    });
-  }
-
-  private startNewPlay(): void {
-    if (this.state.scene !== 'start' && this.state.scene !== 'gameover' && this.state.scene !== 'clear') {
+  private startOrResume(): void {
+    if (this.state.scene === 'playing') {
       return;
     }
 
+    if (this.state.scene === 'paused') {
+      this.resumeGame();
+      return;
+    }
+
+    if (this.state.scene === 'start' || this.state.scene === 'gameover' || this.state.scene === 'clear') {
+      this.resetRound();
+      this.startRound();
+      return;
+    }
+  }
+
+  private togglePause(): void {
+    if (this.state.scene === 'playing') {
+      this.pauseGame();
+      return;
+    }
+
+    if (this.state.scene === 'paused') {
+      this.resumeGame();
+    }
+  }
+
+  private startRound(): void {
+    this.lastFrameTime = 0;
+    this.accumulator = 0;
+    this.setScene('playing');
+  }
+
+  private pauseGame(): void {
+    this.setScene('paused');
+  }
+
+  private resumeGame(): void {
+    this.lastFrameTime = 0;
+    this.accumulator = 0;
+    this.setScene('playing');
+  }
+
+  private resetRound(): void {
     this.state.score = 0;
     this.state.lives = this.config.initialLives;
     this.state.elapsedSec = 0;
     this.state.bricks = buildBricks();
     this.state.ball = this.createServeBall();
-    this.setScene('playing');
   }
 
   private setScene(next: Scene): void {
@@ -166,6 +188,7 @@ export class Game {
         );
 
         this.handlePhysicsResult(result);
+
         if (this.state.scene !== 'playing') {
           break;
         }
@@ -174,57 +197,77 @@ export class Game {
 
     this.render();
     this.updateHud();
-    requestAnimationFrame(this.loop);
+
+    if (this.isRunning) {
+      requestAnimationFrame(this.loop);
+    }
   };
 
   private handlePhysicsResult(result: PhysicsResult): void {
-    if (result.collision.wall) {
-      void this.sfx.play('wall');
-    }
-    if (result.collision.paddle) {
-      void this.sfx.play('paddle');
-    }
+    this.playCollisionSound(result);
+
     if (result.collision.brick > 0) {
       this.state.score += result.scoreGain;
-      void this.sfx.play('brick');
     }
 
     if (result.livesLost > 0) {
-      this.state.lives -= result.livesLost;
-      void this.sfx.play('miss');
-      if (this.state.lives <= 0) {
-        this.setScene('gameover');
-        return;
-      }
-      this.state.ball = this.createServeBall();
+      this.handleLifeLoss(result.livesLost);
       return;
     }
 
     if (result.cleared) {
-      this.state.score += this.state.lives * 500;
-      void this.sfx.play('clear');
-      this.setScene('clear');
+      this.handleClear();
     }
   }
 
-  private movePaddleByMouse(event: MouseEvent): void {
+  private playCollisionSound(result: PhysicsResult): void {
+    if (result.collision.wall) {
+      void this.sfx.play('wall');
+    }
+
+    if (result.collision.paddle) {
+      void this.sfx.play('paddle');
+    }
+
+    if (result.collision.brick > 0) {
+      void this.sfx.play('brick');
+    }
+  }
+
+  private handleLifeLoss(livesLost: number): void {
+    this.state.lives -= livesLost;
+    void this.sfx.play('miss');
+    if (this.state.lives <= 0) {
+      this.setScene('gameover');
+      return;
+    }
+    this.state.ball = this.createServeBall();
+  }
+
+  private handleClear(): void {
+    this.state.score += this.state.lives * GAME_BALANCE.clearBonusPerLife;
+    void this.sfx.play('clear');
+    this.setScene('clear');
+  }
+
+  private movePaddleByMouse(clientX: number): void {
     const rect = this.canvas.getBoundingClientRect();
     const scaleX = this.config.width / rect.width;
-    const worldX = (event.clientX - rect.left) * scaleX;
+    const worldX = (clientX - rect.left) * scaleX;
     const half = this.state.paddle.width / 2;
     this.state.paddle.x = Math.max(0, Math.min(this.config.width - this.state.paddle.width, worldX - half));
   }
 
   private createServeBall(): Ball {
     const speed = this.config.initialBallSpeed;
-    const horizontal = (Math.random() - 0.5) * speed * 0.6;
-    const vx = Math.max(-speed * 0.45, Math.min(speed * 0.45, horizontal));
+    const spread = (Math.random() - 0.5) * speed * GAME_BALANCE.serveSpreadRatio;
+    const vx = Math.max(-speed * 0.45, Math.min(speed * 0.45, spread));
     const vy = -Math.sqrt(speed * speed - vx * vx);
 
     return {
       pos: {
         x: this.state.paddle.x + this.state.paddle.width / 2,
-        y: this.state.paddle.y - 18,
+        y: this.state.paddle.y - GAME_BALANCE.serveYOffset,
       },
       vel: {
         x: vx,
@@ -261,80 +304,7 @@ export class Game {
   }
 
   private render(): void {
-    this.ctx.clearRect(0, 0, this.config.width, this.config.height);
-    this.drawBackdrop();
-    this.drawBricks();
-    this.drawPaddle();
-    this.drawBall();
-
-    if (this.state.scene !== 'playing') {
-      this.ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
-      this.ctx.fillRect(0, 0, this.config.width, this.config.height);
-    }
-  }
-
-  private drawBackdrop(): void {
-    const grad = this.ctx.createLinearGradient(0, 0, this.config.width, this.config.height);
-    grad.addColorStop(0, 'rgba(255, 255, 255, 0.25)');
-    grad.addColorStop(1, 'rgba(255, 255, 255, 0.04)');
-
-    this.ctx.fillStyle = grad;
-    this.ctx.fillRect(0, 0, this.config.width, this.config.height);
-    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-    this.ctx.lineWidth = 2;
-    this.ctx.strokeRect(4, 4, this.config.width - 8, this.config.height - 8);
-  }
-
-  private drawBricks(): void {
-    this.state.bricks.forEach((brick, index) => {
-      if (!brick.alive) {
-        return;
-      }
-
-      const color = brick.color || getBrickColor(brick.row ?? Math.floor(index / 10));
-      const glass = this.ctx.createLinearGradient(brick.x, brick.y, brick.x, brick.y + brick.height);
-      glass.addColorStop(0, color);
-      glass.addColorStop(1, 'rgba(255, 255, 255, 0.08)');
-
-      this.ctx.fillStyle = glass;
-      this.ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
-      this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
-      this.ctx.lineWidth = 1;
-      this.ctx.strokeRect(brick.x, brick.y, brick.width, brick.height);
-    });
-  }
-
-  private drawPaddle(): void {
-    const grad = this.ctx.createLinearGradient(this.state.paddle.x, this.state.paddle.y, this.state.paddle.x, this.state.paddle.y + this.state.paddle.height);
-    grad.addColorStop(0, 'rgba(255, 255, 255, 0.94)');
-    grad.addColorStop(1, 'rgba(160, 200, 255, 0.86)');
-
-    this.ctx.fillStyle = grad;
-    this.ctx.beginPath();
-    this.ctx.roundRect(this.state.paddle.x, this.state.paddle.y, this.state.paddle.width, this.state.paddle.height, 9);
-    this.ctx.fill();
-    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-    this.ctx.stroke();
-  }
-
-  private drawBall(): void {
-    const radial = this.ctx.createRadialGradient(
-      this.state.ball.pos.x - 2,
-      this.state.ball.pos.y - 2,
-      0,
-      this.state.ball.pos.x,
-      this.state.ball.pos.y,
-      this.state.ball.radius,
-    );
-    radial.addColorStop(0, 'rgba(255, 255, 255, 1)');
-    radial.addColorStop(1, 'rgba(77, 165, 255, 0.9)');
-
-    this.ctx.fillStyle = radial;
-    this.ctx.beginPath();
-    this.ctx.arc(this.state.ball.pos.x, this.state.ball.pos.y, this.state.ball.radius, 0, Math.PI * 2);
-    this.ctx.fill();
-    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-    this.ctx.stroke();
+    this.renderer.render(this.state);
   }
 
   private updateHud(): void {

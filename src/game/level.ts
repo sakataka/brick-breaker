@@ -1,46 +1,26 @@
 import type { Brick } from './types';
+import { BRICK_LAYOUT as DEFAULT_BRICK_LAYOUT, type BrickLayout, getBrickPaletteColor } from './config';
 
-export function buildBricks(): Brick[] {
-  const cols = 10;
-  const rows = 6;
-  const marginX = 50;
-  const marginY = 80;
-  const gap = 8;
-  const width = 840;
-  const brickW = (width - gap * (cols - 1)) / cols;
-  const brickH = 24;
-  const startX = marginX;
-  const startY = marginY;
-
+export function buildBricks(layout: BrickLayout = DEFAULT_BRICK_LAYOUT): Brick[] {
+  const { cols, rows, marginX, marginY, gapX, gapY, boardWidth, brickHeight } = layout;
+  const brickWidth = (boardWidth - gapX * (cols - 1)) / cols;
   const bricks: Brick[] = [];
   let id = 0;
+
   for (let row = 0; row < rows; row += 1) {
     for (let col = 0; col < cols; col += 1) {
       bricks.push({
         id: id++,
-        x: startX + col * (brickW + gap),
-        y: startY + row * (brickH + 10),
-        width: brickW,
-        height: brickH,
+        x: marginX + col * (brickWidth + gapX),
+        y: marginY + row * (brickHeight + gapY),
+        width: brickWidth,
+        height: brickHeight,
         alive: true,
         row,
-        color: getBrickColor(row),
+        color: getBrickPaletteColor(row),
       });
     }
   }
 
   return bricks;
-}
-
-export function getBrickColor(index: number): string {
-  const palette = [
-    'rgba(255, 122, 122, 0.45)',
-    'rgba(255, 196, 118, 0.45)',
-    'rgba(122, 232, 176, 0.45)',
-    'rgba(125, 165, 255, 0.45)',
-    'rgba(182, 125, 255, 0.45)',
-    'rgba(255, 144, 210, 0.45)',
-  ];
-
-  return palette[index % palette.length];
 }
