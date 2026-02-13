@@ -1,5 +1,20 @@
 import type { GameConfig } from './types';
 
+export interface BrickTheme {
+  palette: readonly string[];
+}
+
+export interface BrickLayout {
+  cols: number;
+  rows: number;
+  marginX: number;
+  marginY: number;
+  gapX: number;
+  gapY: number;
+  boardWidth: number;
+  brickHeight: number;
+}
+
 export const GAME_CONFIG: GameConfig = {
   width: 960,
   height: 540,
@@ -9,7 +24,16 @@ export const GAME_CONFIG: GameConfig = {
   maxBallSpeed: 620,
 };
 
-export const BRICK_LAYOUT = {
+export const BRICK_PALETTE: BrickTheme['palette'] = [
+  'rgba(255, 122, 122, 0.45)',
+  'rgba(255, 196, 118, 0.45)',
+  'rgba(122, 232, 176, 0.45)',
+  'rgba(125, 165, 255, 0.45)',
+  'rgba(182, 125, 255, 0.45)',
+  'rgba(255, 144, 210, 0.45)',
+] as const;
+
+export const BRICK_LAYOUT: BrickLayout = {
   cols: 10,
   rows: 6,
   marginX: 50,
@@ -18,6 +42,10 @@ export const BRICK_LAYOUT = {
   gapY: 10,
   boardWidth: 840,
   brickHeight: 24,
-} as const;
+};
 
 export const CLEAR_BONUS_PER_LIFE = 500;
+
+export function getBrickPaletteColor(row: number, palette: BrickTheme['palette'] = BRICK_PALETTE): string {
+  return palette[row % palette.length];
+}

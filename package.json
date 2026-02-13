@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "bunx vite",
     "build": "bunx vite build",
-    "preview": "bunx vite preview"
+    "preview": "bunx vite preview",
+    "test": "bun test"
   },
   "devDependencies": {
     "typescript": "^5.4.5",

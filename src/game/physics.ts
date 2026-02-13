@@ -132,7 +132,8 @@ function resolvePaddleCollision(ball: Ball, paddle: Paddle): boolean {
 
 function applyPaddleCollision(ball: Ball, paddle: Paddle, config: GameConfig): void {
   ball.pos.y = paddle.y - ball.radius;
-  const impact = Math.max(-1, Math.min(1, (ball.pos.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2));
+  const relativeX = (ball.pos.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2);
+  const impact = Math.max(-1, Math.min(1, relativeX));
   const angle = impact * (Math.PI / 3);
   const speed = Math.min(config.maxBallSpeed, Math.max(config.initialBallSpeed, Math.hypot(ball.vel.x, ball.vel.y)));
   ball.vel.x = Math.sin(angle) * speed;

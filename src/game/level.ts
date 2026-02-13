@@ -1,8 +1,8 @@
-import { BRICK_LAYOUT } from './config';
 import type { Brick } from './types';
+import { BRICK_LAYOUT as DEFAULT_BRICK_LAYOUT, type BrickLayout, getBrickPaletteColor } from './config';
 
-export function buildBricks(): Brick[] {
-  const { cols, rows, marginX, marginY, gapX, gapY, boardWidth, brickHeight } = BRICK_LAYOUT;
+export function buildBricks(layout: BrickLayout = DEFAULT_BRICK_LAYOUT): Brick[] {
+  const { cols, rows, marginX, marginY, gapX, gapY, boardWidth, brickHeight } = layout;
   const brickWidth = (boardWidth - gapX * (cols - 1)) / cols;
   const bricks: Brick[] = [];
   let id = 0;
@@ -17,23 +17,10 @@ export function buildBricks(): Brick[] {
         height: brickHeight,
         alive: true,
         row,
-        color: getBrickColor(row),
+        color: getBrickPaletteColor(row),
       });
     }
   }
 
   return bricks;
-}
-
-export function getBrickColor(index: number): string {
-  const palette = [
-    'rgba(255, 122, 122, 0.45)',
-    'rgba(255, 196, 118, 0.45)',
-    'rgba(122, 232, 176, 0.45)',
-    'rgba(125, 165, 255, 0.45)',
-    'rgba(182, 125, 255, 0.45)',
-    'rgba(255, 144, 210, 0.45)',
-  ];
-
-  return palette[index % palette.length];
 }
