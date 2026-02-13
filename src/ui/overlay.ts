@@ -1,12 +1,46 @@
 import { getRequiredElement } from '../util/dom';
 import type { Scene } from '../game/types';
 
+interface OverlayCopy {
+  message: string;
+  sub: string;
+  button: string;
+}
+
 export interface OverlayElements {
   overlay: HTMLDivElement;
   message: HTMLParagraphElement;
   sub: HTMLParagraphElement;
   button: HTMLButtonElement;
 }
+
+export const OVERLAY_COPY: Record<Scene, OverlayCopy> = {
+  start: {
+    message: 'クリックしてゲーム開始',
+    sub: 'マウスでバーを移動してボールをたたき返してください。',
+    button: 'ゲーム開始',
+  },
+  paused: {
+    message: '一時停止中',
+    sub: 'Pキーで再開できます。',
+    button: '再開',
+  },
+  gameover: {
+    message: 'ゲームオーバー',
+    sub: '最終スコアを確認して、再開ボタンでリトライできます。',
+    button: 'もう一度',
+  },
+  playing: {
+    message: '',
+    sub: '',
+    button: '',
+  },
+  clear: {
+    message: 'ステージクリア！',
+    sub: '',
+    button: 'やり直す',
+  },
+};
 
 export function getOverlayElements(documentRef: Document): OverlayElements {
   const overlay = getRequiredElement<HTMLDivElement>(documentRef, '#overlay', 'overlay要素が見つかりません');
@@ -34,32 +68,25 @@ export function setSceneUI(
   }
 
   elements.overlay.classList.remove('hidden');
+  const copy = OVERLAY_COPY[scene];
+  elements.message.textContent = copy.message;
+  elements.button.textContent = copy.button;
+  elements.button.disabled = false;
 
   if (scene === 'start') {
-    elements.message.textContent = 'クリックしてゲーム開始';
-    elements.sub.textContent = 'マウスでバーを移動してボールをたたき返してください。';
-    elements.button.textContent = 'ゲーム開始';
-    elements.button.disabled = false;
-  }
-
-  if (scene === 'paused') {
-    elements.message.textContent = '一時停止中';
-    elements.sub.textContent = 'Pキーで再開できます。';
-    elements.button.textContent = '再開';
-    elements.button.disabled = false;
+    elements.sub.textContent = copy.sub;
+    return;
   }
 
   if (scene === 'gameover') {
-    elements.message.textContent = 'ゲームオーバー';
     elements.sub.textContent = `最終スコア ${score} / 残機 ${lives}`;
-    elements.button.textContent = 'もう一度';
-    elements.button.disabled = false;
+    return;
   }
 
   if (scene === 'clear') {
-    elements.message.textContent = 'ステージクリア！';
     elements.sub.textContent = `${score}点 ${clearTime ? `・${clearTime}` : ''} クリアしました。`;
-    elements.button.textContent = 'やり直す';
-    elements.button.disabled = false;
+    return;
   }
+
+  elements.sub.textContent = copy.sub;
 }
