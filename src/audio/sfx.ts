@@ -17,7 +17,11 @@ export class SfxManager {
     }
 
     if (context.state === 'suspended') {
-      await context.resume();
+      try {
+        await context.resume();
+      } catch {
+        return;
+      }
     }
   }
 
@@ -35,22 +39,26 @@ export class SfxManager {
       }
     }
 
-    const cfg = this.getTone(name);
-    const now = context.currentTime;
-    const duration = cfg.durationMs / 1000;
-    const osc = context.createOscillator();
-    const gain = context.createGain();
+    try {
+      const cfg = this.getTone(name);
+      const now = context.currentTime;
+      const duration = cfg.durationMs / 1000;
+      const osc = context.createOscillator();
+      const gain = context.createGain();
 
-    osc.type = cfg.type;
-    osc.frequency.setValueAtTime(cfg.freq, now);
-    gain.gain.setValueAtTime(cfg.gain, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+      osc.type = cfg.type;
+      osc.frequency.setValueAtTime(cfg.freq, now);
+      gain.gain.setValueAtTime(cfg.gain, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
-    osc.connect(gain);
-    gain.connect(context.destination);
+      osc.connect(gain);
+      gain.connect(context.destination);
 
-    osc.start(now);
-    osc.stop(now + duration);
+      osc.start(now);
+      osc.stop(now + duration);
+    } catch {
+      return;
+    }
   }
 
   private getTone(name: EventName): SfxConfig {
@@ -67,7 +75,16 @@ export class SfxManager {
 
   private async ensureContext(): Promise<AudioContext | null> {
     if (!this.context) {
-      this.context = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioCtor = window.AudioContext ?? (window as any).webkitAudioContext;
+      if (!AudioCtor) {
+        return null;
+      }
+
+      try {
+        this.context = new AudioCtor();
+      } catch {
+        return null;
+      }
     }
     return this.context;
   }

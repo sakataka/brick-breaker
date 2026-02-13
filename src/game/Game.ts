@@ -69,8 +69,10 @@ export class Game {
   }
 
   private bindOverlay(): void {
-    this.overlay.button.addEventListener('click', async () => {
-      await this.sfx.resumeIfNeeded();
+    this.overlay.button.addEventListener('click', () => {
+      void this.sfx.resumeIfNeeded().catch(() => {
+        // Audio is optional; continue gameplay even if audio context cannot be created/resumed.
+      });
       this.startOrResume();
     });
   }
