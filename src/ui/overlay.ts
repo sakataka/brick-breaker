@@ -1,4 +1,5 @@
 import type { SpeedPreset } from "../game/config";
+import { getDailyChallenge } from "../game/dailyChallenge";
 import type { StageResultSummaryView, StageResultView } from "../game/renderTypes";
 import type { Difficulty, Scene } from "../game/types";
 import { getRequiredElement } from "../util/dom";
@@ -20,8 +21,10 @@ export interface OverlayElements {
   speedPreset: HTMLSelectElement;
   multiballMaxBalls: HTMLSelectElement;
   challengeMode: HTMLInputElement;
+  dailyMode: HTMLInputElement;
   bgmEnabled: HTMLInputElement;
   sfxEnabled: HTMLInputElement;
+  dailyChallengeLabel: HTMLParagraphElement;
   resultsSection: HTMLDivElement;
   resultsList: HTMLUListElement;
 }
@@ -32,6 +35,7 @@ export interface StartSettingsSelection {
   speedPreset: SpeedPreset;
   multiballMaxBalls: number;
   challengeMode: boolean;
+  dailyMode: boolean;
   bgmEnabled: boolean;
   sfxEnabled: boolean;
 }
@@ -126,6 +130,16 @@ export function getOverlayElements(documentRef: Document): OverlayElements {
     "#setting-sfx-enabled",
     "setting-sfx-enabled要素が見つかりません",
   );
+  const dailyMode = getRequiredElement<HTMLInputElement>(
+    documentRef,
+    "#setting-daily-mode",
+    "setting-daily-mode要素が見つかりません",
+  );
+  const dailyChallengeLabel = getRequiredElement<HTMLParagraphElement>(
+    documentRef,
+    "#daily-challenge-label",
+    "daily-challenge-label要素が見つかりません",
+  );
   const challengeMode = getRequiredElement<HTMLInputElement>(
     documentRef,
     "#setting-challenge-mode",
@@ -153,8 +167,10 @@ export function getOverlayElements(documentRef: Document): OverlayElements {
     speedPreset,
     multiballMaxBalls,
     challengeMode,
+    dailyMode,
     bgmEnabled,
     sfxEnabled,
+    dailyChallengeLabel,
     resultsSection,
     resultsList,
   };
@@ -171,6 +187,7 @@ export function readStartSettings(elements: OverlayElements): StartSettingsSelec
     speedPreset,
     multiballMaxBalls: Number.isFinite(multiballMaxBalls) ? multiballMaxBalls : 4,
     challengeMode: elements.challengeMode.checked,
+    dailyMode: elements.dailyMode.checked,
     bgmEnabled: elements.bgmEnabled.checked,
     sfxEnabled: elements.sfxEnabled.checked,
   };
@@ -205,6 +222,8 @@ export function setSceneUI(
   }
 
   if (scene === "start") {
+    const daily = getDailyChallenge();
+    elements.dailyChallengeLabel.textContent = `今日のデイリー(${daily.key}): ${daily.objective}`;
     elements.sub.textContent = copy.sub;
     return;
   }

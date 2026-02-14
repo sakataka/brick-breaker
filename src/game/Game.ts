@@ -4,6 +4,7 @@ import { type OverlayElements, readStartSettings } from "../ui/overlay";
 import { readAccessibility } from "./a11y";
 import { syncAudioScene } from "./audioSync";
 import { buildStartConfig, GAME_CONFIG } from "./config";
+import { getDailyChallenge } from "./dailyChallenge";
 import { computeFrameDelta, handleBallLoss, handleStageClear, runPlayingLoop } from "./gameRuntime";
 import { renderGameFrame, syncSceneOverlayUI } from "./gameUi";
 import type { HudElements } from "./hud";
@@ -283,7 +284,13 @@ export class Game {
   private applyStartSettings(): void {
     const selected = readStartSettings(this.overlay);
     this.config = buildStartConfig(this.baseConfig, selected);
-    this.random = selected.challengeMode ? createSeededRandomSource(CHALLENGE_MODE_SEED) : this.baseRandom;
+    if (selected.dailyMode) {
+      this.random = createSeededRandomSource(getDailyChallenge().seed);
+    } else if (selected.challengeMode) {
+      this.random = createSeededRandomSource(CHALLENGE_MODE_SEED);
+    } else {
+      this.random = this.baseRandom;
+    }
     this.audioSettings = {
       bgmEnabled: selected.bgmEnabled,
       sfxEnabled: selected.sfxEnabled,
