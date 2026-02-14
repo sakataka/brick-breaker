@@ -6,6 +6,7 @@ export interface PhaserHostOptions {
   canvas: HTMLCanvasElement;
   width: number;
   height: number;
+  zoom?: number;
 }
 
 export class GameHost {
@@ -18,11 +19,12 @@ export class GameHost {
       canvas: options.canvas,
       width: options.width,
       height: options.height,
+      zoom: options.zoom ?? 1,
       backgroundColor: "#000000",
       render: {
         pixelArt: false,
         antialias: true,
-        clearBeforeRender: false,
+        clearBeforeRender: true,
       },
       scene: [new BootScene(), this.runtimeScene],
       physics: {

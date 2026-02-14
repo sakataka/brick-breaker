@@ -14,6 +14,10 @@ export interface ViewportResult {
   renderScale: number;
 }
 
+export interface ViewportOptions {
+  resizeBuffer?: boolean;
+}
+
 export function computeCanvasFit(
   wrapperWidth: number,
   wrapperHeight: number,
@@ -58,6 +62,7 @@ export function applyCanvasViewport(
   worldWidth: number,
   worldHeight: number,
   devicePixelRatio = window.devicePixelRatio || 1,
+  options: ViewportOptions = {},
 ): ViewportResult {
   const ratio = worldWidth / worldHeight;
   const fit = computeCanvasFit(wrapper.clientWidth, wrapper.clientHeight, ratio);
@@ -69,8 +74,10 @@ export function applyCanvasViewport(
     devicePixelRatio,
   );
 
-  canvas.width = Math.round(worldWidth * renderScale);
-  canvas.height = Math.round(worldHeight * renderScale);
+  if (options.resizeBuffer ?? true) {
+    canvas.width = Math.round(worldWidth * renderScale);
+    canvas.height = Math.round(worldHeight * renderScale);
+  }
   canvas.style.width = `${fit.cssWidth}px`;
   canvas.style.height = `${fit.cssHeight}px`;
 

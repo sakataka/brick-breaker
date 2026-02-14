@@ -111,6 +111,10 @@ GitHub Pages 公開手順:
 - `docs/architecture.md`
 - `README.md`
 
+## プレイヤー向けガイド
+
+- `docs/game-guide.md`
+
 ## 実装メモ
 
 - 実行エントリは `src/game/GameSession.ts`（オーケストレータ）で、`src/core/engine.ts`（進行ロジック）を駆動します。

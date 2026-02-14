@@ -9,6 +9,12 @@ interface ParsedColor {
   alpha: number;
 }
 
+interface BackdropTheme {
+  base: string;
+  top: string;
+  frame: string;
+}
+
 const ITEM_COLOR_BY_TYPE: Record<ItemType, string> = {
   paddle_plus: "#8fd4ff",
   slow_ball: "#6fc3a4",
@@ -16,6 +22,24 @@ const ITEM_COLOR_BY_TYPE: Record<ItemType, string> = {
   shield: "#85f2da",
   pierce: "#ffd36b",
   bomb: "#ff7f7f",
+};
+
+const BACKDROP_BY_BAND: Record<RenderViewState["themeBandId"], BackdropTheme> = {
+  early: {
+    base: "#0a1a35",
+    top: "#133468",
+    frame: "#2d9fff",
+  },
+  mid: {
+    base: "#1a1734",
+    top: "#3a2a58",
+    frame: "#ffab5e",
+  },
+  late: {
+    base: "#1c1230",
+    top: "#47205f",
+    frame: "#ff80ba",
+  },
 };
 
 export class PhaserRenderPort {
@@ -45,13 +69,17 @@ export class PhaserRenderPort {
     this.effects.clear();
     this.overlay.clear();
 
-    const background = parseColor(theme.backdropEnd, { value: 0x0b1020, alpha: 1 });
-    this.backdrop.fillStyle(background.value, background.alpha);
+    const backdropTheme = resolveBackdropTheme(view.themeBandId, view.highContrast);
+    const background = parseColor(backdropTheme.base, { value: 0x0b1020, alpha: 1 });
+    this.backdrop.fillStyle(background.value, 1);
     this.backdrop.fillRect(0, 0, this.config.width, this.config.height);
 
-    const header = parseColor(theme.backdropStart, { value: 0x161d30, alpha: 0.5 });
-    this.backdrop.fillStyle(header.value, header.alpha);
+    const header = parseColor(backdropTheme.top, { value: 0x161d30, alpha: 1 });
+    this.backdrop.fillStyle(header.value, 0.72);
     this.backdrop.fillRect(0, 0, this.config.width, 72);
+    const frame = parseColor(backdropTheme.frame, { value: 0x29d3ff, alpha: 1 });
+    this.backdrop.lineStyle(1, frame.value, 0.24);
+    this.backdrop.strokeRect(0.5, 0.5, this.config.width - 1, this.config.height - 1);
 
     drawProgressBar(this.backdrop, view.progressRatio, this.config.width, theme.progressBar);
     drawWarpZones(this.backdrop, view.warpZones);
@@ -91,9 +119,22 @@ export class PhaserRenderPort {
       }
     }
 
-    const paddleFill = parseColor(theme.paddleStart, { value: 0xffffff, alpha: 0.9 });
-    this.world.fillStyle(paddleFill.value, paddleFill.alpha);
+    const paddleFill = view.highContrast
+      ? parseColor("#f5f8ff", { value: 0xf5f8ff, alpha: 1 })
+      : parseColor("#44ccff", { value: 0x44ccff, alpha: 1 });
+    const paddleStroke = view.highContrast
+      ? parseColor("#ffffff", { value: 0xffffff, alpha: 1 })
+      : parseColor("#d9f4ff", { value: 0xd9f4ff, alpha: 1 });
+    this.world.fillStyle(paddleFill.value, 0.94);
     this.world.fillRoundedRect(
+      view.paddle.x + offsetX,
+      view.paddle.y + offsetY,
+      view.paddle.width,
+      view.paddle.height,
+      6,
+    );
+    this.world.lineStyle(1.2, paddleStroke.value, 0.9);
+    this.world.strokeRoundedRect(
       view.paddle.x + offsetX,
       view.paddle.y + offsetY,
       view.paddle.width,
@@ -177,15 +218,18 @@ function drawWarpZones(graphics: Phaser.GameObjects.Graphics, warpZones: RenderV
   if (!warpZones || warpZones.length === 0) {
     return;
   }
-  const stroke = parseColor("rgba(130,220,255,0.52)", { value: 0x82dcff, alpha: 0.52 });
-  graphics.lineStyle(1.1, stroke.value, stroke.alpha);
+  const fill = parseColor("rgba(120,214,255,0.14)", { value: 0x78d6ff, alpha: 0.14 });
+  const stroke = parseColor("rgba(130,220,255,0.68)", { value: 0x82dcff, alpha: 0.68 });
+  const exitFill = parseColor("rgba(255,206,102,0.85)", { value: 0xffce66, alpha: 0.85 });
+  graphics.fillStyle(fill.value, fill.alpha);
+  graphics.lineStyle(1.2, stroke.value, stroke.alpha);
   for (const zone of warpZones) {
-    graphics.strokeRect(
-      zone.inXMin,
-      zone.inYMin,
-      Math.max(1, zone.inXMax - zone.inXMin),
-      Math.max(1, zone.inYMax - zone.inYMin),
-    );
+    const width = Math.max(1, zone.inXMax - zone.inXMin);
+    const height = Math.max(1, zone.inYMax - zone.inYMin);
+    graphics.fillRect(zone.inXMin, zone.inYMin, width, height);
+    graphics.strokeRect(zone.inXMin, zone.inYMin, width, height);
+    graphics.fillStyle(exitFill.value, exitFill.alpha);
+    graphics.fillCircle(zone.outX, zone.outY, 3.2);
   }
 }
 
@@ -301,6 +345,20 @@ function getBrickMarkerColor(kind: NonNullable<RenderViewState["bricks"][number]
     default:
       return "#ffffff";
   }
+}
+
+function resolveBackdropTheme(
+  themeBandId: RenderViewState["themeBandId"],
+  highContrast: boolean,
+): BackdropTheme {
+  if (highContrast) {
+    return {
+      base: "#000000",
+      top: "#111111",
+      frame: "#f5e76a",
+    };
+  }
+  return BACKDROP_BY_BAND[themeBandId] ?? BACKDROP_BY_BAND.early;
 }
 
 function parseColor(input: string, fallback: ParsedColor): ParsedColor {

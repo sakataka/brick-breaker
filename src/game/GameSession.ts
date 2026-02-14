@@ -75,6 +75,7 @@ export class GameSession {
         canvas: this.canvas,
         width: this.baseConfig.width,
         height: this.baseConfig.height,
+        zoom: Math.max(1, Math.min(2, this.windowRef.devicePixelRatio || 1)),
       });
     this.renderPort = {
       render: (view) => this.host.render(view),
@@ -106,11 +107,16 @@ export class GameSession {
     );
 
     this.runSafely(() => {
-      this.adjustCanvasScale();
       this.bindUiHandlers();
       this.bindHostHandlers();
       this.bindA11yListeners();
       this.lifecycle.bind();
+      this.adjustCanvasScale();
+      this.windowRef.requestAnimationFrame(() => {
+        if (!this.destroyed) {
+          this.adjustCanvasScale();
+        }
+      });
       this.audioPort.setSettings(this.audioSettings);
       this.audioPort.notifyStageChanged(this.state.campaign.stageIndex);
       this.audioPort.syncScene(this.state.scene, this.state.scene);
@@ -342,6 +348,7 @@ export class GameSession {
       this.config.width,
       this.config.height,
       this.windowRef.devicePixelRatio || 1,
+      { resizeBuffer: false },
     );
     this.syncViewPorts();
   }

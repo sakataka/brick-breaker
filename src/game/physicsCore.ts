@@ -1,10 +1,16 @@
 import { type GameplayBalance, getGameplayBalance } from "./config";
+import type { WarpZone } from "./config/stages";
 import { clamp } from "./math";
 import type { PhysicsFrameResult, PhysicsInput } from "./physicsTypes";
 import type { Ball, Brick, CollisionEvent } from "./types";
 
 const MAX_SUBSTEPS = 12;
 const MAX_MOVE = 4;
+const LOW_GRAVITY_ACCEL = 210;
+const LOW_GRAVITY_MAX_FALL_SPEED = 360;
+const LOW_GRAVITY_MIN_FALL_SPEED = 48;
+const WARP_COOLDOWN_SEC = 0.24;
+const WARP_EXIT_PUSH = 10;
 
 interface BrickHitResult {
   scoreGain: number;
@@ -108,7 +114,7 @@ export function stepPhysicsCore({
     }
 
     if (lowGravity) {
-      ball.vel.y *= 0.94;
+      applyLowGravity(ball, subDt);
     }
     normalizeVelocity(ball, maxBallSpeed);
   }
@@ -418,7 +424,7 @@ function normalizeVelocity(ball: Ball, maxSpeed: number): void {
   ball.vel.y *= factor;
 }
 
-function applyWarpZones(ball: Ball, zones: NonNullable<PhysicsInput["stepConfig"]>["warpZones"]): void {
+function applyWarpZones(ball: Ball, zones: WarpZone[] | undefined): void {
   if (!zones || zones.length <= 0) {
     return;
   }
@@ -426,16 +432,44 @@ function applyWarpZones(ball: Ball, zones: NonNullable<PhysicsInput["stepConfig"
     return;
   }
   for (const zone of zones) {
-    if (
-      ball.pos.x >= zone.inXMin &&
-      ball.pos.x <= zone.inXMax &&
-      ball.pos.y >= zone.inYMin &&
-      ball.pos.y <= zone.inYMax
-    ) {
+    if (isInsideWarpZone(ball, zone)) {
       ball.pos.x = zone.outX;
       ball.pos.y = zone.outY;
-      ball.warpCooldownSec = 0.14;
+      pushWarpExit(ball, zones);
+      ball.warpCooldownSec = WARP_COOLDOWN_SEC;
       return;
     }
+  }
+}
+
+function applyLowGravity(ball: Ball, deltaSec: number): void {
+  ball.vel.y = Math.min(LOW_GRAVITY_MAX_FALL_SPEED, ball.vel.y + LOW_GRAVITY_ACCEL * deltaSec);
+  if (ball.vel.y > 0 && ball.vel.y < LOW_GRAVITY_MIN_FALL_SPEED) {
+    ball.vel.y = LOW_GRAVITY_MIN_FALL_SPEED;
+  }
+}
+
+function isInsideWarpZone(ball: Ball, zone: WarpZone): boolean {
+  return (
+    ball.pos.x >= zone.inXMin &&
+    ball.pos.x <= zone.inXMax &&
+    ball.pos.y >= zone.inYMin &&
+    ball.pos.y <= zone.inYMax
+  );
+}
+
+function pushWarpExit(ball: Ball, zones: WarpZone[]): void {
+  const speed = Math.hypot(ball.vel.x, ball.vel.y);
+  if (speed > 0) {
+    ball.pos.x += (ball.vel.x / speed) * WARP_EXIT_PUSH;
+    ball.pos.y += (ball.vel.y / speed) * WARP_EXIT_PUSH;
+  }
+  for (let i = 0; i < 4; i += 1) {
+    const occupied = zones.some((zone) => isInsideWarpZone(ball, zone));
+    if (!occupied) {
+      return;
+    }
+    ball.pos.y += WARP_EXIT_PUSH;
+    ball.pos.x += speed > 0 ? (ball.vel.x / speed) * (WARP_EXIT_PUSH * 0.6) : 0;
   }
 }

@@ -273,14 +273,15 @@ describe("physicsCore", () => {
       },
     });
 
-    expect(ball.pos.x).toBe(180);
-    expect(ball.pos.y).toBe(120);
+    expect(ball.pos.x).toBeGreaterThanOrEqual(180);
+    expect(ball.pos.y).toBeGreaterThan(120);
+    expect((ball.warpCooldownSec ?? 0) > 0).toBe(true);
   });
 
-  test("low gravity flattens vertical velocity", () => {
+  test("low gravity keeps motion while eventually pulling ball downward", () => {
     const ball: Ball = {
       pos: { x: 120, y: 100 },
-      vel: { x: 30, y: -150 },
+      vel: { x: 30, y: -60 },
       radius: 6,
       speed: 180,
     };
@@ -290,12 +291,12 @@ describe("physicsCore", () => {
       paddle: basePaddle(),
       bricks: [],
       config: baseConfig,
-      deltaSec: 1 / 60,
+      deltaSec: 0.8,
       stepConfig: {
         lowGravity: true,
       },
     });
 
-    expect(Math.abs(ball.vel.y)).toBeLessThan(150);
+    expect(ball.vel.y).toBeGreaterThan(0);
   });
 });
