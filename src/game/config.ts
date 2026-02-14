@@ -51,6 +51,7 @@ export interface StartSetupOptions {
   difficulty: Difficulty;
   initialLives: number;
   speedPreset: SpeedPreset;
+  multiballMaxBalls: number;
 }
 
 export interface ItemRule {
@@ -107,9 +108,13 @@ export interface ThemeBandDefinition {
   brickPalette: BrickTheme["palette"];
 }
 
+export const DEFAULT_MULTIBALL_MAX_BALLS = 4;
+
 export const START_SETTING_LIMITS = {
   minLives: 1,
   maxLives: 6,
+  minMultiballMaxBalls: 2,
+  maxMultiballMaxBalls: 8,
 } as const;
 
 const BASE_CONFIG: Omit<
@@ -118,6 +123,7 @@ const BASE_CONFIG: Omit<
   | "initialLives"
   | "initialBallSpeed"
   | "maxBallSpeed"
+  | "multiballMaxBalls"
   | "assistDurationSec"
   | "assistPaddleScale"
   | "assistMaxSpeedScale"
@@ -190,13 +196,14 @@ export const DIFFICULTY_PRESETS: Record<Difficulty, DifficultyPreset> = {
   },
 } as const;
 
-export const DEFAULT_DIFFICULTY: Difficulty = "casual";
+export const DEFAULT_DIFFICULTY: Difficulty = "standard";
 const activePreset = DIFFICULTY_PRESETS[DEFAULT_DIFFICULTY];
 
 export const GAME_CONFIG: GameConfig = {
   ...BASE_CONFIG,
   difficulty: DEFAULT_DIFFICULTY,
   ...activePreset.config,
+  multiballMaxBalls: DEFAULT_MULTIBALL_MAX_BALLS,
 };
 
 export const BRICK_PALETTE: BrickTheme["palette"] = [
@@ -410,7 +417,7 @@ export const ITEM_BALANCE: ItemBalance = {
   slowBallMaxSpeedScalePerStack: 0.82,
   slowBallMinScale: 0.35,
   slowBallInstantSpeedScale: 0.9,
-  multiballMaxBalls: 4,
+  multiballMaxBalls: DEFAULT_MULTIBALL_MAX_BALLS,
   pierceDepthPerStack: 4,
 };
 
@@ -462,12 +469,17 @@ export function buildStartConfig(base: GameConfig, setup: StartSetupOptions): Ga
     START_SETTING_LIMITS.minLives,
     Math.min(START_SETTING_LIMITS.maxLives, setup.initialLives),
   );
+  const safeMultiballMaxBalls = Math.max(
+    START_SETTING_LIMITS.minMultiballMaxBalls,
+    Math.min(START_SETTING_LIMITS.maxMultiballMaxBalls, Math.round(setup.multiballMaxBalls)),
+  );
   return {
     ...base,
     difficulty: setup.difficulty,
     initialLives: safeLives,
     initialBallSpeed: preset.config.initialBallSpeed * speedScale,
     maxBallSpeed: preset.config.maxBallSpeed * speedScale,
+    multiballMaxBalls: safeMultiballMaxBalls,
     assistDurationSec: preset.config.assistDurationSec,
     assistPaddleScale: preset.config.assistPaddleScale,
     assistMaxSpeedScale: preset.config.assistMaxSpeedScale,

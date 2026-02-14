@@ -97,7 +97,10 @@ export function applyItemPickupFromRegistry(state: ItemState, type: ItemType, ba
   });
 }
 
-export function createItemModifiers(stacks: ItemStackState): ItemModifierBundle {
+export function createItemModifiers(
+  stacks: ItemStackState,
+  multiballMaxBalls = ITEM_BALANCE.multiballMaxBalls,
+): ItemModifierBundle {
   const paddleScale = 1 + ITEM_BALANCE.paddlePlusScalePerStack * stacks.paddlePlusStacks;
   const maxSpeedScale =
     stacks.slowBallStacks <= 0
@@ -110,7 +113,7 @@ export function createItemModifiers(stacks: ItemStackState): ItemModifierBundle 
   return {
     paddleScale,
     maxSpeedScale,
-    targetBallCount: Math.min(1 + stacks.multiballStacks, ITEM_BALANCE.multiballMaxBalls),
+    targetBallCount: Math.min(1 + stacks.multiballStacks, multiballMaxBalls),
     pierceDepth: stacks.pierceStacks * ITEM_BALANCE.pierceDepthPerStack,
     bombRadiusTiles: stacks.bombStacks,
     explodeOnHit: stacks.bombStacks > 0,

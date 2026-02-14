@@ -62,6 +62,7 @@ describe("roundSystem", () => {
     state.items.active.paddlePlusStacks = 2;
     state.items.active.shieldCharges = 1;
     state.items.active.pierceStacks = 3;
+    state.items.active.bombStacks = 1;
     state.items.falling.push({
       id: 99,
       type: "bomb",
@@ -76,19 +77,25 @@ describe("roundSystem", () => {
     expect(state.items.active.paddlePlusStacks).toBe(2);
     expect(state.items.active.shieldCharges).toBe(1);
     expect(state.items.active.pierceStacks).toBe(3);
+    expect(state.items.active.bombStacks).toBe(0);
     expect(state.items.falling).toHaveLength(0);
     expect(state.lives).toBe(2);
   });
 
   test("advanceStage applies carried multiball stacks to next-stage serve count", () => {
-    const state = createInitialGameState(GAME_CONFIG, false, "start");
-    resetRoundState(state, GAME_CONFIG, false, fixedRandom);
+    const customConfig = { ...GAME_CONFIG, multiballMaxBalls: 5 };
+    const state = createInitialGameState(customConfig, false, "start");
+    resetRoundState(state, customConfig, false, fixedRandom);
     state.items.active.multiballStacks = 3;
 
-    const progressed = advanceStage(state, GAME_CONFIG, fixedRandom);
+    const progressed = advanceStage(state, customConfig, fixedRandom);
 
     expect(progressed).toBe(true);
     expect(state.balls).toHaveLength(4);
+
+    state.items.active.multiballStacks = 8;
+    expect(advanceStage(state, customConfig, fixedRandom)).toBe(true);
+    expect(state.balls).toHaveLength(5);
   });
 
   test("retryCurrentStage rolls back to stageStartScore", () => {

@@ -69,7 +69,7 @@ describe("itemSystem", () => {
     expect(getSlowBallMaxSpeedScale(items)).toBeLessThan(1);
   });
 
-  test("multiball stacks are capped to four balls", () => {
+  test("multiball stacks respect configured max-ball cap", () => {
     const items = createItemState();
     applyItemPickup(items, "multiball", [createBall()]);
     applyItemPickup(items, "multiball", [createBall()]);
@@ -77,12 +77,13 @@ describe("itemSystem", () => {
     applyItemPickup(items, "multiball", [createBall()]);
     applyItemPickup(items, "multiball", [createBall()]);
 
-    expect(getTargetBallCount(items)).toBe(4);
+    expect(getTargetBallCount(items, 4)).toBe(4);
+    expect(getTargetBallCount(items, 6)).toBe(6);
 
-    const expanded = ensureMultiballCount(items, [createBall()], sequenceRandom([0.4, 0.6, 0.2]));
+    const expanded = ensureMultiballCount(items, [createBall()], sequenceRandom([0.4, 0.6, 0.2]), 4);
     expect(expanded).toHaveLength(4);
 
-    const trimmed = ensureMultiballCount(items, [...expanded, createBall()], sequenceRandom([0.5]));
+    const trimmed = ensureMultiballCount(items, [...expanded, createBall()], sequenceRandom([0.5]), 4);
     expect(trimmed).toHaveLength(4);
   });
 

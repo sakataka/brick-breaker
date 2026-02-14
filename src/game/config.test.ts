@@ -8,12 +8,14 @@ describe("config helpers", () => {
       difficulty: "hard",
       initialLives: 5,
       speedPreset: "1.25",
+      multiballMaxBalls: 6,
     });
 
     expect(config.difficulty).toBe("hard");
     expect(config.initialLives).toBe(5);
     expect(config.initialBallSpeed).toBeCloseTo(425, 5);
     expect(config.maxBallSpeed).toBeCloseTo(850, 5);
+    expect(config.multiballMaxBalls).toBe(6);
   });
 
   test("getGameplayBalance returns difficulty specific paddle width", () => {

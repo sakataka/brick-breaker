@@ -50,8 +50,8 @@ export function getSlowBallMaxSpeedScale(items: ItemState): number {
   return createItemModifiers(items.active).maxSpeedScale;
 }
 
-export function getTargetBallCount(items: ItemState): number {
-  return createItemModifiers(items.active).targetBallCount;
+export function getTargetBallCount(items: ItemState, multiballMaxBalls: number): number {
+  return createItemModifiers(items.active, multiballMaxBalls).targetBallCount;
 }
 
 export function getPierceDepth(items: ItemState): number {
@@ -147,8 +147,13 @@ export function updateFallingItems(
   return picked;
 }
 
-export function ensureMultiballCount(items: ItemState, balls: Ball[], random: RandomSource): Ball[] {
-  const target = getTargetBallCount(items);
+export function ensureMultiballCount(
+  items: ItemState,
+  balls: Ball[],
+  random: RandomSource,
+  multiballMaxBalls: number,
+): Ball[] {
+  const target = getTargetBallCount(items, multiballMaxBalls);
   if (balls.length === 0) {
     return balls;
   }

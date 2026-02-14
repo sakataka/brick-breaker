@@ -11,6 +11,7 @@ const baseConfig: GameConfig = {
   initialLives: 3,
   initialBallSpeed: 320,
   maxBallSpeed: 620,
+  multiballMaxBalls: 4,
   assistDurationSec: 3,
   assistPaddleScale: 1.1,
   assistMaxSpeedScale: 0.92,

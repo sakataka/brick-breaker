@@ -18,6 +18,7 @@ export interface OverlayElements {
   difficulty: HTMLSelectElement;
   initialLives: HTMLSelectElement;
   speedPreset: HTMLSelectElement;
+  multiballMaxBalls: HTMLSelectElement;
   resultsSection: HTMLDivElement;
   resultsList: HTMLUListElement;
 }
@@ -26,6 +27,7 @@ export interface StartSettingsSelection {
   difficulty: Difficulty;
   initialLives: number;
   speedPreset: SpeedPreset;
+  multiballMaxBalls: number;
 }
 
 export const OVERLAY_COPY: Record<Scene, OverlayCopy> = {
@@ -103,6 +105,11 @@ export function getOverlayElements(documentRef: Document): OverlayElements {
     "#setting-speed",
     "setting-speed要素が見つかりません",
   );
+  const multiballMaxBalls = getRequiredElement<HTMLSelectElement>(
+    documentRef,
+    "#setting-multiball-max",
+    "setting-multiball-max要素が見つかりません",
+  );
   const resultsSection = getRequiredElement<HTMLDivElement>(
     documentRef,
     "#overlay-results-section",
@@ -123,6 +130,7 @@ export function getOverlayElements(documentRef: Document): OverlayElements {
     difficulty,
     initialLives,
     speedPreset,
+    multiballMaxBalls,
     resultsSection,
     resultsList,
   };
@@ -132,10 +140,12 @@ export function readStartSettings(elements: OverlayElements): StartSettingsSelec
   const difficulty = parseDifficulty(elements.difficulty.value);
   const lives = Number.parseInt(elements.initialLives.value, 10);
   const speedPreset = parseSpeedPreset(elements.speedPreset.value);
+  const multiballMaxBalls = Number.parseInt(elements.multiballMaxBalls.value, 10);
   return {
     difficulty,
     initialLives: Number.isFinite(lives) ? lives : 4,
     speedPreset,
+    multiballMaxBalls: Number.isFinite(multiballMaxBalls) ? multiballMaxBalls : 4,
   };
 }
 
@@ -224,10 +234,10 @@ function renderCampaignResults(listElement: HTMLUListElement, results: StageResu
 }
 
 function parseDifficulty(value: string): Difficulty {
-  if (value === "standard" || value === "hard") {
+  if (value === "casual" || value === "hard") {
     return value;
   }
-  return "casual";
+  return "standard";
 }
 
 function parseSpeedPreset(value: string): SpeedPreset {

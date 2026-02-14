@@ -37,10 +37,10 @@ describe("itemRegistry", () => {
     stacks.pierceStacks = 2;
     stacks.bombStacks = 1;
 
-    const modifiers = createItemModifiers(stacks);
+    const modifiers = createItemModifiers(stacks, 5);
     expect(modifiers.paddleScale).toBeGreaterThan(1);
     expect(modifiers.maxSpeedScale).toBeGreaterThanOrEqual(0.35);
-    expect(modifiers.targetBallCount).toBe(4);
+    expect(modifiers.targetBallCount).toBe(5);
     expect(modifiers.shieldCharges).toBe(3);
     expect(modifiers.pierceDepth).toBe(8);
     expect(modifiers.bombRadiusTiles).toBe(1);

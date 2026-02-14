@@ -48,6 +48,7 @@ export interface GameConfig {
   initialLives: number;
   initialBallSpeed: number;
   maxBallSpeed: number;
+  multiballMaxBalls: number;
   assistDurationSec: number;
   assistPaddleScale: number;
   assistMaxSpeedScale: number;

@@ -85,7 +85,7 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
 
   state.balls =
     pickedMultiball && !hadBallDrop
-      ? ensureMultiballCount(state.items, physics.survivors, random)
+      ? ensureMultiballCount(state.items, physics.survivors, random, config.multiballMaxBalls)
       : physics.survivors;
 
   if (physics.hasClear) {

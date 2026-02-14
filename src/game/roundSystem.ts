@@ -41,6 +41,7 @@ function buildStageRound(
     state.items,
     [createServeBall(config, state.paddle, balance.ballRadius, random, stageInitialSpeed)],
     random,
+    config.multiballMaxBalls,
   );
   state.combo = {
     multiplier: 1,
@@ -76,6 +77,7 @@ export function advanceStage(state: GameState, config: GameConfig, random: Rando
   }
 
   const carriedActiveItems = cloneActiveItemState(state.items.active);
+  carriedActiveItems.bombStacks = 0;
   state.campaign.stageIndex += 1;
   buildStageRound(state, config, random, {
     carriedActiveItems,
