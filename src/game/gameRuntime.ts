@@ -1,7 +1,7 @@
 import type { SfxManager } from "../audio/sfx";
 import { GAME_BALANCE } from "./config";
 import { stepPlayingPipeline } from "./gamePipeline";
-import { consumeShield, ensureMultiballCount } from "./itemSystem";
+import { consumeShield } from "./itemSystem";
 import { applyLifeLoss, retryCurrentStage } from "./roundSystem";
 import type { Ball, GameConfig, GameState, RandomSource } from "./types";
 import { triggerHitFreeze, updateVfxState } from "./vfxSystem";
@@ -75,9 +75,7 @@ export function handleBallLoss(
   if (!applyLifeLoss(state, 1, config, random)) {
     retryCurrentStage(state, config, random);
     onGameOver();
-    return;
   }
-  state.balls = ensureMultiballCount(state.items, state.balls, random);
 }
 
 function tryShieldRescue(

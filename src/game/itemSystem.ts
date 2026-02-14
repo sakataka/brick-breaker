@@ -27,6 +27,10 @@ export function createItemState(): ItemState {
   };
 }
 
+export function clearActiveItemEffects(items: ItemState): void {
+  items.active = createItemStacks();
+}
+
 export function getPaddleScale(items: ItemState): number {
   return createItemModifiers(items.active).paddleScale;
 }

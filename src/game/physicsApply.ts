@@ -4,6 +4,7 @@ import type { Ball, CollisionEvent, GameConfig, GameState, Paddle } from "./type
 
 export interface MultiBallPhysicsResult {
   survivors: Ball[];
+  lostBalls: number;
   scoreGain: number;
   hasClear: boolean;
   events: CollisionEvent[];
@@ -23,6 +24,7 @@ export function runPhysicsForBalls(
   const frames: PhysicsFrameResult[] = [];
   let scoreGain = 0;
   let hasClear = false;
+  let lostBalls = 0;
 
   for (const ball of balls) {
     const frame = stepPhysicsCore({
@@ -43,11 +45,14 @@ export function runPhysicsForBalls(
     }
     if (frame.livesLost <= 0) {
       survivors.push(ball);
+    } else {
+      lostBalls += frame.livesLost;
     }
   }
 
   return {
     survivors,
+    lostBalls,
     scoreGain,
     hasClear,
     events,

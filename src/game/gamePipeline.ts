@@ -4,6 +4,7 @@ import { playCollisionSounds } from "./collisionEffects";
 import { GAME_BALANCE } from "./config";
 import {
   applyItemPickup,
+  clearActiveItemEffects,
   ensureMultiballCount,
   getBombRadiusTiles,
   getPaddleScale,
@@ -51,20 +52,32 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   });
 
   state.score += physics.scoreGain;
+  const hadBallDrop = physics.lostBalls > 0;
   playCollisionSounds(deps.sfx, physics.events);
   applyCollisionEvents(state.vfx, physics.events, random);
   spawnDropsFromBrickEvents(state.items, physics.events, random);
 
   const picks = updateFallingItems(state.items, state.paddle, config.height, config.fixedDeltaSec);
+  let pickedMultiball = false;
   for (const pick of picks) {
     applyItemPickup(state.items, pick.type, physics.survivors);
+    if (pick.type === "multiball") {
+      pickedMultiball = true;
+    }
     spawnItemPickupFeedback(state.vfx, pick.type, pick.pos.x, pick.pos.y);
   }
   if (picks.length > 0) {
     deps.playPickupSfx();
   }
 
-  state.balls = ensureMultiballCount(state.items, physics.survivors, random);
+  if (hadBallDrop) {
+    clearActiveItemEffects(state.items);
+  }
+
+  state.balls =
+    pickedMultiball && !hadBallDrop
+      ? ensureMultiballCount(state.items, physics.survivors, random)
+      : physics.survivors;
 
   if (physics.hasClear) {
     return "stageclear";

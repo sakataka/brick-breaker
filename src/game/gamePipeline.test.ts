@@ -91,4 +91,48 @@ describe("gamePipeline", () => {
     expect(state.balls).toHaveLength(1);
     expect(state.elapsedSec).toBeGreaterThan(0);
   });
+
+  test("clears all item effects when any ball is dropped during multiball", () => {
+    const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60 };
+    const state = createInitialGameState(config, true, "playing");
+    state.scene = "playing";
+    state.bricks = [];
+    state.balls = [
+      {
+        pos: { x: 80, y: 100 },
+        vel: { x: 0, y: -120 },
+        radius: 6,
+        speed: config.initialBallSpeed,
+      },
+      {
+        pos: { x: 130, y: 190 },
+        vel: { x: 0, y: 260 },
+        radius: 6,
+        speed: config.initialBallSpeed,
+      },
+    ];
+    state.items.active.multiballStacks = 2;
+    state.items.active.slowBallStacks = 1;
+    state.items.active.shieldCharges = 1;
+    state.items.active.paddlePlusStacks = 1;
+    state.items.active.pierceStacks = 1;
+    state.items.active.bombStacks = 1;
+
+    const outcome = stepPlayingPipeline(state, {
+      config,
+      random,
+      sfx: sfxStub as never,
+      tryShieldRescue: () => false,
+      playPickupSfx: () => {},
+    });
+
+    expect(outcome).toBe("continue");
+    expect(state.balls).toHaveLength(1);
+    expect(state.items.active.multiballStacks).toBe(0);
+    expect(state.items.active.slowBallStacks).toBe(0);
+    expect(state.items.active.shieldCharges).toBe(0);
+    expect(state.items.active.paddlePlusStacks).toBe(0);
+    expect(state.items.active.pierceStacks).toBe(0);
+    expect(state.items.active.bombStacks).toBe(0);
+  });
 });

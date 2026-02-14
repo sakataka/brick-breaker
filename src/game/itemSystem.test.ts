@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import {
   applyItemPickup,
   canUseShield,
+  clearActiveItemEffects,
   consumeShield,
   createItemState,
   ensureMultiballCount,
@@ -146,5 +147,18 @@ describe("itemSystem", () => {
     const labels = getActiveItemLabels(items);
     expect(labels.some((label) => label.includes("MULTI x1"))).toBe(true);
     expect(labels.some((label) => label.includes("PIERCE x2"))).toBe(true);
+  });
+
+  test("clearActiveItemEffects resets all active stacks", () => {
+    const items = createItemState();
+    applyItemPickup(items, "multiball", [createBall()]);
+    applyItemPickup(items, "shield", [createBall()]);
+    applyItemPickup(items, "pierce", [createBall()]);
+
+    clearActiveItemEffects(items);
+
+    expect(items.active.multiballStacks).toBe(0);
+    expect(items.active.shieldCharges).toBe(0);
+    expect(items.active.pierceStacks).toBe(0);
   });
 });
