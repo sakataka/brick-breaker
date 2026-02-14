@@ -7,7 +7,12 @@
 - 評価軸:
   「楽しさインパクト」を最重視し、次に導入しやすさ・回帰リスクの順で判断する。
 - 対象:
-  今回は文書化のみ。コード変更は行わない。
+  アイディア一覧と導入状況の参照。実装進捗は `docs/idea-progress.md` を正本とする。
+
+## 実装状況サマリ（2026-02-14）
+
+- 実装済み: `BB-IDEA-01` 〜 `BB-IDEA-08`
+- 未着手: `BB-IDEA-09` 〜 `BB-IDEA-18`
 
 ## 実装接続ガイド（共通）
 
@@ -24,7 +29,7 @@
 
 ---
 
-## 2. すぐ実装候補（P1）
+## 2. すぐ実装候補（P1: 01〜08は実装済み）
 
 ### BB-IDEA-01
 - ID: `BB-IDEA-01`
@@ -34,6 +39,7 @@
 - 実装難易度（S/M/L）: `M`
 - 回帰リスク: クリア判定の分岐追加で既存ステージ進行に影響する可能性。
 - 優先度（P1/P2/P3）: `P1`
+- 実装状況: `DONE`（`docs/idea-progress.md` 参照）
 - 参考ソース: [Breakout: Recharged](https://atari.com/products/breakout-recharged)
 - 最小導入版: 12面に「時間内クリア」だけを1条件追加し、クリア画面に達成表示を出す。
 
@@ -45,6 +51,7 @@
 - 実装難易度（S/M/L）: `M`
 - 回帰リスク: `Brick` の状態更新ルール変更で衝突テストの更新が必要。
 - 優先度（P1/P2/P3）: `P1`
+- 実装状況: `DONE`（`docs/idea-progress.md` 参照）
 - 参考ソース: [Arkanoid](https://en.wikipedia.org/wiki/Arkanoid)
 - 最小導入版: `durable` の亜種を1つだけ追加し、9〜12面の一部に配置。
 
@@ -56,6 +63,7 @@
 - 実装難易度（S/M/L）: `M`
 - 回帰リスク: ブロック破壊イベントの副作用が増え、スコア計算へ影響しうる。
 - 優先度（P1/P2/P3）: `P1`
+- 実装状況: `DONE`（`docs/idea-progress.md` 参照）
 - 参考ソース: [Shatter (Steam)](https://store.steampowered.com/app/20820/Shatter/)
 - 最小導入版: 「破壊時に3秒スロー解除（速度上昇）」の1デバフのみ。
 
@@ -67,6 +75,7 @@
 - 実装難易度（S/M/L）: `S`
 - 回帰リスク: ドロップ頻度過多でゲームバランスが崩れる可能性。
 - 優先度（P1/P2/P3）: `P1`
+- 実装状況: `DONE`（`docs/idea-progress.md` 参照）
 - 参考ソース: [Breakout: Recharged](https://atari.com/products/breakout-recharged)
 - 最小導入版: `x2.0` 到達時に1回だけ確定ドロップ。
 
@@ -78,6 +87,7 @@
 - 実装難易度（S/M/L）: `M`
 - 回帰リスク: 条件分岐の増加によりアイテム挙動の期待値が読みにくくなる。
 - 優先度（P1/P2/P3）: `P1`
+- 実装状況: `DONE`（`docs/idea-progress.md` 参照）
 - 参考ソース: [Wizorb (Steam)](https://store.steampowered.com/app/207420/Wizorb/)
 - 最小導入版: 1組だけ実装（`pierce + slow_ball` で貫通距離+1）。
 
@@ -89,6 +99,7 @@
 - 実装難易度（S/M/L）: `L`
 - 回帰リスク: 新しい当たり判定オブジェクトの導入で物理回帰範囲が広い。
 - 優先度（P1/P2/P3）: `P1`
+- 実装状況: `DONE`（`docs/idea-progress.md` 参照）
 - 参考ソース: [Arkanoid](https://en.wikipedia.org/wiki/Arkanoid)
 - 最小導入版: 12面のみ簡易ボス（HPゲージ付き単一ターゲット）。
 
@@ -100,6 +111,7 @@
 - 実装難易度（S/M/L）: `M`
 - 回帰リスク: 通常モードと乱数経路を分離しないと既存体験へ混入する。
 - 優先度（P1/P2/P3）: `P1`
+- 実装状況: `DONE`（`docs/idea-progress.md` 参照）
 - 参考ソース: [Breakout (Wikipedia)](https://en.wikipedia.org/wiki/Breakout_%28video_game%29)
 - 最小導入版: スタート画面に「チャレンジ」トグルを追加して固定シードを適用。
 
@@ -111,6 +123,7 @@
 - 実装難易度（S/M/L）: `M`
 - 回帰リスク: 日付依存ロジックでテストが不安定になる可能性。
 - 優先度（P1/P2/P3）: `P1`
+- 実装状況: `DONE`（`docs/idea-progress.md` 参照）
 - 参考ソース: [Breakout: Recharged](https://atari.com/products/breakout-recharged)
 - 最小導入版: 1日1シード+1目標（例: ノーミス）だけを表示。
 
