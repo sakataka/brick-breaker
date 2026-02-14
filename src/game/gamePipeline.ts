@@ -2,7 +2,7 @@ import type { SfxManager } from "../audio/sfx";
 import { applyAssistToPaddle, getCurrentMaxBallSpeed } from "./assistSystem";
 import { playCollisionSounds } from "./collisionEffects";
 import { applyComboHits, normalizeCombo, resetCombo } from "./comboSystem";
-import { getGameplayBalance } from "./config";
+import { getGameplayBalance, HAZARD_CONFIG } from "./config";
 import {
   applyItemPickup,
   clearActiveItemEffects,
@@ -38,7 +38,9 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   const stageInitialSpeed = getStageInitialBallSpeed(config, state.campaign.stageIndex);
   const stageMaxSpeed = getStageMaxBallSpeed(config, state.campaign.stageIndex);
   const maxWithAssist = getCurrentMaxBallSpeed(stageMaxSpeed, state.assist, state.elapsedSec);
-  const effectiveMaxSpeed = maxWithAssist * getSlowBallMaxSpeedScale(state.items);
+  const hazardSpeedScale =
+    state.elapsedSec < state.hazard.speedBoostUntilSec ? HAZARD_CONFIG.maxSpeedScale : 1;
+  const effectiveMaxSpeed = maxWithAssist * getSlowBallMaxSpeedScale(state.items) * hazardSpeedScale;
   const pierceDepth = getPierceDepth(state.items);
   const bombRadiusTiles = getBombRadiusTiles(state.items);
 
@@ -55,6 +57,9 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   });
 
   const destroyedBricks = physics.events.filter((event) => event.kind === "brick").length;
+  const triggeredHazard = physics.events.some(
+    (event) => event.kind === "brick" && event.brickKind === "hazard",
+  );
   state.score += applyComboHits(state.combo, state.elapsedSec, destroyedBricks, balance.scorePerBrick);
   const hadBallDrop = physics.lostBalls > 0;
   const lostAllBalls = physics.survivors.length <= 0;
@@ -73,6 +78,23 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   }
   for (const pick of picks.slice(0, 2)) {
     deps.playPickupSfx(pick.type);
+  }
+
+  if (triggeredHazard) {
+    state.items.active.slowBallStacks = 0;
+    state.hazard.speedBoostUntilSec = state.elapsedSec + HAZARD_CONFIG.durationSec;
+    const boostedMaxSpeed = maxWithAssist * HAZARD_CONFIG.maxSpeedScale;
+    for (const ball of physics.survivors) {
+      const speed = Math.hypot(ball.vel.x, ball.vel.y);
+      const target = Math.min(boostedMaxSpeed, speed * HAZARD_CONFIG.instantSpeedScale);
+      if (speed <= 0 || target <= 0) {
+        continue;
+      }
+      const scale = target / speed;
+      ball.vel.x *= scale;
+      ball.vel.y *= scale;
+      ball.speed = target;
+    }
   }
 
   if (lostAllBalls) {

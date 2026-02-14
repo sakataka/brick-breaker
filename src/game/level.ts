@@ -60,7 +60,7 @@ export function buildBricksFromStage(
 }
 
 function getInitialHpByKind(kind: BrickKind): number {
-  if (kind === "normal") {
+  if (kind === "normal" || kind === "hazard") {
     return 1;
   }
   return 2;

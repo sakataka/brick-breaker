@@ -48,13 +48,14 @@ export function buildHudViewModel(state: GameState): HudViewModel {
   const activeItems = getActiveItemLabels(state.items);
   const themeBand = getThemeBandByStageIndex(state.campaign.stageIndex);
   const comboVisible = state.combo.streak > 1;
+  const hazardBoostActive = state.elapsedSec < state.hazard.speedBoostUntilSec;
   return {
     scoreText: `スコア: ${state.score}`,
     livesText: `残機: ${state.lives}`,
     timeText: `時間: ${formatTime(state.elapsedSec)}`,
     stageText: `ステージ: ${state.campaign.stageIndex + 1}/${state.campaign.totalStages}`,
     comboText: comboVisible ? `コンボ x${state.combo.multiplier.toFixed(2)}` : "コンボ x1.00",
-    itemsText: `アイテム: ${activeItems.join(" / ")}`,
+    itemsText: `アイテム: ${activeItems.join(" / ")}${hazardBoostActive ? " / ⚠危険加速中" : ""}`,
     accessibilityText: buildAccessibilityBadge(state),
     accentColor: comboVisible ? COMBO_ACTIVE_COLOR : themeBand.hudAccent,
   };

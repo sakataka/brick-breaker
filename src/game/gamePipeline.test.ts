@@ -248,6 +248,36 @@ describe("gamePipeline", () => {
     expect(thirdGain).toBe(100);
   });
 
+  test("destroying hazard brick clears slow stacks and starts temporary speed boost", () => {
+    const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60 };
+    const state = createInitialGameState(config, true, "playing");
+    state.scene = "playing";
+    state.items.active.slowBallStacks = 2;
+    state.bricks = [
+      { id: 1, x: 100, y: 70, width: 40, height: 12, alive: true, kind: "hazard", hp: 1 },
+      { id: 2, x: 10, y: 10, width: 40, height: 12, alive: true, kind: "normal", hp: 1 },
+    ];
+    overrideSingleBall(state, {
+      pos: { x: 120, y: 68 },
+      vel: { x: 0, y: 70 },
+      radius: 8,
+      speed: config.initialBallSpeed,
+    });
+
+    const outcome = stepPlayingPipeline(state, {
+      config,
+      random,
+      sfx: sfxStub as never,
+      tryShieldRescue: () => false,
+      playPickupSfx: () => {},
+    });
+
+    expect(outcome).toBe("continue");
+    expect(state.items.active.slowBallStacks).toBe(0);
+    expect(state.hazard.speedBoostUntilSec).toBeGreaterThan(state.elapsedSec);
+    expect(state.balls[0]?.speed).toBeGreaterThan(70);
+  });
+
   test("stageclear then advanceStage preserves active effects and starts next stage", () => {
     const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60 };
     const state = createInitialGameState(config, true, "playing");

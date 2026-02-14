@@ -53,7 +53,8 @@ bunx playwright install chromium
 - コンボ倍率: `1.8s` 窓、`x1.00 -> x3.00`
 - ステージ評価: ★1〜★3（時間/被弾/残機）
 - ステージクリア時に制限時間ミッション（時間内クリア）の達成/未達を表示
-- 9〜12面にエリートブロック（`durable` / `armored` / `regen`）
+- 9〜12面にエリートブロック（`durable` / `armored` / `regen` / `hazard`）
+- `hazard` 破壊時は `slow_ball` 効果が解除され、3秒間だけ球速上限が上がる
 
 ## アイテム仕様
 

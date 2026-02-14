@@ -197,4 +197,27 @@ describe("physicsCore", () => {
     expect(third.collision.brick).toBe(1);
     expect(bricks[0]?.alive).toBe(false);
   });
+
+  test("hazard brick emits hazard kind event on destroy", () => {
+    const ball: Ball = {
+      pos: { x: 72, y: 72 },
+      vel: { x: 0, y: 120 },
+      radius: 8,
+      speed: 320,
+    };
+    const bricks: Brick[] = [
+      { id: 1, x: 60, y: 64, width: 20, height: 10, alive: true, kind: "hazard", hp: 1 },
+    ];
+
+    const result = stepPhysicsCore({
+      ball,
+      paddle: basePaddle(),
+      bricks,
+      config: baseConfig,
+      deltaSec: baseConfig.fixedDeltaSec,
+    });
+
+    expect(result.collision.brick).toBe(1);
+    expect(result.events.some((event) => event.kind === "brick" && event.brickKind === "hazard")).toBe(true);
+  });
 });

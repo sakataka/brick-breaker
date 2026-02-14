@@ -89,6 +89,9 @@ export function createInitialGameState(
     },
     items: createItemState(),
     assist: createAssistState(config),
+    hazard: {
+      speedBoostUntilSec: 0,
+    },
     vfx: createVfxState(reducedMotion),
     a11y: {
       reducedMotion,

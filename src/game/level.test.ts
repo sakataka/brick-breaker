@@ -45,12 +45,21 @@ describe("stage catalog", () => {
 
     expect(eliteBricks.length).toBeGreaterThan(0);
     for (const brick of eliteBricks) {
-      expect(brick.hp).toBe(2);
+      if (brick.kind === "hazard") {
+        expect(brick.hp).toBe(1);
+      } else {
+        expect(brick.hp).toBe(2);
+      }
     }
     const regenBricks = eliteBricks.filter((brick) => brick.kind === "regen");
     expect(regenBricks.length).toBeGreaterThan(0);
     for (const brick of regenBricks) {
       expect(brick.regenCharges).toBe(1);
+    }
+    const hazardBricks = eliteBricks.filter((brick) => brick.kind === "hazard");
+    expect(hazardBricks.length).toBeGreaterThan(0);
+    for (const brick of hazardBricks) {
+      expect(brick.hp).toBe(1);
     }
   });
 });

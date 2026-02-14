@@ -1,4 +1,4 @@
-import type { Ball, Brick, ItemType, Paddle, Scene, Vector2 } from "./domainTypes";
+import type { Ball, Brick, BrickKind, ItemType, Paddle, Scene, Vector2 } from "./domainTypes";
 
 export interface AssistState {
   untilSec: number;
@@ -53,6 +53,7 @@ export interface CollisionEvent {
   x: number;
   y: number;
   color?: string;
+  brickKind?: BrickKind;
 }
 
 export interface CampaignState {
@@ -115,6 +116,7 @@ export interface RuntimeState {
   bricks: Brick[];
   items: ItemState;
   assist: AssistState;
+  hazard: HazardState;
   vfx: VfxState;
   a11y: A11yState;
 }
@@ -145,4 +147,8 @@ export interface StageStats {
 export interface A11yState {
   reducedMotion: boolean;
   highContrast: boolean;
+}
+
+export interface HazardState {
+  speedBoostUntilSec: number;
 }

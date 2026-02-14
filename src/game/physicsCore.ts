@@ -307,6 +307,7 @@ function applyBrickCollision(
     x: target.x + target.width / 2,
     y: target.y + target.height / 2,
     color: target.color,
+    brickKind: target.kind ?? "normal",
   }));
 
   return {
@@ -325,7 +326,7 @@ function damageBrick(brick: Brick, source: BrickDamageSource, destroyed: Brick[]
   }
 
   const kind = brick.kind ?? "normal";
-  const defaultHp = kind === "normal" ? 1 : 2;
+  const defaultHp = kind === "normal" || kind === "hazard" ? 1 : 2;
   const currentHp = typeof brick.hp === "number" && Number.isFinite(brick.hp) ? brick.hp : defaultHp;
   const nextHp = Math.max(0, currentHp - 1);
 

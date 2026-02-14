@@ -57,6 +57,12 @@ export interface RatingConfig {
   targetSecPerStage: number;
 }
 
+export interface HazardConfig {
+  durationSec: number;
+  maxSpeedScale: number;
+  instantSpeedScale: number;
+}
+
 export const DEFAULT_MULTIBALL_MAX_BALLS = 4;
 
 export const START_SETTING_LIMITS = {
@@ -177,6 +183,12 @@ export const RATING_CONFIG: RatingConfig = {
   lifeScorePerLife: 8,
   baseTargetSec: 92,
   targetSecPerStage: 4,
+};
+
+export const HAZARD_CONFIG: HazardConfig = {
+  durationSec: 3,
+  maxSpeedScale: 1.2,
+  instantSpeedScale: 1.15,
 };
 
 export function getGameplayBalance(difficulty: Difficulty): GameplayBalance {

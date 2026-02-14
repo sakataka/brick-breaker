@@ -35,6 +35,7 @@ function buildStageRound(
     state.items.active = cloneActiveItemState(options.carriedActiveItems);
   }
   state.assist = createAssistState(config);
+  state.hazard.speedBoostUntilSec = 0;
   state.vfx = createVfxState(state.vfx.reducedMotion);
   state.paddle = createBasePaddle(config);
   state.balls = ensureMultiballCount(
