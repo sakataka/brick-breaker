@@ -27,7 +27,7 @@ const DEFAULT_FADE_MS = 220;
 export class BgmSequencer implements BgmController {
   private context: AudioContext | null = null;
   private enabled = true;
-  private targetGain = 0.22;
+  private targetGain = 0.2;
   private activeLayer: PlaybackLayer | null = null;
   private paused = false;
   private pendingTrack: BgmTrack | null = null;
@@ -206,6 +206,19 @@ export class BgmSequencer implements BgmController {
             step.leadGain ?? 0.08,
             layer.track.leadWave,
           );
+        }
+        if (step.harmonyMidis && step.harmonyMidis.length > 0) {
+          const perNoteGain = (step.harmonyGain ?? 0.05) / Math.max(1, step.harmonyMidis.length);
+          for (const harmonyMidi of step.harmonyMidis) {
+            this.scheduleNote(
+              layer,
+              harmonyMidi,
+              layer.nextStepTime,
+              stepDurationSec * 0.74,
+              perNoteGain,
+              layer.track.harmonyWave,
+            );
+          }
         }
       }
 

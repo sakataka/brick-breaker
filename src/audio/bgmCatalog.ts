@@ -1,7 +1,9 @@
 export interface BgmStep {
   leadMidi?: number;
+  harmonyMidis?: readonly number[];
   bassMidi?: number;
   leadGain?: number;
+  harmonyGain?: number;
   bassGain?: number;
 }
 
@@ -10,6 +12,7 @@ export interface BgmTrack {
   theme: string;
   tempo: number;
   leadWave: OscillatorType;
+  harmonyWave: OscillatorType;
   bassWave: OscillatorType;
   steps: readonly BgmStep[];
 }
@@ -21,10 +24,12 @@ interface ThemeDefinition {
   title: string;
   source: string;
   leadWave: OscillatorType;
+  harmonyWave: OscillatorType;
   bassWave: OscillatorType;
   tempoRange: { min: number; max: number };
   leadMotif: readonly MidiNote[];
   bassMotif: readonly MidiNote[];
+  harmonyIntervals: readonly [number, number];
   transposeByVariant: readonly number[];
 }
 
@@ -39,10 +44,12 @@ const THEMES: readonly ThemeDefinition[] = [
     title: "Bach Dance",
     source: "Bach Minuet in G major (BWV Anh. 114) motif",
     leadWave: "triangle",
+    harmonyWave: "square",
     bassWave: "sine",
     tempoRange: { min: 114, max: 120 },
     leadMotif: [74, 79, 81, 83, 84, 83, 81, 79, 78, 79, 81, 83, 81, 79, 78, 79],
     bassMotif: [55, null, 59, null, 62, null, 59, null],
+    harmonyIntervals: [-4, -7],
     transposeByVariant: [0, 2, 4],
   },
   {
@@ -50,10 +57,12 @@ const THEMES: readonly ThemeDefinition[] = [
     title: "Mozart Light",
     source: "Mozart Sonata K.545 motif",
     leadWave: "square",
+    harmonyWave: "triangle",
     bassWave: "triangle",
     tempoRange: { min: 122, max: 130 },
     leadMotif: [76, 74, 72, 74, 76, 79, 77, 76, 74, 72, 74, 76, 77, 79, 81, 79],
     bassMotif: [48, null, 55, null, 52, null, 55, null],
+    harmonyIntervals: [-4, -7],
     transposeByVariant: [0, 2, 4],
   },
   {
@@ -61,10 +70,12 @@ const THEMES: readonly ThemeDefinition[] = [
     title: "Bach Counter",
     source: "Bach Invention No.1 (BWV 772) motif",
     leadWave: "sawtooth",
+    harmonyWave: "square",
     bassWave: "square",
     tempoRange: { min: 132, max: 140 },
     leadMotif: [74, 76, 77, 79, 81, 79, 77, 76, 74, 72, 71, 72, 74, 76, 77, 79],
     bassMotif: [50, null, 57, null, 53, null, 57, null],
+    harmonyIntervals: [-3, -7],
     transposeByVariant: [0, 1, 3],
   },
   {
@@ -72,10 +83,12 @@ const THEMES: readonly ThemeDefinition[] = [
     title: "Beethoven Drive",
     source: "Beethoven Symphony No.9 (Ode to Joy) motif",
     leadWave: "triangle",
+    harmonyWave: "square",
     bassWave: "sawtooth",
     tempoRange: { min: 142, max: 148 },
     leadMotif: [76, 76, 77, 79, 79, 77, 76, 74, 72, 72, 74, 76, 74, 72, 72, null],
     bassMotif: [48, null, 55, null, 52, null, 55, null],
+    harmonyIntervals: [-3, -7],
     transposeByVariant: [0, 1, 2],
   },
 ] as const;
@@ -116,8 +129,9 @@ function buildTitleTrack(): BgmTrack {
     theme: "Classical Prelude",
     tempo: 108,
     leadWave: "triangle",
+    harmonyWave: "square",
     bassWave: "sine",
-    steps: buildSteps(lead, bass, 0.102, 0.072),
+    steps: buildSteps(lead, bass, 0.102, 0.05, 0.072, [-5, -9]),
   };
 }
 
@@ -142,8 +156,9 @@ function buildStageTrack(stageNumber: number): BgmTrack {
     theme: `${theme.title} S${stage} (${theme.source})`,
     tempo: getThemeTempo(stage),
     leadWave: theme.leadWave,
+    harmonyWave: theme.harmonyWave,
     bassWave: theme.bassWave,
-    steps: buildSteps(lead, bass, 0.118, 0.084),
+    steps: buildSteps(lead, bass, 0.118, 0.056, 0.084, theme.harmonyIntervals),
   };
 }
 
@@ -151,7 +166,9 @@ function buildSteps(
   leadNotes: readonly MidiNote[],
   bassNotes: readonly MidiNote[],
   leadBaseGain: number,
+  harmonyBaseGain: number,
   bassBaseGain: number,
+  harmonyIntervals: readonly [number, number],
 ): BgmStep[] {
   const steps: BgmStep[] = [];
   for (let index = 0; index < STEP_COUNT; index += 1) {
@@ -159,8 +176,10 @@ function buildSteps(
     const bassMidi = bassNotes[index] ?? undefined;
     const accent = index % 8 === 0;
     const semiAccent = index % 8 === 4;
+    const harmonyMidis = buildHarmonyMidis(leadMidi, index, accent || semiAccent, harmonyIntervals);
     steps.push({
       leadMidi,
+      harmonyMidis,
       bassMidi,
       leadGain: leadMidi
         ? accent
@@ -169,10 +188,31 @@ function buildSteps(
             ? leadBaseGain + 0.01
             : leadBaseGain
         : undefined,
+      harmonyGain: harmonyMidis.length > 0 ? (accent ? harmonyBaseGain + 0.012 : harmonyBaseGain) : undefined,
       bassGain: bassMidi ? (accent ? bassBaseGain + 0.01 : bassBaseGain) : undefined,
     });
   }
   return steps;
+}
+
+function buildHarmonyMidis(
+  leadMidi: number | undefined,
+  index: number,
+  emphasize: boolean,
+  harmonyIntervals: readonly [number, number],
+): number[] {
+  if (typeof leadMidi !== "number") {
+    return [];
+  }
+  const primary = leadMidi + harmonyIntervals[0];
+  const secondary = leadMidi + harmonyIntervals[1];
+  if (emphasize) {
+    return [primary, secondary].filter((midi) => midi >= 36);
+  }
+  if (index % 2 === 0 && primary >= 36) {
+    return [primary];
+  }
+  return [];
 }
 
 function repeatToLength<T>(source: readonly T[], length: number): T[] {

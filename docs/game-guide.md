@@ -70,6 +70,7 @@
 
 - BGMは外部音源ファイルを使わず、WebAudio合成で再生しています。
 - 旋律はパブリックドメインの古典曲モチーフを基にした構成です。
+- 発音は単音ではなく、メロディにハーモニーを重ねる同時発音（3和音系）にしています。
   - Bach Minuet in G major (BWV Anh. 114)
   - Mozart Sonata K.545
   - Bach Invention No.1 (BWV 772)

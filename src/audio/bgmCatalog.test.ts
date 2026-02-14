@@ -36,4 +36,14 @@ describe("bgmCatalog", () => {
     expect(stage7.theme).not.toBe(stage10.theme);
     expect(`${stage1.leadWave}/${stage1.bassWave}`).not.toBe(`${stage10.leadWave}/${stage10.bassWave}`);
   });
+
+  test("includes polyphonic harmony notes for richer chord feel", () => {
+    const stage1 = getStageBgmTrack(1);
+    const harmonySteps = stage1.steps.filter((step) => (step.harmonyMidis?.length ?? 0) > 0);
+    const triadSteps = stage1.steps.filter((step) => (step.harmonyMidis?.length ?? 0) >= 2);
+
+    expect(stage1.harmonyWave).toBeDefined();
+    expect(harmonySteps.length).toBeGreaterThan(0);
+    expect(triadSteps.length).toBeGreaterThan(0);
+  });
 });
