@@ -12,6 +12,7 @@ import {
   getPierceDepth,
   getSlowBallMaxSpeedScale,
   spawnDropsFromBrickEvents,
+  syncMultiballStacksWithBallCount,
   updateFallingItems,
 } from "./itemSystem";
 import { runPhysicsForBalls } from "./physicsApply";
@@ -87,6 +88,7 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
     pickedMultiball && !hadBallDrop
       ? ensureMultiballCount(state.items, physics.survivors, random, config.multiballMaxBalls)
       : physics.survivors;
+  syncMultiballStacksWithBallCount(state.items, state.balls);
 
   if (physics.hasClear) {
     return "stageclear";

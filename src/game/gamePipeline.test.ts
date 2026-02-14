@@ -97,7 +97,7 @@ describe("gamePipeline", () => {
     expect(state.elapsedSec).toBeGreaterThan(0);
   });
 
-  test("keeps item effects while at least one ball survives during multiball", () => {
+  test("keeps non-multiball effects while multiball stacks follow surviving balls", () => {
     const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60 };
     const state = createInitialGameState(config, true, "playing");
     state.scene = "playing";
@@ -116,7 +116,7 @@ describe("gamePipeline", () => {
         speed: config.initialBallSpeed,
       },
     ];
-    state.items.active.multiballStacks = 2;
+    state.items.active.multiballStacks = 1;
     state.items.active.slowBallStacks = 1;
     state.items.active.shieldCharges = 1;
     state.items.active.paddlePlusStacks = 1;
@@ -133,12 +133,58 @@ describe("gamePipeline", () => {
 
     expect(outcome).toBe("continue");
     expect(state.balls).toHaveLength(1);
-    expect(state.items.active.multiballStacks).toBe(2);
+    expect(state.items.active.multiballStacks).toBe(0);
     expect(state.items.active.slowBallStacks).toBe(1);
     expect(state.items.active.shieldCharges).toBe(1);
     expect(state.items.active.paddlePlusStacks).toBe(1);
     expect(state.items.active.pierceStacks).toBe(1);
     expect(state.items.active.bombStacks).toBe(1);
+  });
+
+  test("multiball pickup adds one from current surviving balls instead of old stack history", () => {
+    const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60, multiballMaxBalls: 4 };
+    const state = createInitialGameState(config, true, "playing");
+    state.scene = "playing";
+    state.items.active.multiballStacks = 3;
+    state.balls = [
+      {
+        pos: { x: 130, y: 190 },
+        vel: { x: 0, y: 260 },
+        radius: 6,
+        speed: config.initialBallSpeed,
+      },
+      {
+        pos: { x: 100, y: 100 },
+        vel: { x: 0, y: -120 },
+        radius: 6,
+        speed: config.initialBallSpeed,
+      },
+      {
+        pos: { x: 150, y: 100 },
+        vel: { x: 0, y: -120 },
+        radius: 6,
+        speed: config.initialBallSpeed,
+      },
+    ];
+    state.items.falling.push({
+      id: 1,
+      type: "multiball",
+      pos: { x: 130, y: 150 },
+      speed: 0,
+      size: 16,
+    });
+
+    const outcome = stepPlayingPipeline(state, {
+      config,
+      random,
+      sfx: sfxStub as never,
+      tryShieldRescue: () => false,
+      playPickupSfx: () => {},
+    });
+
+    expect(outcome).toBe("continue");
+    expect(state.balls).toHaveLength(2);
+    expect(state.items.active.multiballStacks).toBe(1);
   });
 
   test("applies combo score within window and resets when window expires", () => {
@@ -208,13 +254,33 @@ describe("gamePipeline", () => {
     state.scene = "playing";
     state.items.active.multiballStacks = 3;
     state.items.active.pierceStacks = 1;
+    state.balls = [
+      {
+        pos: { x: 120, y: 68 },
+        vel: { x: 0, y: 70 },
+        radius: 8,
+        speed: config.initialBallSpeed,
+      },
+      {
+        pos: { x: 70, y: 110 },
+        vel: { x: 20, y: -60 },
+        radius: 8,
+        speed: config.initialBallSpeed,
+      },
+      {
+        pos: { x: 160, y: 120 },
+        vel: { x: -25, y: -65 },
+        radius: 8,
+        speed: config.initialBallSpeed,
+      },
+      {
+        pos: { x: 210, y: 130 },
+        vel: { x: -15, y: -80 },
+        radius: 8,
+        speed: config.initialBallSpeed,
+      },
+    ];
     state.bricks = [{ id: 1, x: 100, y: 70, width: 40, height: 12, alive: true }];
-    overrideSingleBall(state, {
-      pos: { x: 120, y: 68 },
-      vel: { x: 0, y: 70 },
-      radius: 8,
-      speed: config.initialBallSpeed,
-    });
 
     const outcome = stepPlayingPipeline(state, {
       config,

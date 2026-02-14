@@ -186,6 +186,10 @@ export function getActiveItemLabels(items: ItemState): string[] {
   return getActiveItemLabelsFromRegistry(items.active);
 }
 
+export function syncMultiballStacksWithBallCount(items: ItemState, balls: Ball[]): void {
+  items.active.multiballStacks = Math.max(0, balls.length - 1);
+}
+
 function intersectsPaddle(item: FallingItem, paddle: Paddle): boolean {
   const half = item.size / 2;
   const left = item.pos.x - half;
