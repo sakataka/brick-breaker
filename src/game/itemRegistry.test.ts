@@ -44,9 +44,19 @@ describe("itemRegistry", () => {
     expect(modifiers.maxSpeedScale).toBeGreaterThanOrEqual(0.35);
     expect(modifiers.targetBallCount).toBe(5);
     expect(modifiers.shieldCharges).toBe(3);
-    expect(modifiers.pierceDepth).toBe(4);
+    expect(modifiers.pierceDepth).toBe(5);
     expect(modifiers.bombRadiusTiles).toBe(1);
     expect(modifiers.explodeOnHit).toBe(true);
+  });
+
+  test("pierce + slow_ball synergy adds extra pierce depth", () => {
+    const stacks = createItemStacks();
+    stacks.pierceStacks = 1;
+    stacks.slowBallStacks = 1;
+
+    const modifiers = createItemModifiers(stacks, 4);
+
+    expect(modifiers.pierceDepth).toBe(5);
   });
 
   test("pickWeightedItemType excludes requested item types", () => {

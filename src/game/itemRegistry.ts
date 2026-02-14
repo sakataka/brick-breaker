@@ -152,12 +152,14 @@ export function createItemModifiers(
           ITEM_BALANCE.slowBallMinScale,
           ITEM_BALANCE.slowBallMaxSpeedScalePerStack ** stacks.slowBallStacks,
         );
+  const synergyPierceBonus =
+    stacks.pierceStacks > 0 && stacks.slowBallStacks > 0 ? ITEM_BALANCE.pierceSlowBonusDepth : 0;
 
   return {
     paddleScale,
     maxSpeedScale,
     targetBallCount: Math.min(1 + stacks.multiballStacks, multiballMaxBalls),
-    pierceDepth: Math.min(1, stacks.pierceStacks) * ITEM_BALANCE.pierceDepthPerStack,
+    pierceDepth: Math.min(1, stacks.pierceStacks) * ITEM_BALANCE.pierceDepthPerStack + synergyPierceBonus,
     bombRadiusTiles: stacks.bombStacks,
     explodeOnHit: stacks.bombStacks > 0,
     shieldCharges: stacks.shieldCharges,

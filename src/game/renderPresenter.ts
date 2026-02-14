@@ -49,13 +49,14 @@ export function buildHudViewModel(state: GameState): HudViewModel {
   const themeBand = getThemeBandByStageIndex(state.campaign.stageIndex);
   const comboVisible = state.combo.streak > 1;
   const hazardBoostActive = state.elapsedSec < state.hazard.speedBoostUntilSec;
+  const pierceSlowSynergy = state.items.active.pierceStacks > 0 && state.items.active.slowBallStacks > 0;
   return {
     scoreText: `スコア: ${state.score}`,
     livesText: `残機: ${state.lives}`,
     timeText: `時間: ${formatTime(state.elapsedSec)}`,
     stageText: `ステージ: ${state.campaign.stageIndex + 1}/${state.campaign.totalStages}`,
     comboText: comboVisible ? `コンボ x${state.combo.multiplier.toFixed(2)}` : "コンボ x1.00",
-    itemsText: `アイテム: ${activeItems.join(" / ")}${hazardBoostActive ? " / ⚠危険加速中" : ""}`,
+    itemsText: `アイテム: ${activeItems.join(" / ")}${hazardBoostActive ? " / ⚠危険加速中" : ""}${pierceSlowSynergy ? " / ✨貫通+1" : ""}`,
     accessibilityText: buildAccessibilityBadge(state),
     accentColor: comboVisible ? COMBO_ACTIVE_COLOR : themeBand.hudAccent,
   };

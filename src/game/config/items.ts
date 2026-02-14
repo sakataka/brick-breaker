@@ -21,6 +21,7 @@ export interface ItemBalance {
   slowBallInstantSpeedScale: number;
   multiballMaxBalls: number;
   pierceDepthPerStack: number;
+  pierceSlowBonusDepth: number;
 }
 
 export const ITEM_CONFIG: Record<ItemType, ItemRule> = {
@@ -63,6 +64,7 @@ export const ITEM_BALANCE: ItemBalance = {
   slowBallInstantSpeedScale: 0.9,
   multiballMaxBalls: DEFAULT_MULTIBALL_MAX_BALLS,
   pierceDepthPerStack: 4,
+  pierceSlowBonusDepth: 1,
 };
 
 export const DROP_CONFIG: DropConfig = {

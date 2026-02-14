@@ -65,6 +65,7 @@ bunx playwright install chromium
 - ステージクリア時はアクティブ効果を次面へ持ち越し（`bomb` は持ち越さない）
 - 全ボール喪失で全効果解除
 - `bomb` / `pierce` 有効中は同種アイテムを再ドロップしない
+- シナジー: `pierce` + `slow_ball` 同時有効で貫通深度 `+1`
 
 ## アクセシビリティ（自動適用）
 
