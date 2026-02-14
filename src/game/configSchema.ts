@@ -9,6 +9,15 @@ const stageDefinitionSchema = z.object({
     .array(z.array(z.union([z.literal(0), z.literal(1)])))
     .min(1)
     .refine((rows) => rows.every((row) => row.length > 0), "layout must include columns"),
+  elite: z
+    .array(
+      z.object({
+        row: z.number().int().min(0),
+        col: z.number().int().min(0),
+        kind: z.union([z.literal("durable"), z.literal("armored")]),
+      }),
+    )
+    .optional(),
 });
 
 const itemRuleSchema = z.object({
@@ -31,6 +40,14 @@ export function validateStageCatalog(catalog: StageDefinition[]): StageDefinitio
   for (const stage of parsed.data) {
     if (stage.layout.some((row) => row.length !== columnCount)) {
       throw new Error(`Invalid STAGE_CATALOG: inconsistent row width in stage ${stage.id}`);
+    }
+    for (const elite of stage.elite ?? []) {
+      if (elite.row >= stage.layout.length || elite.col >= columnCount) {
+        throw new Error(`Invalid STAGE_CATALOG: elite cell out of range in stage ${stage.id}`);
+      }
+      if (stage.layout[elite.row]?.[elite.col] !== 1) {
+        throw new Error(`Invalid STAGE_CATALOG: elite cell must be placed on a brick in stage ${stage.id}`);
+      }
     }
   }
 

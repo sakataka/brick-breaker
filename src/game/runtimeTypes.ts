@@ -94,6 +94,8 @@ export interface ProgressState {
   lives: number;
   elapsedSec: number;
   campaign: CampaignState;
+  combo: ComboState;
+  stageStats: StageStats;
 }
 
 export interface RuntimeState {
@@ -110,4 +112,18 @@ export type GameState = GameSceneState & ProgressState & RuntimeState;
 interface GameSceneState {
   scene: Scene;
   errorMessage: string | null;
+}
+
+export interface ComboState {
+  multiplier: number;
+  streak: number;
+  lastHitSec: number;
+}
+
+export interface StageStats {
+  hitsTaken: number;
+  startedAtSec: number;
+  clearedAtSec?: number;
+  starRating?: 1 | 2 | 3;
+  ratingScore?: number;
 }

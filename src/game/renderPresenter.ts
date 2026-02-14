@@ -1,11 +1,14 @@
+import { getThemeBandByStageIndex } from "./config";
 import { getActiveItemLabels } from "./itemSystem";
 import type { HudViewModel, OverlayViewModel, RenderViewState } from "./renderTypes";
+import { getStageClearTimeSec } from "./roundSystem";
 import type { GameState } from "./types";
 
 export function buildRenderViewState(state: GameState): RenderViewState {
   const total = state.bricks.length;
   const alive = state.bricks.reduce((count, brick) => count + (brick.alive ? 1 : 0), 0);
   const progressRatio = total <= 0 ? 0 : Math.max(0, Math.min(1, (total - alive) / total));
+  const themeBand = getThemeBandByStageIndex(state.campaign.stageIndex);
 
   return {
     scene: state.scene,
@@ -31,6 +34,7 @@ export function buildRenderViewState(state: GameState): RenderViewState {
     },
     fallingItems: state.items.falling,
     progressRatio,
+    themeBandId: themeBand.id,
     slowBallActive: state.items.active.slowBallStacks > 0,
     multiballActive: state.items.active.multiballStacks > 0,
     shieldCharges: state.items.active.shieldCharges,
@@ -40,16 +44,21 @@ export function buildRenderViewState(state: GameState): RenderViewState {
 
 export function buildHudViewModel(state: GameState): HudViewModel {
   const activeItems = getActiveItemLabels(state.items);
+  const themeBand = getThemeBandByStageIndex(state.campaign.stageIndex);
+  const comboVisible = state.combo.streak > 1;
   return {
     scoreText: `SCORE: ${state.score}`,
     livesText: `LIVES: ${state.lives}`,
     timeText: `TIME: ${formatTime(state.elapsedSec)}`,
     stageText: `STAGE: ${state.campaign.stageIndex + 1}/${state.campaign.totalStages}`,
+    comboText: comboVisible ? `COMBO x${state.combo.multiplier.toFixed(2)}` : "COMBO x1.00",
     itemsText: activeItems.length > 0 ? `ITEM: ${activeItems.join(" / ")}` : "ITEM: -",
+    accentColor: comboVisible ? COMBO_ACTIVE_COLOR : themeBand.hudAccent,
   };
 }
 
 export function buildOverlayViewModel(state: GameState): OverlayViewModel {
+  const clearSec = getStageClearTimeSec(state);
   return {
     scene: state.scene,
     score: state.score,
@@ -57,8 +66,22 @@ export function buildOverlayViewModel(state: GameState): OverlayViewModel {
     clearTime: state.scene === "clear" ? formatTime(state.elapsedSec) : undefined,
     errorMessage: state.errorMessage ?? undefined,
     stageLabel: `STAGE ${state.campaign.stageIndex + 1} / ${state.campaign.totalStages}`,
+    stageResult:
+      typeof state.stageStats.starRating === "number" &&
+      typeof state.stageStats.ratingScore === "number" &&
+      clearSec !== null
+        ? {
+            stars: state.stageStats.starRating,
+            ratingScore: state.stageStats.ratingScore,
+            clearTime: formatTime(clearSec),
+            hitsTaken: state.stageStats.hitsTaken,
+            livesLeft: state.lives,
+          }
+        : undefined,
   };
 }
+
+const COMBO_ACTIVE_COLOR = "#ffd46b";
 
 function formatTime(totalSec: number): string {
   const min = Math.floor(totalSec / 60);

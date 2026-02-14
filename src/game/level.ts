@@ -1,4 +1,9 @@
-import { type BrickLayout, BRICK_LAYOUT as DEFAULT_BRICK_LAYOUT, getBrickPaletteColor } from "./config";
+import {
+  type BrickLayout,
+  BRICK_LAYOUT as DEFAULT_BRICK_LAYOUT,
+  getBrickPaletteColor,
+  getBrickPaletteForStage,
+} from "./config";
 import type { Brick, StageDefinition } from "./types";
 
 export function buildBricks(layout: BrickLayout = DEFAULT_BRICK_LAYOUT): Brick[] {
@@ -18,6 +23,10 @@ export function buildBricksFromStage(
   layout: BrickLayout = DEFAULT_BRICK_LAYOUT,
 ): Brick[] {
   const { cols, rows, marginX, marginY, gapX, gapY, boardWidth, brickHeight } = layout;
+  const eliteMap = new Map(
+    (stage.elite ?? []).map((entry) => [`${entry.row}:${entry.col}`, entry.kind] as const),
+  );
+  const palette = getBrickPaletteForStage(stage.id - 1);
   const brickWidth = (boardWidth - gapX * (cols - 1)) / cols;
   const bricks: Brick[] = [];
   let id = 0;
@@ -28,6 +37,7 @@ export function buildBricksFromStage(
       if (cell !== 1) {
         continue;
       }
+      const eliteKind = eliteMap.get(`${row}:${col}`);
       bricks.push({
         id: id++,
         x: marginX + col * (brickWidth + gapX),
@@ -35,9 +45,11 @@ export function buildBricksFromStage(
         width: brickWidth,
         height: brickHeight,
         alive: true,
+        kind: eliteKind ?? "normal",
+        hp: eliteKind ? 2 : 1,
         row,
         col,
-        color: getBrickPaletteColor(row),
+        color: getBrickPaletteColor(row, palette),
       });
     }
   }

@@ -2,7 +2,7 @@ import type { SfxManager } from "../audio/sfx";
 import { GAME_BALANCE } from "./config";
 import { stepPlayingPipeline } from "./gamePipeline";
 import { consumeShield } from "./itemSystem";
-import { applyLifeLoss, retryCurrentStage } from "./roundSystem";
+import { applyLifeLoss, finalizeStageStats, retryCurrentStage } from "./roundSystem";
 import type { Ball, GameConfig, GameState, RandomSource } from "./types";
 import { triggerHitFreeze, updateVfxState } from "./vfxSystem";
 
@@ -60,6 +60,7 @@ export function handleStageClear(
   sfx: SfxManager,
   onTransition: (event: "GAME_CLEAR" | "STAGE_CLEAR") => void,
 ): void {
+  finalizeStageStats(state);
   triggerHitFreeze(state.vfx, 72);
   state.score += state.lives * GAME_BALANCE.clearBonusPerLife;
   void sfx.play("clear");

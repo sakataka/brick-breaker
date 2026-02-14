@@ -1,5 +1,5 @@
 import { activateAssist, applyAssistToPaddle, createAssistState } from "./assistSystem";
-import { GAME_BALANCE, getStageByIndex, STAGE_CATALOG } from "./config";
+import { GAME_BALANCE, getStageByIndex, getStageTimeTargetSec, RATING_CONFIG, STAGE_CATALOG } from "./config";
 import { cloneActiveItemState, createItemState, ensureMultiballCount } from "./itemSystem";
 import { buildBricksFromStage } from "./level";
 import { createBasePaddle, createServeBall } from "./stateFactory";
@@ -32,6 +32,15 @@ function buildStageRound(
     [createServeBall(config, state.paddle, GAME_BALANCE.ballRadius, random, stageInitialSpeed)],
     random,
   );
+  state.combo = {
+    multiplier: 1,
+    streak: 0,
+    lastHitSec: -1,
+  };
+  state.stageStats = {
+    hitsTaken: 0,
+    startedAtSec: state.elapsedSec,
+  };
 }
 
 export function resetRoundState(
@@ -74,6 +83,7 @@ export function applyLifeLoss(
   random: RandomSource,
 ): boolean {
   state.lives -= livesLost;
+  state.stageStats.hitsTaken += livesLost;
   if (state.lives <= 0) {
     return false;
   }
@@ -99,4 +109,50 @@ export function getStageInitialBallSpeed(config: GameConfig, stageIndex: number)
 
 export function getStageMaxBallSpeed(config: GameConfig, stageIndex: number): number {
   return config.maxBallSpeed * getStageByIndex(stageIndex).speedScale;
+}
+
+export function finalizeStageStats(state: GameState): void {
+  const clearTimeSec = Math.max(0, state.elapsedSec - state.stageStats.startedAtSec);
+  const ratingScore = computeStageRatingScore(state, clearTimeSec);
+  state.stageStats.clearedAtSec = state.elapsedSec;
+  state.stageStats.ratingScore = ratingScore;
+  state.stageStats.starRating = getStarRatingByScore(ratingScore);
+}
+
+export function getStageClearTimeSec(state: GameState): number | null {
+  if (typeof state.stageStats.clearedAtSec !== "number") {
+    return null;
+  }
+  return Math.max(0, state.stageStats.clearedAtSec - state.stageStats.startedAtSec);
+}
+
+export function getStarRatingByScore(score: number): 1 | 2 | 3 {
+  if (score >= RATING_CONFIG.star3Min) {
+    return 3;
+  }
+  if (score >= RATING_CONFIG.star2Min) {
+    return 2;
+  }
+  return 1;
+}
+
+function computeStageRatingScore(state: GameState, clearTimeSec: number): number {
+  const targetSec = getStageTimeTargetSec(state.campaign.stageIndex);
+  const safeClearSec = Math.max(1, clearTimeSec);
+  const timeScore = Math.max(
+    0,
+    Math.min(
+      RATING_CONFIG.timeScoreMax,
+      (targetSec / Math.max(targetSec, safeClearSec)) * RATING_CONFIG.timeScoreMax,
+    ),
+  );
+  const hitScore = Math.max(
+    0,
+    RATING_CONFIG.hitScoreMax - state.stageStats.hitsTaken * RATING_CONFIG.hitPenalty,
+  );
+  const lifeScore = Math.max(
+    0,
+    Math.min(RATING_CONFIG.lifeScoreMax, state.lives * RATING_CONFIG.lifeScorePerLife),
+  );
+  return Math.round(timeScore + hitScore + lifeScore);
 }

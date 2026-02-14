@@ -10,6 +10,7 @@ export interface HudElements {
   lives: HTMLSpanElement;
   time: HTMLSpanElement;
   stage: HTMLSpanElement;
+  combo: HTMLSpanElement;
   items: HTMLSpanElement;
 }
 
@@ -24,7 +25,12 @@ export function applyHudViewModel(hud: HudElements, model: HudViewModel, score: 
   hud.lives.textContent = model.livesText;
   hud.time.textContent = model.timeText;
   hud.stage.textContent = model.stageText;
+  hud.combo.textContent = model.comboText;
   hud.items.textContent = model.itemsText;
+  const hudRoot = hud.score.parentElement;
+  if (hudRoot) {
+    hudRoot.style.setProperty("--hud-accent", model.accentColor);
+  }
 }
 
 export function formatTime(totalSec: number): string {

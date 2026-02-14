@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { GAME_CONFIG } from "./config";
 import { stepPlayingPipeline } from "./gamePipeline";
+import { advanceStage } from "./roundSystem";
 import { createInitialGameState } from "./stateFactory";
 import type { Ball, RandomSource } from "./types";
 
@@ -134,5 +135,97 @@ describe("gamePipeline", () => {
     expect(state.items.active.paddlePlusStacks).toBe(0);
     expect(state.items.active.pierceStacks).toBe(0);
     expect(state.items.active.bombStacks).toBe(0);
+  });
+
+  test("applies combo score within window and resets when window expires", () => {
+    const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 0.8 };
+    const state = createInitialGameState(config, true, "playing");
+    state.scene = "playing";
+    state.bricks = [
+      { id: 1, x: 30, y: 40, width: 40, height: 10, alive: true },
+      { id: 2, x: 90, y: 40, width: 40, height: 10, alive: true },
+      { id: 3, x: 150, y: 40, width: 40, height: 10, alive: true },
+    ];
+    overrideSingleBall(state, {
+      pos: { x: 50, y: 36 },
+      vel: { x: 0, y: 160 },
+      radius: 8,
+      speed: config.initialBallSpeed,
+    });
+
+    stepPlayingPipeline(state, {
+      config,
+      random,
+      sfx: sfxStub as never,
+      tryShieldRescue: () => false,
+      playPickupSfx: () => {},
+    });
+    const afterFirst = state.score;
+
+    const secondBall = state.balls[0];
+    if (!secondBall) {
+      throw new Error("expected first ball");
+    }
+    secondBall.pos = { x: 110, y: 36 };
+    secondBall.vel = { x: 0, y: 160 };
+    stepPlayingPipeline(state, {
+      config,
+      random,
+      sfx: sfxStub as never,
+      tryShieldRescue: () => false,
+      playPickupSfx: () => {},
+    });
+    const secondGain = state.score - afterFirst;
+
+    state.elapsedSec += 2.2;
+    const thirdBall = state.balls[0];
+    if (!thirdBall) {
+      throw new Error("expected surviving ball");
+    }
+    thirdBall.pos = { x: 170, y: 36 };
+    thirdBall.vel = { x: 0, y: 160 };
+    stepPlayingPipeline(state, {
+      config,
+      random,
+      sfx: sfxStub as never,
+      tryShieldRescue: () => false,
+      playPickupSfx: () => {},
+    });
+    const thirdGain = state.score - afterFirst - secondGain;
+
+    expect(afterFirst).toBe(100);
+    expect(secondGain).toBe(125);
+    expect(thirdGain).toBe(100);
+  });
+
+  test("stageclear then advanceStage preserves active effects and starts next stage", () => {
+    const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60 };
+    const state = createInitialGameState(config, true, "playing");
+    state.scene = "playing";
+    state.items.active.multiballStacks = 3;
+    state.items.active.pierceStacks = 1;
+    state.bricks = [{ id: 1, x: 100, y: 70, width: 40, height: 12, alive: true }];
+    overrideSingleBall(state, {
+      pos: { x: 120, y: 68 },
+      vel: { x: 0, y: 70 },
+      radius: 8,
+      speed: config.initialBallSpeed,
+    });
+
+    const outcome = stepPlayingPipeline(state, {
+      config,
+      random,
+      sfx: sfxStub as never,
+      tryShieldRescue: () => false,
+      playPickupSfx: () => {},
+    });
+
+    expect(outcome).toBe("stageclear");
+    expect(advanceStage(state, config, random)).toBe(true);
+    expect(state.scene).toBe("playing");
+    expect(state.campaign.stageIndex).toBe(1);
+    expect(state.items.active.multiballStacks).toBe(3);
+    expect(state.items.active.pierceStacks).toBe(1);
+    expect(state.balls).toHaveLength(4);
   });
 });

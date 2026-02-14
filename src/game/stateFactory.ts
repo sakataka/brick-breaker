@@ -60,6 +60,15 @@ export function createInitialGameState(config: GameConfig, reducedMotion: boolea
     score: 0,
     lives: config.initialLives,
     elapsedSec: 0,
+    combo: {
+      multiplier: 1,
+      streak: 0,
+      lastHitSec: -1,
+    },
+    stageStats: {
+      hitsTaken: 0,
+      startedAtSec: 0,
+    },
     balls: [ball],
     paddle,
     bricks: buildBricksFromStage(stage),

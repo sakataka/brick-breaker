@@ -16,6 +16,9 @@ describe("stage catalog", () => {
       }
       expect(stage.speedScale).toBeGreaterThanOrEqual(1);
       expect(stage.speedScale).toBeLessThanOrEqual(1.18);
+      if (stage.id >= 9) {
+        expect((stage.elite ?? []).length).toBeGreaterThan(0);
+      }
     }
 
     expect(ids.size).toBe(12);
@@ -31,6 +34,18 @@ describe("stage catalog", () => {
       expect(brick.width).toBeGreaterThan(0);
       expect(brick.height).toBe(BRICK_LAYOUT.brickHeight);
       expect(brick.alive).toBe(true);
+      expect(brick.hp).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  test("buildBricksFromStage applies elite kind and hp", () => {
+    const stage = STAGE_CATALOG[8];
+    const bricks = buildBricksFromStage(stage);
+    const eliteBricks = bricks.filter((brick) => brick.kind && brick.kind !== "normal");
+
+    expect(eliteBricks.length).toBeGreaterThan(0);
+    for (const brick of eliteBricks) {
+      expect(brick.hp).toBe(2);
     }
   });
 });

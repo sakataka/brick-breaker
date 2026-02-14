@@ -270,10 +270,10 @@ function applyBrickCollision(
   }
 
   const destroyed: Brick[] = [];
-  destroyBrick(brick, destroyed);
+  damageBrick(brick, "direct", destroyed);
 
   if (options.bombRadiusTiles > 0) {
-    destroyExplodedBricks(bricks, brick, options.bombRadiusTiles, destroyed);
+    damageExplodedBricks(bricks, brick, options.bombRadiusTiles, destroyed);
   }
 
   ball.speed = Math.min(maxBallSpeed, ball.speed + balance.brickHitSpeedGain);
@@ -317,27 +317,40 @@ function applyBrickCollision(
   };
 }
 
-function destroyBrick(brick: Brick, destroyed: Brick[]): void {
+type BrickDamageSource = "direct" | "explosion";
+
+function damageBrick(brick: Brick, source: BrickDamageSource, destroyed: Brick[]): void {
   if (!brick.alive) {
     return;
   }
+
+  const kind = brick.kind ?? "normal";
+  const defaultHp = kind === "normal" ? 1 : 2;
+  const currentHp = typeof brick.hp === "number" && Number.isFinite(brick.hp) ? brick.hp : defaultHp;
+  const nextHp = Math.max(0, currentHp - 1);
+
+  if (source === "explosion" && kind === "armored") {
+    brick.hp = Math.max(1, nextHp);
+    return;
+  }
+
+  brick.hp = nextHp;
+  if (brick.hp > 0) {
+    return;
+  }
+
   brick.alive = false;
   destroyed.push(brick);
 }
 
-function destroyExplodedBricks(
-  bricks: Brick[],
-  center: Brick,
-  radiusTiles: number,
-  destroyed: Brick[],
-): void {
+function damageExplodedBricks(bricks: Brick[], center: Brick, radiusTiles: number, destroyed: Brick[]): void {
   for (const candidate of bricks) {
     if (!candidate.alive || candidate.id === center.id) {
       continue;
     }
 
     if (isWithinExplosionRange(candidate, center, radiusTiles)) {
-      destroyBrick(candidate, destroyed);
+      damageBrick(candidate, "explosion", destroyed);
     }
   }
 }

@@ -1,7 +1,15 @@
 import { describe, expect, test } from "bun:test";
 
 import { GAME_CONFIG, STAGE_CATALOG } from "./config";
-import { advanceStage, applyLifeLoss, resetRoundState, retryCurrentStage } from "./roundSystem";
+import {
+  advanceStage,
+  applyLifeLoss,
+  finalizeStageStats,
+  getStageClearTimeSec,
+  getStarRatingByScore,
+  resetRoundState,
+  retryCurrentStage,
+} from "./roundSystem";
 import { createInitialGameState } from "./stateFactory";
 import type { RandomSource } from "./types";
 
@@ -118,5 +126,27 @@ describe("roundSystem", () => {
 
     expect(state.items.active.bombStacks).toBe(0);
     expect(state.items.active.slowBallStacks).toBe(0);
+  });
+
+  test("star rating boundary thresholds are correct", () => {
+    expect(getStarRatingByScore(80)).toBe(3);
+    expect(getStarRatingByScore(79)).toBe(2);
+    expect(getStarRatingByScore(55)).toBe(2);
+    expect(getStarRatingByScore(54)).toBe(1);
+  });
+
+  test("finalizeStageStats stores stage clear details", () => {
+    const state = createInitialGameState(GAME_CONFIG, false, "playing");
+    resetRoundState(state, GAME_CONFIG, false, fixedRandom);
+    state.stageStats.startedAtSec = 10;
+    state.elapsedSec = 74;
+    state.stageStats.hitsTaken = 1;
+    state.lives = 3;
+
+    finalizeStageStats(state);
+
+    expect(state.stageStats.starRating).toBe(3);
+    expect(typeof state.stageStats.ratingScore).toBe("number");
+    expect(getStageClearTimeSec(state)).toBe(64);
   });
 });

@@ -6,7 +6,16 @@ import type { GameState } from "./types";
 
 export function syncSceneOverlayUI(overlay: ReturnType<typeof getOverlayElements>, state: GameState): void {
   const view = buildOverlayViewModel(state);
-  setSceneUI(overlay, view.scene, view.score, view.lives, view.clearTime, view.errorMessage, view.stageLabel);
+  setSceneUI(
+    overlay,
+    view.scene,
+    view.score,
+    view.lives,
+    view.clearTime,
+    view.errorMessage,
+    view.stageLabel,
+    view.stageResult,
+  );
 }
 
 export function renderGameFrame(renderer: Renderer, hud: HudElements, state: GameState): void {

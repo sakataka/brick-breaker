@@ -1,3 +1,4 @@
+import type { ThemeBandId } from "./config";
 import type { Ball, Brick, FallingItem, FloatingText, ImpactRing, Particle, Scene, Vector2 } from "./types";
 
 export interface RenderViewState {
@@ -24,6 +25,7 @@ export interface RenderViewState {
   };
   fallingItems: FallingItem[];
   progressRatio: number;
+  themeBandId: ThemeBandId;
   slowBallActive: boolean;
   multiballActive: boolean;
   shieldCharges: number;
@@ -35,7 +37,9 @@ export interface HudViewModel {
   livesText: string;
   timeText: string;
   stageText: string;
+  comboText: string;
   itemsText: string;
+  accentColor: string;
 }
 
 export interface OverlayViewModel {
@@ -45,4 +49,13 @@ export interface OverlayViewModel {
   clearTime?: string;
   errorMessage?: string;
   stageLabel: string;
+  stageResult?: StageResultView;
+}
+
+export interface StageResultView {
+  stars: 1 | 2 | 3;
+  ratingScore: number;
+  clearTime: string;
+  hitsTaken: number;
+  livesLeft: number;
 }

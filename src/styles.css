@@ -10,6 +10,7 @@
   --accent-a: #29d3ff;
   --accent-b: #ff9f45;
   --danger: #ff6a6a;
+  --hud-accent: #29d3ff;
 }
 
 * {
@@ -85,7 +86,7 @@ body::before {
   min-height: 58px;
   border-radius: 12px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   grid-template-rows: auto auto;
   gap: 0.18rem 0.5rem;
   justify-items: center;
@@ -101,6 +102,10 @@ body::before {
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
     0 12px 24px rgba(0, 0, 0, 0.24);
   text-shadow: 0 0 10px rgba(41, 211, 255, 0.45);
+}
+
+#combo {
+  color: var(--hud-accent);
 }
 
 #items {

@@ -1,6 +1,7 @@
 import type { SfxManager } from "../audio/sfx";
 import { applyAssistToPaddle, getCurrentMaxBallSpeed } from "./assistSystem";
 import { playCollisionSounds } from "./collisionEffects";
+import { applyComboHits, normalizeCombo, resetCombo } from "./comboSystem";
 import { GAME_BALANCE } from "./config";
 import {
   applyItemPickup,
@@ -51,7 +52,8 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
     onMiss: (target) => deps.tryShieldRescue(target, effectiveMaxSpeed),
   });
 
-  state.score += physics.scoreGain;
+  const destroyedBricks = physics.events.filter((event) => event.kind === "brick").length;
+  state.score += applyComboHits(state.combo, state.elapsedSec, destroyedBricks, GAME_BALANCE.scorePerBrick);
   const hadBallDrop = physics.lostBalls > 0;
   playCollisionSounds(deps.sfx, physics.events);
   applyCollisionEvents(state.vfx, physics.events, random);
@@ -72,6 +74,9 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
 
   if (hadBallDrop) {
     clearActiveItemEffects(state.items);
+    resetCombo(state.combo);
+  } else {
+    normalizeCombo(state.combo, state.elapsedSec);
   }
 
   state.balls =

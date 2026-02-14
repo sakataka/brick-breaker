@@ -83,4 +83,68 @@ describe("physicsCore", () => {
     expect(result.collision.brick).toBeGreaterThanOrEqual(1);
     expect(result.collision.brick).toBeLessThan(bricks.length);
   });
+
+  test("durable brick breaks on second direct hit", () => {
+    const ball: Ball = {
+      pos: { x: 72, y: 72 },
+      vel: { x: 0, y: 120 },
+      radius: 8,
+      speed: 320,
+    };
+    const bricks: Brick[] = [
+      { id: 1, x: 60, y: 64, width: 20, height: 10, alive: true, kind: "durable", hp: 2 },
+    ];
+
+    const first = stepPhysicsCore({
+      ball,
+      paddle: basePaddle(),
+      bricks,
+      config: baseConfig,
+      deltaSec: baseConfig.fixedDeltaSec,
+    });
+    expect(bricks[0]?.alive).toBe(true);
+    expect(bricks[0]?.hp).toBe(1);
+    expect(first.collision.brick).toBe(0);
+
+    ball.pos = { x: 72, y: 72 };
+    ball.vel = { x: 0, y: 120 };
+    const second = stepPhysicsCore({
+      ball,
+      paddle: basePaddle(),
+      bricks,
+      config: baseConfig,
+      deltaSec: baseConfig.fixedDeltaSec,
+    });
+    expect(bricks[0]?.alive).toBe(false);
+    expect(second.collision.brick).toBe(1);
+  });
+
+  test("armored brick resists explosion kill", () => {
+    const ball: Ball = {
+      pos: { x: 72, y: 72 },
+      vel: { x: 0, y: -90 },
+      radius: 8,
+      speed: 320,
+    };
+    const bricks: Brick[] = [
+      { id: 1, x: 60, y: 64, width: 20, height: 10, alive: true, row: 1, col: 1, kind: "normal", hp: 1 },
+      { id: 2, x: 84, y: 64, width: 20, height: 10, alive: true, row: 1, col: 2, kind: "armored", hp: 2 },
+    ];
+
+    const result = stepPhysicsCore({
+      ball,
+      paddle: basePaddle(),
+      bricks,
+      config: baseConfig,
+      deltaSec: baseConfig.fixedDeltaSec,
+      stepConfig: {
+        bombRadiusTiles: 1,
+        explodeOnHit: true,
+      },
+    });
+
+    expect(result.collision.brick).toBe(1);
+    expect(bricks[1]?.alive).toBe(true);
+    expect(bricks[1]?.hp).toBe(1);
+  });
 });

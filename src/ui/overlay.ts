@@ -1,3 +1,4 @@
+import type { StageResultView } from "../game/renderTypes";
 import type { Scene } from "../game/types";
 import { getRequiredElement } from "../util/dom";
 
@@ -81,6 +82,7 @@ export function setSceneUI(
   clearTime?: string,
   errorMessage?: string,
   stageLabel?: string,
+  stageResult?: StageResultView,
 ): void {
   if (scene === "playing") {
     elements.overlay.classList.add("hidden");
@@ -105,12 +107,14 @@ export function setSceneUI(
   }
 
   if (scene === "clear") {
-    elements.sub.textContent = `${stageLabel ?? ""} ${score}点 ${clearTime ? `・${clearTime}` : ""} クリアしました。`;
+    const result = formatStageResult(stageResult);
+    elements.sub.textContent = `${stageLabel ?? ""} ${score}点 ${clearTime ? `・${clearTime}` : ""}${result}`;
     return;
   }
 
   if (scene === "stageclear") {
-    elements.sub.textContent = `${stageLabel ?? ""} ${score}点`;
+    const result = formatStageResult(stageResult);
+    elements.sub.textContent = `${stageLabel ?? ""} ${score}点${result}`;
     return;
   }
 
@@ -120,4 +124,12 @@ export function setSceneUI(
   }
 
   elements.sub.textContent = copy.sub;
+}
+
+function formatStageResult(stageResult: StageResultView | undefined): string {
+  if (!stageResult) {
+    return "";
+  }
+  const stars = "★".repeat(stageResult.stars);
+  return ` / RESULT ${stars} (${stageResult.ratingScore}) TIME ${stageResult.clearTime} HITS ${stageResult.hitsTaken} LIFE ${stageResult.livesLeft}`;
 }
