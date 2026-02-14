@@ -19,6 +19,7 @@ export interface OverlayElements {
   initialLives: HTMLSelectElement;
   speedPreset: HTMLSelectElement;
   multiballMaxBalls: HTMLSelectElement;
+  challengeMode: HTMLInputElement;
   bgmEnabled: HTMLInputElement;
   sfxEnabled: HTMLInputElement;
   resultsSection: HTMLDivElement;
@@ -30,6 +31,7 @@ export interface StartSettingsSelection {
   initialLives: number;
   speedPreset: SpeedPreset;
   multiballMaxBalls: number;
+  challengeMode: boolean;
   bgmEnabled: boolean;
   sfxEnabled: boolean;
 }
@@ -124,6 +126,11 @@ export function getOverlayElements(documentRef: Document): OverlayElements {
     "#setting-sfx-enabled",
     "setting-sfx-enabled要素が見つかりません",
   );
+  const challengeMode = getRequiredElement<HTMLInputElement>(
+    documentRef,
+    "#setting-challenge-mode",
+    "setting-challenge-mode要素が見つかりません",
+  );
   const resultsSection = getRequiredElement<HTMLDivElement>(
     documentRef,
     "#overlay-results-section",
@@ -145,6 +152,7 @@ export function getOverlayElements(documentRef: Document): OverlayElements {
     initialLives,
     speedPreset,
     multiballMaxBalls,
+    challengeMode,
     bgmEnabled,
     sfxEnabled,
     resultsSection,
@@ -162,6 +170,7 @@ export function readStartSettings(elements: OverlayElements): StartSettingsSelec
     initialLives: Number.isFinite(lives) ? lives : 4,
     speedPreset,
     multiballMaxBalls: Number.isFinite(multiballMaxBalls) ? multiballMaxBalls : 4,
+    challengeMode: elements.challengeMode.checked,
     bgmEnabled: elements.bgmEnabled.checked,
     sfxEnabled: elements.sfxEnabled.checked,
   };

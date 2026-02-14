@@ -10,7 +10,7 @@ import type { HudElements } from "./hud";
 import { InputController } from "./input";
 import { LifecycleController } from "./lifecycle";
 import { clamp } from "./math";
-import { defaultRandomSource } from "./random";
+import { createSeededRandomSource, defaultRandomSource } from "./random";
 import { Renderer } from "./renderer";
 import { advanceStage, resetRoundState } from "./roundSystem";
 import { type SceneEvent, SceneMachine } from "./sceneMachine";
@@ -29,13 +29,14 @@ export interface GameDeps {
 }
 
 export class Game {
+  private readonly baseRandom: RandomSource;
   private readonly baseConfig: GameConfig;
   private config: GameConfig;
   private readonly renderer: Renderer;
   private readonly sfx = new SfxManager();
   private readonly audioDirector = new AudioDirector(this.sfx);
   private readonly input: InputController;
-  private readonly random: RandomSource;
+  private random: RandomSource;
   private readonly sceneMachine = new SceneMachine();
   private readonly documentRef: Document;
   private readonly windowRef: Window;
@@ -62,7 +63,8 @@ export class Game {
     if (!context) throw new Error("Canvasが利用できませんでした");
     this.baseConfig = { ...GAME_CONFIG, ...deps.config };
     this.config = { ...this.baseConfig };
-    this.random = deps.random ?? defaultRandomSource;
+    this.baseRandom = deps.random ?? defaultRandomSource;
+    this.random = this.baseRandom;
     this.documentRef = deps.documentRef ?? document;
     this.windowRef = deps.windowRef ?? window;
     this.reducedMotionQuery = this.windowRef.matchMedia("(prefers-reduced-motion: reduce)");
@@ -281,6 +283,7 @@ export class Game {
   private applyStartSettings(): void {
     const selected = readStartSettings(this.overlay);
     this.config = buildStartConfig(this.baseConfig, selected);
+    this.random = selected.challengeMode ? createSeededRandomSource(CHALLENGE_MODE_SEED) : this.baseRandom;
     this.audioSettings = {
       bgmEnabled: selected.bgmEnabled,
       sfxEnabled: selected.sfxEnabled,
@@ -322,6 +325,8 @@ export class Game {
     syncSceneOverlayUI(this.overlay, this.state);
   }
 }
+
+const CHALLENGE_MODE_SEED = 0x2f6e2b1d;
 
 function addMediaListener(query: MediaQueryList, handler: () => void): void {
   if (typeof query.addEventListener === "function") {

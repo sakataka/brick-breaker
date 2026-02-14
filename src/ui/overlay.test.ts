@@ -9,6 +9,7 @@ describe("overlay start settings", () => {
       initialLives: { value: "4" },
       speedPreset: { value: "1.25" },
       multiballMaxBalls: { value: "6" },
+      challengeMode: { checked: true },
       bgmEnabled: { checked: true },
       sfxEnabled: { checked: false },
     } as unknown as OverlayElements;
@@ -18,6 +19,7 @@ describe("overlay start settings", () => {
     expect(selected.initialLives).toBe(4);
     expect(selected.speedPreset).toBe("1.25");
     expect(selected.multiballMaxBalls).toBe(6);
+    expect(selected.challengeMode).toBe(true);
     expect(selected.bgmEnabled).toBe(true);
     expect(selected.sfxEnabled).toBe(false);
   });
