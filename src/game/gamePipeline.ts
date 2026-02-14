@@ -17,7 +17,7 @@ import {
 } from "./itemSystem";
 import { runPhysicsForBalls } from "./physicsApply";
 import { getStageInitialBallSpeed, getStageMaxBallSpeed } from "./roundSystem";
-import type { Ball, GameConfig, GameState, RandomSource } from "./types";
+import type { Ball, GameConfig, GameState, ItemType, RandomSource } from "./types";
 import { applyCollisionEvents, spawnItemPickupFeedback } from "./vfxSystem";
 
 export type PipelineOutcome = "continue" | "stageclear" | "ballloss";
@@ -27,7 +27,7 @@ export interface GamePipelineDeps {
   random: RandomSource;
   sfx: SfxManager;
   tryShieldRescue: (ball: Ball, maxSpeed: number) => boolean;
-  playPickupSfx: () => void;
+  playPickupSfx: (itemType: ItemType) => void;
 }
 
 export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): PipelineOutcome {
@@ -71,8 +71,8 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
     }
     spawnItemPickupFeedback(state.vfx, pick.type, pick.pos.x, pick.pos.y);
   }
-  if (picks.length > 0) {
-    deps.playPickupSfx();
+  for (const pick of picks.slice(0, 2)) {
+    deps.playPickupSfx(pick.type);
   }
 
   if (lostAllBalls) {

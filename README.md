@@ -38,8 +38,20 @@ bun test
   - 初期残機: `1..6`
   - 速度: `75% / 100% / 125%`
   - マルチボール上限: `2..6`（デフォルト: `4`）
+  - サウンド: `BGM ON/OFF` / `効果音 ON/OFF`
 - 速度設定は「初速 / 最高速」にのみ反映
 - 設定はセッション内のみ（永続保存なし）
+
+## サウンド仕様
+
+- 音源は WebAudio 合成のみ（外部音源ファイルなし）
+- タイトル画面は専用BGMをループ再生
+- プレイ中はステージごとに異なるBGM（12曲）へ切替
+- テーマは `1-3 / 4-6 / 7-9 / 10-12` の4帯域で明確に変化（進行が分かる構成）
+- 開始時/ステージクリア/最終クリア/ゲームオーバーで専用ジングルを再生
+- `BGM OFF` で BGM とジングルを停止
+- `効果音 OFF` で衝突SEとアイテムSEを停止
+- アイテムSEは種類別に固有化（`paddle_plus/slow_ball/multiball/shield/pierce/bomb`）
 
 ## キャンペーン仕様
 
@@ -83,6 +95,10 @@ bun test
 - `src/game/Game.ts`: オーケストレータ（ループ/入力/遷移の接続）
 - `src/game/gamePipeline.ts`: playing時の1tick処理順序
 - `src/game/gameRuntime.ts`: fixed-step実行と stage clear / life loss 適用
+- `src/audio/audioDirector.ts`: シーン遷移に連動したBGM/ジングル制御
+- `src/audio/bgmSequencer.ts`: WebAudioステップシーケンサ（ループBGM）
+- `src/audio/bgmCatalog.ts`: タイトル + 12ステージBGM定義
+- `src/audio/sfx.ts`: 衝突SE / アイテムSE / ジングル合成
 - `src/game/itemRegistry.ts`: アイテム定義レジストリ（追加拡張ポイント）
 - `src/game/itemSystem.ts`: ドロップ・取得・スタック・多球調整
 - `src/game/physicsCore.ts`: 物理コア（壁/バー/ブロック/貫通/爆発）

@@ -298,4 +298,55 @@ describe("gamePipeline", () => {
     expect(state.items.active.pierceStacks).toBe(1);
     expect(state.balls).toHaveLength(4);
   });
+
+  test("plays item pickup sounds by item type with a two-sound cap per frame", () => {
+    const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60 };
+    const state = createInitialGameState(config, true, "playing");
+    state.scene = "playing";
+    state.bricks = [];
+    state.paddle = { ...state.paddle, x: 90, y: 120, width: 100, height: 20 };
+    state.balls = [
+      {
+        pos: { x: 130, y: 90 },
+        vel: { x: 0, y: -120 },
+        radius: 6,
+        speed: config.initialBallSpeed,
+      },
+    ];
+    state.items.falling.push(
+      {
+        id: 1,
+        type: "shield",
+        pos: { x: 110, y: 125 },
+        speed: 0,
+        size: 16,
+      },
+      {
+        id: 2,
+        type: "pierce",
+        pos: { x: 130, y: 125 },
+        speed: 0,
+        size: 16,
+      },
+      {
+        id: 3,
+        type: "bomb",
+        pos: { x: 150, y: 125 },
+        speed: 0,
+        size: 16,
+      },
+    );
+    const played: string[] = [];
+
+    const outcome = stepPlayingPipeline(state, {
+      config,
+      random,
+      sfx: sfxStub as never,
+      tryShieldRescue: () => false,
+      playPickupSfx: (itemType) => played.push(itemType),
+    });
+
+    expect(outcome).toBe("continue");
+    expect(played).toEqual(["shield", "pierce"]);
+  });
 });

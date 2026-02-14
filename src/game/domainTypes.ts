@@ -54,6 +54,11 @@ export interface GameConfig {
   assistMaxSpeedScale: number;
 }
 
+export interface GameAudioSettings {
+  bgmEnabled: boolean;
+  sfxEnabled: boolean;
+}
+
 export interface StageDefinition {
   id: number;
   speedScale: number;

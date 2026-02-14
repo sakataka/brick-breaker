@@ -1,3 +1,4 @@
+import { AudioDirector } from "../audio/audioDirector";
 import { SfxManager } from "../audio/sfx";
 import { type OverlayElements, readStartSettings } from "../ui/overlay";
 import { buildStartConfig, GAME_CONFIG } from "./config";
@@ -12,7 +13,7 @@ import { Renderer } from "./renderer";
 import { advanceStage, resetRoundState } from "./roundSystem";
 import { type SceneEvent, SceneMachine } from "./sceneMachine";
 import { createInitialGameState } from "./stateFactory";
-import type { GameConfig, GameState, RandomSource, Scene } from "./types";
+import type { GameAudioSettings, GameConfig, GameState, RandomSource, Scene } from "./types";
 import { nextDensityScale, updateVfxState } from "./vfxSystem";
 import { applyCanvasViewport } from "./viewport";
 
@@ -29,6 +30,7 @@ export class Game {
   private config: GameConfig;
   private readonly renderer: Renderer;
   private readonly sfx = new SfxManager();
+  private readonly audioDirector = new AudioDirector(this.sfx);
   private readonly input: InputController;
   private readonly random: RandomSource;
   private readonly sceneMachine = new SceneMachine();
@@ -36,6 +38,10 @@ export class Game {
   private readonly windowRef: Window;
   private readonly lifecycle: LifecycleController;
   private state: GameState;
+  private audioSettings: GameAudioSettings = {
+    bgmEnabled: true,
+    sfxEnabled: true,
+  };
   private lastFrameTime = 0;
   private accumulator = 0;
   private isRunning = false;
@@ -73,6 +79,9 @@ export class Game {
       this.adjustCanvasScale();
       this.bindOverlay();
       this.lifecycle.bind();
+      this.audioDirector.setSettings(this.audioSettings);
+      this.audioDirector.notifyStageChanged(this.state.campaign.stageIndex);
+      this.audioDirector.syncScene(this.state.scene, this.state.scene);
       renderGameFrame(this.renderer, this.hud, this.state);
       syncSceneOverlayUI(this.overlay, this.state);
     }, "初期化中に問題が発生しました。");
@@ -94,6 +103,7 @@ export class Game {
     this.isRunning = false;
     this.input.detach();
     this.lifecycle.unbind();
+    this.audioDirector.destroy();
     this.sceneMachine.stop();
   }
 
@@ -101,26 +111,33 @@ export class Game {
     this.overlay.button.addEventListener("click", () => {
       if (this.state.scene === "error") return this.windowRef.location.reload();
       if (this.state.scene === "clear") {
+        const previous = this.state.scene;
         this.transition({ type: "BACK_TO_START" });
+        this.syncAudioScene(previous);
         syncSceneOverlayUI(this.overlay, this.state);
         return;
       }
-      void this.sfx.resumeIfNeeded().catch(() => {});
+      void this.audioDirector.unlock().catch(() => {});
       this.runSafely(() => this.startOrResume(), "開始処理に失敗しました。");
     });
   }
 
   private startOrResume(): void {
+    void this.audioDirector.unlock().catch(() => {});
     const previous = this.state.scene;
     if (previous === "clear") {
       this.transition({ type: "BACK_TO_START" });
+      this.syncAudioScene(previous);
       syncSceneOverlayUI(this.overlay, this.state);
       return;
     }
     if (previous === "start") {
       this.applyStartSettings();
     }
-    if (this.transition({ type: "START_OR_RESUME" }) !== "playing") return;
+    if (this.transition({ type: "START_OR_RESUME" }) !== "playing") {
+      this.syncAudioScene(previous);
+      return;
+    }
     if (previous === "start") {
       resetRoundState(this.state, this.config, this.state.vfx.reducedMotion, this.random);
     } else if (previous === "stageclear") {
@@ -128,16 +145,19 @@ export class Game {
     }
     this.lastFrameTime = 0;
     this.accumulator = 0;
+    this.syncAudioScene(previous);
     syncSceneOverlayUI(this.overlay, this.state);
   }
 
   private togglePause(): void {
+    void this.audioDirector.unlock().catch(() => {});
     const previous = this.state.scene;
     const next = this.transition({ type: "TOGGLE_PAUSE" });
     if (previous === "paused" && next === "playing") {
       this.lastFrameTime = 0;
       this.accumulator = 0;
     }
+    this.syncAudioScene(previous);
   }
 
   private transition(event: SceneEvent): Scene {
@@ -157,7 +177,12 @@ export class Game {
       if (this.state.scene === "playing") {
         this.accumulator = runPlayingLoop(
           this.state,
-          { config: this.config, random: this.random, sfx: this.sfx },
+          {
+            config: this.config,
+            random: this.random,
+            sfx: this.sfx,
+            playPickupSfx: (itemType) => this.audioDirector.playItemPickup(itemType),
+          },
           this.accumulator,
           delta,
           () => this.handleStageClear(),
@@ -179,11 +204,15 @@ export class Game {
   };
 
   private handleStageClear(): void {
-    handleStageClear(this.state, this.config, this.sfx, (event) => this.transition({ type: event }));
+    const previous = this.state.scene;
+    handleStageClear(this.state, this.config, (event) => this.transition({ type: event }));
+    this.syncAudioScene(previous);
   }
 
   private handleBallLoss(): void {
+    const previous = this.state.scene;
     handleBallLoss(this.state, this.config, this.random, () => this.transition({ type: "GAME_OVER" }));
+    this.syncAudioScene(previous);
   }
 
   private movePaddleByMouse(clientX: number): void {
@@ -224,7 +253,9 @@ export class Game {
     this.isRunning = false;
     this.state.errorMessage = message;
     this.input.detach();
+    const previous = this.state.scene;
     this.transition({ type: "RUNTIME_ERROR" });
+    this.syncAudioScene(previous);
     try {
       renderGameFrame(this.renderer, this.hud, this.state);
       syncSceneOverlayUI(this.overlay, this.state);
@@ -234,5 +265,18 @@ export class Game {
   private applyStartSettings(): void {
     const selected = readStartSettings(this.overlay);
     this.config = buildStartConfig(this.baseConfig, selected);
+    this.audioSettings = {
+      bgmEnabled: selected.bgmEnabled,
+      sfxEnabled: selected.sfxEnabled,
+    };
+    this.audioDirector.setSettings(this.audioSettings);
+  }
+
+  private syncAudioScene(previousScene: Scene): void {
+    if (previousScene === this.state.scene) {
+      return;
+    }
+    this.audioDirector.notifyStageChanged(this.state.campaign.stageIndex);
+    this.audioDirector.syncScene(this.state.scene, previousScene);
   }
 }

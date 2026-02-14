@@ -216,6 +216,19 @@ body::before {
   color: var(--text-2);
 }
 
+.start-settings .toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 0.1rem;
+}
+
+.start-settings .toggle-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--hud-accent);
+}
+
 .start-settings select {
   appearance: none;
   border: 1px solid rgba(149, 211, 255, 0.48);

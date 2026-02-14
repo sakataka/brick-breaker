@@ -19,6 +19,8 @@ export interface OverlayElements {
   initialLives: HTMLSelectElement;
   speedPreset: HTMLSelectElement;
   multiballMaxBalls: HTMLSelectElement;
+  bgmEnabled: HTMLInputElement;
+  sfxEnabled: HTMLInputElement;
   resultsSection: HTMLDivElement;
   resultsList: HTMLUListElement;
 }
@@ -28,6 +30,8 @@ export interface StartSettingsSelection {
   initialLives: number;
   speedPreset: SpeedPreset;
   multiballMaxBalls: number;
+  bgmEnabled: boolean;
+  sfxEnabled: boolean;
 }
 
 export const OVERLAY_COPY: Record<Scene, OverlayCopy> = {
@@ -110,6 +114,16 @@ export function getOverlayElements(documentRef: Document): OverlayElements {
     "#setting-multiball-max",
     "setting-multiball-max要素が見つかりません",
   );
+  const bgmEnabled = getRequiredElement<HTMLInputElement>(
+    documentRef,
+    "#setting-bgm-enabled",
+    "setting-bgm-enabled要素が見つかりません",
+  );
+  const sfxEnabled = getRequiredElement<HTMLInputElement>(
+    documentRef,
+    "#setting-sfx-enabled",
+    "setting-sfx-enabled要素が見つかりません",
+  );
   const resultsSection = getRequiredElement<HTMLDivElement>(
     documentRef,
     "#overlay-results-section",
@@ -131,6 +145,8 @@ export function getOverlayElements(documentRef: Document): OverlayElements {
     initialLives,
     speedPreset,
     multiballMaxBalls,
+    bgmEnabled,
+    sfxEnabled,
     resultsSection,
     resultsList,
   };
@@ -146,6 +162,8 @@ export function readStartSettings(elements: OverlayElements): StartSettingsSelec
     initialLives: Number.isFinite(lives) ? lives : 4,
     speedPreset,
     multiballMaxBalls: Number.isFinite(multiballMaxBalls) ? multiballMaxBalls : 4,
+    bgmEnabled: elements.bgmEnabled.checked,
+    sfxEnabled: elements.sfxEnabled.checked,
   };
 }
 

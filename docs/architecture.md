@@ -6,10 +6,23 @@
 ## モジュール責務
 - `src/game/Game.ts`
   - オーケストレータ。入力/ライフサイクル/シーン遷移/フレーム進行の接続のみ。
-  - タイトル画面の開始前設定（難易度/残機/速度）を新規開始時に反映。
+  - タイトル画面の開始前設定（難易度/残機/速度/マルチ上限/BGM/SE）を新規開始時に反映。
+  - `AudioDirector` とシーン遷移を同期。
+- `src/audio/audioDirector.ts`
+  - サウンド制御のオーケストレーション。
+  - `start/playing/paused/stageclear/clear/gameover` に応じて BGM とジングルを切替。
+  - BGM/SE の ON/OFF 設定を適用。
+- `src/audio/bgmSequencer.ts`
+  - WebAudioでループBGMを再生するステップシーケンサ。
+  - lookahead 先読みでノートをスケジューリング。
+- `src/audio/bgmCatalog.ts`
+  - タイトルBGM + 12ステージBGMのトラック定義。
+- `src/audio/sfx.ts`
+  - 衝突SE・アイテムSE・シーンジングルの合成再生。
 - `src/game/gamePipeline.ts`
   - playing 中の 1 tick 処理順序を実行。
   - `Input -> Assist/Paddle -> Physics -> Combo/Score -> Event/VFX -> Drop/Pickup -> BallCount`。
+  - アイテム取得SEを種類別で発火（1フレーム最大2音）。
 - `src/game/gameRuntime.ts`
   - 固定ステップループ実行、ball loss / stage clear の適用補助。
 - `src/game/roundSystem.ts`
@@ -46,11 +59,12 @@
 3. 各 step で `gamePipeline.stepPlayingPipeline` がゲーム状態を更新。
 4. `renderPresenter` が表示用 ViewModel を生成。
 5. `renderer` / HUD / overlay が ViewModel を描画。
+6. シーン/ステージ変化時に `AudioDirector` が BGM/ジングルを同期。
 
 ## 重要仕様（アイテム）
 - すべてのボールを落として `ballloss` になった時のみ全アイテム効果を解除。
 - ステージクリア時はアクティブ効果のみ次ステージへ持ち越し。
-- 多球上限は4球固定、持ち越した `multiball` は次ステージ開始球数にも反映。
+- 多球上限は開始前設定で選択（デフォルト4）、持ち越した `multiball` は次ステージ開始球数にも反映。
 - `bomb` は上限1、所持中はドロップしない。
 
 ## 重要仕様（進行）
@@ -58,6 +72,15 @@
 - ステージ評価は `時間 + 被弾 + 残機` の合計点で星1〜3を判定。
 - エリートブロックは 9〜12 面のみ配置（`durable`, `armored`）。
 - 最終ステージクリア後は「タイトルへ戻る」導線付きの結果一覧を表示。
+
+## 重要仕様（サウンド）
+- タイトル画面はタイトルBGMをループ再生。
+- プレイ中はステージ番号に応じてBGMを切替（12曲）。
+- `1-3 / 4-6 / 7-9 / 10-12` の4テーマで音色とリズムを分け、進行体感を強化。
+- `start -> playing` は開始ジングルを優先し、その後ステージBGMへ遷移。
+- `stageclear` / `clear` / `gameover` は対応ジングルを再生しBGMを停止。
+- `paused` はBGMを一時停止し、`playing` 復帰で再開。
+- `BGM OFF` はBGMとジングルを停止、`SE OFF` は衝突/アイテムSEのみ停止。
 
 ## 拡張ポイント
 - 新アイテム追加:

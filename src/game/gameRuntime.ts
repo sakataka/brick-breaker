@@ -3,7 +3,7 @@ import { getGameplayBalance } from "./config";
 import { stepPlayingPipeline } from "./gamePipeline";
 import { consumeShield } from "./itemSystem";
 import { applyLifeLoss, finalizeStageStats, retryCurrentStage } from "./roundSystem";
-import type { Ball, GameConfig, GameState, RandomSource } from "./types";
+import type { Ball, GameConfig, GameState, ItemType, RandomSource } from "./types";
 import { triggerHitFreeze, updateVfxState } from "./vfxSystem";
 
 export function computeFrameDelta(
@@ -19,7 +19,12 @@ export function computeFrameDelta(
 
 export function runPlayingLoop(
   state: GameState,
-  deps: { config: GameConfig; random: RandomSource; sfx: SfxManager },
+  deps: {
+    config: GameConfig;
+    random: RandomSource;
+    sfx: SfxManager;
+    playPickupSfx: (itemType: ItemType) => void;
+  },
   accumulator: number,
   delta: number,
   onStageClear: () => void,
@@ -37,7 +42,7 @@ export function runPlayingLoop(
       random: deps.random,
       sfx: deps.sfx,
       tryShieldRescue: (ball, maxSpeed) => tryShieldRescue(state, deps.config, deps.random, ball, maxSpeed),
-      playPickupSfx: () => void deps.sfx.play("paddle"),
+      playPickupSfx: deps.playPickupSfx,
     });
     updateVfxState(state.vfx, deps.config.fixedDeltaSec, deps.random);
     if (outcome === "stageclear") {
@@ -58,14 +63,12 @@ export function runPlayingLoop(
 export function handleStageClear(
   state: GameState,
   config: GameConfig,
-  sfx: SfxManager,
   onTransition: (event: "GAME_CLEAR" | "STAGE_CLEAR") => void,
 ): void {
   const balance = getGameplayBalance(config.difficulty);
   finalizeStageStats(state);
   triggerHitFreeze(state.vfx, 72);
   state.score += state.lives * balance.clearBonusPerLife;
-  void sfx.play("clear");
   onTransition(state.campaign.stageIndex >= state.campaign.totalStages - 1 ? "GAME_CLEAR" : "STAGE_CLEAR");
 }
 
