@@ -1,7 +1,7 @@
 export type Scene = "start" | "playing" | "paused" | "gameover" | "stageclear" | "clear" | "error";
 export type Difficulty = "casual" | "standard" | "hard";
 export type ItemType = "paddle_plus" | "slow_ball" | "multiball" | "shield" | "pierce" | "bomb";
-export type BrickKind = "normal" | "durable" | "armored" | "regen" | "hazard";
+export type BrickKind = "normal" | "durable" | "armored" | "regen" | "hazard" | "boss";
 
 export interface Vector2 {
   x: number;
@@ -35,6 +35,7 @@ export interface Brick {
   alive: boolean;
   kind?: BrickKind;
   hp?: number;
+  maxHp?: number;
   regenCharges?: number;
   row?: number;
   col?: number;
@@ -70,5 +71,5 @@ export interface StageDefinition {
 export interface StageElitePlacement {
   row: number;
   col: number;
-  kind: Extract<BrickKind, "durable" | "armored" | "regen" | "hazard">;
+  kind: Extract<BrickKind, "durable" | "armored" | "regen" | "hazard" | "boss">;
 }

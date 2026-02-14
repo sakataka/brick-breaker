@@ -39,6 +39,7 @@ export function buildBricksFromStage(
       }
       const eliteKind = eliteMap.get(`${row}:${col}`);
       const kind = eliteKind ?? "normal";
+      const hp = getInitialHpByKind(kind);
       bricks.push({
         id: id++,
         x: marginX + col * (brickWidth + gapX),
@@ -47,7 +48,8 @@ export function buildBricksFromStage(
         height: brickHeight,
         alive: true,
         kind,
-        hp: getInitialHpByKind(kind),
+        hp,
+        maxHp: hp,
         regenCharges: kind === "regen" ? 1 : 0,
         row,
         col,
@@ -60,6 +62,9 @@ export function buildBricksFromStage(
 }
 
 function getInitialHpByKind(kind: BrickKind): number {
+  if (kind === "boss") {
+    return 12;
+  }
   if (kind === "normal" || kind === "hazard") {
     return 1;
   }

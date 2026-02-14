@@ -326,7 +326,7 @@ function damageBrick(brick: Brick, source: BrickDamageSource, destroyed: Brick[]
   }
 
   const kind = brick.kind ?? "normal";
-  const defaultHp = kind === "normal" || kind === "hazard" ? 1 : 2;
+  const defaultHp = kind === "boss" ? 12 : kind === "normal" || kind === "hazard" ? 1 : 2;
   const currentHp = typeof brick.hp === "number" && Number.isFinite(brick.hp) ? brick.hp : defaultHp;
   const nextHp = Math.max(0, currentHp - 1);
 

@@ -64,6 +64,14 @@ function drawEliteMarks(ctx: CanvasRenderingContext2D, brick: Brick, highContras
     ctx.lineTo(brick.x + brick.width / 2 - 1, brick.y + brick.height / 2);
     ctx.lineTo(brick.x + brick.width / 2 + 4, brick.y + brick.height - 4);
     ctx.stroke();
+  } else if (brick.kind === "boss") {
+    ctx.strokeStyle = "rgba(255, 220, 130, 0.96)";
+    ctx.lineWidth = highContrast ? 3 : 2.2;
+    ctx.strokeRect(brick.x + 1.5, brick.y + 1.5, brick.width - 3, brick.height - 3);
+    ctx.beginPath();
+    ctx.moveTo(brick.x + 4, brick.y + brick.height / 2);
+    ctx.lineTo(brick.x + brick.width - 4, brick.y + brick.height / 2);
+    ctx.stroke();
   }
 
   const hp = brick.hp ?? 1;
@@ -91,6 +99,8 @@ function drawHighContrastGlyph(ctx: CanvasRenderingContext2D, brick: Brick): voi
           ? "R"
           : brick.kind === "hazard"
             ? "H"
-            : "N";
+            : brick.kind === "boss"
+              ? "B"
+              : "N";
   ctx.fillText(marker, brick.x + 3, brick.y + 2);
 }

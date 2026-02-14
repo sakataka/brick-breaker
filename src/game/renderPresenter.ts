@@ -50,16 +50,27 @@ export function buildHudViewModel(state: GameState): HudViewModel {
   const comboVisible = state.combo.streak > 1;
   const hazardBoostActive = state.elapsedSec < state.hazard.speedBoostUntilSec;
   const pierceSlowSynergy = state.items.active.pierceStacks > 0 && state.items.active.slowBallStacks > 0;
+  const bossStageText = buildBossHudText(state);
   return {
     scoreText: `スコア: ${state.score}`,
     livesText: `残機: ${state.lives}`,
     timeText: `時間: ${formatTime(state.elapsedSec)}`,
-    stageText: `ステージ: ${state.campaign.stageIndex + 1}/${state.campaign.totalStages}`,
+    stageText: `ステージ: ${state.campaign.stageIndex + 1}/${state.campaign.totalStages}${bossStageText}`,
     comboText: comboVisible ? `コンボ x${state.combo.multiplier.toFixed(2)}` : "コンボ x1.00",
     itemsText: `アイテム: ${activeItems.join(" / ")}${hazardBoostActive ? " / ⚠危険加速中" : ""}${pierceSlowSynergy ? " / ✨貫通+1" : ""}`,
     accessibilityText: buildAccessibilityBadge(state),
     accentColor: comboVisible ? COMBO_ACTIVE_COLOR : themeBand.hudAccent,
   };
+}
+
+function buildBossHudText(state: GameState): string {
+  const boss = state.bricks.find((brick) => brick.alive && brick.kind === "boss");
+  if (!boss) {
+    return "";
+  }
+  const hp = Math.max(0, boss.hp ?? 0);
+  const maxHp = Math.max(hp, boss.maxHp ?? 12);
+  return ` / ボスHP: ${hp}/${maxHp}`;
 }
 
 export function buildOverlayViewModel(state: GameState): OverlayViewModel {

@@ -220,4 +220,28 @@ describe("physicsCore", () => {
     expect(result.collision.brick).toBe(1);
     expect(result.events.some((event) => event.kind === "brick" && event.brickKind === "hazard")).toBe(true);
   });
+
+  test("boss brick survives multiple hits and tracks hp", () => {
+    const ball: Ball = {
+      pos: { x: 72, y: 72 },
+      vel: { x: 0, y: 120 },
+      radius: 8,
+      speed: 320,
+    };
+    const bricks: Brick[] = [
+      { id: 1, x: 60, y: 64, width: 20, height: 10, alive: true, kind: "boss", hp: 12, maxHp: 12 },
+    ];
+
+    const first = stepPhysicsCore({
+      ball,
+      paddle: basePaddle(),
+      bricks,
+      config: baseConfig,
+      deltaSec: baseConfig.fixedDeltaSec,
+    });
+
+    expect(first.collision.brick).toBe(0);
+    expect(bricks[0]?.alive).toBe(true);
+    expect(bricks[0]?.hp).toBe(11);
+  });
 });

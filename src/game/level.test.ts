@@ -62,4 +62,14 @@ describe("stage catalog", () => {
       expect(brick.hp).toBe(1);
     }
   });
+
+  test("stage 12 is a single boss target", () => {
+    const stage = STAGE_CATALOG[11];
+    const bricks = buildBricksFromStage(stage);
+
+    expect(bricks).toHaveLength(1);
+    expect(bricks[0]?.kind).toBe("boss");
+    expect(bricks[0]?.hp).toBe(12);
+    expect(bricks[0]?.maxHp).toBe(12);
+  });
 });

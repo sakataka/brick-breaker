@@ -36,7 +36,7 @@ const STAGE_ROW_DEFINITIONS: readonly (readonly string[])[] = [
   ["1111111111", "1111111111", "1011111101", "1110110111", "0111111110", "0101111010"],
   ["1111111111", "1111111111", "1101111011", "1110110111", "0111111110", "0110110110"],
   ["1111111111", "1111111111", "1111111111", "1011111101", "1110110111", "0111111110"],
-  ["1111111111", "1111111111", "1111111111", "1110110111", "1111111111", "0111111110"],
+  ["0000000000", "0000000000", "0000100000", "0000000000", "0000000000", "0000000000"],
 ];
 
 const ELITE_STAGE_MAP: Partial<Record<number, NonNullable<StageDefinition["elite"]>>> = {
@@ -61,14 +61,7 @@ const ELITE_STAGE_MAP: Partial<Record<number, NonNullable<StageDefinition["elite
     { row: 4, col: 4, kind: "regen" },
     { row: 2, col: 4, kind: "hazard" },
   ],
-  12: [
-    { row: 0, col: 4, kind: "armored" },
-    { row: 1, col: 1, kind: "durable" },
-    { row: 2, col: 8, kind: "durable" },
-    { row: 4, col: 4, kind: "armored" },
-    { row: 3, col: 2, kind: "regen" },
-    { row: 5, col: 6, kind: "hazard" },
-  ],
+  12: [{ row: 2, col: 4, kind: "boss" }],
 };
 
 function parseStageLayout(rows: readonly string[]): number[][] {
