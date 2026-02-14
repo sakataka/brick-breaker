@@ -262,8 +262,62 @@ body::before {
   color: var(--text-2);
 }
 
+#overlay-rogue-select {
+  width: 100%;
+  appearance: none;
+  border: 1px solid rgba(149, 211, 255, 0.48);
+  border-radius: 10px;
+  background: rgba(3, 20, 45, 0.76);
+  color: var(--text-1);
+  font-size: 0.9rem;
+  padding: 0.42rem 0.55rem;
+}
+
 .panel-hidden {
   display: none;
+}
+
+.shop-panel {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  width: min(320px, calc(100% - 28px));
+  border-radius: 12px;
+  border: 1px solid rgba(255, 195, 116, 0.52);
+  background: linear-gradient(160deg, rgba(32, 20, 6, 0.78), rgba(88, 54, 12, 0.62));
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.28);
+  padding: 0.55rem 0.68rem;
+  backdrop-filter: blur(8px);
+}
+
+.shop-panel p {
+  margin: 0 0 0.42rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #ffe0b2;
+}
+
+.shop-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.38rem;
+}
+
+.shop-buttons button {
+  appearance: none;
+  border: 1px solid rgba(255, 214, 153, 0.48);
+  border-radius: 9px;
+  background: rgba(255, 179, 88, 0.12);
+  color: #ffeaca;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.42rem 0.35rem;
+  cursor: pointer;
+}
+
+.shop-buttons button:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 #overlay-button {

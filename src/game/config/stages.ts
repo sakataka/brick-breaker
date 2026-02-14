@@ -1,5 +1,5 @@
 import { validateStageCatalog } from "../configSchema";
-import type { StageDefinition } from "../types";
+import type { StageDefinition, StageRoute } from "../types";
 import { RATING_CONFIG } from "./gameplay";
 
 export interface BrickLayout {
@@ -11,6 +11,23 @@ export interface BrickLayout {
   gapY: number;
   boardWidth: number;
   brickHeight: number;
+}
+
+export interface WarpZone {
+  inXMin: number;
+  inXMax: number;
+  inYMin: number;
+  inYMax: number;
+  outX: number;
+  outY: number;
+}
+
+export interface StageModifier {
+  label?: string;
+  maxSpeedScale?: number;
+  lowGravity?: boolean;
+  warpZones?: WarpZone[];
+  spawnEnemy?: boolean;
 }
 
 export const BRICK_LAYOUT: BrickLayout = {
@@ -93,13 +110,99 @@ export const STAGE_CATALOG: StageDefinition[] = STAGE_ROW_DEFINITIONS.map((rows,
   elite: ELITE_STAGE_MAP[index + 1],
 }));
 
+const routeBCache = new Map<number, StageDefinition>();
+
+const STAGE_MODIFIERS: Partial<Record<number, StageModifier>> = {
+  6: {
+    label: "ワープゾーン",
+    warpZones: [
+      {
+        inXMin: 100,
+        inXMax: 170,
+        inYMin: 130,
+        inYMax: 260,
+        outX: 790,
+        outY: 160,
+      },
+      {
+        inXMin: 760,
+        inXMax: 840,
+        inYMin: 130,
+        inYMax: 260,
+        outX: 160,
+        outY: 160,
+      },
+    ],
+  },
+  7: {
+    label: "低重力",
+    lowGravity: true,
+    maxSpeedScale: 0.9,
+  },
+  8: {
+    label: "高速球",
+    maxSpeedScale: 1.12,
+  },
+  9: {
+    label: "浮遊敵",
+    spawnEnemy: true,
+  },
+};
+
+const STAGE_STORY: Partial<Record<number, string>> = {
+  4: "第4ステージ: 深層ゲートに到達。ここから先は分岐ルートで攻略が変化します。",
+  8: "第8ステージ: 重力レンズ地帯に突入。球速と軌道が大きく変わる危険域です。",
+  12: "最終ステージ: コア・ガーディアン起動。すべての強化を使って突破してください。",
+};
+
 export function getStageByIndex(stageIndex: number): StageDefinition {
   const safeIndex = Math.max(0, Math.min(STAGE_CATALOG.length - 1, stageIndex));
   return STAGE_CATALOG[safeIndex];
 }
 
+export function getStageForCampaign(stageIndex: number, route: StageRoute | null): StageDefinition {
+  const base = getStageByIndex(stageIndex);
+  if (route !== "B") {
+    return base;
+  }
+  if (stageIndex < 4 || stageIndex > 7) {
+    return base;
+  }
+  const cached = routeBCache.get(base.id);
+  if (cached) {
+    return cached;
+  }
+  const mirrored = createMirroredStage(base);
+  routeBCache.set(base.id, mirrored);
+  return mirrored;
+}
+
+export function getStageModifier(stageNumber: number): StageModifier | undefined {
+  return STAGE_MODIFIERS[stageNumber];
+}
+
+export function getStageStory(stageNumber: number): string | null {
+  return STAGE_STORY[stageNumber] ?? null;
+}
+
 export function getStageTimeTargetSec(stageIndex: number): number {
   return RATING_CONFIG.baseTargetSec + stageIndex * RATING_CONFIG.targetSecPerStage;
+}
+
+function createMirroredStage(stage: StageDefinition): StageDefinition {
+  const maxCol = BRICK_LAYOUT.cols - 1;
+  const mirroredLayout = stage.layout.map((row) => [...row].reverse());
+  const mirroredElite = stage.elite?.map((entry) => ({
+    row: entry.row,
+    col: maxCol - entry.col,
+    kind: entry.kind,
+  }));
+  return {
+    id: stage.id,
+    speedScale: stage.speedScale,
+    layout: mirroredLayout,
+    elite: mirroredElite,
+  };
 }
 
 validateStageCatalog(STAGE_CATALOG);

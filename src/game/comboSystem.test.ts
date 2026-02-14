@@ -9,6 +9,7 @@ function createComboState(): ComboState {
     streak: 0,
     lastHitSec: -1,
     rewardGranted: false,
+    fillTriggered: false,
   };
 }
 

@@ -53,6 +53,14 @@
                 </select>
               </label>
               <label>
+                ルート選択
+                <select id="setting-route">
+                  <option value="auto" selected>自動</option>
+                  <option value="A">Aルート</option>
+                  <option value="B">Bルート</option>
+                </select>
+              </label>
+              <label>
                 マルチ上限
                 <select id="setting-multiball-max">
                   <option value="2">2</option>
@@ -71,6 +79,10 @@
                 <input id="setting-daily-mode" type="checkbox" />
               </label>
               <label class="toggle-row">
+                <span>リスク倍率モード</span>
+                <input id="setting-risk-mode" type="checkbox" />
+              </label>
+              <label class="toggle-row">
                 <span>BGM</span>
                 <input id="setting-bgm-enabled" type="checkbox" checked />
               </label>
@@ -84,8 +96,19 @@
               <p class="subtle">ステージ別結果</p>
               <ul id="overlay-results"></ul>
             </div>
+            <div id="overlay-rogue-section" class="results-section panel-hidden">
+              <p class="subtle">ラン強化（3回まで）</p>
+              <select id="overlay-rogue-select"></select>
+            </div>
             <button id="overlay-button" type="button">ゲーム開始</button>
             <p class="subtle">Pキーで一時停止</p>
+          </div>
+        </div>
+        <div id="shop-panel" class="shop-panel panel-hidden">
+          <p id="shop-status">ショップ</p>
+          <div class="shop-buttons">
+            <button id="shop-option-a" type="button">選択肢A</button>
+            <button id="shop-option-b" type="button">選択肢B</button>
           </div>
         </div>
       </div>

@@ -16,6 +16,8 @@ export function syncSceneOverlayUI(overlay: ReturnType<typeof getOverlayElements
     view.stageLabel,
     view.stageResult,
     view.campaignResults,
+    view.rogueOffer,
+    view.storyText,
   );
 }
 

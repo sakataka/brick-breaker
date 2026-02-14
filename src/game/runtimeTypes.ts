@@ -61,6 +61,8 @@ export interface CampaignState {
   totalStages: number;
   stageStartScore: number;
   results: StageResultEntry[];
+  routePreference: RoutePreference;
+  resolvedRoute: StageRoute | null;
 }
 
 export interface StageResultEntry {
@@ -108,15 +110,21 @@ export interface ProgressState {
   campaign: CampaignState;
   combo: ComboState;
   stageStats: StageStats;
+  options: RunOptions;
 }
 
 export interface RuntimeState {
   balls: Ball[];
   paddle: Paddle;
   bricks: Brick[];
+  enemies: EnemyUnit[];
+  magic: MagicState;
   items: ItemState;
   assist: AssistState;
   hazard: HazardState;
+  shop: ShopState;
+  rogue: RogueState;
+  story: StoryState;
   vfx: VfxState;
   a11y: A11yState;
 }
@@ -133,6 +141,7 @@ export interface ComboState {
   streak: number;
   lastHitSec: number;
   rewardGranted: boolean;
+  fillTriggered: boolean;
 }
 
 export interface StageStats {
@@ -152,4 +161,47 @@ export interface A11yState {
 
 export interface HazardState {
   speedBoostUntilSec: number;
+}
+
+export interface RunOptions {
+  riskMode: boolean;
+}
+
+export interface ShopState {
+  usedThisStage: boolean;
+  lastOffer: [ItemType, ItemType] | null;
+  lastChosen: ItemType | null;
+}
+
+export interface MagicState {
+  cooldownSec: number;
+  requestCast: boolean;
+  cooldownMaxSec: number;
+}
+
+export interface RogueState {
+  upgradesTaken: number;
+  paddleScaleBonus: number;
+  maxSpeedScaleBonus: number;
+  scoreScaleBonus: number;
+  pendingOffer: [RogueUpgradeType, RogueUpgradeType] | null;
+  lastChosen: RogueUpgradeType | null;
+}
+
+export interface StoryState {
+  activeStageNumber: number | null;
+  seenStageNumbers: number[];
+}
+
+export type RoutePreference = "auto" | "A" | "B";
+export type StageRoute = "A" | "B";
+export type RogueUpgradeType = "paddle_core" | "speed_core" | "score_core";
+
+export interface EnemyUnit {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  radius: number;
+  alive: boolean;
 }

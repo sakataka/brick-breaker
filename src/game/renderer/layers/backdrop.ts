@@ -30,3 +30,48 @@ export function drawProgressBar(
   ctx.fillStyle = theme.progressBar;
   ctx.fillRect(barX, barY, barW * clamped, barH);
 }
+
+export function drawWarpZoneHints(
+  ctx: CanvasRenderingContext2D,
+  zones: Array<{
+    inXMin: number;
+    inXMax: number;
+    inYMin: number;
+    inYMax: number;
+    outX: number;
+    outY: number;
+  }>,
+): void {
+  for (const zone of zones) {
+    const x = zone.inXMin;
+    const y = zone.inYMin;
+    const w = zone.inXMax - zone.inXMin;
+    const h = zone.inYMax - zone.inYMin;
+    ctx.strokeStyle = "rgba(111, 245, 255, 0.68)";
+    ctx.setLineDash([5, 4]);
+    ctx.strokeRect(x, y, w, h);
+    ctx.setLineDash([]);
+    ctx.fillStyle = "rgba(111, 245, 255, 0.12)";
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = "rgba(111, 245, 255, 0.78)";
+    ctx.font = "700 10px Avenir Next";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("WARP", x + w / 2, y + h / 2);
+  }
+}
+
+export function drawModifierLabel(
+  ctx: CanvasRenderingContext2D,
+  label: string | undefined,
+  config: GameConfig,
+): void {
+  if (!label) {
+    return;
+  }
+  ctx.fillStyle = "rgba(255, 255, 255, 0.74)";
+  ctx.font = "700 12px Avenir Next";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "top";
+  ctx.fillText(`修飾: ${label}`, config.width - 16, 74);
+}

@@ -6,6 +6,7 @@ export function resetCombo(combo: ComboState): void {
   combo.streak = 0;
   combo.lastHitSec = -1;
   combo.rewardGranted = false;
+  combo.fillTriggered = false;
 }
 
 export function normalizeCombo(combo: ComboState, nowSec: number): void {

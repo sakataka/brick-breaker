@@ -28,6 +28,8 @@ export function stepPhysicsCore({
   const pierceDepth = Math.max(0, stepConfig?.pierceDepth ?? 0);
   const bombRadiusTiles = Math.max(0, stepConfig?.bombRadiusTiles ?? 0);
   const explodeOnHit = stepConfig?.explodeOnHit ?? false;
+  const lowGravity = stepConfig?.lowGravity ?? false;
+  const warpZones = stepConfig?.warpZones ?? [];
   const balance = stepConfig?.balance ?? getGameplayBalance(config.difficulty);
 
   const distance = Math.hypot(ball.vel.x, ball.vel.y) * deltaSec;
@@ -47,7 +49,9 @@ export function stepPhysicsCore({
   };
 
   for (let i = 0; i < iterations; i += 1) {
+    ball.warpCooldownSec = Math.max(0, (ball.warpCooldownSec ?? 0) - subDt);
     integratePosition(ball, subDt);
+    applyWarpZones(ball, warpZones);
 
     if (
       resolveWallCollision(
@@ -103,6 +107,9 @@ export function stepPhysicsCore({
       nudgeForward(ball);
     }
 
+    if (lowGravity) {
+      ball.vel.y *= 0.94;
+    }
     normalizeVelocity(ball, maxBallSpeed);
   }
 
@@ -409,4 +416,26 @@ function normalizeVelocity(ball: Ball, maxSpeed: number): void {
   const factor = Math.min(maxSpeed, current) / current;
   ball.vel.x *= factor;
   ball.vel.y *= factor;
+}
+
+function applyWarpZones(ball: Ball, zones: NonNullable<PhysicsInput["stepConfig"]>["warpZones"]): void {
+  if (!zones || zones.length <= 0) {
+    return;
+  }
+  if ((ball.warpCooldownSec ?? 0) > 0) {
+    return;
+  }
+  for (const zone of zones) {
+    if (
+      ball.pos.x >= zone.inXMin &&
+      ball.pos.x <= zone.inXMax &&
+      ball.pos.y >= zone.inYMin &&
+      ball.pos.y <= zone.inYMax
+    ) {
+      ball.pos.x = zone.outX;
+      ball.pos.y = zone.outY;
+      ball.warpCooldownSec = 0.14;
+      return;
+    }
+  }
 }

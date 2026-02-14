@@ -130,6 +130,36 @@ export function drawShield(
   ctx.lineWidth = 1;
 }
 
+export function drawEnemies(
+  ctx: CanvasRenderingContext2D,
+  enemies: RenderViewState["enemies"],
+  reducedMotion: boolean,
+): void {
+  for (const enemy of enemies) {
+    if (!enemy.alive) {
+      continue;
+    }
+    ctx.save();
+    if (!reducedMotion) {
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = "rgba(255, 132, 96, 0.6)";
+    }
+    const grad = ctx.createRadialGradient(enemy.x - 2, enemy.y - 2, 1, enemy.x, enemy.y, enemy.radius);
+    grad.addColorStop(0, "rgba(255, 236, 198, 0.95)");
+    grad.addColorStop(1, "rgba(255, 132, 96, 0.92)");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.strokeStyle = "rgba(255, 228, 185, 0.9)";
+    ctx.beginPath();
+    ctx.arc(enemy.x, enemy.y, enemy.radius + 2, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
 function drawBall(
   ctx: CanvasRenderingContext2D,
   ball: Ball,

@@ -1,24 +1,26 @@
 import { AudioDirector } from "../audio/audioDirector";
 import { SfxManager } from "../audio/sfx";
-import { type OverlayElements, readStartSettings } from "../ui/overlay";
+import { type OverlayElements, readRogueUpgradeSelection, readStartSettings } from "../ui/overlay";
 import { readAccessibility } from "./a11y";
 import { syncAudioScene } from "./audioSync";
-import { buildStartConfig, GAME_CONFIG } from "./config";
+import { buildStartConfig, GAME_CONFIG, SHOP_CONFIG } from "./config";
 import { getDailyChallenge } from "./dailyChallenge";
 import { computeFrameDelta, handleBallLoss, handleStageClear, runPlayingLoop } from "./gameRuntime";
 import { renderGameFrame, syncSceneOverlayUI } from "./gameUi";
 import type { HudElements } from "./hud";
 import { InputController } from "./input";
+import { ITEM_REGISTRY } from "./itemRegistry";
+import { applyItemPickup, ensureMultiballCount } from "./itemSystem";
 import { LifecycleController } from "./lifecycle";
 import { clamp } from "./math";
 import { createSeededRandomSource, defaultRandomSource } from "./random";
 import { Renderer } from "./renderer";
-import { advanceStage, resetRoundState } from "./roundSystem";
+import { advanceStage, applyRogueUpgradeSelection, prepareStageStory, resetRoundState } from "./roundSystem";
 import { type SceneEvent, SceneMachine } from "./sceneMachine";
 import { applySceneTransition, type SceneTransitionResult } from "./sceneSync";
 import { createInitialGameState } from "./stateFactory";
 import type { GameAudioSettings, GameConfig, GameState, RandomSource, Scene } from "./types";
-import { nextDensityScale, updateVfxState } from "./vfxSystem";
+import { nextDensityScale, spawnItemPickupFeedback, updateVfxState } from "./vfxSystem";
 import { applyCanvasViewport } from "./viewport";
 
 export interface GameDeps {
@@ -82,6 +84,7 @@ export class Game {
       moveByMouseX: (clientX) => this.movePaddleByMouse(clientX),
       pauseToggle: () => this.togglePause(),
       startOrRestart: () => this.startOrResume(),
+      castMagic: () => this.castMagic(),
       resize: () => this.adjustCanvasScale(),
     });
     this.lifecycle = new LifecycleController(
@@ -93,6 +96,7 @@ export class Game {
     this.runSafely(() => {
       this.adjustCanvasScale();
       this.bindOverlay();
+      this.bindShop();
       this.bindA11yListeners();
       this.lifecycle.bind();
       this.audioDirector.setSettings(this.audioSettings);
@@ -100,6 +104,7 @@ export class Game {
       this.audioDirector.syncScene(this.state.scene, this.state.scene);
       renderGameFrame(this.renderer, this.hud, this.state);
       syncSceneOverlayUI(this.overlay, this.state);
+      this.updateShopPanel();
     }, "初期化中に問題が発生しました。");
   }
 
@@ -131,10 +136,20 @@ export class Game {
         const result = this.transition({ type: "BACK_TO_START" });
         this.syncAudioForTransition(result);
         syncSceneOverlayUI(this.overlay, this.state);
+        this.updateShopPanel();
         return;
       }
       void this.audioDirector.unlock().catch(() => {});
       this.runSafely(() => this.startOrResume(), "開始処理に失敗しました。");
+    });
+  }
+
+  private bindShop(): void {
+    this.overlay.shopOptionA.addEventListener("click", () => {
+      this.runSafely(() => this.purchaseShopOption(0), "ショップ購入に失敗しました。");
+    });
+    this.overlay.shopOptionB.addEventListener("click", () => {
+      this.runSafely(() => this.purchaseShopOption(1), "ショップ購入に失敗しました。");
     });
   }
 
@@ -144,10 +159,24 @@ export class Game {
       const result = this.transition({ type: "BACK_TO_START" });
       this.syncAudioForTransition(result);
       syncSceneOverlayUI(this.overlay, this.state);
+      this.updateShopPanel();
       return;
     }
     if (this.state.scene === "start") {
       this.applyStartSettings();
+    }
+    if (this.state.scene === "stageclear") {
+      if (this.state.rogue.pendingOffer) {
+        applyRogueUpgradeSelection(this.state, readRogueUpgradeSelection(this.overlay));
+      }
+      advanceStage(this.state, this.config, this.random);
+      if (prepareStageStory(this.state)) {
+        const storyResult = this.transition({ type: "SHOW_STORY" });
+        this.syncAudioForTransition(storyResult);
+        syncSceneOverlayUI(this.overlay, this.state);
+        this.updateShopPanel();
+        return;
+      }
     }
 
     const result = this.transition({ type: "START_OR_RESUME" });
@@ -158,13 +187,14 @@ export class Game {
 
     if (result.previous === "start") {
       resetRoundState(this.state, this.config, this.state.vfx.reducedMotion, this.random);
-    } else if (result.previous === "stageclear") {
-      advanceStage(this.state, this.config, this.random);
+    } else if (result.previous === "story") {
+      this.state.story.activeStageNumber = null;
     }
     this.lastFrameTime = 0;
     this.accumulator = 0;
     this.syncAudioForTransition(result);
     syncSceneOverlayUI(this.overlay, this.state);
+    this.updateShopPanel();
   }
 
   private togglePause(): void {
@@ -175,6 +205,7 @@ export class Game {
       this.accumulator = 0;
     }
     this.syncAudioForTransition(result);
+    this.updateShopPanel();
   }
 
   private transition(event: SceneEvent): SceneTransitionResult {
@@ -197,6 +228,8 @@ export class Game {
             random: this.random,
             sfx: this.sfx,
             playPickupSfx: (itemType) => this.audioDirector.playItemPickup(itemType),
+            playComboFillSfx: () => this.audioDirector.playComboFill(),
+            playMagicCastSfx: () => this.audioDirector.playMagicCast(),
           },
           this.accumulator,
           delta,
@@ -208,6 +241,7 @@ export class Game {
       }
       renderGameFrame(this.renderer, this.hud, this.state);
       syncSceneOverlayUI(this.overlay, this.state);
+      this.updateShopPanel();
     } catch (error) {
       this.setRuntimeError(
         error instanceof Error && error.message
@@ -246,6 +280,72 @@ export class Game {
     );
   }
 
+  private castMagic(): void {
+    if (this.state.scene !== "playing") {
+      return;
+    }
+    this.state.magic.requestCast = true;
+  }
+
+  private purchaseShopOption(index: 0 | 1): void {
+    if (this.state.scene !== "playing") {
+      return;
+    }
+    if (this.state.shop.usedThisStage) {
+      return;
+    }
+    const offer = this.state.shop.lastOffer;
+    if (!offer) {
+      return;
+    }
+    if (this.state.score < SHOP_CONFIG.purchaseCost) {
+      return;
+    }
+    const picked = offer[index];
+    this.state.score -= SHOP_CONFIG.purchaseCost;
+    this.state.shop.usedThisStage = true;
+    this.state.shop.lastChosen = picked;
+    applyItemPickup(this.state.items, picked, this.state.balls);
+    if (picked === "multiball") {
+      this.state.balls = ensureMultiballCount(
+        this.state.items,
+        this.state.balls,
+        this.random,
+        this.config.multiballMaxBalls,
+      );
+    }
+    const anchor = this.state.balls[0];
+    if (anchor) {
+      spawnItemPickupFeedback(this.state.vfx, picked, anchor.pos.x, anchor.pos.y);
+    }
+    this.audioDirector.playItemPickup(picked);
+    renderGameFrame(this.renderer, this.hud, this.state);
+    this.updateShopPanel();
+  }
+
+  private updateShopPanel(): void {
+    const panel = this.overlay.shopPanel;
+    if (this.state.scene !== "playing") {
+      panel.classList.add("panel-hidden");
+      return;
+    }
+    const offer = this.state.shop.lastOffer;
+    if (!offer) {
+      panel.classList.add("panel-hidden");
+      return;
+    }
+    panel.classList.remove("panel-hidden");
+    const canBuy = !this.state.shop.usedThisStage && this.state.score >= SHOP_CONFIG.purchaseCost;
+    const title = this.state.shop.usedThisStage
+      ? "ショップ: このステージは購入済み"
+      : `ショップ: 1回限定 (${SHOP_CONFIG.purchaseCost}点)`;
+    this.overlay.shopStatus.textContent = title;
+    this.overlay.shopOptionA.textContent = getShopButtonLabel(offer[0]);
+    this.overlay.shopOptionB.textContent = getShopButtonLabel(offer[1]);
+    this.overlay.shopOptionA.disabled = !canBuy;
+    this.overlay.shopOptionB.disabled = !canBuy;
+  }
+
   private adjustCanvasScale(): void {
     const wrapper = this.canvas.parentElement;
     if (!wrapper) return;
@@ -278,6 +378,7 @@ export class Game {
     try {
       renderGameFrame(this.renderer, this.hud, this.state);
       syncSceneOverlayUI(this.overlay, this.state);
+      this.updateShopPanel();
     } catch {}
   }
 
@@ -296,6 +397,8 @@ export class Game {
       sfxEnabled: selected.sfxEnabled,
     };
     this.audioDirector.setSettings(this.audioSettings);
+    this.state.options.riskMode = selected.riskMode;
+    this.state.campaign.routePreference = selected.routePreference;
   }
 
   private syncAudioForTransition(result: SceneTransitionResult): void {
@@ -330,10 +433,15 @@ export class Game {
     syncAudioScene(this.audioDirector, previous, this.state.scene, this.state.campaign.stageIndex);
     renderGameFrame(this.renderer, this.hud, this.state);
     syncSceneOverlayUI(this.overlay, this.state);
+    this.updateShopPanel();
   }
 }
 
 const CHALLENGE_MODE_SEED = 0x2f6e2b1d;
+
+function getShopButtonLabel(type: keyof typeof ITEM_REGISTRY): string {
+  return `${ITEM_REGISTRY[type].label}`;
+}
 
 function addMediaListener(query: MediaQueryList, handler: () => void): void {
   if (typeof query.addEventListener === "function") {

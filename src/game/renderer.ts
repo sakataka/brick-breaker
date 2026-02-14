@@ -1,7 +1,19 @@
-import { drawBackdrop, drawProgressBar } from "./renderer/layers/backdrop";
+import {
+  drawBackdrop,
+  drawModifierLabel,
+  drawProgressBar,
+  drawWarpZoneHints,
+} from "./renderer/layers/backdrop";
 import { drawBricks } from "./renderer/layers/bricks";
 import { drawFlash, drawFloatingTexts, drawImpactRings, drawParticles } from "./renderer/layers/effects";
-import { drawBallIndicators, drawBalls, drawPaddle, drawShield, drawTrail } from "./renderer/layers/entities";
+import {
+  drawBallIndicators,
+  drawBalls,
+  drawEnemies,
+  drawPaddle,
+  drawShield,
+  drawTrail,
+} from "./renderer/layers/entities";
 import { drawFallingItems } from "./renderer/layers/items";
 import { DEFAULT_RENDER_THEME, type RenderTheme, resolveRenderTheme } from "./renderer/theme";
 import type { RenderViewState } from "./renderTypes";
@@ -29,9 +41,14 @@ export class Renderer {
 
     drawBackdrop(this.ctx, this.config, theme);
     drawProgressBar(this.ctx, this.config, view.progressRatio, theme);
+    if (view.warpZones && view.warpZones.length > 0) {
+      drawWarpZoneHints(this.ctx, view.warpZones);
+    }
+    drawModifierLabel(this.ctx, view.stageModifierLabel, this.config);
     drawBricks(this.ctx, view.bricks, theme, view.highContrast);
     drawPaddle(this.ctx, view.paddle, view.elapsedSec, theme);
     drawShield(this.ctx, this.config, view.shieldCharges, view.elapsedSec, theme);
+    drawEnemies(this.ctx, view.enemies, view.reducedMotion);
     drawTrail(this.ctx, this.config, view.trail, view.balls[0], view.slowBallActive, theme);
     drawBallIndicators(this.ctx, this.config, view.balls, view.paddle.y);
     drawBalls(this.ctx, view.balls, view.slowBallActive, view.multiballActive, view.reducedMotion, theme);

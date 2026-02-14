@@ -63,6 +63,23 @@ export interface HazardConfig {
   instantSpeedScale: number;
 }
 
+export interface RiskModeConfig {
+  scoreScale: number;
+  maxSpeedScale: number;
+}
+
+export interface ShopConfig {
+  purchaseCost: number;
+}
+
+export interface RogueConfig {
+  maxUpgrades: number;
+  checkpointStages: readonly number[];
+  paddleScaleStep: number;
+  maxSpeedScaleStep: number;
+  scoreScaleStep: number;
+}
+
 export const DEFAULT_MULTIBALL_MAX_BALLS = 4;
 
 export const START_SETTING_LIMITS = {
@@ -189,6 +206,23 @@ export const HAZARD_CONFIG: HazardConfig = {
   durationSec: 3,
   maxSpeedScale: 1.2,
   instantSpeedScale: 1.15,
+};
+
+export const RISK_MODE_CONFIG: RiskModeConfig = {
+  scoreScale: 1.35,
+  maxSpeedScale: 1.12,
+};
+
+export const SHOP_CONFIG: ShopConfig = {
+  purchaseCost: 1200,
+};
+
+export const ROGUE_CONFIG: RogueConfig = {
+  maxUpgrades: 3,
+  checkpointStages: [3, 7, 11],
+  paddleScaleStep: 0.08,
+  maxSpeedScaleStep: 0.07,
+  scoreScaleStep: 0.15,
 };
 
 export function getGameplayBalance(difficulty: Difficulty): GameplayBalance {

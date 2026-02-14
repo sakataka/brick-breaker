@@ -1,15 +1,18 @@
 import { activateAssist, applyAssistToPaddle, createAssistState } from "./assistSystem";
 import {
   getGameplayBalance,
-  getStageByIndex,
+  getStageForCampaign,
+  getStageModifier,
+  getStageStory,
   getStageTimeTargetSec,
   RATING_CONFIG,
+  ROGUE_CONFIG,
   STAGE_CATALOG,
 } from "./config";
 import { cloneActiveItemState, createItemState, ensureMultiballCount } from "./itemSystem";
 import { buildBricksFromStage } from "./level";
 import { createBasePaddle, createServeBall } from "./stateFactory";
-import type { GameConfig, GameState, RandomSource } from "./types";
+import type { EnemyUnit, GameConfig, GameState, RandomSource, RogueUpgradeType, StageRoute } from "./types";
 import { createVfxState } from "./vfxSystem";
 
 interface BuildStageRoundOptions {
@@ -23,7 +26,7 @@ function buildStageRound(
   random: RandomSource,
   options: BuildStageRoundOptions = {},
 ): void {
-  const stage = getStageByIndex(state.campaign.stageIndex);
+  const stage = getStageForCampaign(state.campaign.stageIndex, state.campaign.resolvedRoute);
   const balance = getGameplayBalance(config.difficulty);
   const stageInitialSpeed = getStageInitialBallSpeed(config, state.campaign.stageIndex);
   if (options.resetLives ?? true) {
@@ -35,6 +38,9 @@ function buildStageRound(
     state.items.active = cloneActiveItemState(options.carriedActiveItems);
   }
   state.assist = createAssistState(config);
+  state.shop.usedThisStage = false;
+  state.shop.lastOffer = null;
+  state.shop.lastChosen = null;
   state.hazard.speedBoostUntilSec = 0;
   state.vfx = createVfxState(state.vfx.reducedMotion);
   state.paddle = createBasePaddle(config);
@@ -49,12 +55,15 @@ function buildStageRound(
     streak: 0,
     lastHitSec: -1,
     rewardGranted: false,
+    fillTriggered: false,
   };
   state.stageStats = {
     hitsTaken: 0,
     startedAtSec: state.elapsedSec,
     missionTargetSec: getStageTimeTargetSec(state.campaign.stageIndex),
   };
+  state.enemies = createStageEnemies(state.campaign.stageIndex, config);
+  state.magic.requestCast = false;
 }
 
 export function resetRoundState(
@@ -69,6 +78,17 @@ export function resetRoundState(
   state.campaign.totalStages = STAGE_CATALOG.length;
   state.campaign.stageStartScore = 0;
   state.campaign.results = [];
+  state.campaign.resolvedRoute = null;
+  state.rogue = {
+    upgradesTaken: 0,
+    paddleScaleBonus: 0,
+    maxSpeedScaleBonus: 0,
+    scoreScaleBonus: 0,
+    pendingOffer: null,
+    lastChosen: null,
+  };
+  state.story.activeStageNumber = null;
+  state.story.seenStageNumbers = [];
   state.vfx = createVfxState(reducedMotion);
   buildStageRound(state, config, random, { resetLives: true });
   state.campaign.stageStartScore = state.score;
@@ -79,8 +99,14 @@ export function advanceStage(state: GameState, config: GameConfig, random: Rando
     return false;
   }
 
+  if (state.campaign.stageIndex === 3 && state.campaign.resolvedRoute === null) {
+    state.campaign.resolvedRoute = resolveRoute(state, random);
+  }
+
   const carriedActiveItems = cloneActiveItemState(state.items.active);
   carriedActiveItems.bombStacks = 0;
+  state.rogue.pendingOffer = null;
+  state.story.activeStageNumber = null;
   state.campaign.stageIndex += 1;
   buildStageRound(state, config, random, {
     carriedActiveItems,
@@ -92,6 +118,8 @@ export function advanceStage(state: GameState, config: GameConfig, random: Rando
 
 export function retryCurrentStage(state: GameState, config: GameConfig, random: RandomSource): void {
   state.score = state.campaign.stageStartScore;
+  state.rogue.pendingOffer = null;
+  state.story.activeStageNumber = null;
   buildStageRound(state, config, random, { resetLives: true });
 }
 
@@ -124,11 +152,11 @@ export function applyLifeLoss(
 }
 
 export function getStageInitialBallSpeed(config: GameConfig, stageIndex: number): number {
-  return config.initialBallSpeed * getStageByIndex(stageIndex).speedScale;
+  return config.initialBallSpeed * getStageForCampaign(stageIndex, null).speedScale;
 }
 
 export function getStageMaxBallSpeed(config: GameConfig, stageIndex: number): number {
-  return config.maxBallSpeed * getStageByIndex(stageIndex).speedScale;
+  return config.maxBallSpeed * getStageForCampaign(stageIndex, null).speedScale;
 }
 
 export function finalizeStageStats(state: GameState): void {
@@ -143,6 +171,7 @@ export function finalizeStageStats(state: GameState): void {
   state.stageStats.missionTargetSec = missionTargetSec;
   state.stageStats.missionAchieved = missionAchieved;
   upsertCampaignStageResult(state, clearTimeSec, stars, ratingScore, missionTargetSec, missionAchieved);
+  prepareRogueUpgradeOffer(state);
 }
 
 export function getStageClearTimeSec(state: GameState): number | null {
@@ -208,4 +237,85 @@ function upsertCampaignStageResult(
   }
   state.campaign.results.push(entry);
   state.campaign.results.sort((a, b) => a.stageNumber - b.stageNumber);
+}
+
+function resolveRoute(state: GameState, random: RandomSource): StageRoute {
+  if (state.campaign.routePreference === "A" || state.campaign.routePreference === "B") {
+    return state.campaign.routePreference;
+  }
+  if (state.score >= 2500 || state.lives >= 3) {
+    return "A";
+  }
+  return random.next() < 0.5 ? "A" : "B";
+}
+
+export function prepareStageStory(state: GameState): boolean {
+  const stageNumber = state.campaign.stageIndex + 1;
+  if (!getStageStory(stageNumber)) {
+    return false;
+  }
+  if (state.story.seenStageNumbers.includes(stageNumber)) {
+    return false;
+  }
+  state.story.seenStageNumbers.push(stageNumber);
+  state.story.activeStageNumber = stageNumber;
+  return true;
+}
+
+export function applyRogueUpgradeSelection(state: GameState, selected: RogueUpgradeType): void {
+  if (!state.rogue.pendingOffer) {
+    return;
+  }
+  if (!state.rogue.pendingOffer.includes(selected)) {
+    selected = state.rogue.pendingOffer[0];
+  }
+  if (state.rogue.upgradesTaken >= ROGUE_CONFIG.maxUpgrades) {
+    state.rogue.pendingOffer = null;
+    return;
+  }
+  if (selected === "paddle_core") {
+    state.rogue.paddleScaleBonus += ROGUE_CONFIG.paddleScaleStep;
+  } else if (selected === "speed_core") {
+    state.rogue.maxSpeedScaleBonus += ROGUE_CONFIG.maxSpeedScaleStep;
+  } else {
+    state.rogue.scoreScaleBonus += ROGUE_CONFIG.scoreScaleStep;
+  }
+  state.rogue.upgradesTaken += 1;
+  state.rogue.lastChosen = selected;
+  state.rogue.pendingOffer = null;
+}
+
+function createStageEnemies(stageIndex: number, config: GameConfig): EnemyUnit[] {
+  const modifier = getStageModifier(stageIndex + 1);
+  if (!modifier?.spawnEnemy) {
+    return [];
+  }
+  return [
+    {
+      id: 1,
+      x: config.width * 0.5,
+      y: 138,
+      vx: 90,
+      radius: 11,
+      alive: true,
+    },
+  ];
+}
+
+function prepareRogueUpgradeOffer(state: GameState): void {
+  if (state.rogue.upgradesTaken >= ROGUE_CONFIG.maxUpgrades) {
+    state.rogue.pendingOffer = null;
+    return;
+  }
+  const stageNumber = state.campaign.stageIndex + 1;
+  if (!ROGUE_CONFIG.checkpointStages.includes(stageNumber)) {
+    state.rogue.pendingOffer = null;
+    return;
+  }
+
+  const upgrades: RogueUpgradeType[] = ["paddle_core", "speed_core", "score_core"];
+  const pivot = (stageNumber + state.rogue.upgradesTaken + state.lives) % upgrades.length;
+  const first = upgrades[pivot];
+  const second = upgrades[(pivot + 1) % upgrades.length];
+  state.rogue.pendingOffer = [first, second];
 }

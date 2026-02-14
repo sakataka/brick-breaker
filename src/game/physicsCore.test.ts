@@ -244,4 +244,58 @@ describe("physicsCore", () => {
     expect(bricks[0]?.alive).toBe(true);
     expect(bricks[0]?.hp).toBe(11);
   });
+
+  test("warp zone teleports ball position", () => {
+    const ball: Ball = {
+      pos: { x: 40, y: 40 },
+      vel: { x: 10, y: 10 },
+      radius: 6,
+      speed: 120,
+    };
+
+    stepPhysicsCore({
+      ball,
+      paddle: basePaddle(),
+      bricks: [],
+      config: baseConfig,
+      deltaSec: 1 / 60,
+      stepConfig: {
+        warpZones: [
+          {
+            inXMin: 30,
+            inXMax: 60,
+            inYMin: 30,
+            inYMax: 60,
+            outX: 180,
+            outY: 120,
+          },
+        ],
+      },
+    });
+
+    expect(ball.pos.x).toBe(180);
+    expect(ball.pos.y).toBe(120);
+  });
+
+  test("low gravity flattens vertical velocity", () => {
+    const ball: Ball = {
+      pos: { x: 120, y: 100 },
+      vel: { x: 30, y: -150 },
+      radius: 6,
+      speed: 180,
+    };
+
+    stepPhysicsCore({
+      ball,
+      paddle: basePaddle(),
+      bricks: [],
+      config: baseConfig,
+      deltaSec: 1 / 60,
+      stepConfig: {
+        lowGravity: true,
+      },
+    });
+
+    expect(Math.abs(ball.vel.y)).toBeLessThan(150);
+  });
 });

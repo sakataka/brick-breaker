@@ -1,7 +1,7 @@
 import type { SpeedPreset } from "../game/config";
 import { getDailyChallenge } from "../game/dailyChallenge";
-import type { StageResultSummaryView, StageResultView } from "../game/renderTypes";
-import type { Difficulty, Scene } from "../game/types";
+import type { RogueOfferView, StageResultSummaryView, StageResultView } from "../game/renderTypes";
+import type { Difficulty, RogueUpgradeType, RoutePreference, Scene } from "../game/types";
 import { getRequiredElement } from "../util/dom";
 
 interface OverlayCopy {
@@ -19,21 +19,31 @@ export interface OverlayElements {
   difficulty: HTMLSelectElement;
   initialLives: HTMLSelectElement;
   speedPreset: HTMLSelectElement;
+  routePreference: HTMLSelectElement;
   multiballMaxBalls: HTMLSelectElement;
+  riskMode: HTMLInputElement;
   challengeMode: HTMLInputElement;
   dailyMode: HTMLInputElement;
   bgmEnabled: HTMLInputElement;
   sfxEnabled: HTMLInputElement;
   dailyChallengeLabel: HTMLParagraphElement;
+  rogueSection: HTMLDivElement;
+  rogueSelect: HTMLSelectElement;
   resultsSection: HTMLDivElement;
   resultsList: HTMLUListElement;
+  shopPanel: HTMLDivElement;
+  shopStatus: HTMLParagraphElement;
+  shopOptionA: HTMLButtonElement;
+  shopOptionB: HTMLButtonElement;
 }
 
 export interface StartSettingsSelection {
   difficulty: Difficulty;
   initialLives: number;
   speedPreset: SpeedPreset;
+  routePreference: RoutePreference;
   multiballMaxBalls: number;
+  riskMode: boolean;
   challengeMode: boolean;
   dailyMode: boolean;
   bgmEnabled: boolean;
@@ -45,6 +55,11 @@ export const OVERLAY_COPY: Record<Scene, OverlayCopy> = {
     message: "ブロック崩し",
     sub: "マウスでバーを移動してボールをたたき返してください。",
     button: "ゲーム開始",
+  },
+  story: {
+    message: "ステージ演出",
+    sub: "物語テキスト",
+    button: "続行",
   },
   paused: {
     message: "一時停止中",
@@ -115,10 +130,20 @@ export function getOverlayElements(documentRef: Document): OverlayElements {
     "#setting-speed",
     "setting-speed要素が見つかりません",
   );
+  const routePreference = getRequiredElement<HTMLSelectElement>(
+    documentRef,
+    "#setting-route",
+    "setting-route要素が見つかりません",
+  );
   const multiballMaxBalls = getRequiredElement<HTMLSelectElement>(
     documentRef,
     "#setting-multiball-max",
     "setting-multiball-max要素が見つかりません",
+  );
+  const riskMode = getRequiredElement<HTMLInputElement>(
+    documentRef,
+    "#setting-risk-mode",
+    "setting-risk-mode要素が見つかりません",
   );
   const bgmEnabled = getRequiredElement<HTMLInputElement>(
     documentRef,
@@ -150,10 +175,40 @@ export function getOverlayElements(documentRef: Document): OverlayElements {
     "#overlay-results-section",
     "overlay-results-section要素が見つかりません",
   );
+  const rogueSection = getRequiredElement<HTMLDivElement>(
+    documentRef,
+    "#overlay-rogue-section",
+    "overlay-rogue-section要素が見つかりません",
+  );
+  const rogueSelect = getRequiredElement<HTMLSelectElement>(
+    documentRef,
+    "#overlay-rogue-select",
+    "overlay-rogue-select要素が見つかりません",
+  );
   const resultsList = getRequiredElement<HTMLUListElement>(
     documentRef,
     "#overlay-results",
     "overlay-results要素が見つかりません",
+  );
+  const shopPanel = getRequiredElement<HTMLDivElement>(
+    documentRef,
+    "#shop-panel",
+    "shop-panel要素が見つかりません",
+  );
+  const shopStatus = getRequiredElement<HTMLParagraphElement>(
+    documentRef,
+    "#shop-status",
+    "shop-status要素が見つかりません",
+  );
+  const shopOptionA = getRequiredElement<HTMLButtonElement>(
+    documentRef,
+    "#shop-option-a",
+    "shop-option-a要素が見つかりません",
+  );
+  const shopOptionB = getRequiredElement<HTMLButtonElement>(
+    documentRef,
+    "#shop-option-b",
+    "shop-option-b要素が見つかりません",
   );
 
   return {
@@ -165,14 +220,22 @@ export function getOverlayElements(documentRef: Document): OverlayElements {
     difficulty,
     initialLives,
     speedPreset,
+    routePreference,
     multiballMaxBalls,
+    riskMode,
     challengeMode,
     dailyMode,
     bgmEnabled,
     sfxEnabled,
     dailyChallengeLabel,
+    rogueSection,
+    rogueSelect,
     resultsSection,
     resultsList,
+    shopPanel,
+    shopStatus,
+    shopOptionA,
+    shopOptionB,
   };
 }
 
@@ -185,7 +248,9 @@ export function readStartSettings(elements: OverlayElements): StartSettingsSelec
     difficulty,
     initialLives: Number.isFinite(lives) ? lives : 4,
     speedPreset,
+    routePreference: parseRoutePreference(elements.routePreference.value),
     multiballMaxBalls: Number.isFinite(multiballMaxBalls) ? multiballMaxBalls : 4,
+    riskMode: elements.riskMode.checked,
     challengeMode: elements.challengeMode.checked,
     dailyMode: elements.dailyMode.checked,
     bgmEnabled: elements.bgmEnabled.checked,
@@ -203,6 +268,8 @@ export function setSceneUI(
   stageLabel?: string,
   stageResult?: StageResultView,
   campaignResults?: StageResultSummaryView[],
+  rogueOffer?: RogueOfferView,
+  storyText?: string,
 ): void {
   if (scene === "playing") {
     elements.overlay.classList.add("hidden");
@@ -217,6 +284,7 @@ export function setSceneUI(
   elements.button.disabled = false;
   elements.startSettings.classList.toggle("panel-hidden", scene !== "start");
   elements.resultsSection.classList.toggle("panel-hidden", scene !== "clear");
+  elements.rogueSection.classList.toggle("panel-hidden", !(scene === "stageclear" && rogueOffer));
   if (scene !== "clear") {
     elements.resultsList.innerHTML = "";
   }
@@ -241,7 +309,13 @@ export function setSceneUI(
 
   if (scene === "stageclear") {
     const result = formatStageResult(stageResult);
+    renderRogueOffer(elements.rogueSelect, rogueOffer);
     elements.sub.textContent = `${stageLabel ?? ""} ${score}点${result}`;
+    return;
+  }
+
+  if (scene === "story") {
+    elements.sub.textContent = storyText ?? copy.sub;
     return;
   }
 
@@ -293,4 +367,43 @@ function parseSpeedPreset(value: string): SpeedPreset {
     return value;
   }
   return "1.00";
+}
+
+function parseRoutePreference(value: string): RoutePreference {
+  if (value === "A" || value === "B") {
+    return value;
+  }
+  return "auto";
+}
+
+function renderRogueOffer(selectElement: HTMLSelectElement, offer: RogueOfferView | undefined): void {
+  selectElement.innerHTML = "";
+  if (!offer) {
+    return;
+  }
+  const doc = selectElement.ownerDocument;
+  for (const option of offer.options) {
+    const item = doc.createElement("option");
+    item.value = option;
+    item.textContent = `${formatRogueUpgradeLabel(option)}（残り${offer.remaining}回）`;
+    selectElement.append(item);
+  }
+}
+
+function formatRogueUpgradeLabel(upgrade: RogueUpgradeType): string {
+  if (upgrade === "paddle_core") {
+    return "幅コア";
+  }
+  if (upgrade === "speed_core") {
+    return "速度コア";
+  }
+  return "スコアコア";
+}
+
+export function readRogueUpgradeSelection(elements: OverlayElements): RogueUpgradeType {
+  const value = elements.rogueSelect.value;
+  if (value === "paddle_core" || value === "speed_core") {
+    return value;
+  }
+  return "score_core";
 }

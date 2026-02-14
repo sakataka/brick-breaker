@@ -8,6 +8,7 @@ export interface InputHandlers {
   moveByMouseX: (clientX: number) => void;
   pauseToggle: () => void;
   startOrRestart: () => void;
+  castMagic: () => void;
   resize: () => void;
 }
 
@@ -17,6 +18,8 @@ export class InputController {
   attach(): void {
     window.addEventListener("mousemove", this.handleMouseMove);
     window.addEventListener("pointermove", this.handlePointerMove);
+    window.addEventListener("pointerdown", this.handlePointerDown);
+    window.addEventListener("contextmenu", this.handleContextMenu);
     window.addEventListener("keydown", this.handleKeyDown);
     window.addEventListener("resize", this.handlers.resize);
   }
@@ -24,6 +27,8 @@ export class InputController {
   detach(): void {
     window.removeEventListener("mousemove", this.handleMouseMove);
     window.removeEventListener("pointermove", this.handlePointerMove);
+    window.removeEventListener("pointerdown", this.handlePointerDown);
+    window.removeEventListener("contextmenu", this.handleContextMenu);
     window.removeEventListener("keydown", this.handleKeyDown);
     window.removeEventListener("resize", this.handlers.resize);
   }
@@ -34,6 +39,17 @@ export class InputController {
 
   private readonly handlePointerMove = (event: PointerEvent): void => {
     this.handlers.moveByMouseX(event.clientX);
+  };
+
+  private readonly handlePointerDown = (event: PointerEvent): void => {
+    if (event.button === 2) {
+      event.preventDefault();
+      this.handlers.castMagic();
+    }
+  };
+
+  private readonly handleContextMenu = (event: MouseEvent): void => {
+    event.preventDefault();
   };
 
   private readonly handleKeyDown = (event: KeyboardEvent): void => {

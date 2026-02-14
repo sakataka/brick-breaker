@@ -34,6 +34,8 @@ describe("gamePipeline", () => {
       sfx: sfxStub as never,
       tryShieldRescue: () => false,
       playPickupSfx: () => {},
+      playComboFillSfx: () => {},
+      playMagicCastSfx: () => {},
     });
 
     expect(outcome).toBe("stageclear");
@@ -60,6 +62,8 @@ describe("gamePipeline", () => {
       sfx: sfxStub as never,
       tryShieldRescue: () => false,
       playPickupSfx: () => {},
+      playComboFillSfx: () => {},
+      playMagicCastSfx: () => {},
     });
 
     expect(outcome).toBe("ballloss");
@@ -90,6 +94,8 @@ describe("gamePipeline", () => {
         return true;
       },
       playPickupSfx: () => {},
+      playComboFillSfx: () => {},
+      playMagicCastSfx: () => {},
     });
 
     expect(outcome).toBe("continue");
@@ -129,6 +135,8 @@ describe("gamePipeline", () => {
       sfx: sfxStub as never,
       tryShieldRescue: () => false,
       playPickupSfx: () => {},
+      playComboFillSfx: () => {},
+      playMagicCastSfx: () => {},
     });
 
     expect(outcome).toBe("continue");
@@ -180,6 +188,8 @@ describe("gamePipeline", () => {
       sfx: sfxStub as never,
       tryShieldRescue: () => false,
       playPickupSfx: () => {},
+      playComboFillSfx: () => {},
+      playMagicCastSfx: () => {},
     });
 
     expect(outcome).toBe("continue");
@@ -209,6 +219,8 @@ describe("gamePipeline", () => {
       sfx: sfxStub as never,
       tryShieldRescue: () => false,
       playPickupSfx: () => {},
+      playComboFillSfx: () => {},
+      playMagicCastSfx: () => {},
     });
     const afterFirst = state.score;
 
@@ -224,6 +236,8 @@ describe("gamePipeline", () => {
       sfx: sfxStub as never,
       tryShieldRescue: () => false,
       playPickupSfx: () => {},
+      playComboFillSfx: () => {},
+      playMagicCastSfx: () => {},
     });
     const secondGain = state.score - afterFirst;
 
@@ -240,6 +254,8 @@ describe("gamePipeline", () => {
       sfx: sfxStub as never,
       tryShieldRescue: () => false,
       playPickupSfx: () => {},
+      playComboFillSfx: () => {},
+      playMagicCastSfx: () => {},
     });
     const thirdGain = state.score - afterFirst - secondGain;
 
@@ -281,6 +297,8 @@ describe("gamePipeline", () => {
         sfx: sfxStub as never,
         tryShieldRescue: () => false,
         playPickupSfx: () => {},
+        playComboFillSfx: () => {},
+        playMagicCastSfx: () => {},
       });
     }
 
@@ -301,6 +319,8 @@ describe("gamePipeline", () => {
       sfx: sfxStub as never,
       tryShieldRescue: () => false,
       playPickupSfx: () => {},
+      playComboFillSfx: () => {},
+      playMagicCastSfx: () => {},
     });
 
     expect(state.items.falling.length).toBe(countAfterTrigger);
@@ -328,6 +348,8 @@ describe("gamePipeline", () => {
       sfx: sfxStub as never,
       tryShieldRescue: () => false,
       playPickupSfx: () => {},
+      playComboFillSfx: () => {},
+      playMagicCastSfx: () => {},
     });
 
     expect(outcome).toBe("continue");
@@ -376,6 +398,8 @@ describe("gamePipeline", () => {
       sfx: sfxStub as never,
       tryShieldRescue: () => false,
       playPickupSfx: () => {},
+      playComboFillSfx: () => {},
+      playMagicCastSfx: () => {},
     });
 
     expect(outcome).toBe("stageclear");
@@ -432,9 +456,166 @@ describe("gamePipeline", () => {
       sfx: sfxStub as never,
       tryShieldRescue: () => false,
       playPickupSfx: (itemType) => played.push(itemType),
+      playComboFillSfx: () => {},
+      playMagicCastSfx: () => {},
     });
 
     expect(outcome).toBe("continue");
     expect(played).toEqual(["shield", "pierce"]);
+  });
+
+  test("risk mode raises brick score gain", () => {
+    const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60 };
+    const state = createInitialGameState(config, true, "playing");
+    state.scene = "playing";
+    state.options.riskMode = true;
+    state.bricks = [{ id: 1, x: 100, y: 70, width: 40, height: 12, alive: true }];
+    state.balls = [
+      {
+        pos: { x: 120, y: 68 },
+        vel: { x: 0, y: 70 },
+        radius: 8,
+        speed: config.initialBallSpeed,
+      },
+    ];
+
+    stepPlayingPipeline(state, {
+      config,
+      random,
+      sfx: sfxStub as never,
+      tryShieldRescue: () => false,
+      playPickupSfx: () => {},
+      playComboFillSfx: () => {},
+      playMagicCastSfx: () => {},
+    });
+
+    expect(state.score).toBe(135);
+  });
+
+  test("generates one shop offer per stage", () => {
+    const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60 };
+    const state = createInitialGameState(config, true, "playing");
+    state.scene = "playing";
+    state.bricks = [];
+    state.shop.lastOffer = null;
+    state.balls = [
+      {
+        pos: { x: 120, y: 110 },
+        vel: { x: 0, y: -120 },
+        radius: 8,
+        speed: config.initialBallSpeed,
+      },
+    ];
+
+    stepPlayingPipeline(state, {
+      config,
+      random,
+      sfx: sfxStub as never,
+      tryShieldRescue: () => false,
+      playPickupSfx: () => {},
+      playComboFillSfx: () => {},
+      playMagicCastSfx: () => {},
+    });
+
+    expect(state.shop.lastOffer).not.toBeNull();
+    expect(state.shop.lastOffer).toHaveLength(2);
+  });
+
+  test("enemy collision defeats enemy and grants score", () => {
+    const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60 };
+    const state = createInitialGameState(config, true, "playing");
+    state.scene = "playing";
+    state.bricks = [];
+    state.enemies = [{ id: 1, x: 120, y: 100, vx: 0, radius: 10, alive: true }];
+    state.balls = [
+      {
+        pos: { x: 120, y: 100 },
+        vel: { x: 0, y: 120 },
+        radius: 8,
+        speed: config.initialBallSpeed,
+      },
+    ];
+
+    stepPlayingPipeline(state, {
+      config,
+      random,
+      sfx: sfxStub as never,
+      tryShieldRescue: () => false,
+      playPickupSfx: () => {},
+      playComboFillSfx: () => {},
+      playMagicCastSfx: () => {},
+    });
+
+    expect(state.enemies).toHaveLength(0);
+    expect(state.score).toBeGreaterThanOrEqual(150);
+  });
+
+  test("combo fill sfx fires once when crossing x2.5", () => {
+    const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60 };
+    const state = createInitialGameState(config, true, "playing");
+    state.scene = "playing";
+    state.combo.multiplier = 2.25;
+    state.combo.streak = 6;
+    state.combo.lastHitSec = 0;
+    state.elapsedSec = 0.2;
+    state.bricks = [{ id: 1, x: 30, y: 40, width: 36, height: 10, alive: true }];
+    overrideSingleBall(state, {
+      pos: { x: 48, y: 36 },
+      vel: { x: 0, y: 160 },
+      radius: 8,
+      speed: config.initialBallSpeed,
+    });
+
+    let fillCount = 0;
+    stepPlayingPipeline(state, {
+      config,
+      random,
+      sfx: sfxStub as never,
+      tryShieldRescue: () => false,
+      playPickupSfx: () => {},
+      playComboFillSfx: () => {
+        fillCount += 1;
+      },
+      playMagicCastSfx: () => {},
+    });
+
+    expect(fillCount).toBe(1);
+    expect(state.combo.fillTriggered).toBe(true);
+  });
+
+  test("magic cast destroys nearest brick and starts cooldown", () => {
+    const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60 };
+    const state = createInitialGameState(config, true, "playing");
+    state.scene = "playing";
+    state.magic.requestCast = true;
+    state.bricks = [
+      { id: 1, x: 20, y: 40, width: 30, height: 10, alive: true },
+      { id: 2, x: 110, y: 80, width: 30, height: 10, alive: true },
+    ];
+    state.balls = [
+      {
+        pos: { x: 120, y: 120 },
+        vel: { x: 0, y: -80 },
+        radius: 8,
+        speed: config.initialBallSpeed,
+      },
+    ];
+
+    let played = 0;
+    stepPlayingPipeline(state, {
+      config,
+      random,
+      sfx: sfxStub as never,
+      tryShieldRescue: () => false,
+      playPickupSfx: () => {},
+      playComboFillSfx: () => {},
+      playMagicCastSfx: () => {
+        played += 1;
+      },
+    });
+
+    expect(state.bricks[1]?.alive).toBe(false);
+    expect(state.magic.cooldownSec).toBeGreaterThan(9.5);
+    expect(played).toBe(1);
   });
 });

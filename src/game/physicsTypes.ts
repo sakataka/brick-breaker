@@ -1,4 +1,5 @@
 import type { GameplayBalance } from "./config";
+import type { WarpZone } from "./config/stages";
 import type { Ball, Brick, CollisionEvent, GameConfig, Paddle } from "./types";
 
 export interface PhysicsConfig {
@@ -9,6 +10,8 @@ export interface PhysicsConfig {
   pierceDepth?: number;
   bombRadiusTiles?: number;
   explodeOnHit?: boolean;
+  lowGravity?: boolean;
+  warpZones?: WarpZone[];
   onMiss?: (ball: Ball) => boolean;
   balance?: GameplayBalance;
 }

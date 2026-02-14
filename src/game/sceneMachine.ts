@@ -3,6 +3,7 @@ import type { Scene } from "./types";
 
 export const SceneTransitionInput = {
   START_OR_RESUME: "START_OR_RESUME",
+  SHOW_STORY: "SHOW_STORY",
   TOGGLE_PAUSE: "TOGGLE_PAUSE",
   STAGE_CLEAR: "STAGE_CLEAR",
   GAME_OVER: "GAME_OVER",
@@ -20,6 +21,12 @@ const sceneMachineDefinition = createMachine({
   initial: "start",
   states: {
     start: {
+      on: {
+        START_OR_RESUME: "playing",
+        RUNTIME_ERROR: "error",
+      },
+    },
+    story: {
       on: {
         START_OR_RESUME: "playing",
         RUNTIME_ERROR: "error",
@@ -56,6 +63,7 @@ const sceneMachineDefinition = createMachine({
     },
     stageclear: {
       on: {
+        SHOW_STORY: "story",
         START_OR_RESUME: "playing",
         RUNTIME_ERROR: "error",
       },

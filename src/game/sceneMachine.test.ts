@@ -27,6 +27,15 @@ describe("sceneMachine", () => {
     machine.stop();
   });
 
+  test("supports stageclear -> story -> playing", () => {
+    const machine = new SceneMachine();
+    expect(machine.send({ type: "START_OR_RESUME" })).toBe("playing");
+    expect(machine.send({ type: "STAGE_CLEAR" })).toBe("stageclear");
+    expect(machine.send({ type: "SHOW_STORY" })).toBe("story");
+    expect(machine.send({ type: "START_OR_RESUME" })).toBe("playing");
+    machine.stop();
+  });
+
   test("moves stageclear to error on runtime error", () => {
     const machine = new SceneMachine();
     expect(machine.send({ type: "START_OR_RESUME" })).toBe("playing");

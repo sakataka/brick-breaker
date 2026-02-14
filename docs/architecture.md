@@ -22,9 +22,9 @@
 - `src/game/gameRuntime.ts`
   - fixed-step 実行、stage clear / life loss 適用。
 - `src/game/gamePipeline.ts`
-  - playing 中1tickの順序実行（物理/アイテム/コンボ/VFX）。
+  - playing 中1tickの順序実行（物理/アイテム/コンボ/VFX/敵/ショップ提示）。
 - `src/game/roundSystem.ts`
-  - ステージ進行、再挑戦、評価、結果履歴。
+  - ステージ進行、分岐ルート、再挑戦、評価、結果履歴、ラン強化。
 - `src/game/dailyChallenge.ts`
   - ローカル日付に基づくデイリーシードと目標文言の生成。
 - `src/game/itemRegistry.ts`
@@ -114,15 +114,4 @@
 
 `docs/idea-progress.md` と同期する未完了タスク:
 
-- P2
-  - `BB-IDEA-09` 分岐ステージ選択（2ルート）
-  - `BB-IDEA-10` フィールドギミック（ワープ / 重力帯 / 可動壁）
-  - `BB-IDEA-11` 敵ユニット導入（浮遊敵）
-  - `BB-IDEA-12` スコア倍率のリスク選択（高倍率 / 高危険）
-  - `BB-IDEA-13` ラウンド中ショップ（1回だけ強化購入）
-  - `BB-IDEA-14` ステージ修飾子（低重力 / 高速球）
-- P3
-  - `BB-IDEA-15` ローグライト進行（ラン内構築）
-  - `BB-IDEA-16` 魔法スキルシステム（Wizorb方向）
-  - `BB-IDEA-17` サウンド同期イベント（特定行動でBGM変調）
-  - `BB-IDEA-18` ストーリー演出ステージ（短いイベント挿入）
+- 現時点の残タスクはありません（`BB-IDEA-01` 〜 `BB-IDEA-18` 実装済み）。

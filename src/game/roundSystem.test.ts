@@ -4,9 +4,11 @@ import { GAME_CONFIG, STAGE_CATALOG } from "./config";
 import {
   advanceStage,
   applyLifeLoss,
+  applyRogueUpgradeSelection,
   finalizeStageStats,
   getStageClearTimeSec,
   getStarRatingByScore,
+  prepareStageStory,
   resetRoundState,
   retryCurrentStage,
 } from "./roundSystem";
@@ -53,6 +55,18 @@ describe("roundSystem", () => {
     }
 
     expect(advanceStage(state, GAME_CONFIG, fixedRandom)).toBe(false);
+  });
+
+  test("route preference B is resolved after stage 4 clear", () => {
+    const state = createInitialGameState(GAME_CONFIG, false, "start");
+    resetRoundState(state, GAME_CONFIG, false, fixedRandom);
+    state.campaign.routePreference = "B";
+
+    for (let i = 0; i < 4; i += 1) {
+      expect(advanceStage(state, GAME_CONFIG, fixedRandom)).toBe(true);
+    }
+
+    expect(state.campaign.resolvedRoute).toBe("B");
   });
 
   test("advanceStage carries active item effects but clears falling items", () => {
@@ -186,5 +200,38 @@ describe("roundSystem", () => {
 
     expect(state.stageStats.missionAchieved).toBe(false);
     expect(state.campaign.results[0]?.missionAchieved).toBe(false);
+  });
+
+  test("checkpoint stage prepares rogue upgrade offer", () => {
+    const state = createInitialGameState(GAME_CONFIG, false, "playing");
+    resetRoundState(state, GAME_CONFIG, false, fixedRandom);
+    state.campaign.stageIndex = 2;
+    state.elapsedSec = 60;
+
+    finalizeStageStats(state);
+
+    expect(state.rogue.pendingOffer).not.toBeNull();
+    expect(state.rogue.pendingOffer).toHaveLength(2);
+  });
+
+  test("applying rogue selection consumes pending offer and grants bonus", () => {
+    const state = createInitialGameState(GAME_CONFIG, false, "playing");
+    state.rogue.pendingOffer = ["paddle_core", "speed_core"];
+
+    applyRogueUpgradeSelection(state, "speed_core");
+
+    expect(state.rogue.upgradesTaken).toBe(1);
+    expect(state.rogue.maxSpeedScaleBonus).toBeGreaterThan(0);
+    expect(state.rogue.pendingOffer).toBeNull();
+    expect(state.rogue.lastChosen).toBe("speed_core");
+  });
+
+  test("prepareStageStory returns true once for story stages", () => {
+    const state = createInitialGameState(GAME_CONFIG, false, "stageclear");
+    state.campaign.stageIndex = 3;
+
+    expect(prepareStageStory(state)).toBe(true);
+    expect(state.story.activeStageNumber).toBe(4);
+    expect(prepareStageStory(state)).toBe(false);
   });
 });

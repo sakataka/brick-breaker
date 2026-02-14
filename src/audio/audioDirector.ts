@@ -89,6 +89,14 @@ export class AudioDirector {
     void this.sfx.play(getItemPickupSfxEvent(itemType));
   }
 
+  playComboFill(): void {
+    void this.sfx.play("combo_fill");
+  }
+
+  playMagicCast(): void {
+    void this.sfx.play("magic_cast");
+  }
+
   destroy(): void {
     this.clearDelayedStageStart();
     this.sequencer.destroy();

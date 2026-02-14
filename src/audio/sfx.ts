@@ -10,6 +10,8 @@ export type EventName =
   | "item_shield"
   | "item_pierce"
   | "item_bomb"
+  | "magic_cast"
+  | "combo_fill"
   | "jingle_start"
   | "jingle_stage_clear"
   | "jingle_game_clear"
@@ -118,6 +120,16 @@ export class SfxManager {
       ],
       item_pierce: [{ freq: 1280, type: "square", durationMs: 90, gain: 0.062 }],
       item_bomb: [{ freq: 220, type: "sawtooth", durationMs: 170, gain: 0.09, glideTo: 120 }],
+      magic_cast: [
+        { freq: 420, type: "sine", durationMs: 110, gain: 0.06 },
+        { freq: 860, type: "triangle", durationMs: 110, gain: 0.065 },
+        { freq: 1320, type: "triangle", durationMs: 130, gain: 0.07 },
+      ],
+      combo_fill: [
+        { freq: 980, type: "triangle", durationMs: 90, gain: 0.07 },
+        { freq: 1220, type: "triangle", durationMs: 100, gain: 0.07 },
+        { freq: 1480, type: "triangle", durationMs: 120, gain: 0.068 },
+      ],
       jingle_start: [
         { freq: 560, type: "triangle", durationMs: 180, gain: 0.08 },
         { freq: 680, type: "triangle", durationMs: 180, gain: 0.08 },

@@ -31,6 +31,22 @@ export interface RenderViewState {
   multiballActive: boolean;
   shieldCharges: number;
   showSceneOverlayTint: boolean;
+  enemies: Array<{
+    id: number;
+    x: number;
+    y: number;
+    radius: number;
+    alive: boolean;
+  }>;
+  stageModifierLabel?: string;
+  warpZones?: Array<{
+    inXMin: number;
+    inXMax: number;
+    inYMin: number;
+    inYMax: number;
+    outX: number;
+    outY: number;
+  }>;
 }
 
 export interface HudViewModel {
@@ -53,6 +69,8 @@ export interface OverlayViewModel {
   stageLabel: string;
   stageResult?: StageResultView;
   campaignResults?: StageResultSummaryView[];
+  rogueOffer?: RogueOfferView;
+  storyText?: string;
 }
 
 export interface StageResultView {
@@ -74,3 +92,10 @@ export interface StageResultSummaryView {
   missionTargetTime: string;
   missionAchieved: boolean;
 }
+
+export interface RogueOfferView {
+  options: [RogueUpgradeTypeView, RogueUpgradeTypeView];
+  remaining: number;
+}
+
+export type RogueUpgradeTypeView = "paddle_core" | "speed_core" | "score_core";

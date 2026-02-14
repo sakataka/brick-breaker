@@ -24,6 +24,8 @@ export function runPlayingLoop(
     random: RandomSource;
     sfx: SfxManager;
     playPickupSfx: (itemType: ItemType) => void;
+    playComboFillSfx: () => void;
+    playMagicCastSfx: () => void;
   },
   accumulator: number,
   delta: number,
@@ -43,6 +45,8 @@ export function runPlayingLoop(
       sfx: deps.sfx,
       tryShieldRescue: (ball, maxSpeed) => tryShieldRescue(state, deps.config, deps.random, ball, maxSpeed),
       playPickupSfx: deps.playPickupSfx,
+      playComboFillSfx: deps.playComboFillSfx,
+      playMagicCastSfx: deps.playMagicCastSfx,
     });
     updateVfxState(state.vfx, deps.config.fixedDeltaSec, deps.random);
     if (outcome === "stageclear") {

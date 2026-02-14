@@ -11,8 +11,8 @@
 
 ## 実装状況サマリ（2026-02-14）
 
-- 実装済み: `BB-IDEA-01` 〜 `BB-IDEA-08`
-- 未着手: `BB-IDEA-09` 〜 `BB-IDEA-18`
+- 実装済み: `BB-IDEA-01` 〜 `BB-IDEA-18`
+- 未着手: なし
 
 ## 実装接続ガイド（共通）
 
@@ -139,6 +139,7 @@
 - 実装難易度（S/M/L）: `M`
 - 回帰リスク: キャンペーン履歴/表示の整合更新が必要。
 - 優先度（P1/P2/P3）: `P2`
+- 実装状況: `DONE`（`docs/idea-progress.md` 参照）
 - 参考ソース: [Brickorium (Steam)](https://store.steampowered.com/app/2955960/Brickorium/)
 - 最小導入版: 4面クリア時のみ `A/B` どちらか選択。
 
@@ -150,6 +151,7 @@
 - 実装難易度（S/M/L）: `L`
 - 回帰リスク: 物理の分岐増加で衝突バグが入りやすい。
 - 優先度（P1/P2/P3）: `P2`
+- 実装状況: `DONE`（`docs/idea-progress.md` 参照）
 - 参考ソース: [Shatter (Steam)](https://store.steampowered.com/app/20820/Shatter/)
 - 最小導入版: ワープゾーン1種類のみ。
 
@@ -161,6 +163,7 @@
 - 実装難易度（S/M/L）: `L`
 - 回帰リスク: 新エンティティ更新で tick 負荷とロジック複雑度が上がる。
 - 優先度（P1/P2/P3）: `P2`
+- 実装状況: `DONE`（`docs/idea-progress.md` 参照）
 - 参考ソース: [Arkanoid](https://en.wikipedia.org/wiki/Arkanoid)
 - 最小導入版: 1種の低速敵のみ実装。
 
@@ -172,6 +175,7 @@
 - 実装難易度（S/M/L）: `M`
 - 回帰リスク: ハイスコア比較時の公平性ルールが必要。
 - 優先度（P1/P2/P3）: `P2`
+- 実装状況: `DONE`（`docs/idea-progress.md` 参照）
 - 参考ソース: [Breakout: Recharged](https://atari.com/products/breakout-recharged)
 - 最小導入版: ラウンド開始時に倍率モードを1つ選択するだけに限定。
 
@@ -183,6 +187,7 @@
 - 実装難易度（S/M/L）: `M`
 - 回帰リスク: ポーズ/進行との競合で状態遷移が複雑化する。
 - 優先度（P1/P2/P3）: `P2`
+- 実装状況: `DONE`（`docs/idea-progress.md` 参照）
 - 参考ソース: [Wizorb (MobyGames)](https://www.mobygames.com/game/57770/wizorb/)
 - 最小導入版: ステージ中1回、2択の強化購入のみ。
 
@@ -194,6 +199,7 @@
 - 実装難易度（S/M/L）: `M`
 - 回帰リスク: 難易度の上下が大きく、調整コストがかかる。
 - 優先度（P1/P2/P3）: `P2`
+- 実装状況: `DONE`（`docs/idea-progress.md` 参照）
 - 参考ソース: [Block Shot (Steam)](https://store.steampowered.com/app/4272730/)
 - 最小導入版: 2種修飾子のみ（低重力/高速球）。
 
@@ -209,6 +215,7 @@
 - 実装難易度（S/M/L）: `L`
 - 回帰リスク: 現行の直線キャンペーン仕様と競合しやすい。
 - 優先度（P1/P2/P3）: `P3`
+- 実装状況: `DONE`（`docs/idea-progress.md` 参照）
 - 参考ソース: [Brickorium (Steam)](https://store.steampowered.com/app/2955960/Brickorium/)
 - 最小導入版: ラン中に3回だけ永続強化を選べる簡易版。
 
@@ -220,6 +227,7 @@
 - 実装難易度（S/M/L）: `L`
 - 回帰リスク: マウス中心操作と入力設計の再調整が必要。
 - 優先度（P1/P2/P3）: `P3`
+- 実装状況: `DONE`（`docs/idea-progress.md` 参照）
 - 参考ソース: [Wizorb (Steam)](https://store.steampowered.com/app/207420/Wizorb/)
 - 最小導入版: クールダウン付き単発スキル1種のみ。
 
@@ -231,6 +239,7 @@
 - 実装難易度（S/M/L）: `M`
 - 回帰リスク: 音切替が多いと聴感疲労や破綻が起こる可能性。
 - 優先度（P1/P2/P3）: `P3`
+- 実装状況: `DONE`（`docs/idea-progress.md` 参照）
 - 参考ソース: [Shatter (Steam)](https://store.steampowered.com/app/20820/Shatter/)
 - 最小導入版: `コンボ x2.5` 以上でフィルイン音を1回追加。
 
@@ -242,6 +251,7 @@
 - 実装難易度（S/M/L）: `M`
 - 回帰リスク: テンポ低下で周回プレイに不向きになる可能性。
 - 優先度（P1/P2/P3）: `P3`
+- 実装状況: `DONE`（`docs/idea-progress.md` 参照）
 - 参考ソース: [Wizorb (MobyGames)](https://www.mobygames.com/game/57770/wizorb/)
 - 最小導入版: 4面・8面・12面の開始前に1画面テキストを表示。
 
