@@ -63,6 +63,9 @@ export class PhaserRenderPort {
     const band = THEME_BANDS.find((candidate) => candidate.id === view.themeBandId) ?? THEME_BANDS[0];
     const offsetX = view.shake.active ? view.shake.offset.x : 0;
     const offsetY = view.shake.active ? view.shake.offset.y : 0;
+    const dpr = readDevicePixelRatio(this.scene);
+    const lineWidth = dpr >= 1.5 ? 1.4 : 1.2;
+    const heavyLineWidth = dpr >= 1.5 ? 1.7 : 1.4;
 
     this.backdrop.clear();
     this.world.clear();
@@ -78,11 +81,11 @@ export class PhaserRenderPort {
     this.backdrop.fillStyle(header.value, 0.72);
     this.backdrop.fillRect(0, 0, this.config.width, 72);
     const frame = parseColor(backdropTheme.frame, { value: 0x29d3ff, alpha: 1 });
-    this.backdrop.lineStyle(1, frame.value, 0.24);
+    this.backdrop.lineStyle(lineWidth, frame.value, 0.24);
     this.backdrop.strokeRect(0.5, 0.5, this.config.width - 1, this.config.height - 1);
 
     drawProgressBar(this.backdrop, view.progressRatio, this.config.width, theme.progressBar);
-    drawWarpZones(this.backdrop, view.warpZones);
+    drawWarpZones(this.backdrop, view.warpZones, lineWidth);
 
     for (const brick of view.bricks) {
       if (!brick.alive) {
@@ -91,16 +94,22 @@ export class PhaserRenderPort {
       const fallbackColor = band.brickPalette[(brick.row ?? 0) % band.brickPalette.length] ?? "#ffffff";
       const body = parseColor(brick.color ?? fallbackColor, { value: 0xa0c8ff, alpha: 0.55 });
       const stroke = parseColor(theme.brickStroke, { value: 0xffffff, alpha: 0.75 });
+      const brickX = snapPixel(brick.x + offsetX);
+      const brickY = snapPixel(brick.y + offsetY);
       this.world.fillStyle(body.value, body.alpha);
-      this.world.fillRoundedRect(brick.x + offsetX, brick.y + offsetY, brick.width, brick.height, 5);
-      this.world.lineStyle(1.2, stroke.value, stroke.alpha);
-      this.world.strokeRoundedRect(brick.x + offsetX, brick.y + offsetY, brick.width, brick.height, 5);
+      this.world.fillRoundedRect(brickX, brickY, brick.width, brick.height, 5);
+      this.world.lineStyle(lineWidth, stroke.value, stroke.alpha);
+      this.world.strokeRoundedRect(brickX, brickY, brick.width, brick.height, 5);
 
       if (brick.kind && brick.kind !== "normal") {
         const markerColor = getBrickMarkerColor(brick.kind);
         const marker = parseColor(markerColor, { value: 0xffffff, alpha: 0.95 });
         this.world.fillStyle(marker.value, marker.alpha);
-        this.world.fillCircle(brick.x + brick.width - 7 + offsetX, brick.y + 7 + offsetY, 2.5);
+        this.world.fillCircle(
+          snapPixel(brick.x + brick.width - 7 + offsetX),
+          snapPixel(brick.y + 7 + offsetY),
+          2.5,
+        );
       }
 
       if (typeof brick.hp === "number" && typeof brick.maxHp === "number" && brick.maxHp > 1) {
@@ -108,11 +117,16 @@ export class PhaserRenderPort {
         const hpBg = parseColor("rgba(255,255,255,0.2)", { value: 0xffffff, alpha: 0.2 });
         const hpFg = parseColor("rgba(255,235,160,0.9)", { value: 0xffeba0, alpha: 0.9 });
         this.world.fillStyle(hpBg.value, hpBg.alpha);
-        this.world.fillRect(brick.x + 4 + offsetX, brick.y + brick.height - 4 + offsetY, brick.width - 8, 2);
+        this.world.fillRect(
+          snapPixel(brick.x + 4 + offsetX),
+          snapPixel(brick.y + brick.height - 4 + offsetY),
+          brick.width - 8,
+          2,
+        );
         this.world.fillStyle(hpFg.value, hpFg.alpha);
         this.world.fillRect(
-          brick.x + 4 + offsetX,
-          brick.y + brick.height - 4 + offsetY,
+          snapPixel(brick.x + 4 + offsetX),
+          snapPixel(brick.y + brick.height - 4 + offsetY),
           (brick.width - 8) * hpRatio,
           2,
         );
@@ -125,33 +139,17 @@ export class PhaserRenderPort {
     const paddleStroke = view.highContrast
       ? parseColor("#ffffff", { value: 0xffffff, alpha: 1 })
       : parseColor("#d9f4ff", { value: 0xd9f4ff, alpha: 1 });
+    const paddleX = snapPixel(view.paddle.x + offsetX);
+    const paddleY = snapPixel(view.paddle.y + offsetY);
     this.world.fillStyle(paddleFill.value, 0.94);
-    this.world.fillRoundedRect(
-      view.paddle.x + offsetX,
-      view.paddle.y + offsetY,
-      view.paddle.width,
-      view.paddle.height,
-      6,
-    );
-    this.world.lineStyle(1.2, paddleStroke.value, 0.9);
-    this.world.strokeRoundedRect(
-      view.paddle.x + offsetX,
-      view.paddle.y + offsetY,
-      view.paddle.width,
-      view.paddle.height,
-      6,
-    );
+    this.world.fillRoundedRect(paddleX, paddleY, view.paddle.width, view.paddle.height, 6);
+    this.world.lineStyle(heavyLineWidth, paddleStroke.value, 0.94);
+    this.world.strokeRoundedRect(paddleX, paddleY, view.paddle.width, view.paddle.height, 6);
 
     if (view.paddle.glowActive) {
       const glow = parseColor("rgba(120,220,255,0.28)", { value: 0x78dcff, alpha: 0.28 });
       this.world.fillStyle(glow.value, glow.alpha);
-      this.world.fillRoundedRect(
-        view.paddle.x - 4 + offsetX,
-        view.paddle.y - 3 + offsetY,
-        view.paddle.width + 8,
-        view.paddle.height + 6,
-        8,
-      );
+      this.world.fillRoundedRect(paddleX - 4, paddleY - 3, view.paddle.width + 8, view.paddle.height + 6, 8);
     }
 
     drawShield(this.world, view.shieldCharges, this.config.width, this.config.height, offsetX, offsetY);
@@ -166,9 +164,11 @@ export class PhaserRenderPort {
     const ballStroke = parseColor(theme.ballStroke, { value: 0xffffff, alpha: 0.9 });
     for (const ball of view.balls) {
       this.world.fillStyle(ballFill.value, ballFill.alpha);
-      this.world.fillCircle(ball.pos.x + offsetX, ball.pos.y + offsetY, ball.radius);
-      this.world.lineStyle(1.2, ballStroke.value, ballStroke.alpha);
-      this.world.strokeCircle(ball.pos.x + offsetX, ball.pos.y + offsetY, ball.radius);
+      const ballX = snapPixel(ball.pos.x + offsetX);
+      const ballY = snapPixel(ball.pos.y + offsetY);
+      this.world.fillCircle(ballX, ballY, ball.radius);
+      this.world.lineStyle(lineWidth, ballStroke.value, ballStroke.alpha);
+      this.world.strokeCircle(ballX, ballY, ball.radius);
     }
 
     drawEnemies(this.world, view, offsetX, offsetY);
@@ -214,22 +214,35 @@ function drawProgressBar(
   graphics.fillRect(20, 16, (width - 40) * ratio, 6);
 }
 
-function drawWarpZones(graphics: Phaser.GameObjects.Graphics, warpZones: RenderViewState["warpZones"]): void {
+function drawWarpZones(
+  graphics: Phaser.GameObjects.Graphics,
+  warpZones: RenderViewState["warpZones"],
+  lineWidth: number,
+): void {
   if (!warpZones || warpZones.length === 0) {
     return;
   }
   const fill = parseColor("rgba(120,214,255,0.14)", { value: 0x78d6ff, alpha: 0.14 });
   const stroke = parseColor("rgba(130,220,255,0.68)", { value: 0x82dcff, alpha: 0.68 });
+  const guide = parseColor("rgba(125,220,255,0.42)", { value: 0x7ddcff, alpha: 0.42 });
   const exitFill = parseColor("rgba(255,206,102,0.85)", { value: 0xffce66, alpha: 0.85 });
+  const exitRing = parseColor("rgba(255,238,176,0.9)", { value: 0xffeeb0, alpha: 0.9 });
   graphics.fillStyle(fill.value, fill.alpha);
-  graphics.lineStyle(1.2, stroke.value, stroke.alpha);
+  graphics.lineStyle(lineWidth, stroke.value, stroke.alpha);
   for (const zone of warpZones) {
     const width = Math.max(1, zone.inXMax - zone.inXMin);
     const height = Math.max(1, zone.inYMax - zone.inYMin);
-    graphics.fillRect(zone.inXMin, zone.inYMin, width, height);
-    graphics.strokeRect(zone.inXMin, zone.inYMin, width, height);
+    const entryX = snapPixel(zone.inXMin);
+    const entryY = snapPixel(zone.inYMin);
+    const entryCenterX = zone.inXMin + width / 2;
+    const entryCenterY = zone.inYMin + height / 2;
+    graphics.fillRect(entryX, entryY, width, height);
+    graphics.strokeRect(entryX, entryY, width, height);
+    drawGuideSegments(graphics, entryCenterX, entryCenterY, zone.outX, zone.outY, guide, lineWidth);
     graphics.fillStyle(exitFill.value, exitFill.alpha);
-    graphics.fillCircle(zone.outX, zone.outY, 3.2);
+    graphics.fillCircle(snapPixel(zone.outX), snapPixel(zone.outY), 3.6);
+    graphics.lineStyle(lineWidth, exitRing.value, exitRing.alpha);
+    graphics.strokeCircle(snapPixel(zone.outX), snapPixel(zone.outY), 7.2);
   }
 }
 
@@ -359,6 +372,47 @@ function resolveBackdropTheme(
     };
   }
   return BACKDROP_BY_BAND[themeBandId] ?? BACKDROP_BY_BAND.early;
+}
+
+function drawGuideSegments(
+  graphics: Phaser.GameObjects.Graphics,
+  fromX: number,
+  fromY: number,
+  toX: number,
+  toY: number,
+  color: ParsedColor,
+  lineWidth: number,
+): void {
+  const dx = toX - fromX;
+  const dy = toY - fromY;
+  const distance = Math.hypot(dx, dy);
+  if (distance < 1) {
+    return;
+  }
+  const unitX = dx / distance;
+  const unitY = dy / distance;
+  const dashLength = 8;
+  const gapLength = 5;
+  let cursor = 0;
+  graphics.lineStyle(lineWidth, color.value, color.alpha);
+  while (cursor < distance) {
+    const start = cursor;
+    const end = Math.min(distance, cursor + dashLength);
+    graphics.beginPath();
+    graphics.moveTo(snapPixel(fromX + unitX * start), snapPixel(fromY + unitY * start));
+    graphics.lineTo(snapPixel(fromX + unitX * end), snapPixel(fromY + unitY * end));
+    graphics.strokePath();
+    cursor += dashLength + gapLength;
+  }
+}
+
+function readDevicePixelRatio(scene: Phaser.Scene): number {
+  const ratio = scene.game.canvas.ownerDocument?.defaultView?.devicePixelRatio ?? 1;
+  return Math.max(1, Math.min(2, ratio));
+}
+
+function snapPixel(value: number): number {
+  return Math.round(value) + 0.5;
 }
 
 function parseColor(input: string, fallback: ParsedColor): ParsedColor {

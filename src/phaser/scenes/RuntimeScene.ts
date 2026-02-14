@@ -27,6 +27,7 @@ export class RuntimeScene extends Phaser.Scene {
 
   create(): void {
     this.input.mouse?.disableContextMenu();
+    this.cameras.main.setRoundPixels(true);
     this.renderPort = new PhaserRenderPort(this, {
       width: this.scale.gameSize.width,
       height: this.scale.gameSize.height,

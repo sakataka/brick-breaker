@@ -137,7 +137,7 @@ const STAGE_MODIFIERS: Partial<Record<number, StageModifier>> = {
   7: {
     label: "低重力",
     lowGravity: true,
-    maxSpeedScale: 0.9,
+    maxSpeedScale: 1,
   },
   8: {
     label: "高速球",

@@ -55,9 +55,11 @@ export function buildHudViewModel(state: GameState): HudViewModel {
   const hazardBoostActive = state.elapsedSec < state.hazard.speedBoostUntilSec;
   const pierceSlowSynergy = state.items.active.pierceStacks > 0 && state.items.active.slowBallStacks > 0;
   const bossStageText = buildBossHudText(state);
+  const stageModifier = getStageModifier(state.campaign.stageIndex + 1);
   const routeLabel = state.campaign.resolvedRoute ? ` / ルート${state.campaign.resolvedRoute}` : "";
-  const modifierLabel = getStageModifier(state.campaign.stageIndex + 1)?.label;
+  const modifierLabel = stageModifier?.label;
   const modifierText = modifierLabel ? ` / 修飾:${modifierLabel}` : "";
+  const warpLegend = stageModifier?.warpZones?.length ? " / ワープ: 青=入口 / 黄=出口" : "";
   const riskText = state.options.riskMode ? " / 🔥リスクx1.35" : "";
   const rogueText =
     state.rogue.upgradesTaken > 0 ? ` / 強化:${state.rogue.upgradesTaken}/${ROGUE_CONFIG.maxUpgrades}` : "";
@@ -71,7 +73,7 @@ export function buildHudViewModel(state: GameState): HudViewModel {
     timeText: `時間: ${formatTime(state.elapsedSec)}`,
     stageText: `ステージ: ${state.campaign.stageIndex + 1}/${state.campaign.totalStages}${routeLabel}${modifierText}${bossStageText}`,
     comboText: comboVisible ? `コンボ x${state.combo.multiplier.toFixed(2)}` : "コンボ x1.00",
-    itemsText: `アイテム: ${activeItems.join(" / ")}${hazardBoostActive ? " / ⚠危険加速中" : ""}${pierceSlowSynergy ? " / ✨貫通+1" : ""}${riskText}${rogueText}${magicText}`,
+    itemsText: `アイテム: ${activeItems.join(" / ")}${hazardBoostActive ? " / ⚠危険加速中" : ""}${pierceSlowSynergy ? " / ✨貫通+1" : ""}${riskText}${rogueText}${magicText}${warpLegend}`,
     accessibilityText: buildAccessibilityBadge(state),
     accentColor: comboVisible ? COMBO_ACTIVE_COLOR : themeBand.hudAccent,
   };
