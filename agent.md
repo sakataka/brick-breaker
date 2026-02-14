@@ -21,7 +21,7 @@
 5. 変更後は `bun run check && bun test && bun run e2e` を実行する。
 
 ## 正本ドキュメント
-- `/Users/sakataka/youtube_speech/ブロック崩し/Brick Breaker/README.md`
-- `/Users/sakataka/youtube_speech/ブロック崩し/Brick Breaker/docs/architecture.md`
+- `README.md`
+- `docs/architecture.md`
 
 未完了タスクは `docs/architecture.md` の `Open Backlog` のみ参照。

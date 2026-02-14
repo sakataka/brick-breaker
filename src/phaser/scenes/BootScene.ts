@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { RuntimeScene } from "./RuntimeScene";
 
 export class BootScene extends Phaser.Scene {
   static readonly KEY = "BootScene";
@@ -8,8 +9,6 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.scene.start(TitleSceneKey);
+    this.scene.start(RuntimeScene.KEY);
   }
 }
-
-export const TitleSceneKey = "TitleScene";

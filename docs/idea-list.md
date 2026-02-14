@@ -23,7 +23,7 @@
 - アイテム仕様:
   `src/game/itemRegistry.ts`, `src/game/itemSystem.ts`
 - UI表示:
-  `src/game/renderPresenter.ts`, `src/ui/overlay.ts`, `src/game/hud.ts`
+  `src/game/renderPresenter.ts`, `src/app/components/OverlayRoot.tsx`, `src/app/components/HudPanel.tsx`
 - サウンド:
   `src/audio/audioDirector.ts`, `src/audio/sfx.ts`, `src/audio/bgmCatalog.ts`
 
@@ -35,7 +35,7 @@
 - ID: `BB-IDEA-01`
 - アイディア名: ステージ目標ミッション（制限時間 / ノーミス / 指定コンボ）
 - 体験価値（何が楽しくなるか）: 同じステージでも遊び方が変わり、達成感が増える。
-- 実装対象モジュール: `src/game/roundSystem.ts`, `src/game/gamePipeline.ts`, `src/ui/overlay.ts`
+- 実装対象モジュール: `src/game/roundSystem.ts`, `src/game/gamePipeline.ts`, `src/app/components/OverlayRoot.tsx`
 - 実装難易度（S/M/L）: `M`
 - 回帰リスク: クリア判定の分岐追加で既存ステージ進行に影響する可能性。
 - 優先度（P1/P2/P3）: `P1`
@@ -47,7 +47,7 @@
 - ID: `BB-IDEA-02`
 - アイディア名: エリートブロック派生（耐久回復型 / 分裂型）
 - 体験価値（何が楽しくなるか）: 後半面の攻略順が生まれ、単純作業感が減る。
-- 実装対象モジュール: `src/game/config/stages.ts`, `src/game/physicsCore.ts`, `src/game/renderer/layers/bricks.ts`
+- 実装対象モジュール: `src/game/config/stages.ts`, `src/game/physicsCore.ts`, `src/phaser/render/PhaserRenderPort.ts`
 - 実装難易度（S/M/L）: `M`
 - 回帰リスク: `Brick` の状態更新ルール変更で衝突テストの更新が必要。
 - 優先度（P1/P2/P3）: `P1`
@@ -59,7 +59,7 @@
 - ID: `BB-IDEA-03`
 - アイディア名: 危険ブロック（破壊時デバフ / 放置増殖）
 - 体験価値（何が楽しくなるか）: 優先ターゲットが明確になり、緊張感が出る。
-- 実装対象モジュール: `src/game/physicsCore.ts`, `src/game/gamePipeline.ts`, `src/game/renderer/layers/bricks.ts`
+- 実装対象モジュール: `src/game/physicsCore.ts`, `src/game/gamePipeline.ts`, `src/phaser/render/PhaserRenderPort.ts`
 - 実装難易度（S/M/L）: `M`
 - 回帰リスク: ブロック破壊イベントの副作用が増え、スコア計算へ影響しうる。
 - 優先度（P1/P2/P3）: `P1`
@@ -95,7 +95,7 @@
 - ID: `BB-IDEA-06`
 - アイディア名: ボスステージ拡張（4面ごと）
 - 体験価値（何が楽しくなるか）: 節目の盛り上がりが明確になり、進行モチベーションが上がる。
-- 実装対象モジュール: `src/game/config/stages.ts`, `src/game/physicsCore.ts`, `src/game/renderer/layers/entities.ts`, `src/ui/overlay.ts`
+- 実装対象モジュール: `src/game/config/stages.ts`, `src/game/physicsCore.ts`, `src/phaser/render/PhaserRenderPort.ts`, `src/app/components/OverlayRoot.tsx`
 - 実装難易度（S/M/L）: `L`
 - 回帰リスク: 新しい当たり判定オブジェクトの導入で物理回帰範囲が広い。
 - 優先度（P1/P2/P3）: `P1`
@@ -107,7 +107,7 @@
 - ID: `BB-IDEA-07`
 - アイディア名: チャレンジモード（固定シード）
 - 体験価値（何が楽しくなるか）: 再現性ある条件でリプレイ・比較がしやすくなる。
-- 実装対象モジュール: `src/game/random.ts`, `src/game/Game.ts`, `src/ui/overlay.ts`
+- 実装対象モジュール: `src/game/random.ts`, `src/game/Game.ts`, `src/app/components/OverlayRoot.tsx`
 - 実装難易度（S/M/L）: `M`
 - 回帰リスク: 通常モードと乱数経路を分離しないと既存体験へ混入する。
 - 優先度（P1/P2/P3）: `P1`
@@ -119,7 +119,7 @@
 - ID: `BB-IDEA-08`
 - アイディア名: デイリーチャレンジ（ローカル日替わり）
 - 体験価値（何が楽しくなるか）: 毎日違う課題で短時間プレイの動機が生まれる。
-- 実装対象モジュール: `src/game/random.ts`, `src/game/roundSystem.ts`, `src/ui/overlay.ts`
+- 実装対象モジュール: `src/game/random.ts`, `src/game/roundSystem.ts`, `src/app/components/OverlayRoot.tsx`
 - 実装難易度（S/M/L）: `M`
 - 回帰リスク: 日付依存ロジックでテストが不安定になる可能性。
 - 優先度（P1/P2/P3）: `P1`
@@ -135,7 +135,7 @@
 - ID: `BB-IDEA-09`
 - アイディア名: 分岐ステージ選択（2ルート）
 - 体験価値（何が楽しくなるか）: 自分で進行を選ぶ感覚が生まれ、周回価値が上がる。
-- 実装対象モジュール: `src/game/roundSystem.ts`, `src/game/config/stages.ts`, `src/ui/overlay.ts`
+- 実装対象モジュール: `src/game/roundSystem.ts`, `src/game/config/stages.ts`, `src/app/components/OverlayRoot.tsx`
 - 実装難易度（S/M/L）: `M`
 - 回帰リスク: キャンペーン履歴/表示の整合更新が必要。
 - 優先度（P1/P2/P3）: `P2`
@@ -147,7 +147,7 @@
 - ID: `BB-IDEA-10`
 - アイディア名: フィールドギミック（ワープ / 重力帯 / 可動壁）
 - 体験価値（何が楽しくなるか）: 球道を読む楽しさが増え、単調さを抑えられる。
-- 実装対象モジュール: `src/game/physicsCore.ts`, `src/game/config/stages.ts`, `src/game/renderer/layers/backdrop.ts`
+- 実装対象モジュール: `src/game/physicsCore.ts`, `src/game/config/stages.ts`, `src/phaser/render/PhaserRenderPort.ts`
 - 実装難易度（S/M/L）: `L`
 - 回帰リスク: 物理の分岐増加で衝突バグが入りやすい。
 - 優先度（P1/P2/P3）: `P2`
@@ -159,7 +159,7 @@
 - ID: `BB-IDEA-11`
 - アイディア名: 敵ユニット導入（浮遊敵）
 - 体験価値（何が楽しくなるか）: 「避ける/狙う」の判断が増え、アクション性が上がる。
-- 実装対象モジュール: `src/game/gamePipeline.ts`, `src/game/physicsCore.ts`, `src/game/renderer/layers/entities.ts`
+- 実装対象モジュール: `src/game/gamePipeline.ts`, `src/game/physicsCore.ts`, `src/phaser/render/PhaserRenderPort.ts`
 - 実装難易度（S/M/L）: `L`
 - 回帰リスク: 新エンティティ更新で tick 負荷とロジック複雑度が上がる。
 - 優先度（P1/P2/P3）: `P2`
@@ -171,7 +171,7 @@
 - ID: `BB-IDEA-12`
 - アイディア名: スコア倍率のリスク選択（高倍率 / 高危険）
 - 体験価値（何が楽しくなるか）: プレイヤーが難易度を能動的に選び、緊張感が増す。
-- 実装対象モジュール: `src/game/comboSystem.ts`, `src/game/gamePipeline.ts`, `src/game/hud.ts`
+- 実装対象モジュール: `src/game/comboSystem.ts`, `src/game/gamePipeline.ts`, `src/app/components/HudPanel.tsx`
 - 実装難易度（S/M/L）: `M`
 - 回帰リスク: ハイスコア比較時の公平性ルールが必要。
 - 優先度（P1/P2/P3）: `P2`
@@ -183,7 +183,7 @@
 - ID: `BB-IDEA-13`
 - アイディア名: ラウンド中ショップ（1回だけ強化購入）
 - 体験価値（何が楽しくなるか）: スコアの使い道ができ、プレイ方針が分かれる。
-- 実装対象モジュール: `src/game/roundSystem.ts`, `src/ui/overlay.ts`, `src/game/itemRegistry.ts`
+- 実装対象モジュール: `src/game/roundSystem.ts`, `src/app/components/OverlayRoot.tsx`, `src/game/itemRegistry.ts`
 - 実装難易度（S/M/L）: `M`
 - 回帰リスク: ポーズ/進行との競合で状態遷移が複雑化する。
 - 優先度（P1/P2/P3）: `P2`
@@ -211,7 +211,7 @@
 - ID: `BB-IDEA-15`
 - アイディア名: ローグライト進行（ラン内構築）
 - 体験価値（何が楽しくなるか）: 毎回異なる育成ルートで長時間遊べる。
-- 実装対象モジュール: `src/game/roundSystem.ts`, `src/game/itemRegistry.ts`, `src/ui/overlay.ts`
+- 実装対象モジュール: `src/game/roundSystem.ts`, `src/game/itemRegistry.ts`, `src/app/components/OverlayRoot.tsx`
 - 実装難易度（S/M/L）: `L`
 - 回帰リスク: 現行の直線キャンペーン仕様と競合しやすい。
 - 優先度（P1/P2/P3）: `P3`
@@ -223,7 +223,7 @@
 - ID: `BB-IDEA-16`
 - アイディア名: 魔法スキルシステム（Wizorb方向）
 - 体験価値（何が楽しくなるか）: パドル以外の能動アクションが増え、操作幅が広がる。
-- 実装対象モジュール: `src/game/gamePipeline.ts`, `src/game/input.ts`, `src/audio/sfx.ts`, `src/game/renderer/layers/effects.ts`
+- 実装対象モジュール: `src/game/gamePipeline.ts`, `src/phaser/scenes/RuntimeScene.ts`, `src/audio/sfx.ts`, `src/phaser/render/PhaserRenderPort.ts`
 - 実装難易度（S/M/L）: `L`
 - 回帰リスク: マウス中心操作と入力設計の再調整が必要。
 - 優先度（P1/P2/P3）: `P3`
@@ -235,7 +235,7 @@
 - ID: `BB-IDEA-17`
 - アイディア名: サウンド同期イベント（特定行動でBGM変調）
 - 体験価値（何が楽しくなるか）: ハイライト時の没入感が上がる。
-- 実装対象モジュール: `src/audio/audioDirector.ts`, `src/audio/bgmSequencer.ts`, `src/game/comboSystem.ts`
+- 実装対象モジュール: `src/audio/audioDirector.ts`, `src/audio/toneBgm.ts`, `src/game/comboSystem.ts`
 - 実装難易度（S/M/L）: `M`
 - 回帰リスク: 音切替が多いと聴感疲労や破綻が起こる可能性。
 - 優先度（P1/P2/P3）: `P3`
@@ -247,7 +247,7 @@
 - ID: `BB-IDEA-18`
 - アイディア名: ストーリー演出ステージ（短いイベント挿入）
 - 体験価値（何が楽しくなるか）: ステージ進行に意味づけができ、完走動機が上がる。
-- 実装対象モジュール: `src/ui/overlay.ts`, `src/game/roundSystem.ts`, `src/audio/audioDirector.ts`
+- 実装対象モジュール: `src/app/components/OverlayRoot.tsx`, `src/game/roundSystem.ts`, `src/audio/audioDirector.ts`
 - 実装難易度（S/M/L）: `M`
 - 回帰リスク: テンポ低下で周回プレイに不向きになる可能性。
 - 優先度（P1/P2/P3）: `P3`
