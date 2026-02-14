@@ -195,4 +195,110 @@ describe("stepPhysics", () => {
     expect(result.events.some((event) => event.kind === "wall")).toBe(true);
     expect(ball.vel.y).toBeLessThan(0);
   });
+
+  test("pierceDepth destroys multiple bricks in one trajectory", () => {
+    const config: GameConfig = { ...baseConfig, fixedDeltaSec: 1 / 60 };
+    const ball: Ball = {
+      pos: { x: 42, y: 92 },
+      vel: { x: 0, y: -140 },
+      radius: 7,
+      speed: 320,
+    };
+    const paddle: Paddle = { x: 80, y: 160, width: 80, height: 14 };
+    const bricks: Brick[] = [
+      { id: 1, x: 30, y: 70, width: 24, height: 10, alive: true, row: 2, col: 1 },
+      { id: 2, x: 30, y: 56, width: 24, height: 10, alive: true, row: 1, col: 1 },
+      { id: 3, x: 30, y: 42, width: 24, height: 10, alive: true, row: 0, col: 1 },
+    ];
+
+    const result = stepPhysics(ball, paddle, bricks, config, 0.2, {
+      pierceDepth: 4,
+      maxMove: 12,
+      maxSubSteps: 24,
+    });
+
+    expect(result.collision.brick).toBeGreaterThanOrEqual(2);
+    expect(result.scoreGain).toBeGreaterThanOrEqual(200);
+  });
+
+  test("bombRadiusTiles destroys area in 3x3 range", () => {
+    const config: GameConfig = { ...baseConfig, fixedDeltaSec: 1 / 60 };
+    const ball: Ball = {
+      pos: { x: 72, y: 72 },
+      vel: { x: 0, y: -80 },
+      radius: 8,
+      speed: 320,
+    };
+    const paddle: Paddle = { x: 80, y: 160, width: 80, height: 14 };
+    const bricks: Brick[] = [
+      { id: 1, x: 60, y: 64, width: 20, height: 10, alive: true, row: 1, col: 1 },
+      { id: 2, x: 84, y: 64, width: 20, height: 10, alive: true, row: 1, col: 2 },
+      { id: 3, x: 36, y: 64, width: 20, height: 10, alive: true, row: 1, col: 0 },
+      { id: 4, x: 60, y: 50, width: 20, height: 10, alive: true, row: 0, col: 1 },
+      { id: 5, x: 60, y: 78, width: 20, height: 10, alive: true, row: 2, col: 1 },
+      { id: 6, x: 132, y: 64, width: 20, height: 10, alive: true, row: 1, col: 4 },
+    ];
+
+    const result = stepPhysics(ball, paddle, bricks, config, config.fixedDeltaSec, {
+      bombRadiusTiles: 1,
+      explodeOnHit: true,
+    });
+
+    expect(result.collision.brick).toBeGreaterThanOrEqual(4);
+    expect(bricks[5]?.alive).toBe(true);
+  });
+
+  test("pierce and bomb can be active simultaneously", () => {
+    const config: GameConfig = { ...baseConfig, fixedDeltaSec: 1 / 60 };
+    const ball: Ball = {
+      pos: { x: 72, y: 96 },
+      vel: { x: 0, y: -180 },
+      radius: 8,
+      speed: 320,
+    };
+    const paddle: Paddle = { x: 80, y: 160, width: 80, height: 14 };
+    const bricks: Brick[] = [
+      { id: 1, x: 60, y: 82, width: 20, height: 10, alive: true, row: 2, col: 1 },
+      { id: 2, x: 60, y: 68, width: 20, height: 10, alive: true, row: 1, col: 1 },
+      { id: 3, x: 60, y: 54, width: 20, height: 10, alive: true, row: 0, col: 1 },
+      { id: 4, x: 84, y: 68, width: 20, height: 10, alive: true, row: 1, col: 2 },
+    ];
+
+    const result = stepPhysics(ball, paddle, bricks, config, 0.18, {
+      pierceDepth: 4,
+      bombRadiusTiles: 1,
+      explodeOnHit: true,
+      maxMove: 12,
+      maxSubSteps: 32,
+    });
+
+    expect(result.collision.brick).toBeGreaterThanOrEqual(3);
+    expect(result.events.filter((event) => event.kind === "brick").length).toBe(result.collision.brick);
+  });
+
+  test("bomb does not chain recursively from exploded bricks", () => {
+    const config: GameConfig = { ...baseConfig, fixedDeltaSec: 1 / 60 };
+    const ball: Ball = {
+      pos: { x: 72, y: 72 },
+      vel: { x: 0, y: -120 },
+      radius: 8,
+      speed: 320,
+    };
+    const paddle: Paddle = { x: 80, y: 160, width: 80, height: 14 };
+    const bricks: Brick[] = [
+      { id: 1, x: 60, y: 64, width: 20, height: 10, alive: true, row: 1, col: 1 },
+      { id: 2, x: 84, y: 64, width: 20, height: 10, alive: true, row: 1, col: 2 },
+      { id: 3, x: 108, y: 64, width: 20, height: 10, alive: true, row: 1, col: 3 },
+      { id: 4, x: 132, y: 64, width: 20, height: 10, alive: true, row: 1, col: 4 },
+    ];
+
+    const result = stepPhysics(ball, paddle, bricks, config, config.fixedDeltaSec, {
+      bombRadiusTiles: 1,
+      explodeOnHit: true,
+    });
+
+    // 連鎖がないため、1段先（col:4）は残る
+    expect(result.collision.brick).toBeLessThan(4);
+    expect(bricks[3]?.alive).toBe(true);
+  });
 });

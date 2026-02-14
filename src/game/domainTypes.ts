@@ -1,6 +1,6 @@
 export type Scene = "start" | "playing" | "paused" | "gameover" | "stageclear" | "clear" | "error";
 export type Difficulty = "casual" | "standard" | "hard";
-export type ItemType = "paddle_plus" | "slow_ball" | "multiball" | "shield";
+export type ItemType = "paddle_plus" | "slow_ball" | "multiball" | "shield" | "pierce" | "bomb";
 
 export interface Vector2 {
   x: number;
@@ -33,6 +33,7 @@ export interface Brick {
   height: number;
   alive: boolean;
   row?: number;
+  col?: number;
   color?: string;
 }
 

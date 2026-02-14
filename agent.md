@@ -1,65 +1,45 @@
 # Agent Notes (Brick Breaker)
 
-このファイルは、このプロジェクトで今後の開発を進める際に、エージェントや人間開発者が参照する運用ガイドです。
+## プロジェクト概要
+- ローカル実行の Web ブロック崩し（Bun + Vite + TypeScript + Canvas）
+- 操作はマウス中心
+- 12ステージキャンペーン + アイテムスタック（6種）
 
-## 1) プロジェクト概要
-- プロジェクト名: Brick Breaker
-- 目的: PC向けローカルWeb版ブロック崩し
-- 技術構成:
-  - TypeScript
-  - Vite
-  - Bun
-  - HTML5 Canvas
-- 実装済みの主ファイル:
-  - `index.html`
-  - `src/main.ts`
-  - `src/styles.css`
-  - `src/game/Game.ts`
-  - `src/game/physics.ts`
-  - `src/game/level.ts`
-  - `src/game/config.ts`
-  - `src/game/renderer.ts`
-  - `src/game/input.ts`
-  - `src/game/types.ts`
-  - `src/ui/overlay.ts`
-  - `src/audio/sfx.ts`
-  - `src/util/dom.ts`
-  - `PLAN.md`
+## 実行コマンド
+- 開発: `bun run dev`
+- ビルド: `bun run build`
+- 型チェック: `bun run typecheck`
+- 品質ゲート: `bun run check`
+- テスト: `bun test`
 
-## 2) 実行コマンド
-- 開発サーバ起動: `bun run dev`
-- 本番ビルド: `bun run build`
-- プレビュー: `bun run preview`
-- 依存関係: `bun install`
+## 現行アーキテクチャ
+- `src/game/Game.ts`
+  - オーケストレータ専用（入力/loop/scene連携）。
+- `src/game/gamePipeline.ts`
+  - playing tick の処理順序を管理。
+- `src/game/gameRuntime.ts`
+  - fixed-step ループと stage clear / life loss の適用。
+- `src/game/itemRegistry.ts`
+  - アイテム定義駆動（新アイテム拡張の主入口）。
+- `src/game/physicsCore.ts`
+  - 物理コア（純関数寄り）。
+- `src/game/renderPresenter.ts`
+  - `GameState` -> `RenderViewState/HudViewModel/OverlayViewModel` 変換。
+- `src/game/renderer.ts`
+  - 描画専任。
 
-## 3) コードの基本方針（仕様）
-- マウス移動でパドルを操作
-- 物理更新は固定タイムステップ
-- 1ステージ（初期版）
-- 3ライフ制
-- 開始/一時停止/ゲームオーバー/クリアのUI状態を実装
+## 変更時の優先ルール
+1. 新アイテムは `itemRegistry` を先に編集する。
+2. 物理ルールは `physicsCore` に集約する。
+3. `Game.ts` に新規ロジックを直接積み増ししない。
+4. 設定追加時は `configSchema` に検証を追加する。
+5. 変更後は `bun run check && bun test` を必ず通す。
 
-## 4) 変更時の優先ルール
-- `PLAN.md` を変更対象範囲の基準として優先参照
-- 物理挙動（衝突・速度処理）は慎重に変更し、`src/game/physics.ts` を最優先で確認
-- UI変更は `src/game/renderer.ts` / `src/styles.css` を主体にし、状態管理は `src/game/Game.ts` に集約
-- 共通設定は `src/game/config.ts` にまとめる
-- DOM取得は `src/util/dom.ts` を経由して欠損を明示
+## 参照ドキュメント
+- `docs/architecture.md`
+- `docs/refactor-roadmap.md`
 
-## 5) Git運用（このプロジェクト固有）
-- コミット運用: `main` と `codex/` 系ブランチを使用
-- 有効ブランチ: `codex/brick-breaker-initial-web`
-- リモート先: `https://github.com/sakataka/brick-breaker.git`
-- 例: 
-  - `git add -A`
-  - `git commit -m "Your message"`
-  - `git push https://github.com/sakataka/brick-breaker.git <branch>`
-
-## 6) 今後の拡張候補（優先度順）
-1. 難易度設定（複数速度/速度上昇ルール）
-2. パワーアップ追加
-3. サウンド素材の差し替え（現状はWeb Audio合成音）
-4. ステージ追加機能
-
-## 7) 注意事項
-- 環境依存で `.git/config` 更新が制限される場合があるため、リモート追加は `git remote add` よりも `git push https://github.com/...` を優先
+## Git 運用メモ
+- リポジトリ: `https://github.com/sakataka/brick-breaker`
+- 既定ブランチ: `main`
+- 変更は小さく分割し、テスト通過後にコミットする。

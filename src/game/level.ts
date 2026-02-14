@@ -36,6 +36,7 @@ export function buildBricksFromStage(
         height: brickHeight,
         alive: true,
         row,
+        col,
         color: getBrickPaletteColor(row),
       });
     }

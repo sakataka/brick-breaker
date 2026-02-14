@@ -1,14 +1,18 @@
 import { createActor, createMachine } from "xstate";
 import type { Scene } from "./types";
 
-export type SceneEvent =
-  | { type: "START_OR_RESUME" }
-  | { type: "TOGGLE_PAUSE" }
-  | { type: "STAGE_CLEAR" }
-  | { type: "GAME_OVER" }
-  | { type: "GAME_CLEAR" }
-  | { type: "RUNTIME_ERROR" }
-  | { type: "RESET" };
+export const SceneTransitionInput = {
+  START_OR_RESUME: "START_OR_RESUME",
+  TOGGLE_PAUSE: "TOGGLE_PAUSE",
+  STAGE_CLEAR: "STAGE_CLEAR",
+  GAME_OVER: "GAME_OVER",
+  GAME_CLEAR: "GAME_CLEAR",
+  RUNTIME_ERROR: "RUNTIME_ERROR",
+  RESET: "RESET",
+} as const;
+
+export type SceneTransitionInput = (typeof SceneTransitionInput)[keyof typeof SceneTransitionInput];
+export type SceneEvent = { type: SceneTransitionInput };
 
 const sceneMachineDefinition = createMachine({
   id: "brick-breaker-scene",

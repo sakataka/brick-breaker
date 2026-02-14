@@ -1,14 +1,6 @@
-import type {
-  Ball,
-  Brick,
-  FallingItem,
-  FloatingText,
-  GameConfig,
-  GameState,
-  ImpactRing,
-  Particle,
-  Vector2,
-} from "./types";
+import { getItemColor, getItemShortLabel } from "./itemRegistry";
+import type { RenderViewState } from "./renderTypes";
+import type { Ball, Brick, FallingItem, FloatingText, GameConfig, ImpactRing, Particle } from "./types";
 
 export interface RenderTheme {
   backdropStart: string;
@@ -62,26 +54,26 @@ export class Renderer {
     this.ctx.imageSmoothingQuality = "high";
   }
 
-  render(state: GameState): void {
+  render(view: RenderViewState): void {
     this.ctx.clearRect(0, 0, this.config.width, this.config.height);
     this.ctx.save();
-    this.applyShake(state);
+    this.applyShake(view);
 
     this.drawBackdrop();
-    this.drawProgressBar(state);
-    this.drawBricks(state.bricks);
-    this.drawPaddle(state);
-    this.drawShield(state);
-    this.drawTrail(state);
-    this.drawBallIndicators(state);
-    this.drawBalls(state);
-    this.drawFallingItems(state.items.falling, state.vfx.reducedMotion);
-    this.drawImpactRings(state.vfx.impactRings);
-    this.drawFloatingTexts(state.vfx.floatingTexts);
-    this.drawParticles(state.vfx.particles);
-    this.drawFlash(state.vfx.flashMs);
+    this.drawProgressBar(view.progressRatio);
+    this.drawBricks(view.bricks);
+    this.drawPaddle(view.paddle, view.elapsedSec);
+    this.drawShield(view.shieldCharges, view.elapsedSec);
+    this.drawTrail(view.trail, view.balls[0], view.slowBallActive);
+    this.drawBallIndicators(view.balls, view.paddle.y);
+    this.drawBalls(view.balls, view.slowBallActive, view.multiballActive, view.reducedMotion);
+    this.drawFallingItems(view.fallingItems, view.reducedMotion);
+    this.drawImpactRings(view.impactRings);
+    this.drawFloatingTexts(view.floatingTexts);
+    this.drawParticles(view.particles);
+    this.drawFlash(view.flashMs);
 
-    if (state.scene !== "playing") {
+    if (view.showSceneOverlayTint) {
       this.ctx.fillStyle = this.theme.overlayTint;
       this.ctx.fillRect(0, 0, this.config.width, this.config.height);
     }
@@ -89,11 +81,11 @@ export class Renderer {
     this.ctx.restore();
   }
 
-  private applyShake(state: GameState): void {
-    if (state.vfx.reducedMotion || state.vfx.shakeMs <= 0 || state.vfx.shakePx <= 0) {
+  private applyShake(view: RenderViewState): void {
+    if (!view.shake.active) {
       return;
     }
-    this.ctx.translate(state.vfx.shakeOffset.x, state.vfx.shakeOffset.y);
+    this.ctx.translate(view.shake.offset.x, view.shake.offset.y);
   }
 
   private drawBackdrop(): void {
@@ -108,14 +100,8 @@ export class Renderer {
     this.ctx.strokeRect(4, 4, this.config.width - 8, this.config.height - 8);
   }
 
-  private drawProgressBar(state: GameState): void {
-    const total = state.bricks.length;
-    if (total <= 0) {
-      return;
-    }
-
-    const alive = state.bricks.reduce((count, brick) => count + (brick.alive ? 1 : 0), 0);
-    const ratio = Math.max(0, Math.min(1, (total - alive) / total));
+  private drawProgressBar(ratio: number): void {
+    const clamped = Math.max(0, Math.min(1, ratio));
     const barX = 14;
     const barY = 66;
     const barW = this.config.width - 28;
@@ -124,7 +110,7 @@ export class Renderer {
     this.ctx.fillStyle = "rgba(255, 255, 255, 0.18)";
     this.ctx.fillRect(barX, barY, barW, barH);
     this.ctx.fillStyle = "rgba(41, 211, 255, 0.9)";
-    this.ctx.fillRect(barX, barY, barW * ratio, barH);
+    this.ctx.fillRect(barX, barY, barW * clamped, barH);
   }
 
   private drawBricks(bricks: Brick[]): void {
@@ -145,22 +131,18 @@ export class Renderer {
     }
   }
 
-  private drawPaddle(state: GameState): void {
-    const paddle = state.paddle;
-    const paddlePlusActive = state.items.active.paddlePlus.untilSec > state.elapsedSec;
-    const pulse = 0.6 + ((Math.sin(state.elapsedSec * 10) + 1) / 2) * 0.4;
-    const topColor = paddlePlusActive ? withAlpha("rgba(92, 242, 255, 1)", pulse) : this.theme.paddleStart;
-    const bottomColor = paddlePlusActive ? withAlpha("rgba(74, 201, 255, 1)", 0.82) : this.theme.paddleEnd;
+  private drawPaddle(paddle: RenderViewState["paddle"], elapsedSec: number): void {
+    const pulse = 0.6 + ((Math.sin(elapsedSec * 10) + 1) / 2) * 0.4;
+    const topColor = paddle.glowActive ? withAlpha("rgba(92, 242, 255, 1)", pulse) : this.theme.paddleStart;
+    const bottomColor = paddle.glowActive ? withAlpha("rgba(74, 201, 255, 1)", 0.82) : this.theme.paddleEnd;
 
     const grad = this.ctx.createLinearGradient(paddle.x, paddle.y, paddle.x, paddle.y + paddle.height);
     grad.addColorStop(0, topColor);
     grad.addColorStop(1, bottomColor);
 
     this.ctx.save();
-    if (!state.vfx.reducedMotion) {
-      this.ctx.shadowBlur = 12;
-      this.ctx.shadowColor = paddlePlusActive ? "rgba(98, 240, 255, 0.68)" : "rgba(122, 176, 255, 0.38)";
-    }
+    this.ctx.shadowBlur = 12;
+    this.ctx.shadowColor = paddle.glowActive ? "rgba(98, 240, 255, 0.68)" : "rgba(122, 176, 255, 0.38)";
     this.ctx.fillStyle = grad;
     this.ctx.beginPath();
     if (this.ctx.roundRect) {
@@ -189,11 +171,14 @@ export class Renderer {
     this.ctx.quadraticCurveTo(x, y, x + r, y);
   }
 
-  private drawBalls(state: GameState): void {
-    const slowActive = state.items.active.slowBall.untilSec > state.elapsedSec;
-    const multiballActive = state.items.active.multiball.untilSec > state.elapsedSec;
-    for (const ball of state.balls) {
-      this.drawBall(ball, slowActive, multiballActive, state.vfx.reducedMotion);
+  private drawBalls(
+    balls: Ball[],
+    slowActive: boolean,
+    multiballActive: boolean,
+    reducedMotion: boolean,
+  ): void {
+    for (const ball of balls) {
+      this.drawBall(ball, slowActive, multiballActive, reducedMotion);
     }
   }
 
@@ -233,20 +218,17 @@ export class Renderer {
     }
   }
 
-  private drawTrail(state: GameState): void {
-    const trail = state.vfx.trail;
+  private drawTrail(trail: RenderViewState["trail"], lead: Ball | undefined, slowActive: boolean): void {
     const count = trail.length;
     if (count <= 1) {
       return;
     }
 
-    const lead = state.balls[0];
     const ballRadius = lead?.radius ?? 8;
     const speed = lead ? Math.hypot(lead.vel.x, lead.vel.y) : 0;
     const speedRatio = Math.max(0, Math.min(1, speed / Math.max(1, this.config.maxBallSpeed)));
     const maxPoints = Math.max(4, Math.min(count, 6 + Math.round(speedRatio * 4)));
     const start = Math.max(0, count - maxPoints);
-    const slowActive = state.items.active.slowBall.untilSec > state.elapsedSec;
     const trailColor = slowActive ? "rgba(255, 182, 114, 0.3)" : this.theme.trail;
 
     for (let i = start; i < count; i += 1) {
@@ -266,10 +248,10 @@ export class Renderer {
     }
   }
 
-  private drawBallIndicators(state: GameState): void {
-    const baseY = state.paddle.y - 16;
-    for (const ball of state.balls) {
-      if (ball.pos.y > state.paddle.y - 200) {
+  private drawBallIndicators(balls: Ball[], paddleY: number): void {
+    const baseY = paddleY - 16;
+    for (const ball of balls) {
+      if (ball.pos.y > paddleY - 200) {
         continue;
       }
 
@@ -310,9 +292,9 @@ export class Renderer {
       this.ctx.save();
       if (!reducedMotion) {
         this.ctx.shadowBlur = 10;
-        this.ctx.shadowColor = withAlpha(this.itemColor(item.type), 0.7);
+        this.ctx.shadowColor = withAlpha(getItemColor(item.type), 0.7);
       }
-      this.ctx.fillStyle = this.itemColor(item.type);
+      this.ctx.fillStyle = getItemColor(item.type);
       this.ctx.beginPath();
       if (this.ctx.roundRect) {
         this.ctx.roundRect(item.pos.x - half, item.pos.y - half, item.size, item.size, 5);
@@ -330,20 +312,17 @@ export class Renderer {
       this.ctx.font = "600 9px Avenir Next";
       this.ctx.textAlign = "center";
       this.ctx.textBaseline = "middle";
-      this.ctx.fillText(this.itemShort(item.type), item.pos.x, item.pos.y + 0.5);
+      this.ctx.fillText(getItemShortLabel(item.type), item.pos.x, item.pos.y + 0.5);
     }
   }
 
-  private drawShield(state: GameState): void {
-    if (
-      state.items.active.shield.remainingHits <= 0 ||
-      state.items.active.shield.untilSec <= state.elapsedSec
-    ) {
+  private drawShield(shieldCharges: number, elapsedSec: number): void {
+    if (shieldCharges <= 0) {
       return;
     }
 
     const baseY = this.config.height - 8;
-    const pulse = 0.45 + ((Math.sin(state.elapsedSec * 8) + 1) / 2) * 0.35;
+    const pulse = 0.45 + ((Math.sin(elapsedSec * 8) + 1) / 2) * 0.35;
     this.ctx.strokeStyle = withAlpha(this.theme.shield, pulse);
     this.ctx.lineWidth = 4;
     this.ctx.beginPath();
@@ -375,32 +354,6 @@ export class Renderer {
       this.ctx.fillStyle = withAlpha(label.color, Math.min(1, ratio));
       this.ctx.fillText(label.text, label.pos.x, label.pos.y);
     }
-  }
-
-  private itemShort(type: FallingItem["type"]): string {
-    if (type === "paddle_plus") {
-      return "P+";
-    }
-    if (type === "slow_ball") {
-      return "SL";
-    }
-    if (type === "multiball") {
-      return "MB";
-    }
-    return "SH";
-  }
-
-  private itemColor(type: FallingItem["type"]): string {
-    if (type === "paddle_plus") {
-      return "rgba(104, 216, 255, 0.8)";
-    }
-    if (type === "slow_ball") {
-      return "rgba(255, 191, 112, 0.85)";
-    }
-    if (type === "multiball") {
-      return "rgba(197, 143, 255, 0.82)";
-    }
-    return "rgba(112, 255, 210, 0.78)";
   }
 }
 

@@ -6,10 +6,13 @@ import {
   consumeShield,
   createItemState,
   ensureMultiballCount,
+  getActiveItemLabels,
+  getBombRadiusTiles,
   getPaddleScale,
+  getPierceDepth,
   getSlowBallMaxSpeedScale,
+  getTargetBallCount,
   spawnDropsFromBrickEvents,
-  trimBallsWhenMultiballEnds,
   updateFallingItems,
 } from "./itemSystem";
 import type { Ball, CollisionEvent, Paddle, RandomSource } from "./types";
@@ -35,72 +38,79 @@ function createBall(): Ball {
 }
 
 describe("itemSystem", () => {
-  test("paddle_plus stacking extends only duration", () => {
+  test("stacking increases power without overwrite", () => {
     const items = createItemState();
-    const balls = [createBall()];
 
-    applyItemPickup(items, "paddle_plus", 10, balls);
-    const firstUntil = items.active.paddlePlus.untilSec;
-    applyItemPickup(items, "paddle_plus", 11, balls);
+    applyItemPickup(items, "paddle_plus", [createBall()]);
+    applyItemPickup(items, "paddle_plus", [createBall()]);
+    applyItemPickup(items, "pierce", [createBall()]);
+    applyItemPickup(items, "bomb", [createBall()]);
 
-    expect(firstUntil).toBe(22);
-    expect(items.active.paddlePlus.untilSec).toBe(31);
-    expect(getPaddleScale(items, 12)).toBeGreaterThan(1);
+    expect(items.active.paddlePlusStacks).toBe(2);
+    expect(getPaddleScale(items)).toBeCloseTo(1.36, 5);
+    expect(getPierceDepth(items)).toBe(4);
+    expect(getBombRadiusTiles(items)).toBe(1);
   });
 
-  test("slow_ball applies instant velocity reduction and max-speed scale", () => {
+  test("slow_ball applies instant velocity reduction and scaled max-speed", () => {
     const items = createItemState();
     const balls = [createBall()];
 
     const before = Math.hypot(balls[0].vel.x, balls[0].vel.y);
-    applyItemPickup(items, "slow_ball", 5, balls);
+    applyItemPickup(items, "slow_ball", balls);
+    applyItemPickup(items, "slow_ball", balls);
     const after = Math.hypot(balls[0].vel.x, balls[0].vel.y);
 
     expect(after).toBeLessThan(before);
-    expect(getSlowBallMaxSpeedScale(items, 5.2)).toBeLessThan(1);
+    expect(getSlowBallMaxSpeedScale(items)).toBeLessThan(1);
   });
 
-  test("multiball keeps max two balls and trims when expired", () => {
+  test("multiball stacks are capped to four balls", () => {
     const items = createItemState();
-    applyItemPickup(items, "multiball", 2, [createBall()]);
+    applyItemPickup(items, "multiball", [createBall()]);
+    applyItemPickup(items, "multiball", [createBall()]);
+    applyItemPickup(items, "multiball", [createBall()]);
+    applyItemPickup(items, "multiball", [createBall()]);
+    applyItemPickup(items, "multiball", [createBall()]);
 
-    const expanded = ensureMultiballCount(items, 2.1, [createBall()], sequenceRandom([0.4]));
-    expect(expanded).toHaveLength(2);
+    expect(getTargetBallCount(items)).toBe(4);
 
-    const trimmed = trimBallsWhenMultiballEnds(items, 40, expanded);
-    expect(trimmed).toHaveLength(1);
+    const expanded = ensureMultiballCount(items, [createBall()], sequenceRandom([0.4, 0.6, 0.2]));
+    expect(expanded).toHaveLength(4);
+
+    const trimmed = ensureMultiballCount(items, [...expanded, createBall()], sequenceRandom([0.5]));
+    expect(trimmed).toHaveLength(4);
   });
 
-  test("shield can be consumed only once", () => {
+  test("shield accumulates charges and consumes one by one", () => {
     const items = createItemState();
-    applyItemPickup(items, "shield", 1, [createBall()]);
+    applyItemPickup(items, "shield", [createBall()]);
+    applyItemPickup(items, "shield", [createBall()]);
 
-    expect(canUseShield(items, 1.2)).toBe(true);
-    expect(consumeShield(items, 1.2)).toBe(true);
-    expect(canUseShield(items, 1.3)).toBe(false);
-    expect(consumeShield(items, 1.3)).toBe(false);
+    expect(canUseShield(items)).toBe(true);
+    expect(consumeShield(items)).toBe(true);
+    expect(items.active.shieldCharges).toBe(1);
+    expect(consumeShield(items)).toBe(true);
+    expect(canUseShield(items)).toBe(false);
   });
 
-  test("spawnDrops respects chance and max count", () => {
+  test("spawnDrops includes new item types with weighted picker", () => {
     const items = createItemState();
-    const events: CollisionEvent[] = Array.from({ length: 5 }, (_, idx) => ({
+    const events: CollisionEvent[] = Array.from({ length: 6 }, (_, idx) => ({
       kind: "brick",
-      x: 120 + idx,
-      y: 80,
+      x: 100 + idx,
+      y: 90,
     }));
 
-    // drop判定0.1で生成、種類抽選0.2。2件目は0.7で生成されない。
-    spawnDropsFromBrickEvents(
-      items,
-      events,
-      sequenceRandom([0.1, 0.2, 0.7, 0.2, 0.1, 0.9, 0.1, 0.3, 0.1, 0.4]),
-    );
-
+    spawnDropsFromBrickEvents(items, events, sequenceRandom([0.1, 0.85, 0.1, 0.95, 0.1, 0.99]));
     expect(items.falling.length).toBeGreaterThan(0);
-    expect(items.falling.length).toBeLessThanOrEqual(3);
+
+    // 2番目=0.85 は pierce/bomb 帯域に入る
+    const hasAdvanced = items.falling.some((drop) => drop.type === "pierce" || drop.type === "bomb");
+    expect(hasAdvanced).toBe(true);
   });
 
-  test("updateFallingItems collects on paddle and removes out-of-screen", () => {
+  test("updateFallingItems returns picked item payload", () => {
     const items = createItemState();
     items.falling.push(
       {
@@ -112,7 +122,7 @@ describe("itemSystem", () => {
       },
       {
         id: 2,
-        type: "slow_ball",
+        type: "bomb",
         pos: { x: 60, y: 600 },
         speed: 0,
         size: 16,
@@ -125,5 +135,16 @@ describe("itemSystem", () => {
     expect(picked).toHaveLength(1);
     expect(picked[0]?.type).toBe("paddle_plus");
     expect(items.falling).toHaveLength(0);
+  });
+
+  test("active labels are stack-based", () => {
+    const items = createItemState();
+    applyItemPickup(items, "multiball", [createBall()]);
+    applyItemPickup(items, "pierce", [createBall()]);
+    applyItemPickup(items, "pierce", [createBall()]);
+
+    const labels = getActiveItemLabels(items);
+    expect(labels.some((label) => label.includes("MULTI x1"))).toBe(true);
+    expect(labels.some((label) => label.includes("PIERCE x2"))).toBe(true);
   });
 });

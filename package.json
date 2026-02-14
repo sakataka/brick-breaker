@@ -14,7 +14,9 @@
     "check": "bun run typecheck && bun run lint && bun run build"
   },
   "dependencies": {
-    "xstate": "^5.23.0"
+    "ts-pattern": "^5.8.0",
+    "xstate": "^5.23.0",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

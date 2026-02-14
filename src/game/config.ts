@@ -1,3 +1,4 @@
+import { validateItemConfig, validateStageCatalog } from "./configSchema";
 import type { Difficulty, GameConfig, ItemType, StageDefinition } from "./types";
 
 export interface BrickTheme {
@@ -46,7 +47,6 @@ interface DifficultyPreset {
 
 export interface ItemRule {
   type: ItemType;
-  durationSec: number;
   weight: number;
   label: string;
 }
@@ -55,15 +55,15 @@ export interface DropConfig {
   chance: number;
   maxFalling: number;
   fallSpeed: number;
-  maxDurationSec: number;
-  extendRatio: number;
 }
 
 export interface ItemBalance {
-  paddlePlusScale: number;
-  slowBallMaxSpeedScale: number;
+  paddlePlusScalePerStack: number;
+  slowBallMaxSpeedScalePerStack: number;
+  slowBallMinScale: number;
   slowBallInstantSpeedScale: number;
   multiballMaxBalls: number;
+  pierceDepthPerStack: number;
 }
 
 const BASE_CONFIG: Omit<
@@ -224,43 +224,49 @@ export const STAGE_CATALOG: StageDefinition[] = STAGE_ROW_DEFINITIONS.map((rows,
 export const ITEM_CONFIG: Record<ItemType, ItemRule> = {
   paddle_plus: {
     type: "paddle_plus",
-    durationSec: 12,
-    weight: 0.35,
+    weight: 1 / 6,
     label: "PADDLE+",
   },
   slow_ball: {
     type: "slow_ball",
-    durationSec: 10,
-    weight: 0.3,
+    weight: 1 / 6,
     label: "SLOW",
   },
   shield: {
     type: "shield",
-    durationSec: 14,
-    weight: 0.2,
+    weight: 1 / 6,
     label: "SHIELD",
   },
   multiball: {
     type: "multiball",
-    durationSec: 12,
-    weight: 0.15,
+    weight: 1 / 6,
     label: "MULTI",
+  },
+  pierce: {
+    type: "pierce",
+    weight: 1 / 6,
+    label: "PIERCE",
+  },
+  bomb: {
+    type: "bomb",
+    weight: 1 / 6,
+    label: "BOMB",
   },
 };
 
 export const ITEM_BALANCE: ItemBalance = {
-  paddlePlusScale: 1.28,
-  slowBallMaxSpeedScale: 0.82,
+  paddlePlusScalePerStack: 0.18,
+  slowBallMaxSpeedScalePerStack: 0.82,
+  slowBallMinScale: 0.35,
   slowBallInstantSpeedScale: 0.9,
-  multiballMaxBalls: 2,
+  multiballMaxBalls: 4,
+  pierceDepthPerStack: 4,
 };
 
 export const DROP_CONFIG: DropConfig = {
   chance: 0.18,
   maxFalling: 3,
   fallSpeed: 160,
-  maxDurationSec: 24,
-  extendRatio: 0.75,
 };
 
 export function getBrickPaletteColor(row: number, palette: BrickTheme["palette"] = BRICK_PALETTE): string {
@@ -271,3 +277,6 @@ export function getStageByIndex(stageIndex: number): StageDefinition {
   const safeIndex = Math.max(0, Math.min(STAGE_CATALOG.length - 1, stageIndex));
   return STAGE_CATALOG[safeIndex];
 }
+
+validateStageCatalog(STAGE_CATALOG);
+validateItemConfig(ITEM_CONFIG);

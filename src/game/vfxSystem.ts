@@ -1,3 +1,4 @@
+import { ITEM_REGISTRY } from "./itemRegistry";
 import type {
   CollisionEvent,
   FloatingText,
@@ -14,18 +15,6 @@ const MAX_PARTICLES = 220;
 const MAX_TRAIL_POINTS = 12;
 const MAX_IMPACT_RINGS = 10;
 const MAX_FLOATING_TEXTS = 8;
-
-interface ItemVisual {
-  label: string;
-  color: string;
-}
-
-const ITEM_VISUALS: Record<ItemType, ItemVisual> = {
-  paddle_plus: { label: "PADDLE+", color: "rgba(104, 216, 255, 0.95)" },
-  slow_ball: { label: "SLOW", color: "rgba(255, 191, 112, 0.96)" },
-  multiball: { label: "MULTI", color: "rgba(197, 143, 255, 0.95)" },
-  shield: { label: "SHIELD", color: "rgba(112, 255, 210, 0.95)" },
-};
 
 export function createVfxState(reducedMotion: boolean): VfxState {
   return {
@@ -95,16 +84,16 @@ export function triggerHitFreeze(vfx: VfxState, durationMs: number): void {
 }
 
 export function spawnItemPickupFeedback(vfx: VfxState, type: ItemType, x: number, y: number): void {
-  const visual = ITEM_VISUALS[type];
-  spawnImpactRing(vfx, x, y, visual.color, 8, 46, 240);
+  const item = ITEM_REGISTRY[type];
+  spawnImpactRing(vfx, x, y, item.color, 8, 46, 240);
 
   const lifeMs = vfx.reducedMotion ? 420 : 760;
   const text: FloatingText = {
-    text: visual.label,
+    text: item.label,
     pos: { x, y: y - 8 },
     lifeMs,
     maxLifeMs: lifeMs,
-    color: visual.color,
+    color: item.color,
   };
   if (vfx.floatingTexts.length >= MAX_FLOATING_TEXTS) {
     vfx.floatingTexts.shift();

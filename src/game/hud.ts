@@ -1,4 +1,5 @@
-import { getActiveItemLabels } from "./itemSystem";
+import { buildHudViewModel } from "./renderPresenter";
+import type { HudViewModel } from "./renderTypes";
 import type { GameState } from "./types";
 
 const previousScores = new WeakMap<HTMLSpanElement, number>();
@@ -13,13 +14,17 @@ export interface HudElements {
 }
 
 export function updateHud(hud: HudElements, state: GameState): void {
-  animateScorePop(hud.score, state.score);
-  hud.score.textContent = `SCORE: ${state.score}`;
-  hud.lives.textContent = `LIVES: ${state.lives}`;
-  hud.time.textContent = `TIME: ${formatTime(state.elapsedSec)}`;
-  hud.stage.textContent = `STAGE: ${state.campaign.stageIndex + 1}/${state.campaign.totalStages}`;
-  const activeItems = getActiveItemLabels(state.items, state.elapsedSec);
-  hud.items.textContent = activeItems.length > 0 ? `ITEM: ${activeItems.join(" / ")}` : "ITEM: -";
+  const model = buildHudViewModel(state);
+  applyHudViewModel(hud, model, state.score);
+}
+
+export function applyHudViewModel(hud: HudElements, model: HudViewModel, score: number): void {
+  animateScorePop(hud.score, score);
+  hud.score.textContent = model.scoreText;
+  hud.lives.textContent = model.livesText;
+  hud.time.textContent = model.timeText;
+  hud.stage.textContent = model.stageText;
+  hud.items.textContent = model.itemsText;
 }
 
 export function formatTime(totalSec: number): string {

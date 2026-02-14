@@ -74,21 +74,13 @@ export interface PickedItem {
   pos: Vector2;
 }
 
-export interface ActiveTimedEffect {
-  type: Exclude<ItemType, "shield">;
-  untilSec: number;
-}
-
-export interface ShieldState {
-  untilSec: number;
-  remainingHits: number;
-}
-
 export interface ActiveItemState {
-  paddlePlus: ActiveTimedEffect;
-  slowBall: ActiveTimedEffect;
-  multiball: ActiveTimedEffect;
-  shield: ShieldState;
+  paddlePlusStacks: number;
+  slowBallStacks: number;
+  multiballStacks: number;
+  shieldCharges: number;
+  pierceStacks: number;
+  bombStacks: number;
 }
 
 export interface ItemState {
@@ -97,17 +89,25 @@ export interface ItemState {
   nextId: number;
 }
 
-export interface GameState {
-  scene: Scene;
+export interface ProgressState {
   score: number;
   lives: number;
   elapsedSec: number;
+  campaign: CampaignState;
+}
+
+export interface RuntimeState {
   balls: Ball[];
   paddle: Paddle;
   bricks: Brick[];
-  campaign: CampaignState;
   items: ItemState;
   assist: AssistState;
   vfx: VfxState;
+}
+
+export type GameState = GameSceneState & ProgressState & RuntimeState;
+
+interface GameSceneState {
+  scene: Scene;
   errorMessage: string | null;
 }

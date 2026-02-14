@@ -58,4 +58,31 @@ describe("roundSystem", () => {
 
     expect(canContinue).toBe(false);
   });
+
+  test("applyLifeLoss keeps stage item stacks", () => {
+    const state = createInitialGameState(GAME_CONFIG, false, "start");
+    resetRoundState(state, GAME_CONFIG, false, fixedRandom);
+    state.items.active.multiballStacks = 2;
+    state.items.active.pierceStacks = 3;
+    state.items.active.shieldCharges = 4;
+
+    const canContinue = applyLifeLoss(state, 1, GAME_CONFIG, fixedRandom);
+
+    expect(canContinue).toBe(true);
+    expect(state.items.active.multiballStacks).toBe(2);
+    expect(state.items.active.pierceStacks).toBe(3);
+    expect(state.items.active.shieldCharges).toBe(4);
+  });
+
+  test("retryCurrentStage resets stage item stacks", () => {
+    const state = createInitialGameState(GAME_CONFIG, false, "start");
+    resetRoundState(state, GAME_CONFIG, false, fixedRandom);
+    state.items.active.bombStacks = 2;
+    state.items.active.slowBallStacks = 5;
+
+    retryCurrentStage(state, GAME_CONFIG, fixedRandom);
+
+    expect(state.items.active.bombStacks).toBe(0);
+    expect(state.items.active.slowBallStacks).toBe(0);
+  });
 });

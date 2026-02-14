@@ -43,21 +43,33 @@ bun test
 - ブロック破壊時 `18%` でドロップ判定
 - 同時落下上限 `3`
 - 種類:
-  - `paddle_plus`: パドル幅 `x1.28`（12秒）
-  - `slow_ball`: 速度上限 `x0.82` + 取得直後速度 `x0.9`（10秒）
-  - `multiball`: 2球化（12秒）
-  - `shield`: 画面下バリア1回（14秒）
-- 同種再取得は効果量を増やさず、時間のみ延長（+基本時間の75%、上限24秒）
+  - `paddle_plus`: パドル幅スタック増加（`1 + 0.18 * stacks`）
+  - `slow_ball`: 速度上限を段階低下（`max(0.35, 0.82^stacks)`）+ 取得直後に減速
+  - `multiball`: スタックで目標球数増加（最大4球）
+  - `shield`: チャージを加算（ミス時に1消費）
+  - `pierce`: 1スタックごとに +4 枚貫通
+  - `bomb`: 直撃時に範囲破壊（1スタック目3x3、以降拡大）
+- 効果持続は時間制ではなく「ステージ中のみ」有効
+- ライフ喪失では効果を保持し、ステージ遷移/再挑戦開始時にリセット
+- 同種取得は上書きではなくスタック加算
 
 ## 主要モジュール
 
-- `src/game/Game.ts`: ループ・進行・入力・遷移のオーケストレーション
-- `src/game/roundSystem.ts`: ステージ進行と再挑戦
-- `src/game/itemSystem.ts`: ドロップ・取得・効果時間管理
-- `src/game/sceneMachine.ts`: Scene遷移（xstate）
-- `src/game/physics.ts`: 衝突と反射
-- `src/game/renderer.ts`: Canvas描画
-- `src/ui/overlay.ts`: シーン別オーバーレイ文言
+- `src/game/Game.ts`: オーケストレータ（ループ/入力/遷移の接続）
+- `src/game/gamePipeline.ts`: playing時の1tick処理順序
+- `src/game/gameRuntime.ts`: fixed-step実行と stage clear / life loss 適用
+- `src/game/itemRegistry.ts`: アイテム定義レジストリ（追加拡張ポイント）
+- `src/game/itemSystem.ts`: ドロップ・取得・スタック・多球調整
+- `src/game/physicsCore.ts`: 物理コア（壁/バー/ブロック/貫通/爆発）
+- `src/game/physics.ts`: 互換ラッパーAPI
+- `src/game/renderPresenter.ts`: 描画/HUD/overlay ViewModel 生成
+- `src/game/renderer.ts`: Canvas描画専任
+- `src/game/configSchema.ts`: zodによる設定検証
+
+## 設計ドキュメント
+
+- `docs/architecture.md`
+- `docs/refactor-roadmap.md`
 
 ## 補足
 
