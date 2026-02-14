@@ -9,6 +9,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
   paddle_plus: {
     type: "paddle_plus",
     label: ITEM_CONFIG.paddle_plus.label,
+    hudLabel: "🟦パドル(幅)",
     shortLabel: "幅",
     color: "rgba(104, 216, 255, 0.8)",
     weight: ITEM_CONFIG.paddle_plus.weight,
@@ -20,6 +21,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
   slow_ball: {
     type: "slow_ball",
     label: ITEM_CONFIG.slow_ball.label,
+    hudLabel: "🐢スロー(減速)",
     shortLabel: "遅",
     color: "rgba(255, 191, 112, 0.85)",
     weight: ITEM_CONFIG.slow_ball.weight,
@@ -36,6 +38,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
   shield: {
     type: "shield",
     label: ITEM_CONFIG.shield.label,
+    hudLabel: "🛡シールド(防御)",
     shortLabel: "盾",
     color: "rgba(112, 255, 210, 0.78)",
     weight: ITEM_CONFIG.shield.weight,
@@ -47,6 +50,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
   multiball: {
     type: "multiball",
     label: ITEM_CONFIG.multiball.label,
+    hudLabel: "🎱マルチ(多球)",
     shortLabel: "多",
     color: "rgba(197, 143, 255, 0.82)",
     weight: ITEM_CONFIG.multiball.weight,
@@ -58,17 +62,19 @@ export const ITEM_REGISTRY: ItemRegistry = {
   pierce: {
     type: "pierce",
     label: ITEM_CONFIG.pierce.label,
+    hudLabel: "🗡貫通",
     shortLabel: "貫",
     color: "rgba(255, 130, 110, 0.86)",
     weight: ITEM_CONFIG.pierce.weight,
     applyPickup: ({ stacks }) => {
-      stacks.pierceStacks += 1;
+      stacks.pierceStacks = 1;
     },
-    getLabelStack: (stacks) => stacks.pierceStacks,
+    getLabelStack: (stacks) => Math.min(1, stacks.pierceStacks),
   },
   bomb: {
     type: "bomb",
     label: ITEM_CONFIG.bomb.label,
+    hudLabel: "💣ボム(爆発)",
     shortLabel: "爆",
     color: "rgba(255, 95, 95, 0.88)",
     weight: ITEM_CONFIG.bomb.weight,
@@ -114,7 +120,7 @@ export function createItemModifiers(
     paddleScale,
     maxSpeedScale,
     targetBallCount: Math.min(1 + stacks.multiballStacks, multiballMaxBalls),
-    pierceDepth: stacks.pierceStacks * ITEM_BALANCE.pierceDepthPerStack,
+    pierceDepth: Math.min(1, stacks.pierceStacks) * ITEM_BALANCE.pierceDepthPerStack,
     bombRadiusTiles: stacks.bombStacks,
     explodeOnHit: stacks.bombStacks > 0,
     shieldCharges: stacks.shieldCharges,
@@ -126,10 +132,7 @@ export function getActiveItemLabelsFromRegistry(stacks: ItemStackState): string[
   for (const type of ITEM_ORDER) {
     const definition = ITEM_REGISTRY[type];
     const count = getStackCount(stacks, definition.type);
-    if (count <= 0) {
-      continue;
-    }
-    labels.push(`${definition.label} x${count}`);
+    labels.push(`${definition.hudLabel}×${count}`);
   }
   return labels;
 }
@@ -200,7 +203,7 @@ function getStackCount(stacks: ItemStackState, type: ItemType): number {
     .with("slow_ball", () => stacks.slowBallStacks)
     .with("multiball", () => stacks.multiballStacks)
     .with("shield", () => stacks.shieldCharges)
-    .with("pierce", () => stacks.pierceStacks)
+    .with("pierce", () => Math.min(1, stacks.pierceStacks))
     .with("bomb", () => stacks.bombStacks)
     .exhaustive();
 }

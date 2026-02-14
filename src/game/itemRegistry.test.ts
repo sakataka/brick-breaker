@@ -42,7 +42,7 @@ describe("itemRegistry", () => {
     expect(modifiers.maxSpeedScale).toBeGreaterThanOrEqual(0.35);
     expect(modifiers.targetBallCount).toBe(5);
     expect(modifiers.shieldCharges).toBe(3);
-    expect(modifiers.pierceDepth).toBe(8);
+    expect(modifiers.pierceDepth).toBe(4);
     expect(modifiers.bombRadiusTiles).toBe(1);
     expect(modifiers.explodeOnHit).toBe(true);
   });

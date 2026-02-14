@@ -27,6 +27,7 @@ export interface ItemModifierBundle {
 export interface ItemDefinition {
   type: ItemType;
   label: string;
+  hudLabel: string;
   shortLabel: string;
   color: string;
   weight: number;

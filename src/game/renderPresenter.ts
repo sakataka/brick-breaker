@@ -52,7 +52,7 @@ export function buildHudViewModel(state: GameState): HudViewModel {
     timeText: `時間: ${formatTime(state.elapsedSec)}`,
     stageText: `ステージ: ${state.campaign.stageIndex + 1}/${state.campaign.totalStages}`,
     comboText: comboVisible ? `コンボ x${state.combo.multiplier.toFixed(2)}` : "コンボ x1.00",
-    itemsText: activeItems.length > 0 ? `アイテム: ${activeItems.join(" / ")}` : "アイテム: -",
+    itemsText: `アイテム: ${activeItems.join(" / ")}`,
     accentColor: comboVisible ? COMBO_ACTIVE_COLOR : themeBand.hudAccent,
   };
 }

@@ -88,6 +88,9 @@ export function spawnDropsFromBrickEvents(
   if (items.active.bombStacks >= 1) {
     excludedTypes.push("bomb");
   }
+  if (items.active.pierceStacks >= 1) {
+    excludedTypes.push("pierce");
+  }
   for (const event of events) {
     if (event.kind !== "brick") {
       continue;
