@@ -38,11 +38,32 @@ describe("renderPresenter", () => {
   test("shows combo text only when streak is active", () => {
     const state = createInitialGameState(GAME_CONFIG, false, "playing");
     const idle = buildHudViewModel(state);
-    expect(idle.comboText).toBe("COMBO x1.00");
+    expect(idle.comboText).toBe("コンボ x1.00");
 
     state.combo.streak = 3;
     state.combo.multiplier = 1.5;
     const active = buildHudViewModel(state);
-    expect(active.comboText).toBe("COMBO x1.50");
+    expect(active.comboText).toBe("コンボ x1.50");
+  });
+
+  test("builds campaign result list for clear scene", () => {
+    const state = createInitialGameState(GAME_CONFIG, false, "playing");
+    resetRoundState(state, GAME_CONFIG, false, fixedRandom);
+    state.stageStats.startedAtSec = 0;
+    state.elapsedSec = 40;
+    state.lives = 3;
+    finalizeStageStats(state);
+
+    state.campaign.stageIndex = 1;
+    state.stageStats.startedAtSec = 40;
+    state.elapsedSec = 90;
+    state.lives = 2;
+    finalizeStageStats(state);
+
+    state.scene = "clear";
+    const view = buildOverlayViewModel(state);
+    expect(view.campaignResults).toHaveLength(2);
+    expect(view.campaignResults?.[0]?.stageNumber).toBe(1);
+    expect(view.campaignResults?.[1]?.stageNumber).toBe(2);
   });
 });

@@ -7,6 +7,7 @@ export const SceneTransitionInput = {
   STAGE_CLEAR: "STAGE_CLEAR",
   GAME_OVER: "GAME_OVER",
   GAME_CLEAR: "GAME_CLEAR",
+  BACK_TO_START: "BACK_TO_START",
   RUNTIME_ERROR: "RUNTIME_ERROR",
   RESET: "RESET",
 } as const;
@@ -49,6 +50,7 @@ const sceneMachineDefinition = createMachine({
     clear: {
       on: {
         START_OR_RESUME: "playing",
+        BACK_TO_START: "start",
         RUNTIME_ERROR: "error",
       },
     },

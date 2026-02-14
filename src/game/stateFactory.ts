@@ -1,5 +1,5 @@
 import { createAssistState } from "./assistSystem";
-import { GAME_BALANCE, getStageByIndex, STAGE_CATALOG } from "./config";
+import { getGameplayBalance, getStageByIndex, STAGE_CATALOG } from "./config";
 import { createItemState } from "./itemSystem";
 import { buildBricksFromStage } from "./level";
 import { clamp } from "./math";
@@ -7,22 +7,24 @@ import type { Ball, GameConfig, GameState, Paddle, RandomSource, Scene } from ".
 import { createVfxState } from "./vfxSystem";
 
 export function createBasePaddle(config: GameConfig): Paddle {
+  const balance = getGameplayBalance(config.difficulty);
   return {
-    x: config.width / 2 - GAME_BALANCE.paddleWidth / 2,
-    y: config.height - GAME_BALANCE.paddleBottomOffset,
-    width: GAME_BALANCE.paddleWidth,
-    height: GAME_BALANCE.paddleHeight,
+    x: config.width / 2 - balance.paddleWidth / 2,
+    y: config.height - balance.paddleBottomOffset,
+    width: balance.paddleWidth,
+    height: balance.paddleHeight,
   };
 }
 
 export function createRestingBall(config: GameConfig, paddle: Paddle, speed = config.initialBallSpeed): Ball {
+  const balance = getGameplayBalance(config.difficulty);
   return {
     pos: {
       x: config.width / 2,
-      y: paddle.y - (GAME_BALANCE.paddleHeight + GAME_BALANCE.ballRadius + 2),
+      y: paddle.y - (balance.paddleHeight + balance.ballRadius + 2),
     },
     vel: { x: 0, y: 0 },
-    radius: GAME_BALANCE.ballRadius,
+    radius: balance.ballRadius,
     speed,
   };
 }
@@ -34,14 +36,15 @@ export function createServeBall(
   random: RandomSource,
   speed = config.initialBallSpeed,
 ): Ball {
-  const spread = (random.next() - 0.5) * speed * GAME_BALANCE.serveSpreadRatio;
+  const balance = getGameplayBalance(config.difficulty);
+  const spread = (random.next() - 0.5) * speed * balance.serveSpreadRatio;
   const vx = clamp(spread, -speed * 0.45, speed * 0.45);
   const vy = -Math.sqrt(speed * speed - vx * vx);
 
   return {
     pos: {
       x: paddle.x + paddle.width / 2,
-      y: paddle.y - GAME_BALANCE.serveYOffset,
+      y: paddle.y - balance.serveYOffset,
     },
     vel: { x: vx, y: vy },
     radius,
@@ -76,6 +79,7 @@ export function createInitialGameState(config: GameConfig, reducedMotion: boolea
       stageIndex: 0,
       totalStages: STAGE_CATALOG.length,
       stageStartScore: 0,
+      results: [],
     },
     items: createItemState(),
     assist: createAssistState(config),

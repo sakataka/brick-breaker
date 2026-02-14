@@ -34,4 +34,12 @@ describe("sceneMachine", () => {
     expect(machine.send({ type: "RUNTIME_ERROR" })).toBe("error");
     machine.stop();
   });
+
+  test("supports clear -> start transition", () => {
+    const machine = new SceneMachine();
+    expect(machine.send({ type: "START_OR_RESUME" })).toBe("playing");
+    expect(machine.send({ type: "GAME_CLEAR" })).toBe("clear");
+    expect(machine.send({ type: "BACK_TO_START" })).toBe("start");
+    machine.stop();
+  });
 });

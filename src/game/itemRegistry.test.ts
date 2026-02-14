@@ -1,6 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
-import { createItemModifiers, createItemStacks, ITEM_REGISTRY, validateItemRegistry } from "./itemRegistry";
+import {
+  createItemModifiers,
+  createItemStacks,
+  ITEM_REGISTRY,
+  pickWeightedItemType,
+  validateItemRegistry,
+} from "./itemRegistry";
 
 describe("itemRegistry", () => {
   test("includes all item definitions with valid weights", () => {
@@ -39,5 +45,11 @@ describe("itemRegistry", () => {
     expect(modifiers.pierceDepth).toBe(8);
     expect(modifiers.bombRadiusTiles).toBe(1);
     expect(modifiers.explodeOnHit).toBe(true);
+  });
+
+  test("pickWeightedItemType excludes requested item types", () => {
+    const random = { next: () => 0.999 };
+    const picked = pickWeightedItemType(random, ["bomb"]);
+    expect(picked).not.toBe("bomb");
   });
 });

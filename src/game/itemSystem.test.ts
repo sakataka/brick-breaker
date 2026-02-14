@@ -47,11 +47,13 @@ describe("itemSystem", () => {
     applyItemPickup(items, "paddle_plus", [createBall()]);
     applyItemPickup(items, "pierce", [createBall()]);
     applyItemPickup(items, "bomb", [createBall()]);
+    applyItemPickup(items, "bomb", [createBall()]);
 
     expect(items.active.paddlePlusStacks).toBe(2);
     expect(getPaddleScale(items)).toBeCloseTo(1.36, 5);
     expect(getPierceDepth(items)).toBe(4);
     expect(getBombRadiusTiles(items)).toBe(1);
+    expect(items.active.bombStacks).toBe(1);
   });
 
   test("slow_ball applies instant velocity reduction and scaled max-speed", () => {
@@ -112,6 +114,19 @@ describe("itemSystem", () => {
     expect(hasAdvanced).toBe(true);
   });
 
+  test("bomb does not drop while bomb effect is active", () => {
+    const items = createItemState();
+    items.active.bombStacks = 1;
+    const events: CollisionEvent[] = Array.from({ length: 20 }, () => ({
+      kind: "brick",
+      x: 110,
+      y: 90,
+    }));
+
+    spawnDropsFromBrickEvents(items, events, sequenceRandom(Array(40).fill(0.02)));
+    expect(items.falling.every((drop) => drop.type !== "bomb")).toBe(true);
+  });
+
   test("updateFallingItems returns picked item payload", () => {
     const items = createItemState();
     items.falling.push(
@@ -146,8 +161,8 @@ describe("itemSystem", () => {
     applyItemPickup(items, "pierce", [createBall()]);
 
     const labels = getActiveItemLabels(items);
-    expect(labels.some((label) => label.includes("MULTI x1"))).toBe(true);
-    expect(labels.some((label) => label.includes("PIERCE x2"))).toBe(true);
+    expect(labels.some((label) => label.includes("マルチ x1"))).toBe(true);
+    expect(labels.some((label) => label.includes("貫通 x2"))).toBe(true);
   });
 
   test("clearActiveItemEffects resets all active stacks", () => {

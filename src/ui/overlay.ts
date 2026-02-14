@@ -1,5 +1,6 @@
-import type { StageResultView } from "../game/renderTypes";
-import type { Scene } from "../game/types";
+import type { SpeedPreset } from "../game/config";
+import type { StageResultSummaryView, StageResultView } from "../game/renderTypes";
+import type { Difficulty, Scene } from "../game/types";
 import { getRequiredElement } from "../util/dom";
 
 interface OverlayCopy {
@@ -13,11 +14,23 @@ export interface OverlayElements {
   message: HTMLParagraphElement;
   sub: HTMLParagraphElement;
   button: HTMLButtonElement;
+  startSettings: HTMLDivElement;
+  difficulty: HTMLSelectElement;
+  initialLives: HTMLSelectElement;
+  speedPreset: HTMLSelectElement;
+  resultsSection: HTMLDivElement;
+  resultsList: HTMLUListElement;
+}
+
+export interface StartSettingsSelection {
+  difficulty: Difficulty;
+  initialLives: number;
+  speedPreset: SpeedPreset;
 }
 
 export const OVERLAY_COPY: Record<Scene, OverlayCopy> = {
   start: {
-    message: "クリックしてゲーム開始",
+    message: "ブロック崩し",
     sub: "マウスでバーを移動してボールをたたき返してください。",
     button: "ゲーム開始",
   },
@@ -37,9 +50,9 @@ export const OVERLAY_COPY: Record<Scene, OverlayCopy> = {
     button: "",
   },
   clear: {
-    message: "ステージクリア！",
-    sub: "",
-    button: "やり直す",
+    message: "全ステージクリア！",
+    sub: "キャンペーン結果",
+    button: "タイトルへ戻る",
   },
   stageclear: {
     message: "ステージクリア！",
@@ -70,8 +83,60 @@ export function getOverlayElements(documentRef: Document): OverlayElements {
     "#overlay-button",
     "overlay-button要素が見つかりません",
   );
+  const startSettings = getRequiredElement<HTMLDivElement>(
+    documentRef,
+    "#start-settings",
+    "start-settings要素が見つかりません",
+  );
+  const difficulty = getRequiredElement<HTMLSelectElement>(
+    documentRef,
+    "#setting-difficulty",
+    "setting-difficulty要素が見つかりません",
+  );
+  const initialLives = getRequiredElement<HTMLSelectElement>(
+    documentRef,
+    "#setting-lives",
+    "setting-lives要素が見つかりません",
+  );
+  const speedPreset = getRequiredElement<HTMLSelectElement>(
+    documentRef,
+    "#setting-speed",
+    "setting-speed要素が見つかりません",
+  );
+  const resultsSection = getRequiredElement<HTMLDivElement>(
+    documentRef,
+    "#overlay-results-section",
+    "overlay-results-section要素が見つかりません",
+  );
+  const resultsList = getRequiredElement<HTMLUListElement>(
+    documentRef,
+    "#overlay-results",
+    "overlay-results要素が見つかりません",
+  );
 
-  return { overlay, message, sub, button };
+  return {
+    overlay,
+    message,
+    sub,
+    button,
+    startSettings,
+    difficulty,
+    initialLives,
+    speedPreset,
+    resultsSection,
+    resultsList,
+  };
+}
+
+export function readStartSettings(elements: OverlayElements): StartSettingsSelection {
+  const difficulty = parseDifficulty(elements.difficulty.value);
+  const lives = Number.parseInt(elements.initialLives.value, 10);
+  const speedPreset = parseSpeedPreset(elements.speedPreset.value);
+  return {
+    difficulty,
+    initialLives: Number.isFinite(lives) ? lives : 4,
+    speedPreset,
+  };
 }
 
 export function setSceneUI(
@@ -83,6 +148,7 @@ export function setSceneUI(
   errorMessage?: string,
   stageLabel?: string,
   stageResult?: StageResultView,
+  campaignResults?: StageResultSummaryView[],
 ): void {
   if (scene === "playing") {
     elements.overlay.classList.add("hidden");
@@ -95,6 +161,11 @@ export function setSceneUI(
   elements.message.textContent = copy.message;
   elements.button.textContent = copy.button;
   elements.button.disabled = false;
+  elements.startSettings.classList.toggle("panel-hidden", scene !== "start");
+  elements.resultsSection.classList.toggle("panel-hidden", scene !== "clear");
+  if (scene !== "clear") {
+    elements.resultsList.innerHTML = "";
+  }
 
   if (scene === "start") {
     elements.sub.textContent = copy.sub;
@@ -107,8 +178,8 @@ export function setSceneUI(
   }
 
   if (scene === "clear") {
-    const result = formatStageResult(stageResult);
-    elements.sub.textContent = `${stageLabel ?? ""} ${score}点 ${clearTime ? `・${clearTime}` : ""}${result}`;
+    elements.sub.textContent = `${stageLabel ?? ""} ${score}点 ${clearTime ? `・総時間 ${clearTime}` : ""}`;
+    renderCampaignResults(elements.resultsList, campaignResults ?? []);
     return;
   }
 
@@ -131,5 +202,37 @@ function formatStageResult(stageResult: StageResultView | undefined): string {
     return "";
   }
   const stars = "★".repeat(stageResult.stars);
-  return ` / RESULT ${stars} (${stageResult.ratingScore}) TIME ${stageResult.clearTime} HITS ${stageResult.hitsTaken} LIFE ${stageResult.livesLeft}`;
+  return ` / 評価 ${stars} (${stageResult.ratingScore}) ・時間 ${stageResult.clearTime} ・被弾 ${stageResult.hitsTaken} ・残機 ${stageResult.livesLeft}`;
+}
+
+function renderCampaignResults(listElement: HTMLUListElement, results: StageResultSummaryView[]): void {
+  listElement.innerHTML = "";
+  const doc = listElement.ownerDocument;
+  if (results.length <= 0) {
+    const empty = doc.createElement("li");
+    empty.textContent = "結果データがありません。";
+    listElement.append(empty);
+    return;
+  }
+
+  for (const result of results) {
+    const item = doc.createElement("li");
+    const stars = "★".repeat(result.stars);
+    item.textContent = `ステージ ${result.stageNumber}: ${stars} (${result.ratingScore}) / 時間 ${result.clearTime} / 残機 ${result.livesLeft}`;
+    listElement.append(item);
+  }
+}
+
+function parseDifficulty(value: string): Difficulty {
+  if (value === "standard" || value === "hard") {
+    return value;
+  }
+  return "casual";
+}
+
+function parseSpeedPreset(value: string): SpeedPreset {
+  if (value === "0.75" || value === "1.25") {
+    return value;
+  }
+  return "1.00";
 }

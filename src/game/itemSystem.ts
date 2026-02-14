@@ -84,6 +84,10 @@ export function spawnDropsFromBrickEvents(
   events: CollisionEvent[],
   random: RandomSource,
 ): void {
+  const excludedTypes: ItemType[] = [];
+  if (items.active.bombStacks >= 1) {
+    excludedTypes.push("bomb");
+  }
   for (const event of events) {
     if (event.kind !== "brick") {
       continue;
@@ -99,7 +103,7 @@ export function spawnDropsFromBrickEvents(
 
     items.falling.push({
       id: items.nextId,
-      type: pickWeightedItemType(random),
+      type: pickWeightedItemType(random, excludedTypes),
       pos: { x: event.x, y: event.y },
       speed: DROP_CONFIG.fallSpeed,
       size: ITEM_SIZE,

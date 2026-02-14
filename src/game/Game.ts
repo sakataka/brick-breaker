@@ -1,6 +1,6 @@
 import { SfxManager } from "../audio/sfx";
-import type { getOverlayElements } from "../ui/overlay";
-import { GAME_CONFIG } from "./config";
+import { type OverlayElements, readStartSettings } from "../ui/overlay";
+import { buildStartConfig, GAME_CONFIG } from "./config";
 import { computeFrameDelta, handleBallLoss, handleStageClear, runPlayingLoop } from "./gameRuntime";
 import { renderGameFrame, syncSceneOverlayUI } from "./gameUi";
 import type { HudElements } from "./hud";
@@ -25,7 +25,8 @@ export interface GameDeps {
 }
 
 export class Game {
-  private readonly config: GameConfig;
+  private readonly baseConfig: GameConfig;
+  private config: GameConfig;
   private readonly renderer: Renderer;
   private readonly sfx = new SfxManager();
   private readonly input: InputController;
@@ -43,12 +44,13 @@ export class Game {
   constructor(
     private readonly canvas: HTMLCanvasElement,
     private readonly hud: HudElements,
-    private readonly overlay: ReturnType<typeof getOverlayElements>,
+    private readonly overlay: OverlayElements,
     deps: GameDeps = {},
   ) {
     const context = deps.ctx ?? this.canvas.getContext("2d");
     if (!context) throw new Error("Canvasが利用できませんでした");
-    this.config = { ...GAME_CONFIG, ...deps.config };
+    this.baseConfig = { ...GAME_CONFIG, ...deps.config };
+    this.config = { ...this.baseConfig };
     this.random = deps.random ?? defaultRandomSource;
     this.documentRef = deps.documentRef ?? document;
     this.windowRef = deps.windowRef ?? window;
@@ -98,6 +100,11 @@ export class Game {
   private bindOverlay(): void {
     this.overlay.button.addEventListener("click", () => {
       if (this.state.scene === "error") return this.windowRef.location.reload();
+      if (this.state.scene === "clear") {
+        this.transition({ type: "BACK_TO_START" });
+        syncSceneOverlayUI(this.overlay, this.state);
+        return;
+      }
       void this.sfx.resumeIfNeeded().catch(() => {});
       this.runSafely(() => this.startOrResume(), "開始処理に失敗しました。");
     });
@@ -105,8 +112,16 @@ export class Game {
 
   private startOrResume(): void {
     const previous = this.state.scene;
+    if (previous === "clear") {
+      this.transition({ type: "BACK_TO_START" });
+      syncSceneOverlayUI(this.overlay, this.state);
+      return;
+    }
+    if (previous === "start") {
+      this.applyStartSettings();
+    }
     if (this.transition({ type: "START_OR_RESUME" }) !== "playing") return;
-    if (previous === "start" || previous === "clear") {
+    if (previous === "start") {
       resetRoundState(this.state, this.config, this.state.vfx.reducedMotion, this.random);
     } else if (previous === "stageclear") {
       advanceStage(this.state, this.config, this.random);
@@ -164,7 +179,7 @@ export class Game {
   };
 
   private handleStageClear(): void {
-    handleStageClear(this.state, this.sfx, (event) => this.transition({ type: event }));
+    handleStageClear(this.state, this.config, this.sfx, (event) => this.transition({ type: event }));
   }
 
   private handleBallLoss(): void {
@@ -214,5 +229,10 @@ export class Game {
       renderGameFrame(this.renderer, this.hud, this.state);
       syncSceneOverlayUI(this.overlay, this.state);
     } catch {}
+  }
+
+  private applyStartSettings(): void {
+    const selected = readStartSettings(this.overlay);
+    this.config = buildStartConfig(this.baseConfig, selected);
   }
 }

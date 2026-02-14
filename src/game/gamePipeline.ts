@@ -2,7 +2,7 @@ import type { SfxManager } from "../audio/sfx";
 import { applyAssistToPaddle, getCurrentMaxBallSpeed } from "./assistSystem";
 import { playCollisionSounds } from "./collisionEffects";
 import { applyComboHits, normalizeCombo, resetCombo } from "./comboSystem";
-import { GAME_BALANCE } from "./config";
+import { getGameplayBalance } from "./config";
 import {
   applyItemPickup,
   clearActiveItemEffects,
@@ -31,6 +31,7 @@ export interface GamePipelineDeps {
 
 export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): PipelineOutcome {
   const { config, random } = deps;
+  const balance = getGameplayBalance(config.difficulty);
   state.elapsedSec += config.fixedDeltaSec;
 
   const stageInitialSpeed = getStageInitialBallSpeed(config, state.campaign.stageIndex);
@@ -40,7 +41,7 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   const pierceDepth = getPierceDepth(state.items);
   const bombRadiusTiles = getBombRadiusTiles(state.items);
 
-  const basePaddleWidth = GAME_BALANCE.paddleWidth * getPaddleScale(state.items);
+  const basePaddleWidth = balance.paddleWidth * getPaddleScale(state.items);
   applyAssistToPaddle(state.paddle, basePaddleWidth, config.width, state.assist, state.elapsedSec);
 
   const physics = runPhysicsForBalls(state.balls, state.paddle, state.bricks, config, config.fixedDeltaSec, {
@@ -53,8 +54,9 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   });
 
   const destroyedBricks = physics.events.filter((event) => event.kind === "brick").length;
-  state.score += applyComboHits(state.combo, state.elapsedSec, destroyedBricks, GAME_BALANCE.scorePerBrick);
+  state.score += applyComboHits(state.combo, state.elapsedSec, destroyedBricks, balance.scorePerBrick);
   const hadBallDrop = physics.lostBalls > 0;
+  const lostAllBalls = physics.survivors.length <= 0;
   playCollisionSounds(deps.sfx, physics.events);
   applyCollisionEvents(state.vfx, physics.events, random);
   spawnDropsFromBrickEvents(state.items, physics.events, random);
@@ -72,8 +74,10 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
     deps.playPickupSfx();
   }
 
-  if (hadBallDrop) {
+  if (lostAllBalls) {
     clearActiveItemEffects(state.items);
+  }
+  if (hadBallDrop) {
     resetCombo(state.combo);
   } else {
     normalizeCombo(state.combo, state.elapsedSec);

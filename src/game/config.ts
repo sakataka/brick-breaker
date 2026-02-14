@@ -45,6 +45,14 @@ interface DifficultyPreset {
   >;
 }
 
+export type SpeedPreset = "0.75" | "1.00" | "1.25";
+
+export interface StartSetupOptions {
+  difficulty: Difficulty;
+  initialLives: number;
+  speedPreset: SpeedPreset;
+}
+
 export interface ItemRule {
   type: ItemType;
   weight: number;
@@ -98,6 +106,11 @@ export interface ThemeBandDefinition {
   hudAccent: string;
   brickPalette: BrickTheme["palette"];
 }
+
+export const START_SETTING_LIMITS = {
+  minLives: 1,
+  maxLives: 6,
+} as const;
 
 const BASE_CONFIG: Omit<
   GameConfig,
@@ -217,6 +230,13 @@ export const GAME_BALANCE: GameplayBalance = {
   ...BASE_BALANCE,
   ...activePreset.balance,
 } as const;
+
+export function getGameplayBalance(difficulty: Difficulty): GameplayBalance {
+  return {
+    ...BASE_BALANCE,
+    ...DIFFICULTY_PRESETS[difficulty].balance,
+  };
+}
 
 export const BRICK_LAYOUT: BrickLayout = {
   cols: 10,
@@ -356,32 +376,32 @@ export const ITEM_CONFIG: Record<ItemType, ItemRule> = {
   paddle_plus: {
     type: "paddle_plus",
     weight: 1 / 6,
-    label: "PADDLE+",
+    label: "パドル+",
   },
   slow_ball: {
     type: "slow_ball",
     weight: 1 / 6,
-    label: "SLOW",
+    label: "スロー",
   },
   shield: {
     type: "shield",
     weight: 1 / 6,
-    label: "SHIELD",
+    label: "シールド",
   },
   multiball: {
     type: "multiball",
     weight: 1 / 6,
-    label: "MULTI",
+    label: "マルチ",
   },
   pierce: {
     type: "pierce",
     weight: 1 / 6,
-    label: "PIERCE",
+    label: "貫通",
   },
   bomb: {
     type: "bomb",
     weight: 1 / 6,
-    label: "BOMB",
+    label: "ボム",
   },
 };
 
@@ -425,6 +445,33 @@ export function getStageTimeTargetSec(stageIndex: number): number {
 export function getStageByIndex(stageIndex: number): StageDefinition {
   const safeIndex = Math.max(0, Math.min(STAGE_CATALOG.length - 1, stageIndex));
   return STAGE_CATALOG[safeIndex];
+}
+
+export function resolveSpeedScale(speedPreset: SpeedPreset): number {
+  const parsed = Number(speedPreset);
+  if (Number.isNaN(parsed)) {
+    return 1;
+  }
+  return Math.max(0.5, Math.min(2, parsed));
+}
+
+export function buildStartConfig(base: GameConfig, setup: StartSetupOptions): GameConfig {
+  const preset = DIFFICULTY_PRESETS[setup.difficulty];
+  const speedScale = resolveSpeedScale(setup.speedPreset);
+  const safeLives = Math.max(
+    START_SETTING_LIMITS.minLives,
+    Math.min(START_SETTING_LIMITS.maxLives, setup.initialLives),
+  );
+  return {
+    ...base,
+    difficulty: setup.difficulty,
+    initialLives: safeLives,
+    initialBallSpeed: preset.config.initialBallSpeed * speedScale,
+    maxBallSpeed: preset.config.maxBallSpeed * speedScale,
+    assistDurationSec: preset.config.assistDurationSec,
+    assistPaddleScale: preset.config.assistPaddleScale,
+    assistMaxSpeedScale: preset.config.assistMaxSpeedScale,
+  };
 }
 
 validateStageCatalog(STAGE_CATALOG);

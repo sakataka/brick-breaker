@@ -15,6 +15,7 @@ export function syncSceneOverlayUI(overlay: ReturnType<typeof getOverlayElements
     view.errorMessage,
     view.stageLabel,
     view.stageResult,
+    view.campaignResults,
   );
 }
 

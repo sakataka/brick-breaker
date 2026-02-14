@@ -45,6 +45,8 @@ describe("gamePipeline", () => {
     const state = createInitialGameState(config, true, "playing");
     state.scene = "playing";
     state.bricks = [];
+    state.items.active.multiballStacks = 2;
+    state.items.active.pierceStacks = 1;
     overrideSingleBall(state, {
       pos: { x: 130, y: 190 },
       vel: { x: 0, y: 260 },
@@ -62,6 +64,8 @@ describe("gamePipeline", () => {
 
     expect(outcome).toBe("ballloss");
     expect(state.balls).toHaveLength(0);
+    expect(state.items.active.multiballStacks).toBe(0);
+    expect(state.items.active.pierceStacks).toBe(0);
   });
 
   test("keeps running when shield rescue succeeds", () => {
@@ -93,7 +97,7 @@ describe("gamePipeline", () => {
     expect(state.elapsedSec).toBeGreaterThan(0);
   });
 
-  test("clears all item effects when any ball is dropped during multiball", () => {
+  test("keeps item effects while at least one ball survives during multiball", () => {
     const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60 };
     const state = createInitialGameState(config, true, "playing");
     state.scene = "playing";
@@ -129,12 +133,12 @@ describe("gamePipeline", () => {
 
     expect(outcome).toBe("continue");
     expect(state.balls).toHaveLength(1);
-    expect(state.items.active.multiballStacks).toBe(0);
-    expect(state.items.active.slowBallStacks).toBe(0);
-    expect(state.items.active.shieldCharges).toBe(0);
-    expect(state.items.active.paddlePlusStacks).toBe(0);
-    expect(state.items.active.pierceStacks).toBe(0);
-    expect(state.items.active.bombStacks).toBe(0);
+    expect(state.items.active.multiballStacks).toBe(2);
+    expect(state.items.active.slowBallStacks).toBe(1);
+    expect(state.items.active.shieldCharges).toBe(1);
+    expect(state.items.active.paddlePlusStacks).toBe(1);
+    expect(state.items.active.pierceStacks).toBe(1);
+    expect(state.items.active.bombStacks).toBe(1);
   });
 
   test("applies combo score within window and resets when window expires", () => {

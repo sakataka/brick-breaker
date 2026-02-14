@@ -29,6 +29,18 @@ describe("roundSystem", () => {
     expect(state.balls).toHaveLength(1);
   });
 
+  test("resetRoundState uses configured initial lives", () => {
+    const customConfig = {
+      ...GAME_CONFIG,
+      initialLives: 6,
+    };
+    const state = createInitialGameState(customConfig, false, "start");
+
+    resetRoundState(state, customConfig, false, fixedRandom);
+
+    expect(state.lives).toBe(6);
+  });
+
   test("advanceStage increments until final stage", () => {
     const state = createInitialGameState(GAME_CONFIG, false, "start");
     resetRoundState(state, GAME_CONFIG, false, fixedRandom);
@@ -46,6 +58,7 @@ describe("roundSystem", () => {
   test("advanceStage carries active item effects but clears falling items", () => {
     const state = createInitialGameState(GAME_CONFIG, false, "start");
     resetRoundState(state, GAME_CONFIG, false, fixedRandom);
+    state.lives = 2;
     state.items.active.paddlePlusStacks = 2;
     state.items.active.shieldCharges = 1;
     state.items.active.pierceStacks = 3;
@@ -64,6 +77,7 @@ describe("roundSystem", () => {
     expect(state.items.active.shieldCharges).toBe(1);
     expect(state.items.active.pierceStacks).toBe(3);
     expect(state.items.falling).toHaveLength(0);
+    expect(state.lives).toBe(2);
   });
 
   test("advanceStage applies carried multiball stacks to next-stage serve count", () => {
@@ -148,5 +162,7 @@ describe("roundSystem", () => {
     expect(state.stageStats.starRating).toBe(3);
     expect(typeof state.stageStats.ratingScore).toBe("number");
     expect(getStageClearTimeSec(state)).toBe(64);
+    expect(state.campaign.results[0]?.stageNumber).toBe(1);
+    expect(state.campaign.results[0]?.clearTimeSec).toBe(64);
   });
 });

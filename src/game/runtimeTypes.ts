@@ -59,6 +59,15 @@ export interface CampaignState {
   stageIndex: number;
   totalStages: number;
   stageStartScore: number;
+  results: StageResultEntry[];
+}
+
+export interface StageResultEntry {
+  stageNumber: number;
+  clearTimeSec: number;
+  stars: 1 | 2 | 3;
+  ratingScore: number;
+  livesAtClear: number;
 }
 
 export interface FallingItem {

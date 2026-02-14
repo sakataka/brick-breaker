@@ -47,12 +47,12 @@ export function buildHudViewModel(state: GameState): HudViewModel {
   const themeBand = getThemeBandByStageIndex(state.campaign.stageIndex);
   const comboVisible = state.combo.streak > 1;
   return {
-    scoreText: `SCORE: ${state.score}`,
-    livesText: `LIVES: ${state.lives}`,
-    timeText: `TIME: ${formatTime(state.elapsedSec)}`,
-    stageText: `STAGE: ${state.campaign.stageIndex + 1}/${state.campaign.totalStages}`,
-    comboText: comboVisible ? `COMBO x${state.combo.multiplier.toFixed(2)}` : "COMBO x1.00",
-    itemsText: activeItems.length > 0 ? `ITEM: ${activeItems.join(" / ")}` : "ITEM: -",
+    scoreText: `スコア: ${state.score}`,
+    livesText: `残機: ${state.lives}`,
+    timeText: `時間: ${formatTime(state.elapsedSec)}`,
+    stageText: `ステージ: ${state.campaign.stageIndex + 1}/${state.campaign.totalStages}`,
+    comboText: comboVisible ? `コンボ x${state.combo.multiplier.toFixed(2)}` : "コンボ x1.00",
+    itemsText: activeItems.length > 0 ? `アイテム: ${activeItems.join(" / ")}` : "アイテム: -",
     accentColor: comboVisible ? COMBO_ACTIVE_COLOR : themeBand.hudAccent,
   };
 }
@@ -65,7 +65,7 @@ export function buildOverlayViewModel(state: GameState): OverlayViewModel {
     lives: state.lives,
     clearTime: state.scene === "clear" ? formatTime(state.elapsedSec) : undefined,
     errorMessage: state.errorMessage ?? undefined,
-    stageLabel: `STAGE ${state.campaign.stageIndex + 1} / ${state.campaign.totalStages}`,
+    stageLabel: `ステージ ${state.campaign.stageIndex + 1} / ${state.campaign.totalStages}`,
     stageResult:
       typeof state.stageStats.starRating === "number" &&
       typeof state.stageStats.ratingScore === "number" &&
@@ -77,6 +77,16 @@ export function buildOverlayViewModel(state: GameState): OverlayViewModel {
             hitsTaken: state.stageStats.hitsTaken,
             livesLeft: state.lives,
           }
+        : undefined,
+    campaignResults:
+      state.scene === "clear"
+        ? state.campaign.results.map((result) => ({
+            stageNumber: result.stageNumber,
+            stars: result.stars,
+            ratingScore: result.ratingScore,
+            clearTime: formatTime(result.clearTimeSec),
+            livesLeft: result.livesAtClear,
+          }))
         : undefined,
   };
 }

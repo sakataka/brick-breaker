@@ -1,5 +1,11 @@
 import { activateAssist, applyAssistToPaddle, createAssistState } from "./assistSystem";
-import { GAME_BALANCE, getStageByIndex, getStageTimeTargetSec, RATING_CONFIG, STAGE_CATALOG } from "./config";
+import {
+  getGameplayBalance,
+  getStageByIndex,
+  getStageTimeTargetSec,
+  RATING_CONFIG,
+  STAGE_CATALOG,
+} from "./config";
 import { cloneActiveItemState, createItemState, ensureMultiballCount } from "./itemSystem";
 import { buildBricksFromStage } from "./level";
 import { createBasePaddle, createServeBall } from "./stateFactory";
@@ -8,6 +14,7 @@ import { createVfxState } from "./vfxSystem";
 
 interface BuildStageRoundOptions {
   carriedActiveItems?: GameState["items"]["active"];
+  resetLives?: boolean;
 }
 
 function buildStageRound(
@@ -17,8 +24,11 @@ function buildStageRound(
   options: BuildStageRoundOptions = {},
 ): void {
   const stage = getStageByIndex(state.campaign.stageIndex);
+  const balance = getGameplayBalance(config.difficulty);
   const stageInitialSpeed = getStageInitialBallSpeed(config, state.campaign.stageIndex);
-  state.lives = config.initialLives;
+  if (options.resetLives ?? true) {
+    state.lives = config.initialLives;
+  }
   state.bricks = buildBricksFromStage(stage);
   state.items = createItemState();
   if (options.carriedActiveItems) {
@@ -29,7 +39,7 @@ function buildStageRound(
   state.paddle = createBasePaddle(config);
   state.balls = ensureMultiballCount(
     state.items,
-    [createServeBall(config, state.paddle, GAME_BALANCE.ballRadius, random, stageInitialSpeed)],
+    [createServeBall(config, state.paddle, balance.ballRadius, random, stageInitialSpeed)],
     random,
   );
   state.combo = {
@@ -54,8 +64,9 @@ export function resetRoundState(
   state.campaign.stageIndex = 0;
   state.campaign.totalStages = STAGE_CATALOG.length;
   state.campaign.stageStartScore = 0;
+  state.campaign.results = [];
   state.vfx = createVfxState(reducedMotion);
-  buildStageRound(state, config, random);
+  buildStageRound(state, config, random, { resetLives: true });
   state.campaign.stageStartScore = state.score;
 }
 
@@ -66,14 +77,17 @@ export function advanceStage(state: GameState, config: GameConfig, random: Rando
 
   const carriedActiveItems = cloneActiveItemState(state.items.active);
   state.campaign.stageIndex += 1;
-  buildStageRound(state, config, random, { carriedActiveItems });
+  buildStageRound(state, config, random, {
+    carriedActiveItems,
+    resetLives: false,
+  });
   state.campaign.stageStartScore = state.score;
   return true;
 }
 
 export function retryCurrentStage(state: GameState, config: GameConfig, random: RandomSource): void {
   state.score = state.campaign.stageStartScore;
-  buildStageRound(state, config, random);
+  buildStageRound(state, config, random, { resetLives: true });
 }
 
 export function applyLifeLoss(
@@ -82,6 +96,7 @@ export function applyLifeLoss(
   config: GameConfig,
   random: RandomSource,
 ): boolean {
+  const balance = getGameplayBalance(config.difficulty);
   state.lives -= livesLost;
   state.stageStats.hitsTaken += livesLost;
   if (state.lives <= 0) {
@@ -89,13 +104,13 @@ export function applyLifeLoss(
   }
 
   activateAssist(state.assist, state.elapsedSec, config);
-  const baseWidth = GAME_BALANCE.paddleWidth;
+  const baseWidth = balance.paddleWidth;
   applyAssistToPaddle(state.paddle, baseWidth, config.width, state.assist, state.elapsedSec);
   state.balls = [
     createServeBall(
       config,
       state.paddle,
-      GAME_BALANCE.ballRadius,
+      balance.ballRadius,
       random,
       getStageInitialBallSpeed(config, state.campaign.stageIndex),
     ),
@@ -114,9 +129,11 @@ export function getStageMaxBallSpeed(config: GameConfig, stageIndex: number): nu
 export function finalizeStageStats(state: GameState): void {
   const clearTimeSec = Math.max(0, state.elapsedSec - state.stageStats.startedAtSec);
   const ratingScore = computeStageRatingScore(state, clearTimeSec);
+  const stars = getStarRatingByScore(ratingScore);
   state.stageStats.clearedAtSec = state.elapsedSec;
   state.stageStats.ratingScore = ratingScore;
-  state.stageStats.starRating = getStarRatingByScore(ratingScore);
+  state.stageStats.starRating = stars;
+  upsertCampaignStageResult(state, clearTimeSec, stars, ratingScore);
 }
 
 export function getStageClearTimeSec(state: GameState): number | null {
@@ -155,4 +172,27 @@ function computeStageRatingScore(state: GameState, clearTimeSec: number): number
     Math.min(RATING_CONFIG.lifeScoreMax, state.lives * RATING_CONFIG.lifeScorePerLife),
   );
   return Math.round(timeScore + hitScore + lifeScore);
+}
+
+function upsertCampaignStageResult(
+  state: GameState,
+  clearTimeSec: number,
+  stars: 1 | 2 | 3,
+  ratingScore: number,
+): void {
+  const stageNumber = state.campaign.stageIndex + 1;
+  const entry = {
+    stageNumber,
+    clearTimeSec,
+    stars,
+    ratingScore,
+    livesAtClear: state.lives,
+  };
+  const existing = state.campaign.results.findIndex((result) => result.stageNumber === stageNumber);
+  if (existing >= 0) {
+    state.campaign.results[existing] = entry;
+    return;
+  }
+  state.campaign.results.push(entry);
+  state.campaign.results.sort((a, b) => a.stageNumber - b.stageNumber);
 }

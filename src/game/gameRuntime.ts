@@ -1,5 +1,5 @@
 import type { SfxManager } from "../audio/sfx";
-import { GAME_BALANCE } from "./config";
+import { getGameplayBalance } from "./config";
 import { stepPlayingPipeline } from "./gamePipeline";
 import { consumeShield } from "./itemSystem";
 import { applyLifeLoss, finalizeStageStats, retryCurrentStage } from "./roundSystem";
@@ -57,12 +57,14 @@ export function runPlayingLoop(
 
 export function handleStageClear(
   state: GameState,
+  config: GameConfig,
   sfx: SfxManager,
   onTransition: (event: "GAME_CLEAR" | "STAGE_CLEAR") => void,
 ): void {
+  const balance = getGameplayBalance(config.difficulty);
   finalizeStageStats(state);
   triggerHitFreeze(state.vfx, 72);
-  state.score += state.lives * GAME_BALANCE.clearBonusPerLife;
+  state.score += state.lives * balance.clearBonusPerLife;
   void sfx.play("clear");
   onTransition(state.campaign.stageIndex >= state.campaign.totalStages - 1 ? "GAME_CLEAR" : "STAGE_CLEAR");
 }

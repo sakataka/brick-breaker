@@ -50,6 +50,7 @@ export interface OverlayViewModel {
   errorMessage?: string;
   stageLabel: string;
   stageResult?: StageResultView;
+  campaignResults?: StageResultSummaryView[];
 }
 
 export interface StageResultView {
@@ -57,5 +58,13 @@ export interface StageResultView {
   ratingScore: number;
   clearTime: string;
   hitsTaken: number;
+  livesLeft: number;
+}
+
+export interface StageResultSummaryView {
+  stageNumber: number;
+  stars: 1 | 2 | 3;
+  ratingScore: number;
+  clearTime: string;
   livesLeft: number;
 }

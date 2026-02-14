@@ -1,4 +1,4 @@
-import { GAME_BALANCE, type GameplayBalance } from "./config";
+import { type GameplayBalance, getGameplayBalance } from "./config";
 import { clamp } from "./math";
 import type { PhysicsFrameResult, PhysicsInput } from "./physicsTypes";
 import type { Ball, Brick, CollisionEvent } from "./types";
@@ -28,7 +28,7 @@ export function stepPhysicsCore({
   const pierceDepth = Math.max(0, stepConfig?.pierceDepth ?? 0);
   const bombRadiusTiles = Math.max(0, stepConfig?.bombRadiusTiles ?? 0);
   const explodeOnHit = stepConfig?.explodeOnHit ?? false;
-  const balance = stepConfig?.balance ?? GAME_BALANCE;
+  const balance = stepConfig?.balance ?? getGameplayBalance(config.difficulty);
 
   const distance = Math.hypot(ball.vel.x, ball.vel.y) * deltaSec;
   const iterations = Math.min(maxSubSteps, Math.max(1, Math.ceil(distance / maxMove)));

@@ -9,7 +9,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
   paddle_plus: {
     type: "paddle_plus",
     label: ITEM_CONFIG.paddle_plus.label,
-    shortLabel: "P+",
+    shortLabel: "幅",
     color: "rgba(104, 216, 255, 0.8)",
     weight: ITEM_CONFIG.paddle_plus.weight,
     applyPickup: ({ stacks }) => {
@@ -20,7 +20,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
   slow_ball: {
     type: "slow_ball",
     label: ITEM_CONFIG.slow_ball.label,
-    shortLabel: "SL",
+    shortLabel: "遅",
     color: "rgba(255, 191, 112, 0.85)",
     weight: ITEM_CONFIG.slow_ball.weight,
     applyPickup: ({ stacks, balls }) => {
@@ -36,7 +36,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
   shield: {
     type: "shield",
     label: ITEM_CONFIG.shield.label,
-    shortLabel: "SH",
+    shortLabel: "盾",
     color: "rgba(112, 255, 210, 0.78)",
     weight: ITEM_CONFIG.shield.weight,
     applyPickup: ({ stacks }) => {
@@ -47,7 +47,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
   multiball: {
     type: "multiball",
     label: ITEM_CONFIG.multiball.label,
-    shortLabel: "MB",
+    shortLabel: "多",
     color: "rgba(197, 143, 255, 0.82)",
     weight: ITEM_CONFIG.multiball.weight,
     applyPickup: ({ stacks }) => {
@@ -58,7 +58,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
   pierce: {
     type: "pierce",
     label: ITEM_CONFIG.pierce.label,
-    shortLabel: "PR",
+    shortLabel: "貫",
     color: "rgba(255, 130, 110, 0.86)",
     weight: ITEM_CONFIG.pierce.weight,
     applyPickup: ({ stacks }) => {
@@ -69,11 +69,11 @@ export const ITEM_REGISTRY: ItemRegistry = {
   bomb: {
     type: "bomb",
     label: ITEM_CONFIG.bomb.label,
-    shortLabel: "BM",
+    shortLabel: "爆",
     color: "rgba(255, 95, 95, 0.88)",
     weight: ITEM_CONFIG.bomb.weight,
     applyPickup: ({ stacks }) => {
-      stacks.bombStacks += 1;
+      stacks.bombStacks = 1;
     },
     getLabelStack: (stacks) => stacks.bombStacks,
   },
@@ -139,18 +139,24 @@ export function getItemColor(type: ItemType): string {
   return ITEM_REGISTRY[type].color;
 }
 
-export function pickWeightedItemType(random: RandomSource): ItemType {
-  const value = random.next();
+export function pickWeightedItemType(random: RandomSource, excludedTypes: ItemType[] = []): ItemType {
+  const excluded = new Set(excludedTypes);
+  const selectable = ITEM_ORDER.filter((type) => !excluded.has(type));
+  if (selectable.length <= 0) {
+    return ITEM_ORDER[ITEM_ORDER.length - 1];
+  }
+  const totalWeight = selectable.reduce((total, type) => total + ITEM_REGISTRY[type].weight, 0);
+  const value = random.next() * totalWeight;
   let cumulative = 0;
 
-  for (const type of ITEM_ORDER) {
+  for (const type of selectable) {
     cumulative += ITEM_REGISTRY[type].weight;
     if (value <= cumulative) {
       return type;
     }
   }
 
-  return ITEM_ORDER[ITEM_ORDER.length - 1];
+  return selectable[selectable.length - 1];
 }
 
 export function validateItemRegistry(registry: ItemRegistry = ITEM_REGISTRY): {
