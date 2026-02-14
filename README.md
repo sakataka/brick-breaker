@@ -108,11 +108,11 @@ GitHub Pages 公開手順:
 
 ## 設計ドキュメント（正本）
 
-- `/Users/sakataka/youtube_speech/ブロック崩し/Brick Breaker/docs/architecture.md`
-- `/Users/sakataka/youtube_speech/ブロック崩し/Brick Breaker/README.md`
+- `docs/architecture.md`
+- `README.md`
 
 ## アイディアリスト（実装検討用）
 
-- `/Users/sakataka/youtube_speech/ブロック崩し/Brick Breaker/docs/idea-list.md`
+- `docs/idea-list.md`
 
 他の計画系ドキュメントは履歴/補助参照で、未完了タスクの正本管理は `docs/architecture.md` の `Open Backlog` に統一しています。
