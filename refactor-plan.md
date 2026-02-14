@@ -1,76 +1,28 @@
-# Brick Breaker リファクタリング計画（Bun前提）
+# Brick Breaker リファクタ残タスク
 
-最終更新: 2026-02-13
+最終更新: 2026-02-14
 
-## 方針
-- 実行環境は Bun を前提 (`bunx`/`bun install`)
-- ゲーム性（物理安定性）を崩さない
-- ファイル単位で責務を分離し、テストしやすい構成にする
+## 現在の到達点
+- `Game.ts` はオーケストレータ中心へ縮小済み
+- `physicsCore` / `physicsApply` / `itemRegistry` / `renderPresenter` 分離済み
+- `configSchema` による設定検証導入済み
+- Bun運用と型・lint・build・testゲート整備済み
 
-## 0) Bun整備（優先度: 高）
-1. `package.json` のスクリプトを Bun 統一にする
-   - `dev`: `bunx vite`
-   - `build`: `bunx vite build`
-   - `preview`: `bunx vite preview`
-2. `.gitignore` に環境依存ファイルを追加
-   - `node_modules/`
-   - `.bun/`
-   - `bun.lockb`
-3. lockfile/依存手順を明文化
-   - 開発用メモ (`agent.md`) に `bun install` / `bun run` を追記
+## 未完了タスクのみ
+1. `Game` の責務最終整理
+   - `syncSceneUI` を専用ユーティリティへ切り出し完了確認
+   - ループ周辺の依存注入ポイントをテストしやすく整理
+2. 物理回帰テストの強化
+   - 長時間プレイ相当の反復シナリオを追加
+   - 多球 + 爆発 + 貫通同時時の境界ケースを拡張
+3. レンダラ差分検証
+   - reduced-motion時の描画差分をスナップショット化
+   - 4K/DPR環境向けの見た目回帰テストを整備
+4. CIの最終強化
+   - `bun run check` / `bun test` に加え、将来用の軽量e2eを追加
+   - 主要シナリオ（start/pause/clear/gameover/error）を自動確認
 
-## 1) 設計の再整理（優先度: 高）
-### 対象: `src/game/Game.ts`
-- 状態遷移（start / paused / gameover / clear）を FSM 化
-  - `Scene`, `Transition` を明示した関数に分離
-- `startOrResume`, `togglePause`, `handlePhysicsResult` の分岐を簡潔化
-- `createInitialState`, `resetRound`, `startPlay`, `serveBall` を独立メソッドに整理
-
-### 対象: `src/game/physics.ts`
-- 衝突系を責務別に分割
-  - `integratePosition`, `resolveWall`, `resolvePaddle`, `resolveBricks`
-- 1フレーム分割更新 (`iterations`) の上限（例: 8回）を追加して暴走防止
-- `PhysicsResult` に「どこに当たったか」メタ情報を明示
-  - `collision.kind: 'wall' | 'paddle' | 'brick' | 'bottom'`
-  - `brickIndex?: number`, `wasCleared: boolean`
-
-## 2) 可読性・保守性改善（優先度: 中）
-### 対象: `src/game/renderer.ts`
-- 描画設定を `RenderTheme` か `RENDER_STYLE` 定数へ
-- `drawBackdrop` / `drawBricks` / `drawPaddle` / `drawBall` の戻り値を `void` 明示し、意図を分離
-
-### 対象: `src/game/level.ts`
-- `BRICK_LAYOUT` と `BUILD` ロジックを分離
-- `buildBricks` の引数に `BRICK_LAYOUT` を受ける形にして後で難易度切替が効くようにする
-- 色付けを行番号だけでなく行列定義に寄せる（テーマ差し替え容易）
-
-### 対象: `src/ui/overlay.ts`
-- `querySelector` を `getRequiredElement` で統一（NPE予防）
-- 文言定義を `OVERLAY_COPY` 定数へ集約
-
-### 対象: `src/game/input.ts`
-- `keydown` 制御は残すが、`Mouse` 中心仕様に合わせて
-  - `p`/`space` は操作ショートカットとして分離し、説明を表示
-- `PointerEvent` + `touch-action: none` を将来対応のため検討
-
-## 3) 型安全・品質（優先度: 中）
-- `GameState` と `Scene` の不変条件を型として明示
-  - スコア・残機・経過時間の更新を専用メソッドに閉じる
-- 定数の直書き値を `GAME_CONFIG` に寄せる
-  - パドル幅/高さ、初期速度、ボーナス等
-
-## 4) テスト・検証（優先度: 中〜高）
-- `bun test` で `src/game/physics.ts` の単体テストを追加
-  - 壁反射、パドル反射、ブロック衝突、ライフ減算、全消し判定
-- `bun run build` が通ることを CI 風チェック
-- 起動確認
-  - `bunx vite` 起動、`bunx vite build`, `bunx vite preview`
-
-## 5) UI/体感調整（優先度: 低）
-- 現在のモダンUI維持しつつ、カード表示/フェードのアクセシビリティ強化
-  - `prefers-reduced-motion` 対応
-  - キーボードでもボタン到達しやすいフォーカススタイル
-
-## 実施順
-1. Bun整備 → 2. `Game.ts` の状態管理分離 → 3. 物理分割 → 4. レンダ/レイアウト定数化 → 5. 物理テスト追加
-
+## 完了判定
+- 追加機能の実装時に変更ファイル数が局所化されること
+- 回帰検知が unit + integration で再現できること
+- ドキュメント更新が実装変更と同時に行われること

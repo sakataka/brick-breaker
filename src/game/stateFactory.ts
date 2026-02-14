@@ -1,5 +1,5 @@
 import { createAssistState } from "./assistSystem";
-import { GAME_BALANCE, STAGE_CATALOG, getStageByIndex } from "./config";
+import { GAME_BALANCE, getStageByIndex, STAGE_CATALOG } from "./config";
 import { createItemState } from "./itemSystem";
 import { buildBricksFromStage } from "./level";
 import { clamp } from "./math";

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { ITEM_REGISTRY, createItemModifiers, createItemStacks, validateItemRegistry } from "./itemRegistry";
+import { createItemModifiers, createItemStacks, ITEM_REGISTRY, validateItemRegistry } from "./itemRegistry";
 
 describe("itemRegistry", () => {
   test("includes all item definitions with valid weights", () => {

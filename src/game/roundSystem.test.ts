@@ -35,6 +35,40 @@ describe("roundSystem", () => {
     expect(advanceStage(state, GAME_CONFIG, fixedRandom)).toBe(false);
   });
 
+  test("advanceStage carries active item effects but clears falling items", () => {
+    const state = createInitialGameState(GAME_CONFIG, false, "start");
+    resetRoundState(state, GAME_CONFIG, false, fixedRandom);
+    state.items.active.paddlePlusStacks = 2;
+    state.items.active.shieldCharges = 1;
+    state.items.active.pierceStacks = 3;
+    state.items.falling.push({
+      id: 99,
+      type: "bomb",
+      pos: { x: 120, y: 100 },
+      speed: 160,
+      size: 16,
+    });
+
+    const progressed = advanceStage(state, GAME_CONFIG, fixedRandom);
+
+    expect(progressed).toBe(true);
+    expect(state.items.active.paddlePlusStacks).toBe(2);
+    expect(state.items.active.shieldCharges).toBe(1);
+    expect(state.items.active.pierceStacks).toBe(3);
+    expect(state.items.falling).toHaveLength(0);
+  });
+
+  test("advanceStage applies carried multiball stacks to next-stage serve count", () => {
+    const state = createInitialGameState(GAME_CONFIG, false, "start");
+    resetRoundState(state, GAME_CONFIG, false, fixedRandom);
+    state.items.active.multiballStacks = 3;
+
+    const progressed = advanceStage(state, GAME_CONFIG, fixedRandom);
+
+    expect(progressed).toBe(true);
+    expect(state.balls).toHaveLength(4);
+  });
+
   test("retryCurrentStage rolls back to stageStartScore", () => {
     const state = createInitialGameState(GAME_CONFIG, false, "start");
     resetRoundState(state, GAME_CONFIG, false, fixedRandom);

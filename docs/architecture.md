@@ -11,6 +11,9 @@
   - `Input -> Assist/Paddle -> Physics -> Event/VFX -> Drop/Pickup -> BallCount`。
 - `src/game/gameRuntime.ts`
   - 固定ステップループ実行、ball loss / stage clear の適用補助。
+- `src/game/roundSystem.ts`
+  - ステージ進行/再挑戦/初期化を管理。
+  - ステージクリア時は `items.active` のみ持ち越し、`falling` は破棄。
 - `src/game/physicsCore.ts`
   - 物理コア（純関数寄り）。壁/バー/ブロック/貫通/爆発の計算。
 - `src/game/physicsApply.ts`
@@ -33,6 +36,11 @@
 3. 各 step で `gamePipeline.stepPlayingPipeline` がゲーム状態を更新。
 4. `renderPresenter` が表示用 ViewModel を生成。
 5. `renderer` / HUD / overlay が ViewModel を描画。
+
+## 重要仕様（アイテム）
+- 1球でも落下したフレームで全アイテム効果を解除。
+- ステージクリア時はアクティブ効果のみ次ステージへ持ち越し。
+- 多球上限は4球固定、持ち越した `multiball` は次ステージ開始球数にも反映。
 
 ## 拡張ポイント
 - 新アイテム追加:

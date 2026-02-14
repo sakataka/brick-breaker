@@ -1,21 +1,37 @@
 import { activateAssist, applyAssistToPaddle, createAssistState } from "./assistSystem";
-import { GAME_BALANCE, STAGE_CATALOG, getStageByIndex } from "./config";
-import { createItemState } from "./itemSystem";
+import { GAME_BALANCE, getStageByIndex, STAGE_CATALOG } from "./config";
+import { cloneActiveItemState, createItemState, ensureMultiballCount } from "./itemSystem";
 import { buildBricksFromStage } from "./level";
 import { createBasePaddle, createServeBall } from "./stateFactory";
 import type { GameConfig, GameState, RandomSource } from "./types";
 import { createVfxState } from "./vfxSystem";
 
-function buildStageRound(state: GameState, config: GameConfig, random: RandomSource): void {
+interface BuildStageRoundOptions {
+  carriedActiveItems?: GameState["items"]["active"];
+}
+
+function buildStageRound(
+  state: GameState,
+  config: GameConfig,
+  random: RandomSource,
+  options: BuildStageRoundOptions = {},
+): void {
   const stage = getStageByIndex(state.campaign.stageIndex);
   const stageInitialSpeed = getStageInitialBallSpeed(config, state.campaign.stageIndex);
   state.lives = config.initialLives;
   state.bricks = buildBricksFromStage(stage);
   state.items = createItemState();
+  if (options.carriedActiveItems) {
+    state.items.active = cloneActiveItemState(options.carriedActiveItems);
+  }
   state.assist = createAssistState(config);
   state.vfx = createVfxState(state.vfx.reducedMotion);
   state.paddle = createBasePaddle(config);
-  state.balls = [createServeBall(config, state.paddle, GAME_BALANCE.ballRadius, random, stageInitialSpeed)];
+  state.balls = ensureMultiballCount(
+    state.items,
+    [createServeBall(config, state.paddle, GAME_BALANCE.ballRadius, random, stageInitialSpeed)],
+    random,
+  );
 }
 
 export function resetRoundState(
@@ -39,8 +55,9 @@ export function advanceStage(state: GameState, config: GameConfig, random: Rando
     return false;
   }
 
+  const carriedActiveItems = cloneActiveItemState(state.items.active);
   state.campaign.stageIndex += 1;
-  buildStageRound(state, config, random);
+  buildStageRound(state, config, random, { carriedActiveItems });
   state.campaign.stageStartScore = state.score;
   return true;
 }

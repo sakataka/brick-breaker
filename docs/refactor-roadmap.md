@@ -1,41 +1,30 @@
-# Refactor Roadmap
+# Refactor Roadmap（残タスク）
 
-## 旧構成からの移行マッピング
-- `Game.ts`
-  - 旧: ループ/進行/物理注入/アイテム/VFX/HUD/描画を集中管理。
-  - 新: オーケストレータ専用。処理は `gamePipeline`/`gameRuntime`/`gameUi` に委譲。
-- `physics.ts`
-  - 旧: 物理本体を保持。
-  - 新: 互換ラッパー。実体は `physicsCore.ts`。
-- `itemSystem.ts`
-  - 旧: 効果計算・分岐中心。
-  - 新: `itemRegistry.ts` を利用した定義駆動。
-- `renderer.ts`
-  - 旧: 状態判定 + 描画。
-  - 新: 描画専任。判定は `renderPresenter.ts`。
+最終更新: 2026-02-14
 
-## 変更理由
-- 機能追加時に変更箇所を絞るため。
-- 物理・描画・アイテムを独立テスト可能にするため。
-- 回帰バグ時の切り分け速度を上げるため。
+## 現在の構成
+- `Game` はオーケストレータ化済み
+- `physicsCore` / `itemRegistry` / `renderPresenter` 分離済み
+- `sceneMachine` による遷移管理導入済み
+- `bun run check` + `bun test` 運用を継続
 
-## 変更履歴ポリシー
-- 変更は「型/基盤」「ロジック」「表示」「ドキュメント」で可能な限り分割コミット。
-- 新規機能は必ずテストと docs 更新を同コミットに含める。
+## 残タスク（未完了のみ）
+1. パイプライン統合テストの拡張
+   - `stageclear -> advanceStage -> playing` の連続動作検証
+   - 落球によるアイテム全解除と持ち越し仕様の同時検証
+2. パフォーマンス監視ポイントの整理
+   - 多球時の描画・物理負荷の閾値を明示
+   - デバッグ用メトリクスの表示手段を決定
+3. 回帰検証の自動化
+   - 手動チェック項目をテスト化（主要シーン遷移）
+   - CIでの定常実行対象を明確化
+4. 仕様変更時の追従ルール整備
+   - `README` / `architecture` / `agent.md` の同時更新をルール化
+   - 変更時に「完了タスクを残さない」運用を固定
 
-## 回帰チェックリスト
-1. 起動直後にキャンバス描画が見える。
-2. start/pause/resume/gameover/clear/error 遷移が成立。
-3. stage clear -> 次ステージ進行、最終面で clear。
-4. ライフ喪失時の同面再挑戦とスコア巻き戻し。
-5. アイテム取得（6種）とスタック反映。
-6. 貫通/爆発/多球/シールドの同時動作。
-7. 4K 相当表示でも入力追従と描画品質が維持。
-
-## 今後の拡張手順
-1. 仕様を `domainTypes` / `runtimeTypes` / `renderTypes` に先に反映。
-2. ルール追加は `itemRegistry` または `physicsCore` に集約。
-3. `gamePipeline` に注入値と適用順を追加。
-4. `renderPresenter` / `renderer` へ表示反映。
-5. テスト追加（unit + pipeline）。
-6. `bun run check && bun test` を通してから docs 更新。
+## 変更時の固定手順
+1. 実装変更
+2. `bun run check`
+3. `bun test`
+4. ドキュメント更新（残タスクの整理）
+5. コミット・プッシュ

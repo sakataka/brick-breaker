@@ -1,7 +1,7 @@
 import { type getOverlayElements, setSceneUI } from "../ui/overlay";
-import { type HudElements, applyHudViewModel } from "./hud";
-import { buildHudViewModel, buildOverlayViewModel, buildRenderViewState } from "./renderPresenter";
+import { applyHudViewModel, type HudElements } from "./hud";
 import type { Renderer } from "./renderer";
+import { buildHudViewModel, buildOverlayViewModel, buildRenderViewState } from "./renderPresenter";
 import type { GameState } from "./types";
 
 export function syncSceneOverlayUI(overlay: ReturnType<typeof getOverlayElements>, state: GameState): void {

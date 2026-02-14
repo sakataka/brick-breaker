@@ -31,6 +31,17 @@ export function clearActiveItemEffects(items: ItemState): void {
   items.active = createItemStacks();
 }
 
+export function cloneActiveItemState(active: ItemState["active"]): ItemState["active"] {
+  return {
+    paddlePlusStacks: active.paddlePlusStacks,
+    slowBallStacks: active.slowBallStacks,
+    multiballStacks: active.multiballStacks,
+    shieldCharges: active.shieldCharges,
+    pierceStacks: active.pierceStacks,
+    bombStacks: active.bombStacks,
+  };
+}
+
 export function getPaddleScale(items: ItemState): number {
   return createItemModifiers(items.active).paddleScale;
 }

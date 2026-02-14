@@ -4,6 +4,7 @@
 - ローカル実行の Web ブロック崩し（Bun + Vite + TypeScript + Canvas）
 - 操作はマウス中心
 - 12ステージキャンペーン + アイテムスタック（6種）
+- 1球落下で全アイテム解除、ステージクリア時はアクティブ効果のみ持ち越し
 
 ## 実行コマンド
 - 開発: `bun run dev`
@@ -38,6 +39,9 @@
 ## 参照ドキュメント
 - `docs/architecture.md`
 - `docs/refactor-roadmap.md`
+- `docs/ui-improvement-ideas.md`
+- `PLAN.md`
+- `refactor-plan.md`
 
 ## Git 運用メモ
 - リポジトリ: `https://github.com/sakataka/brick-breaker`

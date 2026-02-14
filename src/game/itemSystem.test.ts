@@ -4,6 +4,7 @@ import {
   applyItemPickup,
   canUseShield,
   clearActiveItemEffects,
+  cloneActiveItemState,
   consumeShield,
   createItemState,
   ensureMultiballCount,
@@ -160,5 +161,18 @@ describe("itemSystem", () => {
     expect(items.active.multiballStacks).toBe(0);
     expect(items.active.shieldCharges).toBe(0);
     expect(items.active.pierceStacks).toBe(0);
+  });
+
+  test("cloneActiveItemState returns detached copy", () => {
+    const items = createItemState();
+    items.active.multiballStacks = 2;
+    items.active.shieldCharges = 1;
+
+    const copied = cloneActiveItemState(items.active);
+    copied.multiballStacks = 4;
+    copied.shieldCharges = 0;
+
+    expect(items.active.multiballStacks).toBe(2);
+    expect(items.active.shieldCharges).toBe(1);
   });
 });
