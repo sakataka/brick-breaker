@@ -10,12 +10,22 @@
 
 - `src/game/Game.ts`
   - ループ制御、入力接続、シーン遷移の呼び出し、システム間の配線。
+  - DOM直接更新は行わず、UIストアへ ViewModel を反映。
 - `src/game/sceneSync.ts`
   - SceneMachine 反映の共通処理。
 - `src/game/audioSync.ts`
   - シーン変化時の `AudioDirector` 同期。
 - `src/game/a11y.ts`
   - `prefers-reduced-motion` / `prefers-contrast` の取得。
+
+### App UI Layer
+
+- `src/app/AppUi.tsx`
+  - React で HUD / Overlay / ショップUIを宣言的に描画。
+- `src/app/store.ts`
+  - Zustand ストア。開始設定、オーバーレイ状態、ショップ状態、UIハンドラを一元管理。
+- `src/app/scenes/*.ts`
+  - Phaser Scene 境界の土台（Boot / Title / Play / StageClear / GameOver / Clear）。
 
 ### Game Systems
 
@@ -62,6 +72,7 @@
 ### Audio
 
 - `src/audio/audioDirector.ts`
+- `src/audio/toneDirector.ts`
 - `src/audio/bgmCatalog.ts`
 - `src/audio/bgmSequencer.ts`
 - `src/audio/sfx.ts`
@@ -72,7 +83,7 @@
 2. `gameRuntime.runPlayingLoop` が fixed-step を進行。
 3. `gamePipeline.stepPlayingPipeline` が状態更新。
 4. `renderPresenter` が ViewModel を生成。
-5. `renderer` / HUD / overlay が描画。
+5. `renderer` が Canvas 描画、`app/store` が HUD / overlay / shop を React UI に反映。
 6. シーン/ステージ変化時に `audioSync` 経由で音同期。
 
 ## 仕様の正本化ルール
@@ -80,6 +91,7 @@
 - アイテム仕様: `itemRegistry.ts` を唯一の正本。
 - ステージ仕様: `config/stages.ts` を正本。
 - 表示仕様: `renderPresenter.ts` + `renderer/*`。
+- UI状態正本: `src/app/store.ts`。
 - 未完了タスク管理: 本ドキュメント末尾 `Open Backlog` のみ。
 
 ## 追加時の手順

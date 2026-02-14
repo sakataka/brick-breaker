@@ -78,6 +78,11 @@ body::before {
   touch-action: none;
 }
 
+#ui-root {
+  position: absolute;
+  inset: 0;
+}
+
 #hud {
   position: absolute;
   top: 12px;

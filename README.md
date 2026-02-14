@@ -1,6 +1,7 @@
 # Brick Breaker Local
 
-Bun + Vite + TypeScript + Canvas で作成したローカル向けブロック崩しです。  
+Bun + Vite + TypeScript を基盤に、`React + Zustand` で UI、`Canvas` で描画、`Tone/WebAudio` でサウンド制御を行うローカル向けブロック崩しです。  
+将来の本格移行に向けて `Phaser` の Scene 境界（`src/app/scenes/*`）も先行導入しています。  
 マウス操作を中心に、12ステージキャンペーン、6種アイテム、コンボ、評価、サウンド、開始前設定を備えています。
 
 ## セットアップ
@@ -110,6 +111,12 @@ GitHub Pages 公開手順:
 
 - `docs/architecture.md`
 - `README.md`
+
+## UI / Audio 実装メモ
+
+- UI は `src/app/AppUi.tsx` が正本で、`src/app/store.ts` の Zustand ストアを介して `Game` と同期します。
+- `Game` は HUD/Overlay を直接操作せず、ViewModel をストアへ反映する構成です。
+- 音制御は `src/audio/toneDirector.ts` を中心に、`src/audio/audioDirector.ts` は互換ラッパとして機能します。
 
 ## アイディアリスト（実装検討用）
 

@@ -1,13 +1,12 @@
+import { appStore } from "../app/store";
 import { AudioDirector } from "../audio/audioDirector";
 import { SfxManager } from "../audio/sfx";
-import { type OverlayElements, readRogueUpgradeSelection, readStartSettings } from "../ui/overlay";
 import { readAccessibility } from "./a11y";
 import { syncAudioScene } from "./audioSync";
 import { buildStartConfig, GAME_CONFIG, SHOP_CONFIG } from "./config";
 import { getDailyChallenge } from "./dailyChallenge";
 import { computeFrameDelta, handleBallLoss, handleStageClear, runPlayingLoop } from "./gameRuntime";
 import { renderGameFrame, syncSceneOverlayUI } from "./gameUi";
-import type { HudElements } from "./hud";
 import { InputController } from "./input";
 import { ITEM_REGISTRY } from "./itemRegistry";
 import { applyItemPickup, ensureMultiballCount } from "./itemSystem";
@@ -58,8 +57,6 @@ export class Game {
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
-    private readonly hud: HudElements,
-    private readonly overlay: OverlayElements,
     deps: GameDeps = {},
   ) {
     const context = deps.ctx ?? this.canvas.getContext("2d");
@@ -95,15 +92,14 @@ export class Game {
     );
     this.runSafely(() => {
       this.adjustCanvasScale();
-      this.bindOverlay();
-      this.bindShop();
+      this.bindUiHandlers();
       this.bindA11yListeners();
       this.lifecycle.bind();
       this.audioDirector.setSettings(this.audioSettings);
       this.audioDirector.notifyStageChanged(this.state.campaign.stageIndex);
       this.audioDirector.syncScene(this.state.scene, this.state.scene);
-      renderGameFrame(this.renderer, this.hud, this.state);
-      syncSceneOverlayUI(this.overlay, this.state);
+      renderGameFrame(this.renderer, this.state);
+      syncSceneOverlayUI(this.state);
       this.updateShopPanel();
     }, "初期化中に問題が発生しました。");
   }
@@ -113,7 +109,7 @@ export class Game {
     this.runSafely(() => {
       this.isRunning = true;
       this.input.attach();
-      renderGameFrame(this.renderer, this.hud, this.state);
+      renderGameFrame(this.renderer, this.state);
       this.windowRef.requestAnimationFrame(this.loop);
     }, "ゲーム開始時に問題が発生しました。");
   }
@@ -129,27 +125,26 @@ export class Game {
     this.sceneMachine.stop();
   }
 
-  private bindOverlay(): void {
-    this.overlay.button.addEventListener("click", () => {
-      if (this.state.scene === "error") return this.windowRef.location.reload();
-      if (this.state.scene === "clear") {
-        const result = this.transition({ type: "BACK_TO_START" });
-        this.syncAudioForTransition(result);
-        syncSceneOverlayUI(this.overlay, this.state);
-        this.updateShopPanel();
-        return;
-      }
-      void this.audioDirector.unlock().catch(() => {});
-      this.runSafely(() => this.startOrResume(), "開始処理に失敗しました。");
-    });
-  }
-
-  private bindShop(): void {
-    this.overlay.shopOptionA.addEventListener("click", () => {
-      this.runSafely(() => this.purchaseShopOption(0), "ショップ購入に失敗しました。");
-    });
-    this.overlay.shopOptionB.addEventListener("click", () => {
-      this.runSafely(() => this.purchaseShopOption(1), "ショップ購入に失敗しました。");
+  private bindUiHandlers(): void {
+    appStore.getState().setHandlers({
+      primaryAction: () => {
+        if (this.state.scene === "error") {
+          this.windowRef.location.reload();
+          return;
+        }
+        if (this.state.scene === "clear") {
+          const result = this.transition({ type: "BACK_TO_START" });
+          this.syncAudioForTransition(result);
+          syncSceneOverlayUI(this.state);
+          this.updateShopPanel();
+          return;
+        }
+        void this.audioDirector.unlock().catch(() => {});
+        this.runSafely(() => this.startOrResume(), "開始処理に失敗しました。");
+      },
+      shopOption: (index) => {
+        this.runSafely(() => this.purchaseShopOption(index), "ショップ購入に失敗しました。");
+      },
     });
   }
 
@@ -158,7 +153,7 @@ export class Game {
     if (this.state.scene === "clear") {
       const result = this.transition({ type: "BACK_TO_START" });
       this.syncAudioForTransition(result);
-      syncSceneOverlayUI(this.overlay, this.state);
+      syncSceneOverlayUI(this.state);
       this.updateShopPanel();
       return;
     }
@@ -167,13 +162,13 @@ export class Game {
     }
     if (this.state.scene === "stageclear") {
       if (this.state.rogue.pendingOffer) {
-        applyRogueUpgradeSelection(this.state, readRogueUpgradeSelection(this.overlay));
+        applyRogueUpgradeSelection(this.state, appStore.getState().rogueSelection);
       }
       advanceStage(this.state, this.config, this.random);
       if (prepareStageStory(this.state)) {
         const storyResult = this.transition({ type: "SHOW_STORY" });
         this.syncAudioForTransition(storyResult);
-        syncSceneOverlayUI(this.overlay, this.state);
+        syncSceneOverlayUI(this.state);
         this.updateShopPanel();
         return;
       }
@@ -193,7 +188,7 @@ export class Game {
     this.lastFrameTime = 0;
     this.accumulator = 0;
     this.syncAudioForTransition(result);
-    syncSceneOverlayUI(this.overlay, this.state);
+    syncSceneOverlayUI(this.state);
     this.updateShopPanel();
   }
 
@@ -239,8 +234,8 @@ export class Game {
       } else {
         updateVfxState(this.state.vfx, delta, this.random);
       }
-      renderGameFrame(this.renderer, this.hud, this.state);
-      syncSceneOverlayUI(this.overlay, this.state);
+      renderGameFrame(this.renderer, this.state);
+      syncSceneOverlayUI(this.state);
       this.updateShopPanel();
     } catch (error) {
       this.setRuntimeError(
@@ -319,31 +314,46 @@ export class Game {
       spawnItemPickupFeedback(this.state.vfx, picked, anchor.pos.x, anchor.pos.y);
     }
     this.audioDirector.playItemPickup(picked);
-    renderGameFrame(this.renderer, this.hud, this.state);
+    renderGameFrame(this.renderer, this.state);
     this.updateShopPanel();
   }
 
   private updateShopPanel(): void {
-    const panel = this.overlay.shopPanel;
     if (this.state.scene !== "playing") {
-      panel.classList.add("panel-hidden");
+      appStore.getState().setShop({
+        visible: false,
+        status: "ショップ",
+        optionALabel: "選択肢A",
+        optionBLabel: "選択肢B",
+        optionADisabled: true,
+        optionBDisabled: true,
+      });
       return;
     }
     const offer = this.state.shop.lastOffer;
     if (!offer) {
-      panel.classList.add("panel-hidden");
+      appStore.getState().setShop({
+        visible: false,
+        status: "ショップ",
+        optionALabel: "選択肢A",
+        optionBLabel: "選択肢B",
+        optionADisabled: true,
+        optionBDisabled: true,
+      });
       return;
     }
-    panel.classList.remove("panel-hidden");
     const canBuy = !this.state.shop.usedThisStage && this.state.score >= SHOP_CONFIG.purchaseCost;
     const title = this.state.shop.usedThisStage
       ? "ショップ: このステージは購入済み"
       : `ショップ: 1回限定 (${SHOP_CONFIG.purchaseCost}点)`;
-    this.overlay.shopStatus.textContent = title;
-    this.overlay.shopOptionA.textContent = getShopButtonLabel(offer[0]);
-    this.overlay.shopOptionB.textContent = getShopButtonLabel(offer[1]);
-    this.overlay.shopOptionA.disabled = !canBuy;
-    this.overlay.shopOptionB.disabled = !canBuy;
+    appStore.getState().setShop({
+      visible: true,
+      status: title,
+      optionALabel: getShopButtonLabel(offer[0]),
+      optionBLabel: getShopButtonLabel(offer[1]),
+      optionADisabled: !canBuy,
+      optionBDisabled: !canBuy,
+    });
   }
 
   private adjustCanvasScale(): void {
@@ -376,14 +386,14 @@ export class Game {
     const result = this.transition({ type: "RUNTIME_ERROR" });
     this.syncAudioForTransition(result);
     try {
-      renderGameFrame(this.renderer, this.hud, this.state);
-      syncSceneOverlayUI(this.overlay, this.state);
+      renderGameFrame(this.renderer, this.state);
+      syncSceneOverlayUI(this.state);
       this.updateShopPanel();
     } catch {}
   }
 
   private applyStartSettings(): void {
-    const selected = readStartSettings(this.overlay);
+    const selected = appStore.getState().startSettings;
     this.config = buildStartConfig(this.baseConfig, selected);
     if (selected.dailyMode) {
       this.random = createSeededRandomSource(getDailyChallenge().seed);
@@ -417,7 +427,7 @@ export class Game {
 
   private handleAccessibilityChange = (): void => {
     this.applyAccessibilitySnapshot();
-    renderGameFrame(this.renderer, this.hud, this.state);
+    renderGameFrame(this.renderer, this.state);
   };
 
   private applyAccessibilitySnapshot(): void {
@@ -431,8 +441,8 @@ export class Game {
     const previous = this.state.scene;
     this.state.scene = scene;
     syncAudioScene(this.audioDirector, previous, this.state.scene, this.state.campaign.stageIndex);
-    renderGameFrame(this.renderer, this.hud, this.state);
-    syncSceneOverlayUI(this.overlay, this.state);
+    renderGameFrame(this.renderer, this.state);
+    syncSceneOverlayUI(this.state);
     this.updateShopPanel();
   }
 }
