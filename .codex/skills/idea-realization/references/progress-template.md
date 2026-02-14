@@ -9,10 +9,10 @@ Use this table in `docs/idea-progress.md`.
 Status values:
 - `TODO`: not started
 - `IN_PROGRESS`: currently implementing
-- `DONE`: merged/committed and verified
+- `DONE`: committed, pushed, and verified
 - `BLOCKED`: waiting for decision or dependency
 
 Update rules:
 1. Mark target idea as `IN_PROGRESS` before coding.
-2. Mark as `DONE` with commit hash after tests pass.
+2. Mark as `DONE` with commit hash after tests pass and push succeeds.
 3. Keep history in Notes when requirements change.

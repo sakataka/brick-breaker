@@ -1,4 +1,4 @@
 interface:
   display_name: "Idea Realization"
   short_description: "アイディアを1件ずつ実装・検証・記録する"
-  default_prompt: "Use $idea-realization to implement one item from docs/idea-list.md with tests, docs/progress updates, and a single commit."
+  default_prompt: "Use $idea-realization to implement one item from docs/idea-list.md with tests, docs/progress updates, then commit and push automatically."

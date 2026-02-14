@@ -1,6 +1,6 @@
 ---
 name: idea-realization
-description: Implement one gameplay idea at a time from docs/idea-list.md in this Brick Breaker repository. Use when the user asks to realize an idea with end-to-end flow: select target idea, design implementation plan, implement code, add or update tests, run quality gates, update docs/progress, and commit.
+description: Implement one gameplay idea at a time from docs/idea-list.md in this Brick Breaker repository. Use when the user asks to realize an idea with end-to-end flow: select target idea, design implementation plan, implement code, add or update tests, run quality gates, update docs/progress, then automatically commit and push.
 ---
 
 # Idea Realization
@@ -16,6 +16,7 @@ Execute one idea from `docs/idea-list.md` through a fixed workflow with progress
 5. Run verification commands.
 6. Update docs and progress.
 7. Commit changes.
+8. Push to remote.
 
 ## Target selection rules
 
@@ -68,6 +69,8 @@ If e2e cannot run due environment constraints, report the reason clearly and con
 2. Use commit message format:
    - `feat(idea): implement BB-IDEA-XX <short-slug>`
 3. Include tests and docs updates in the same commit.
+4. After successful commit, push to `origin/main` by default.
+5. Do not wait for extra confirmation unless the user explicitly says not to push.
 
 ## Response contract
 
@@ -77,4 +80,5 @@ Always report:
 2. Files changed.
 3. Test command results.
 4. Updated progress status.
-5. Commit hash (if committed).
+5. Commit hash.
+6. Push result (`origin/main`).
