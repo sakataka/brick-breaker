@@ -69,10 +69,29 @@ bun test
 - `src/game/renderer.ts`: Canvas描画専任
 - `src/game/configSchema.ts`: zodによる設定検証
 
+## 現在の開発状況
+
+- 責務分離リファクタを適用済み（`gamePipeline`/`physicsCore`/`itemRegistry`/`renderPresenter`）
+- ライブラリは最新系へ更新済み（Vite 7 / Biome 2 / XState 5）
+- 品質ゲートは `bun run check` と `bun test` を運用
+
 ## 設計ドキュメント
 
 - `docs/architecture.md`
 - `docs/refactor-roadmap.md`
+- `docs/ui-improvement-ideas.md`
+- `PLAN.md`
+- `refactor-plan.md`
+
+## 残タスク（概要）
+
+- コンボ倍率システム
+- ステージ評価（星1〜3）
+- エリートブロック導入
+- 色覚多様性テーマ / UIアクセシビリティ拡張
+- 後半ステージ向けテーマ差分
+
+詳細は `PLAN.md`, `refactor-plan.md`, `docs/ui-improvement-ideas.md` を参照。
 
 ## 補足
 
