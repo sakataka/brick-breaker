@@ -334,6 +334,15 @@ function damageBrick(brick: Brick, source: BrickDamageSource, destroyed: Brick[]
     return;
   }
 
+  if (source === "direct" && kind === "regen" && nextHp === 1) {
+    const regenCharges = Math.max(0, brick.regenCharges ?? 1);
+    if (regenCharges > 0) {
+      brick.regenCharges = regenCharges - 1;
+      brick.hp = 2;
+      return;
+    }
+  }
+
   brick.hp = nextHp;
   if (brick.hp > 0) {
     return;

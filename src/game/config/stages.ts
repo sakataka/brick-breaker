@@ -44,22 +44,26 @@ const ELITE_STAGE_MAP: Partial<Record<number, NonNullable<StageDefinition["elite
     { row: 0, col: 4, kind: "durable" },
     { row: 1, col: 5, kind: "durable" },
     { row: 2, col: 2, kind: "armored" },
+    { row: 3, col: 4, kind: "regen" },
   ],
   10: [
     { row: 0, col: 3, kind: "durable" },
     { row: 1, col: 6, kind: "armored" },
     { row: 2, col: 4, kind: "durable" },
+    { row: 4, col: 4, kind: "regen" },
   ],
   11: [
     { row: 0, col: 2, kind: "armored" },
     { row: 1, col: 7, kind: "durable" },
     { row: 3, col: 5, kind: "armored" },
+    { row: 4, col: 4, kind: "regen" },
   ],
   12: [
     { row: 0, col: 4, kind: "armored" },
     { row: 1, col: 1, kind: "durable" },
     { row: 2, col: 8, kind: "durable" },
     { row: 4, col: 4, kind: "armored" },
+    { row: 3, col: 2, kind: "regen" },
   ],
 };
 

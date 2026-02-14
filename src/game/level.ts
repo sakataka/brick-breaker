@@ -4,7 +4,7 @@ import {
   getBrickPaletteColor,
   getBrickPaletteForStage,
 } from "./config";
-import type { Brick, StageDefinition } from "./types";
+import type { Brick, BrickKind, StageDefinition } from "./types";
 
 export function buildBricks(layout: BrickLayout = DEFAULT_BRICK_LAYOUT): Brick[] {
   const fullLayout = Array.from({ length: layout.rows }, () => Array.from({ length: layout.cols }, () => 1));
@@ -38,6 +38,7 @@ export function buildBricksFromStage(
         continue;
       }
       const eliteKind = eliteMap.get(`${row}:${col}`);
+      const kind = eliteKind ?? "normal";
       bricks.push({
         id: id++,
         x: marginX + col * (brickWidth + gapX),
@@ -45,8 +46,9 @@ export function buildBricksFromStage(
         width: brickWidth,
         height: brickHeight,
         alive: true,
-        kind: eliteKind ?? "normal",
-        hp: eliteKind ? 2 : 1,
+        kind,
+        hp: getInitialHpByKind(kind),
+        regenCharges: kind === "regen" ? 1 : 0,
         row,
         col,
         color: getBrickPaletteColor(row, palette),
@@ -55,4 +57,11 @@ export function buildBricksFromStage(
   }
 
   return bricks;
+}
+
+function getInitialHpByKind(kind: BrickKind): number {
+  if (kind === "normal") {
+    return 1;
+  }
+  return 2;
 }

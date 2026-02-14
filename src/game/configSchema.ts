@@ -14,7 +14,7 @@ const stageDefinitionSchema = z.object({
       z.object({
         row: z.number().int().min(0),
         col: z.number().int().min(0),
-        kind: z.union([z.literal("durable"), z.literal("armored")]),
+        kind: z.union([z.literal("durable"), z.literal("armored"), z.literal("regen")]),
       }),
     )
     .optional(),

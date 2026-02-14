@@ -44,6 +44,16 @@ function drawEliteMarks(ctx: CanvasRenderingContext2D, brick: Brick, highContras
     ctx.moveTo(brick.x + brick.width - 4, brick.y + 4);
     ctx.lineTo(brick.x + 4, brick.y + brick.height - 4);
     ctx.stroke();
+  } else if (brick.kind === "regen") {
+    ctx.strokeStyle = "rgba(170, 255, 170, 0.95)";
+    ctx.lineWidth = highContrast ? 2.4 : 1.8;
+    ctx.strokeRect(brick.x + 1.5, brick.y + 1.5, brick.width - 3, brick.height - 3);
+    ctx.beginPath();
+    ctx.moveTo(brick.x + brick.width / 2, brick.y + 4);
+    ctx.lineTo(brick.x + brick.width / 2, brick.y + brick.height - 4);
+    ctx.moveTo(brick.x + 4, brick.y + brick.height / 2);
+    ctx.lineTo(brick.x + brick.width - 4, brick.y + brick.height / 2);
+    ctx.stroke();
   }
 
   const hp = brick.hp ?? 1;
@@ -62,6 +72,7 @@ function drawHighContrastGlyph(ctx: CanvasRenderingContext2D, brick: Brick): voi
   ctx.font = "700 9px Avenir Next";
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
-  const marker = brick.kind === "durable" ? "D" : brick.kind === "armored" ? "A" : "N";
+  const marker =
+    brick.kind === "durable" ? "D" : brick.kind === "armored" ? "A" : brick.kind === "regen" ? "R" : "N";
   ctx.fillText(marker, brick.x + 3, brick.y + 2);
 }

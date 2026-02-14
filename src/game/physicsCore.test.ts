@@ -148,4 +148,53 @@ describe("physicsCore", () => {
     expect(bricks[1]?.alive).toBe(true);
     expect(bricks[1]?.hp).toBe(1);
   });
+
+  test("regen brick heals once before breaking", () => {
+    const ball: Ball = {
+      pos: { x: 72, y: 72 },
+      vel: { x: 0, y: 120 },
+      radius: 8,
+      speed: 320,
+    };
+    const bricks: Brick[] = [
+      { id: 1, x: 60, y: 64, width: 20, height: 10, alive: true, kind: "regen", hp: 2, regenCharges: 1 },
+    ];
+
+    const first = stepPhysicsCore({
+      ball,
+      paddle: basePaddle(),
+      bricks,
+      config: baseConfig,
+      deltaSec: baseConfig.fixedDeltaSec,
+    });
+    expect(first.collision.brick).toBe(0);
+    expect(bricks[0]?.alive).toBe(true);
+    expect(bricks[0]?.hp).toBe(2);
+    expect(bricks[0]?.regenCharges).toBe(0);
+
+    ball.pos = { x: 72, y: 72 };
+    ball.vel = { x: 0, y: 120 };
+    const second = stepPhysicsCore({
+      ball,
+      paddle: basePaddle(),
+      bricks,
+      config: baseConfig,
+      deltaSec: baseConfig.fixedDeltaSec,
+    });
+    expect(second.collision.brick).toBe(0);
+    expect(bricks[0]?.alive).toBe(true);
+    expect(bricks[0]?.hp).toBe(1);
+
+    ball.pos = { x: 72, y: 72 };
+    ball.vel = { x: 0, y: 120 };
+    const third = stepPhysicsCore({
+      ball,
+      paddle: basePaddle(),
+      bricks,
+      config: baseConfig,
+      deltaSec: baseConfig.fixedDeltaSec,
+    });
+    expect(third.collision.brick).toBe(1);
+    expect(bricks[0]?.alive).toBe(false);
+  });
 });
