@@ -104,6 +104,20 @@ body::before {
   justify-self: center;
 }
 
+#score {
+  transform-origin: center;
+}
+
+#score.pop {
+  color: var(--accent-a);
+  transform: scale(1.16);
+  transition: transform 90ms ease-out, color 90ms ease-out;
+}
+
+#score.pop.pop-large {
+  transform: scale(1.28);
+}
+
 .overlay {
   position: absolute;
   inset: 0;

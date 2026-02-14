@@ -122,7 +122,8 @@ describe("itemSystem", () => {
     const paddle: Paddle = { x: 90, y: 95, width: 80, height: 20 };
     const picked = updateFallingItems(items, paddle, 540, 1 / 60);
 
-    expect(picked).toEqual(["paddle_plus"]);
+    expect(picked).toHaveLength(1);
+    expect(picked[0]?.type).toBe("paddle_plus");
     expect(items.falling).toHaveLength(0);
   });
 });

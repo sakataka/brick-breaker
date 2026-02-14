@@ -1,14 +1,41 @@
-import type { CollisionEvent, Particle, RandomSource, Scene, Vector2, VfxState } from "./types";
+import type {
+  CollisionEvent,
+  FloatingText,
+  ImpactRing,
+  ItemType,
+  Particle,
+  RandomSource,
+  Scene,
+  Vector2,
+  VfxState,
+} from "./types";
 
 const MAX_PARTICLES = 220;
-const MAX_TRAIL_POINTS = 8;
+const MAX_TRAIL_POINTS = 12;
+const MAX_IMPACT_RINGS = 10;
+const MAX_FLOATING_TEXTS = 8;
+
+interface ItemVisual {
+  label: string;
+  color: string;
+}
+
+const ITEM_VISUALS: Record<ItemType, ItemVisual> = {
+  paddle_plus: { label: "PADDLE+", color: "rgba(104, 216, 255, 0.95)" },
+  slow_ball: { label: "SLOW", color: "rgba(255, 191, 112, 0.96)" },
+  multiball: { label: "MULTI", color: "rgba(197, 143, 255, 0.95)" },
+  shield: { label: "SHIELD", color: "rgba(112, 255, 210, 0.95)" },
+};
 
 export function createVfxState(reducedMotion: boolean): VfxState {
   return {
     particles: [],
+    impactRings: [],
+    floatingTexts: [],
     flashMs: 0,
     shakeMs: 0,
     shakePx: 0,
+    hitFreezeMs: 0,
     shakeOffset: { x: 0, y: 0 },
     trail: [],
     densityScale: 1,
@@ -41,6 +68,8 @@ export function applyCollisionEvents(vfx: VfxState, events: CollisionEvent[], ra
   for (const event of events) {
     if (event.kind === "brick") {
       spawnParticles(vfx, event, 14, 260, event.color ?? "rgba(255, 196, 118, 0.95)", random);
+      spawnImpactRing(vfx, event.x, event.y, "rgba(255, 245, 245, 0.9)");
+      triggerHitFreeze(vfx, 18);
       bumpShake(vfx, 1.4, 45);
       continue;
     }
@@ -58,8 +87,41 @@ export function applyCollisionEvents(vfx: VfxState, events: CollisionEvent[], ra
   }
 }
 
+export function triggerHitFreeze(vfx: VfxState, durationMs: number): void {
+  if (vfx.reducedMotion || durationMs <= 0) {
+    return;
+  }
+  vfx.hitFreezeMs = Math.max(vfx.hitFreezeMs, durationMs);
+}
+
+export function spawnItemPickupFeedback(vfx: VfxState, type: ItemType, x: number, y: number): void {
+  const visual = ITEM_VISUALS[type];
+  spawnImpactRing(vfx, x, y, visual.color, 8, 46, 240);
+
+  const lifeMs = vfx.reducedMotion ? 420 : 760;
+  const text: FloatingText = {
+    text: visual.label,
+    pos: { x, y: y - 8 },
+    lifeMs,
+    maxLifeMs: lifeMs,
+    color: visual.color,
+  };
+  if (vfx.floatingTexts.length >= MAX_FLOATING_TEXTS) {
+    vfx.floatingTexts.shift();
+  }
+  vfx.floatingTexts.push(text);
+}
+
 export function updateVfxState(vfx: VfxState, deltaSec: number, random: RandomSource): void {
   const deltaMs = deltaSec * 1000;
+
+  if (vfx.hitFreezeMs > 0) {
+    vfx.hitFreezeMs = Math.max(0, vfx.hitFreezeMs - deltaMs);
+    if (vfx.hitFreezeMs > 0) {
+      return;
+    }
+  }
+
   vfx.flashMs = Math.max(0, vfx.flashMs - deltaMs);
   vfx.shakeMs = Math.max(0, vfx.shakeMs - deltaMs);
   if (vfx.shakeMs <= 0 || vfx.shakePx <= 0 || vfx.reducedMotion) {
@@ -83,6 +145,20 @@ export function updateVfxState(vfx: VfxState, deltaSec: number, random: RandomSo
     particle.pos.y += particle.vel.y * deltaSec;
     particle.vel.x *= 0.94;
     particle.vel.y *= 0.94;
+    return true;
+  });
+
+  vfx.impactRings = vfx.impactRings.filter((ring) => {
+    ring.lifeMs -= deltaMs;
+    return ring.lifeMs > 0;
+  });
+
+  vfx.floatingTexts = vfx.floatingTexts.filter((label) => {
+    label.lifeMs -= deltaMs;
+    if (label.lifeMs <= 0) {
+      return false;
+    }
+    label.pos.y -= deltaSec * 28;
     return true;
   });
 }
@@ -144,4 +220,28 @@ function spawnParticles(
     };
     vfx.particles.push(particle);
   }
+}
+
+function spawnImpactRing(
+  vfx: VfxState,
+  x: number,
+  y: number,
+  color: string,
+  radiusStart = 0,
+  radiusEnd = 40,
+  lifeMs = 220,
+): void {
+  if (vfx.impactRings.length >= MAX_IMPACT_RINGS) {
+    vfx.impactRings.shift();
+  }
+
+  const ring: ImpactRing = {
+    pos: { x, y },
+    radiusStart,
+    radiusEnd,
+    lifeMs,
+    maxLifeMs: lifeMs,
+    color,
+  };
+  vfx.impactRings.push(ring);
 }

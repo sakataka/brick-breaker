@@ -32,7 +32,14 @@ import {
 import { type SceneEvent, SceneMachine } from "./sceneMachine";
 import { createInitialGameState } from "./stateFactory";
 import type { Ball, CollisionEvent, GameConfig, GameState, RandomSource, Scene } from "./types";
-import { applyCollisionEvents, nextDensityScale, recordTrailPoint, updateVfxState } from "./vfxSystem";
+import {
+  applyCollisionEvents,
+  nextDensityScale,
+  recordTrailPoint,
+  spawnItemPickupFeedback,
+  triggerHitFreeze,
+  updateVfxState,
+} from "./vfxSystem";
 import { applyCanvasViewport } from "./viewport";
 
 export interface GameDeps {
@@ -206,6 +213,10 @@ export class Game {
         this.accumulator += delta;
         while (this.accumulator >= this.config.fixedDeltaSec) {
           this.accumulator -= this.config.fixedDeltaSec;
+          if (this.state.vfx.hitFreezeMs > 0) {
+            updateVfxState(this.state.vfx, this.config.fixedDeltaSec, this.random);
+            continue;
+          }
           this.stepPlayingTick();
           updateVfxState(this.state.vfx, this.config.fixedDeltaSec, this.random);
           if (this.state.scene !== "playing") {
@@ -294,8 +305,9 @@ export class Game {
       this.config.height,
       this.config.fixedDeltaSec,
     );
-    for (const type of picks) {
-      applyItemPickup(this.state.items, type, this.state.elapsedSec, survivors);
+    for (const pick of picks) {
+      applyItemPickup(this.state.items, pick.type, this.state.elapsedSec, survivors);
+      spawnItemPickupFeedback(this.state.vfx, pick.type, pick.pos.x, pick.pos.y);
     }
     if (picks.length > 0) {
       void this.sfx.play("paddle");
@@ -321,6 +333,7 @@ export class Game {
   }
 
   private handleStageClear(): void {
+    triggerHitFreeze(this.state.vfx, 72);
     this.state.score += this.state.lives * GAME_BALANCE.clearBonusPerLife;
     if (this.state.campaign.stageIndex >= this.state.campaign.totalStages - 1) {
       void this.sfx.play("clear");

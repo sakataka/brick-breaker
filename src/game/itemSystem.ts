@@ -1,5 +1,14 @@
 import { DROP_CONFIG, ITEM_BALANCE, ITEM_CONFIG } from "./config";
-import type { Ball, CollisionEvent, FallingItem, ItemState, ItemType, Paddle, RandomSource } from "./types";
+import type {
+  Ball,
+  CollisionEvent,
+  FallingItem,
+  ItemState,
+  ItemType,
+  Paddle,
+  PickedItem,
+  RandomSource,
+} from "./types";
 
 const ITEM_SIZE = 16;
 
@@ -164,19 +173,22 @@ export function updateFallingItems(
   paddle: Paddle,
   worldHeight: number,
   deltaSec: number,
-): ItemType[] {
+): PickedItem[] {
   if (items.falling.length === 0) {
     return [];
   }
 
-  const picked: ItemType[] = [];
+  const picked: PickedItem[] = [];
   const next: FallingItem[] = [];
 
   for (const drop of items.falling) {
     drop.pos.y += drop.speed * deltaSec;
 
     if (intersectsPaddle(drop, paddle)) {
-      picked.push(drop.type);
+      picked.push({
+        type: drop.type,
+        pos: { x: drop.pos.x, y: drop.pos.y },
+      });
       continue;
     }
 

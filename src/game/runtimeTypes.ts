@@ -15,11 +15,31 @@ export interface Particle {
   color: string;
 }
 
+export interface ImpactRing {
+  pos: Vector2;
+  radiusStart: number;
+  radiusEnd: number;
+  lifeMs: number;
+  maxLifeMs: number;
+  color: string;
+}
+
+export interface FloatingText {
+  text: string;
+  pos: Vector2;
+  lifeMs: number;
+  maxLifeMs: number;
+  color: string;
+}
+
 export interface VfxState {
   particles: Particle[];
+  impactRings: ImpactRing[];
+  floatingTexts: FloatingText[];
   flashMs: number;
   shakeMs: number;
   shakePx: number;
+  hitFreezeMs: number;
   shakeOffset: Vector2;
   trail: Vector2[];
   densityScale: number;
@@ -47,6 +67,11 @@ export interface FallingItem {
   pos: Vector2;
   size: number;
   speed: number;
+}
+
+export interface PickedItem {
+  type: ItemType;
+  pos: Vector2;
 }
 
 export interface ActiveTimedEffect {

@@ -6,6 +6,9 @@ import {
   computeParticleSpawnCount,
   createVfxState,
   nextDensityScale,
+  spawnItemPickupFeedback,
+  triggerHitFreeze,
+  updateVfxState,
 } from "./vfxSystem";
 
 const deterministicRandom: RandomSource = {
@@ -39,5 +42,49 @@ describe("applyCollisionEvents", () => {
     expect(vfx.flashMs).toBeGreaterThan(0);
     expect(vfx.shakeMs).toBeGreaterThan(0);
     expect(vfx.shakePx).toBeGreaterThan(0);
+  });
+
+  test("spawns impact ring and hit freeze on brick", () => {
+    const vfx = createVfxState(false);
+    applyCollisionEvents(vfx, [{ kind: "brick", x: 25, y: 40 }], deterministicRandom);
+
+    expect(vfx.impactRings.length).toBeGreaterThan(0);
+    expect(vfx.hitFreezeMs).toBeGreaterThan(0);
+  });
+});
+
+describe("new feedback effects", () => {
+  test("triggerHitFreeze is disabled with reduced motion", () => {
+    const normal = createVfxState(false);
+    const reduced = createVfxState(true);
+    triggerHitFreeze(normal, 20);
+    triggerHitFreeze(reduced, 20);
+
+    expect(normal.hitFreezeMs).toBe(20);
+    expect(reduced.hitFreezeMs).toBe(0);
+  });
+
+  test("spawnItemPickupFeedback adds floating text and impact ring", () => {
+    const vfx = createVfxState(false);
+    spawnItemPickupFeedback(vfx, "shield", 90, 160);
+
+    expect(vfx.floatingTexts).toHaveLength(1);
+    expect(vfx.floatingTexts[0]?.text).toContain("SHIELD");
+    expect(vfx.impactRings).toHaveLength(1);
+  });
+
+  test("updateVfxState decays freeze and then updates effects", () => {
+    const vfx = createVfxState(false);
+    triggerHitFreeze(vfx, 20);
+    spawnItemPickupFeedback(vfx, "paddle_plus", 120, 200);
+    const beforeY = vfx.floatingTexts[0]?.pos.y ?? 0;
+
+    updateVfxState(vfx, 1 / 120, deterministicRandom);
+    expect(vfx.hitFreezeMs).toBeGreaterThan(0);
+    expect(vfx.floatingTexts[0]?.pos.y).toBe(beforeY);
+
+    updateVfxState(vfx, 0.1, deterministicRandom);
+    expect(vfx.hitFreezeMs).toBe(0);
+    expect((vfx.floatingTexts[0]?.pos.y ?? 999) < beforeY).toBe(true);
   });
 });
