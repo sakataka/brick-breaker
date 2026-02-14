@@ -86,6 +86,13 @@ export function createInitialGameState(
     balls: [ball],
     paddle,
     bricks: buildBricksFromStage(stage),
+    combat: {
+      laserCooldownSec: 0,
+      nextLaserId: 1,
+      laserProjectiles: [],
+      heldBalls: [],
+      shieldBurstQueued: false,
+    },
     enemies: [],
     magic: {
       cooldownSec: 0,

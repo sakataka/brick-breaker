@@ -22,6 +22,8 @@ const ITEM_COLOR_BY_TYPE: Record<ItemType, string> = {
   shield: "#85f2da",
   pierce: "#ffd36b",
   bomb: "#ff7f7f",
+  laser: "#ff8a8a",
+  sticky: "#8fff9a",
 };
 
 const BACKDROP_BY_BAND: Record<RenderViewState["themeBandId"], BackdropTheme> = {
@@ -152,6 +154,9 @@ export class PhaserRenderPort {
       this.world.fillRoundedRect(paddleX - 4, paddleY - 3, view.paddle.width + 8, view.paddle.height + 6, 8);
     }
 
+    if (view.fluxFieldActive) {
+      drawFluxField(this.world, view.paddle.x + offsetX, view.paddle.y + offsetY, view.paddle.width);
+    }
     drawShield(this.world, view.shieldCharges, this.config.width, this.config.height, offsetX, offsetY);
 
     const trailColor = parseColor(theme.trail, { value: 0x99dcff, alpha: 0.26 });
@@ -170,6 +175,7 @@ export class PhaserRenderPort {
       this.world.lineStyle(lineWidth, ballStroke.value, ballStroke.alpha);
       this.world.strokeCircle(ballX, ballY, ball.radius);
     }
+    drawLaserProjectiles(this.world, view, offsetX, offsetY);
 
     drawEnemies(this.world, view, offsetX, offsetY);
     drawFallingItems(this.world, view, offsetX, offsetY);
@@ -260,6 +266,46 @@ function drawShield(
   const charge = parseColor("rgba(116,255,229,0.45)", { value: 0x74ffe5, alpha: 0.45 });
   graphics.fillStyle(charge.value, charge.alpha);
   graphics.fillRect(offsetX, height - 10 + offsetY, width, 10);
+}
+
+function drawFluxField(
+  graphics: Phaser.GameObjects.Graphics,
+  paddleX: number,
+  paddleY: number,
+  paddleWidth: number,
+): void {
+  const centerX = paddleX + paddleWidth / 2;
+  const centerY = paddleY;
+  const fill = parseColor("rgba(120, 170, 255, 0.08)", { value: 0x78aaff, alpha: 0.08 });
+  const stroke = parseColor("rgba(160, 200, 255, 0.22)", { value: 0xa0c8ff, alpha: 0.22 });
+  graphics.fillStyle(fill.value, fill.alpha);
+  graphics.fillCircle(centerX, centerY, 180);
+  graphics.lineStyle(1, stroke.value, stroke.alpha);
+  graphics.strokeCircle(centerX, centerY, 180);
+}
+
+function drawLaserProjectiles(
+  graphics: Phaser.GameObjects.Graphics,
+  view: RenderViewState,
+  offsetX: number,
+  offsetY: number,
+): void {
+  if (view.laserProjectiles.length <= 0) {
+    return;
+  }
+  const core = parseColor("rgba(255, 110, 110, 0.92)", { value: 0xff6e6e, alpha: 0.92 });
+  const glow = parseColor("rgba(255, 222, 222, 0.66)", { value: 0xffdede, alpha: 0.66 });
+  graphics.lineStyle(2.1, core.value, core.alpha);
+  for (const shot of view.laserProjectiles) {
+    const x = snapPixel(shot.x + offsetX);
+    const y = snapPixel(shot.y + offsetY);
+    graphics.beginPath();
+    graphics.moveTo(x, y);
+    graphics.lineTo(x, y - 12);
+    graphics.strokePath();
+    graphics.fillStyle(glow.value, glow.alpha);
+    graphics.fillCircle(x, y - 12, 1.5);
+  }
 }
 
 function drawEnemies(

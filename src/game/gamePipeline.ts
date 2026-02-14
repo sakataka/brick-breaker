@@ -2,16 +2,24 @@ import type { SfxManager } from "../audio/sfx";
 import { applyAssistToPaddle, getCurrentMaxBallSpeed } from "./assistSystem";
 import { playCollisionSounds } from "./collisionEffects";
 import { applyComboHits, normalizeCombo, resetCombo } from "./comboSystem";
-import { getGameplayBalance, getStageModifier, HAZARD_CONFIG, RISK_MODE_CONFIG } from "./config";
+import {
+  getGameplayBalance,
+  getStageModifier,
+  HAZARD_CONFIG,
+  ITEM_BALANCE,
+  RISK_MODE_CONFIG,
+} from "./config";
 import { pickWeightedItemType } from "./itemRegistry";
 import {
   applyItemPickup,
   clearActiveItemEffects,
   ensureMultiballCount,
   getBombRadiusTiles,
+  getLaserLevel,
   getPaddleScale,
   getPierceDepth,
   getSlowBallMaxSpeedScale,
+  isStickyEnabled,
   spawnDropsFromBrickEvents,
   spawnGuaranteedDrop,
   syncMultiballStacksWithBallCount,
@@ -63,6 +71,10 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   const bombRadiusTiles = getBombRadiusTiles(state.items);
   const scoreScale =
     (state.options.riskMode ? RISK_MODE_CONFIG.scoreScale : 1) * (1 + state.rogue.scoreScaleBonus);
+  const laserLevel = getLaserLevel(state.items);
+  const stickyEnabled = isStickyEnabled(state.items);
+
+  const projectileEvents = updateLaserProjectiles(state, config.fixedDeltaSec);
 
   const basePaddleWidth =
     balance.paddleWidth * getPaddleScale(state.items) * (1 + state.rogue.paddleScaleBonus);
@@ -74,12 +86,23 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
     pierceDepth,
     bombRadiusTiles,
     explodeOnHit: bombRadiusTiles > 0,
+    stickyEnabled,
+    stickyHoldSec: ITEM_BALANCE.stickyHoldSec,
+    stickyRecaptureCooldownSec: ITEM_BALANCE.stickyRecaptureCooldownSec,
+    fluxField: stageModifier?.fluxField,
     warpZones: stageModifier?.warpZones,
     onMiss: (target) => deps.tryShieldRescue(target, effectiveMaxSpeed),
   });
+  if (projectileEvents.length > 0) {
+    physics.events.push(...projectileEvents);
+  }
   const enemyHits = resolveEnemyHits(state, physics.survivors, scoreScale);
   if (enemyHits.events.length > 0) {
     physics.events.push(...enemyHits.events);
+  }
+  const burstEvents = processShieldBurst(state, physics.survivors, effectiveMaxSpeed, deps.sfx, random);
+  if (burstEvents.length > 0) {
+    physics.events.push(...burstEvents);
   }
   state.score += enemyHits.scoreGain;
 
@@ -140,6 +163,8 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
 
   if (lostAllBalls) {
     clearActiveItemEffects(state.items);
+    state.combat.laserProjectiles = [];
+    state.combat.laserCooldownSec = 0;
   }
   castMagicStrike(state, scoreScale, random, deps.playMagicCastSfx);
   if (hadBallDrop) {
@@ -153,6 +178,10 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
       ? ensureMultiballCount(state.items, physics.survivors, random, config.multiballMaxBalls)
       : physics.survivors;
   syncMultiballStacksWithBallCount(state.items, state.balls);
+  syncHeldBallsSnapshot(state);
+  if (!lostAllBalls) {
+    updateAutoLaserSpawner(state, config.fixedDeltaSec, laserLevel);
+  }
 
   const clearedAfterMagic = hadAliveBricksBeforeTick && !state.bricks.some((brick) => brick.alive);
   if (physics.hasClear || clearedAfterMagic) {
@@ -317,4 +346,194 @@ function selectMagicTarget(state: GameState): GameState["bricks"][number] | null
     }
   }
   return best;
+}
+
+function updateLaserProjectiles(
+  state: GameState,
+  deltaSec: number,
+): Array<{
+  kind: "brick";
+  x: number;
+  y: number;
+  color?: string;
+  brickKind?: GameState["bricks"][number]["kind"];
+}> {
+  if (state.combat.laserProjectiles.length <= 0) {
+    return [];
+  }
+  const events: Array<{
+    kind: "brick";
+    x: number;
+    y: number;
+    color?: string;
+    brickKind?: GameState["bricks"][number]["kind"];
+  }> = [];
+  const nextProjectiles = [];
+  for (const shot of state.combat.laserProjectiles) {
+    const nextY = shot.y - shot.speed * deltaSec;
+    if (nextY < 0) {
+      continue;
+    }
+    const hitBrick = state.bricks.find(
+      (brick) =>
+        brick.alive &&
+        shot.x >= brick.x &&
+        shot.x <= brick.x + brick.width &&
+        nextY >= brick.y &&
+        nextY <= brick.y + brick.height,
+    );
+    if (hitBrick) {
+      const destroyed = applyDirectDamage(hitBrick);
+      if (destroyed) {
+        events.push({
+          kind: "brick",
+          x: hitBrick.x + hitBrick.width / 2,
+          y: hitBrick.y + hitBrick.height / 2,
+          color: hitBrick.color,
+          brickKind: hitBrick.kind ?? "normal",
+        });
+      }
+      continue;
+    }
+    nextProjectiles.push({
+      ...shot,
+      y: nextY,
+    });
+  }
+  state.combat.laserProjectiles = nextProjectiles;
+  return events;
+}
+
+function updateAutoLaserSpawner(state: GameState, deltaSec: number, laserLevel: number): void {
+  if (laserLevel <= 0) {
+    state.combat.laserCooldownSec = 0;
+    state.combat.laserProjectiles = [];
+    return;
+  }
+  const interval =
+    laserLevel >= 2
+      ? ITEM_BALANCE.laserFireIntervalSecByLevel[1]
+      : ITEM_BALANCE.laserFireIntervalSecByLevel[0];
+  state.combat.laserCooldownSec = Math.max(0, state.combat.laserCooldownSec - deltaSec);
+  while (state.combat.laserCooldownSec <= 0) {
+    if (state.combat.laserProjectiles.length < 18) {
+      state.combat.laserProjectiles.push({
+        id: state.combat.nextLaserId,
+        x: state.paddle.x + state.paddle.width / 2,
+        y: state.paddle.y - 8,
+        speed: ITEM_BALANCE.laserProjectileSpeed,
+      });
+      state.combat.nextLaserId += 1;
+    }
+    state.combat.laserCooldownSec += interval;
+  }
+}
+
+function processShieldBurst(
+  state: GameState,
+  survivors: Ball[],
+  maxBallSpeed: number,
+  sfx: SfxManager,
+  random: RandomSource,
+): Array<{
+  kind: "brick";
+  x: number;
+  y: number;
+  color?: string;
+  brickKind?: GameState["bricks"][number]["kind"];
+}> {
+  if (!state.combat.shieldBurstQueued) {
+    return [];
+  }
+  state.combat.shieldBurstQueued = false;
+  void sfx.play("shield_burst");
+  state.vfx.impactRings.push({
+    pos: { x: state.paddle.x + state.paddle.width / 2, y: state.paddle.y - 4 },
+    radiusStart: 10,
+    radiusEnd: 86,
+    lifeMs: 220,
+    maxLifeMs: 220,
+    color: "rgba(120,255,230,0.88)",
+  });
+  state.vfx.flashMs = Math.max(state.vfx.flashMs, 110);
+  state.vfx.shakeMs = Math.max(state.vfx.shakeMs, 70);
+  state.vfx.shakePx = Math.max(state.vfx.shakePx, 3);
+
+  for (const ball of survivors) {
+    const upward = Math.max(260, Math.abs(ball.vel.y));
+    ball.vel.y = -Math.min(maxBallSpeed, upward);
+    if (Math.abs(ball.vel.x) < 24) {
+      ball.vel.x = (random.next() * 2 - 1) * 80;
+    }
+    const nextSpeed = Math.hypot(ball.vel.x, ball.vel.y);
+    ball.speed = Math.min(maxBallSpeed, Math.max(ball.speed, nextSpeed));
+  }
+
+  const candidates = state.bricks
+    .filter((brick) => brick.alive)
+    .sort((a, b) => {
+      if (b.y !== a.y) {
+        return b.y - a.y;
+      }
+      const center = state.paddle.x + state.paddle.width / 2;
+      const da = Math.abs(a.x + a.width / 2 - center);
+      const db = Math.abs(b.x + b.width / 2 - center);
+      return da - db;
+    })
+    .slice(0, 2);
+
+  const events: Array<{
+    kind: "brick";
+    x: number;
+    y: number;
+    color?: string;
+    brickKind?: GameState["bricks"][number]["kind"];
+  }> = [];
+  for (const target of candidates) {
+    if (!target.alive) {
+      continue;
+    }
+    const destroyed = applyDirectDamage(target);
+    if (!destroyed) {
+      continue;
+    }
+    events.push({
+      kind: "brick",
+      x: target.x + target.width / 2,
+      y: target.y + target.height / 2,
+      color: target.color ?? "rgba(120,255,230,0.9)",
+      brickKind: target.kind ?? "normal",
+    });
+  }
+  return events;
+}
+
+function applyDirectDamage(brick: GameState["bricks"][number]): boolean {
+  const kind = brick.kind ?? "normal";
+  const defaultHp = kind === "boss" ? 12 : kind === "normal" || kind === "hazard" ? 1 : 2;
+  const currentHp = typeof brick.hp === "number" && Number.isFinite(brick.hp) ? brick.hp : defaultHp;
+  const nextHp = Math.max(0, currentHp - 1);
+  if (kind === "regen" && nextHp === 1) {
+    const charges = Math.max(0, brick.regenCharges ?? 1);
+    if (charges > 0) {
+      brick.regenCharges = charges - 1;
+      brick.hp = 2;
+      return false;
+    }
+  }
+  brick.hp = nextHp;
+  if (nextHp > 0) {
+    return false;
+  }
+  brick.alive = false;
+  return true;
+}
+
+function syncHeldBallsSnapshot(state: GameState): void {
+  state.combat.heldBalls = state.balls
+    .filter((ball) => (ball.stickTimerSec ?? 0) > 0)
+    .map((ball) => ({
+      xOffsetRatio: ball.stickOffsetRatio ?? 0,
+      remainingSec: ball.stickTimerSec ?? 0,
+    }));
 }

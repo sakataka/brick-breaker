@@ -22,38 +22,52 @@ export interface ItemBalance {
   multiballMaxBalls: number;
   pierceDepthPerStack: number;
   pierceSlowBonusDepth: number;
+  laserFireIntervalSecByLevel: readonly [number, number];
+  laserProjectileSpeed: number;
+  stickyHoldSec: number;
+  stickyRecaptureCooldownSec: number;
 }
 
 export const ITEM_CONFIG: Record<ItemType, ItemRule> = {
   paddle_plus: {
     type: "paddle_plus",
-    weight: 1 / 6,
+    weight: 0.14,
     label: "パドル+",
   },
   slow_ball: {
     type: "slow_ball",
-    weight: 1 / 6,
+    weight: 0.14,
     label: "スロー",
   },
   shield: {
     type: "shield",
-    weight: 1 / 6,
+    weight: 0.13,
     label: "シールド",
   },
   multiball: {
     type: "multiball",
-    weight: 1 / 6,
+    weight: 0.14,
     label: "マルチ",
   },
   pierce: {
     type: "pierce",
-    weight: 1 / 6,
+    weight: 0.11,
     label: "貫通",
   },
   bomb: {
     type: "bomb",
-    weight: 1 / 6,
+    weight: 0.11,
     label: "ボム",
+  },
+  laser: {
+    type: "laser",
+    weight: 0.12,
+    label: "レーザー",
+  },
+  sticky: {
+    type: "sticky",
+    weight: 0.11,
+    label: "スティッキー",
   },
 };
 
@@ -65,6 +79,10 @@ export const ITEM_BALANCE: ItemBalance = {
   multiballMaxBalls: DEFAULT_MULTIBALL_MAX_BALLS,
   pierceDepthPerStack: 4,
   pierceSlowBonusDepth: 1,
+  laserFireIntervalSecByLevel: [1.2, 0.72],
+  laserProjectileSpeed: 760,
+  stickyHoldSec: 0.55,
+  stickyRecaptureCooldownSec: 1.2,
 };
 
 export const DROP_CONFIG: DropConfig = {

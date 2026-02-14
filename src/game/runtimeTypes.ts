@@ -95,6 +95,8 @@ export interface ActiveItemState {
   shieldCharges: number;
   pierceStacks: number;
   bombStacks: number;
+  laserStacks: number;
+  stickyStacks: number;
 }
 
 export interface ItemState {
@@ -117,6 +119,7 @@ export interface RuntimeState {
   balls: Ball[];
   paddle: Paddle;
   bricks: Brick[];
+  combat: CombatState;
   enemies: EnemyUnit[];
   magic: MagicState;
   items: ItemState;
@@ -204,4 +207,24 @@ export interface EnemyUnit {
   vx: number;
   radius: number;
   alive: boolean;
+}
+
+export interface LaserProjectile {
+  id: number;
+  x: number;
+  y: number;
+  speed: number;
+}
+
+export interface HeldBallState {
+  xOffsetRatio: number;
+  remainingSec: number;
+}
+
+export interface CombatState {
+  laserCooldownSec: number;
+  nextLaserId: number;
+  laserProjectiles: LaserProjectile[];
+  heldBalls: HeldBallState[];
+  shieldBurstQueued: boolean;
 }

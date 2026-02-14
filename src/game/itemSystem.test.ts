@@ -10,10 +10,12 @@ import {
   ensureMultiballCount,
   getActiveItemLabels,
   getBombRadiusTiles,
+  getLaserLevel,
   getPaddleScale,
   getPierceDepth,
   getSlowBallMaxSpeedScale,
   getTargetBallCount,
+  isStickyEnabled,
   spawnDropsFromBrickEvents,
   spawnGuaranteedDrop,
   updateFallingItems,
@@ -113,9 +115,9 @@ describe("itemSystem", () => {
     spawnDropsFromBrickEvents(items, events, sequenceRandom([0.1, 0.85, 0.1, 0.95, 0.1, 0.99]));
     expect(items.falling.length).toBeGreaterThan(0);
 
-    // 2番目=0.85 は pierce/bomb 帯域に入る
-    const hasAdvanced = items.falling.some((drop) => drop.type === "pierce" || drop.type === "bomb");
-    expect(hasAdvanced).toBe(true);
+    // 0.85, 0.95 は新規帯域(laser/sticky)に入る
+    expect(items.falling.some((drop) => drop.type === "laser")).toBe(true);
+    expect(items.falling.some((drop) => drop.type === "sticky")).toBe(true);
   });
 
   test("spawnGuaranteedDrop always enqueues one drop when space is available", () => {
@@ -186,12 +188,28 @@ describe("itemSystem", () => {
     applyItemPickup(items, "multiball", [createBall()]);
     applyItemPickup(items, "pierce", [createBall()]);
     applyItemPickup(items, "pierce", [createBall()]);
+    applyItemPickup(items, "laser", [createBall()]);
 
     const labels = getActiveItemLabels(items);
-    expect(labels).toHaveLength(6);
+    expect(labels).toHaveLength(8);
     expect(labels.some((label) => label.includes("🎱マルチ(多球)×1"))).toBe(true);
     expect(labels.some((label) => label.includes("🗡貫通×1"))).toBe(true);
     expect(labels.some((label) => label.includes("💣ボム(爆発)×0"))).toBe(true);
+    expect(labels.some((label) => label.includes("🔫レーザー×1"))).toBe(true);
+  });
+
+  test("laser and sticky stacks respect their caps", () => {
+    const items = createItemState();
+    applyItemPickup(items, "laser", [createBall()]);
+    applyItemPickup(items, "laser", [createBall()]);
+    applyItemPickup(items, "laser", [createBall()]);
+    applyItemPickup(items, "sticky", [createBall()]);
+    applyItemPickup(items, "sticky", [createBall()]);
+
+    expect(items.active.laserStacks).toBe(2);
+    expect(items.active.stickyStacks).toBe(1);
+    expect(getLaserLevel(items)).toBe(2);
+    expect(isStickyEnabled(items)).toBe(true);
   });
 
   test("clearActiveItemEffects resets all active stacks", () => {

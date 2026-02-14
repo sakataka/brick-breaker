@@ -43,6 +43,12 @@ export function buildRenderViewState(state: GameState): RenderViewState {
     shieldCharges: state.items.active.shieldCharges,
     showSceneOverlayTint: state.scene !== "playing",
     enemies: state.enemies,
+    laserProjectiles: state.combat.laserProjectiles.map((shot) => ({
+      id: shot.id,
+      x: shot.x,
+      y: shot.y,
+    })),
+    fluxFieldActive: stageModifier?.fluxField ?? false,
     stageModifierLabel: stageModifier?.label,
     warpZones: stageModifier?.warpZones,
   };

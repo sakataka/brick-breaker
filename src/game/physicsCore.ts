@@ -8,6 +8,10 @@ const MAX_SUBSTEPS = 12;
 const MAX_MOVE = 4;
 const WARP_COOLDOWN_SEC = 0.24;
 const WARP_EXIT_PUSH = 10;
+const FLUX_RADIUS = 180;
+const FLUX_PULL_ACCEL = 340;
+const FLUX_PUSH_ACCEL = 220;
+const FLUX_DELTA_V_LIMIT = 180;
 
 interface BrickHitResult {
   scoreGain: number;
@@ -31,6 +35,10 @@ export function stepPhysicsCore({
   const pierceDepth = Math.max(0, stepConfig?.pierceDepth ?? 0);
   const bombRadiusTiles = Math.max(0, stepConfig?.bombRadiusTiles ?? 0);
   const explodeOnHit = stepConfig?.explodeOnHit ?? false;
+  const stickyEnabled = stepConfig?.stickyEnabled ?? false;
+  const stickyHoldSec = stepConfig?.stickyHoldSec ?? 0.55;
+  const stickyRecaptureCooldownSec = stepConfig?.stickyRecaptureCooldownSec ?? 1.2;
+  const fluxField = stepConfig?.fluxField ?? false;
   const warpZones = stepConfig?.warpZones ?? [];
   const balance = stepConfig?.balance ?? getGameplayBalance(config.difficulty);
 
@@ -52,6 +60,20 @@ export function stepPhysicsCore({
 
   for (let i = 0; i < iterations; i += 1) {
     ball.warpCooldownSec = Math.max(0, (ball.warpCooldownSec ?? 0) - subDt);
+    ball.stickCooldownSec = Math.max(0, (ball.stickCooldownSec ?? 0) - subDt);
+    if ((ball.stickTimerSec ?? 0) > 0) {
+      updateStickyHold(
+        ball,
+        paddle.x,
+        paddle.y,
+        paddle.width,
+        subDt,
+        initialBallSpeed,
+        balance,
+        maxBallSpeed,
+      );
+      continue;
+    }
     integratePosition(ball, subDt);
     applyWarpZones(ball, warpZones);
 
@@ -70,6 +92,24 @@ export function stepPhysicsCore({
     }
 
     if (resolvePaddleCollision(ball, paddle.x, paddle.y, paddle.width, paddle.height)) {
+      if (stickyEnabled && (ball.stickCooldownSec ?? 0) <= 0) {
+        const relativeX = (ball.pos.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2);
+        const impact = Math.max(-1, Math.min(1, relativeX));
+        ball.stickOffsetRatio = impact;
+        ball.stickTimerSec = stickyHoldSec;
+        ball.stickCooldownSec = stickyRecaptureCooldownSec;
+        ball.pos.x = paddle.x + paddle.width / 2 + impact * (paddle.width / 2);
+        ball.pos.y = paddle.y - ball.radius;
+        ball.vel.x = 0;
+        ball.vel.y = 0;
+        result.collision.paddle = true;
+        result.events.push({
+          kind: "paddle",
+          x: ball.pos.x,
+          y: paddle.y,
+        });
+        continue;
+      }
       applyPaddleCollision(ball, paddle.x, paddle.y, paddle.width, initialBallSpeed, balance, maxBallSpeed);
       result.collision.paddle = true;
       result.events.push({
@@ -109,6 +149,9 @@ export function stepPhysicsCore({
       nudgeForward(ball);
     }
 
+    if (fluxField) {
+      applyFluxField(ball, paddle.x, paddle.y, paddle.width, subDt);
+    }
     normalizeVelocity(ball, maxBallSpeed);
   }
 
@@ -407,6 +450,33 @@ function nudgeForward(ball: Ball): void {
   ball.pos.y += (ball.vel.y / speed) * push;
 }
 
+function updateStickyHold(
+  ball: Ball,
+  paddleX: number,
+  paddleY: number,
+  paddleWidth: number,
+  deltaSec: number,
+  initialBallSpeed: number,
+  balance: GameplayBalance,
+  maxBallSpeed: number,
+): void {
+  const timer = Math.max(0, (ball.stickTimerSec ?? 0) - deltaSec);
+  ball.stickTimerSec = timer;
+  const ratio = clamp(ball.stickOffsetRatio ?? 0, -1, 1);
+  ball.pos.x = paddleX + paddleWidth / 2 + ratio * (paddleWidth / 2);
+  ball.pos.y = paddleY - ball.radius;
+  ball.vel.x = 0;
+  ball.vel.y = 0;
+  if (timer > 0) {
+    return;
+  }
+  const angle = ratio * balance.paddleMaxBounceAngle;
+  const speed = Math.min(maxBallSpeed, Math.max(initialBallSpeed, ball.speed || initialBallSpeed));
+  ball.vel.x = Math.sin(angle) * speed;
+  ball.vel.y = -Math.cos(angle) * speed;
+  ball.speed = speed;
+}
+
 function normalizeVelocity(ball: Ball, maxSpeed: number): void {
   const current = Math.hypot(ball.vel.x, ball.vel.y);
   if (current === 0) {
@@ -415,6 +485,33 @@ function normalizeVelocity(ball: Ball, maxSpeed: number): void {
   const factor = Math.min(maxSpeed, current) / current;
   ball.vel.x *= factor;
   ball.vel.y *= factor;
+}
+
+function applyFluxField(
+  ball: Ball,
+  paddleX: number,
+  paddleY: number,
+  paddleWidth: number,
+  deltaSec: number,
+): void {
+  const paddleCenterX = paddleX + paddleWidth / 2;
+  const paddleCenterY = paddleY;
+  const dx = paddleCenterX - ball.pos.x;
+  const dy = paddleCenterY - ball.pos.y;
+  const distance = Math.hypot(dx, dy);
+  if (distance <= 0 || distance > FLUX_RADIUS) {
+    return;
+  }
+  const weight = 1 - distance / FLUX_RADIUS;
+  const towardCenter = dx / distance;
+  const direction = ball.vel.y >= 0 ? towardCenter : -towardCenter;
+  const accel = (ball.vel.y >= 0 ? FLUX_PULL_ACCEL : FLUX_PUSH_ACCEL) * weight;
+  const deltaVx = clamp(
+    direction * accel * deltaSec,
+    -FLUX_DELTA_V_LIMIT * deltaSec,
+    FLUX_DELTA_V_LIMIT * deltaSec,
+  );
+  ball.vel.x += deltaVx;
 }
 
 function applyWarpZones(ball: Ball, zones: WarpZone[] | undefined): void {

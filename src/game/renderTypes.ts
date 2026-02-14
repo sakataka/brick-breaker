@@ -38,6 +38,12 @@ export interface RenderViewState {
     radius: number;
     alive: boolean;
   }>;
+  laserProjectiles: Array<{
+    id: number;
+    x: number;
+    y: number;
+  }>;
+  fluxFieldActive: boolean;
   stageModifierLabel?: string;
   warpZones?: Array<{
     inXMin: number;

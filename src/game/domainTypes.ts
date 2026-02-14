@@ -1,6 +1,14 @@
 export type Scene = "start" | "story" | "playing" | "paused" | "gameover" | "stageclear" | "clear" | "error";
 export type Difficulty = "casual" | "standard" | "hard";
-export type ItemType = "paddle_plus" | "slow_ball" | "multiball" | "shield" | "pierce" | "bomb";
+export type ItemType =
+  | "paddle_plus"
+  | "slow_ball"
+  | "multiball"
+  | "shield"
+  | "pierce"
+  | "bomb"
+  | "laser"
+  | "sticky";
 export type BrickKind = "normal" | "durable" | "armored" | "regen" | "hazard" | "boss";
 
 export interface Vector2 {
@@ -18,6 +26,9 @@ export interface Ball {
   radius: number;
   speed: number;
   warpCooldownSec?: number;
+  stickTimerSec?: number;
+  stickCooldownSec?: number;
+  stickOffsetRatio?: number;
 }
 
 export interface Paddle {

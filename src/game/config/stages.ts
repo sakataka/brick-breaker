@@ -27,6 +27,7 @@ export interface StageModifier {
   maxSpeedScale?: number;
   warpZones?: WarpZone[];
   spawnEnemy?: boolean;
+  fluxField?: boolean;
 }
 
 export const BRICK_LAYOUT: BrickLayout = {
@@ -138,8 +139,17 @@ const STAGE_MODIFIERS: Partial<Record<number, StageModifier>> = {
     maxSpeedScale: 1.12,
   },
   9: {
-    label: "浮遊敵",
+    label: "浮遊敵+フラックス",
     spawnEnemy: true,
+    fluxField: true,
+  },
+  10: {
+    label: "フラックス",
+    fluxField: true,
+  },
+  11: {
+    label: "フラックス",
+    fluxField: true,
   },
 };
 

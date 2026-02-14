@@ -10,6 +10,10 @@ export interface PhysicsConfig {
   pierceDepth?: number;
   bombRadiusTiles?: number;
   explodeOnHit?: boolean;
+  stickyEnabled?: boolean;
+  stickyHoldSec?: number;
+  stickyRecaptureCooldownSec?: number;
+  fluxField?: boolean;
   warpZones?: WarpZone[];
   onMiss?: (ball: Ball) => boolean;
   balance?: GameplayBalance;

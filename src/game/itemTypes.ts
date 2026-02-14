@@ -7,6 +7,8 @@ export interface ItemStackState {
   shieldCharges: number;
   pierceStacks: number;
   bombStacks: number;
+  laserStacks: number;
+  stickyStacks: number;
 }
 
 export interface ItemEffectContext {
@@ -22,6 +24,8 @@ export interface ItemModifierBundle {
   bombRadiusTiles: number;
   explodeOnHit: boolean;
   shieldCharges: number;
+  laserLevel: number;
+  stickyEnabled: boolean;
 }
 
 export interface ItemDefinition {
@@ -58,4 +62,6 @@ export type ItemPickupSfxEvent =
   | "item_multiball"
   | "item_shield"
   | "item_pierce"
-  | "item_bomb";
+  | "item_bomb"
+  | "item_laser"
+  | "item_sticky";

@@ -44,6 +44,11 @@ function buildStageRound(
   state.hazard.speedBoostUntilSec = 0;
   state.vfx = createVfxState(state.vfx.reducedMotion);
   state.paddle = createBasePaddle(config);
+  state.combat.laserCooldownSec = 0;
+  state.combat.nextLaserId = 1;
+  state.combat.laserProjectiles = [];
+  state.combat.heldBalls = [];
+  state.combat.shieldBurstQueued = false;
   state.balls = ensureMultiballCount(
     state.items,
     [createServeBall(config, state.paddle, balance.ballRadius, random, stageInitialSpeed)],
@@ -139,6 +144,9 @@ export function applyLifeLoss(
   activateAssist(state.assist, state.elapsedSec, config);
   const baseWidth = balance.paddleWidth;
   applyAssistToPaddle(state.paddle, baseWidth, config.width, state.assist, state.elapsedSec);
+  state.combat.laserProjectiles = [];
+  state.combat.heldBalls = [];
+  state.combat.shieldBurstQueued = false;
   state.balls = [
     createServeBall(
       config,

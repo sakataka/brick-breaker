@@ -98,6 +98,7 @@ function tryShieldRescue(
   if (!consumeShield(state.items)) {
     return false;
   }
+  state.combat.shieldBurstQueued = true;
   ball.pos.y = config.height - ball.radius - 10;
   ball.vel.y = -Math.max(120, Math.abs(ball.vel.y));
   if (Math.abs(ball.vel.x) < 40) {

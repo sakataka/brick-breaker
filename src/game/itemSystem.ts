@@ -40,6 +40,8 @@ export function cloneActiveItemState(active: ItemState["active"]): ItemState["ac
     shieldCharges: active.shieldCharges,
     pierceStacks: active.pierceStacks,
     bombStacks: active.bombStacks,
+    laserStacks: active.laserStacks,
+    stickyStacks: active.stickyStacks,
   };
 }
 
@@ -61,6 +63,14 @@ export function getPierceDepth(items: ItemState): number {
 
 export function getBombRadiusTiles(items: ItemState): number {
   return createItemModifiers(items.active).bombRadiusTiles;
+}
+
+export function getLaserLevel(items: ItemState): number {
+  return createItemModifiers(items.active).laserLevel;
+}
+
+export function isStickyEnabled(items: ItemState): boolean {
+  return createItemModifiers(items.active).stickyEnabled;
 }
 
 export function canUseShield(items: ItemState): boolean {

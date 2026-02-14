@@ -49,6 +49,8 @@ describe("gamePipeline", () => {
     state.bricks = [];
     state.items.active.multiballStacks = 2;
     state.items.active.pierceStacks = 1;
+    state.items.active.laserStacks = 2;
+    state.items.active.stickyStacks = 1;
     overrideSingleBall(state, {
       pos: { x: 130, y: 190 },
       vel: { x: 0, y: 260 },
@@ -70,6 +72,9 @@ describe("gamePipeline", () => {
     expect(state.balls).toHaveLength(0);
     expect(state.items.active.multiballStacks).toBe(0);
     expect(state.items.active.pierceStacks).toBe(0);
+    expect(state.items.active.laserStacks).toBe(0);
+    expect(state.items.active.stickyStacks).toBe(0);
+    expect(state.combat.laserProjectiles).toHaveLength(0);
   });
 
   test("keeps running when shield rescue succeeds", () => {
@@ -462,6 +467,100 @@ describe("gamePipeline", () => {
 
     expect(outcome).toBe("continue");
     expect(played).toEqual(["shield", "pierce"]);
+  });
+
+  test("laser item auto-spawns projectiles and destroys bricks", () => {
+    const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60 };
+    const state = createInitialGameState(config, true, "playing");
+    state.scene = "playing";
+    state.items.active.laserStacks = 2;
+    state.combat.laserCooldownSec = 0;
+    const paddleCenterX = state.paddle.x + state.paddle.width / 2;
+    state.bricks = [
+      {
+        id: 1,
+        x: paddleCenterX - 14,
+        y: state.paddle.y - 28,
+        width: 28,
+        height: 12,
+        alive: true,
+      },
+    ];
+    state.balls = [
+      {
+        pos: { x: 20, y: 120 },
+        vel: { x: 10, y: -70 },
+        radius: 6,
+        speed: config.initialBallSpeed,
+      },
+    ];
+
+    const first = stepPlayingPipeline(state, {
+      config,
+      random,
+      sfx: sfxStub as never,
+      tryShieldRescue: () => false,
+      playPickupSfx: () => {},
+      playComboFillSfx: () => {},
+      playMagicCastSfx: () => {},
+    });
+    expect(first).toBe("continue");
+    expect(state.combat.laserProjectiles.length).toBeGreaterThan(0);
+
+    const second = stepPlayingPipeline(state, {
+      config,
+      random,
+      sfx: sfxStub as never,
+      tryShieldRescue: () => false,
+      playPickupSfx: () => {},
+      playComboFillSfx: () => {},
+      playMagicCastSfx: () => {},
+    });
+
+    expect(second).toBe("stageclear");
+    expect(state.bricks.every((brick) => !brick.alive)).toBe(true);
+    expect(state.score).toBeGreaterThan(0);
+  });
+
+  test("shield burst pushes balls upward and damages nearby bottom bricks", () => {
+    const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60 };
+    const state = createInitialGameState(config, true, "playing");
+    state.scene = "playing";
+    state.combat.shieldBurstQueued = true;
+    state.bricks = [
+      { id: 1, x: 80, y: 126, width: 30, height: 10, alive: true, hp: 1 },
+      { id: 2, x: 120, y: 122, width: 30, height: 10, alive: true, hp: 1 },
+      { id: 3, x: 50, y: 20, width: 30, height: 10, alive: true, hp: 1 },
+    ];
+    state.balls = [
+      {
+        pos: { x: 20, y: 110 },
+        vel: { x: 0, y: 110 },
+        radius: 7,
+        speed: config.initialBallSpeed,
+      },
+      {
+        pos: { x: 35, y: 120 },
+        vel: { x: 10, y: 140 },
+        radius: 7,
+        speed: config.initialBallSpeed,
+      },
+    ];
+
+    const outcome = stepPlayingPipeline(state, {
+      config,
+      random,
+      sfx: sfxStub as never,
+      tryShieldRescue: () => false,
+      playPickupSfx: () => {},
+      playComboFillSfx: () => {},
+      playMagicCastSfx: () => {},
+    });
+
+    expect(outcome).not.toBe("ballloss");
+    expect(state.combat.shieldBurstQueued).toBe(false);
+    expect(state.balls.every((ball) => ball.vel.y <= -260)).toBe(true);
+    expect(state.bricks.filter((brick) => !brick.alive).length).toBeGreaterThanOrEqual(2);
   });
 
   test("risk mode raises brick score gain", () => {

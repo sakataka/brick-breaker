@@ -84,6 +84,8 @@
 - 設定値: `src/game/config/*`
 - アイテム仕様: `src/game/itemRegistry.ts`
 - UI状態: `src/app/store.ts`
+- 機能台帳: `docs/idea-list.md` と `docs/idea-progress.md`
+- Cycle 01 記録: `docs/archive/idea-cycle-01-2026-02.md`
 - 未完了タスク: この文書末尾の `Open Backlog` のみ
 
 ## 追加時の手順
@@ -109,4 +111,5 @@
 
 ## Open Backlog
 
-- 現時点の残タスクはありません（`BB-IDEA-01` 〜 `BB-IDEA-18` 実装済み）。
+- 現時点の残タスクはありません。
+- 最新完了サイクル: `BB-FEAT-01` 〜 `BB-FEAT-04`（Cycle 02）。

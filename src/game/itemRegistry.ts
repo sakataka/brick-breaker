@@ -9,7 +9,16 @@ import type {
 } from "./itemTypes";
 import type { Ball, ItemState, ItemType, RandomSource } from "./types";
 
-const ITEM_TYPE_ORDER = ["paddle_plus", "slow_ball", "shield", "multiball", "pierce", "bomb"] as const;
+const ITEM_TYPE_ORDER = [
+  "paddle_plus",
+  "slow_ball",
+  "shield",
+  "multiball",
+  "pierce",
+  "bomb",
+  "laser",
+  "sticky",
+] as const;
 const ITEM_ORDER: ItemType[] = [...ITEM_TYPE_ORDER];
 
 export const ITEM_REGISTRY: ItemRegistry = {
@@ -120,6 +129,40 @@ export const ITEM_REGISTRY: ItemRegistry = {
     },
     getLabelStack: (stacks) => stacks.bombStacks,
   },
+  laser: {
+    type: "laser",
+    label: ITEM_CONFIG.laser.label,
+    hudLabel: "🔫レーザー",
+    description: "自動でレーザーを発射",
+    shortLabel: "砲",
+    color: "rgba(255, 122, 122, 0.88)",
+    weight: ITEM_CONFIG.laser.weight,
+    maxStacks: 2,
+    dropSuppressedWhenActive: false,
+    hudOrder: 7,
+    sfxEvent: "item_laser",
+    applyPickup: ({ stacks }) => {
+      stacks.laserStacks = Math.min(2, stacks.laserStacks + 1);
+    },
+    getLabelStack: (stacks) => stacks.laserStacks,
+  },
+  sticky: {
+    type: "sticky",
+    label: ITEM_CONFIG.sticky.label,
+    hudLabel: "🧲スティッキー",
+    description: "ボールを一時保持して自動発射",
+    shortLabel: "粘",
+    color: "rgba(161, 255, 151, 0.86)",
+    weight: ITEM_CONFIG.sticky.weight,
+    maxStacks: 1,
+    dropSuppressedWhenActive: false,
+    hudOrder: 8,
+    sfxEvent: "item_sticky",
+    applyPickup: ({ stacks }) => {
+      stacks.stickyStacks = 1;
+    },
+    getLabelStack: (stacks) => stacks.stickyStacks,
+  },
 };
 
 export function createItemStacks(): ItemStackState {
@@ -130,6 +173,8 @@ export function createItemStacks(): ItemStackState {
     shieldCharges: 0,
     pierceStacks: 0,
     bombStacks: 0,
+    laserStacks: 0,
+    stickyStacks: 0,
   };
 }
 
@@ -163,6 +208,8 @@ export function createItemModifiers(
     bombRadiusTiles: stacks.bombStacks,
     explodeOnHit: stacks.bombStacks > 0,
     shieldCharges: stacks.shieldCharges,
+    laserLevel: Math.min(2, stacks.laserStacks),
+    stickyEnabled: stacks.stickyStacks > 0,
   };
 }
 
@@ -270,5 +317,7 @@ function getStackCount(stacks: ItemStackState, type: ItemType): number {
     .with("shield", () => stacks.shieldCharges)
     .with("pierce", () => Math.min(1, stacks.pierceStacks))
     .with("bomb", () => stacks.bombStacks)
+    .with("laser", () => stacks.laserStacks)
+    .with("sticky", () => stacks.stickyStacks)
     .exhaustive();
 }
