@@ -193,7 +193,7 @@
 
 ### BB-IDEA-14
 - ID: `BB-IDEA-14`
-- アイディア名: ステージ修飾子（低重力 / 高速球）
+- アイディア名: ステージ修飾子（ワープ / 高速球）
 - 体験価値（何が楽しくなるか）: 同じ構成でも体験が変わり、飽きにくくなる。
 - 実装対象モジュール: `src/game/config/stages.ts`, `src/game/gamePipeline.ts`, `src/game/physicsCore.ts`
 - 実装難易度（S/M/L）: `M`
@@ -201,7 +201,7 @@
 - 優先度（P1/P2/P3）: `P2`
 - 実装状況: `DONE`（`docs/idea-progress.md` 参照）
 - 参考ソース: [Block Shot (Steam)](https://store.steampowered.com/app/4272730/)
-- 最小導入版: 2種修飾子のみ（低重力/高速球）。
+- 最小導入版: 2種修飾子のみ（ワープ/高速球）。
 
 ---
 

@@ -277,26 +277,4 @@ describe("physicsCore", () => {
     expect(ball.pos.y).toBeGreaterThan(120);
     expect((ball.warpCooldownSec ?? 0) > 0).toBe(true);
   });
-
-  test("low gravity keeps motion while eventually pulling ball downward", () => {
-    const ball: Ball = {
-      pos: { x: 120, y: 100 },
-      vel: { x: 30, y: -60 },
-      radius: 6,
-      speed: 180,
-    };
-
-    stepPhysicsCore({
-      ball,
-      paddle: basePaddle(),
-      bricks: [],
-      config: baseConfig,
-      deltaSec: 0.8,
-      stepConfig: {
-        lowGravity: true,
-      },
-    });
-
-    expect(ball.vel.y).toBeGreaterThan(0);
-  });
 });

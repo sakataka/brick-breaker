@@ -14,73 +14,69 @@ export interface BgmTrack {
   steps: readonly BgmStep[];
 }
 
-const NEON_SCALE = [0, 2, 3, 5, 7, 10] as const;
-const ARCADE_SCALE = [0, 2, 4, 7, 9, 11] as const;
-const CHASE_SCALE = [0, 1, 3, 5, 6, 8, 10] as const;
-const FINAL_SCALE = [0, 2, 3, 5, 7, 8, 11] as const;
-const TITLE_ROOT = 57;
+type MidiNote = number | null;
+
+interface ThemeDefinition {
+  id: "bach_dance" | "mozart_light" | "bach_counter" | "beethoven_drive";
+  title: string;
+  source: string;
+  leadWave: OscillatorType;
+  bassWave: OscillatorType;
+  tempoRange: { min: number; max: number };
+  leadMotif: readonly MidiNote[];
+  bassMotif: readonly MidiNote[];
+  transposeByVariant: readonly number[];
+}
+
 const STAGE_COUNT = 12;
 const BARS = 8;
 const STEPS_PER_BAR = 4;
 const STEP_COUNT = BARS * STEPS_PER_BAR;
-const RHYTHM_LENGTH = 8;
-
-interface ThemeDefinition {
-  id: "neon" | "arcade" | "chase" | "final";
-  title: string;
-  rootBase: number;
-  scale: readonly number[];
-  leadWave: OscillatorType;
-  bassWave: OscillatorType;
-  leadPattern: readonly number[];
-  bassPattern: readonly number[];
-  tempoRange: { min: number; max: number };
-}
 
 const THEMES: readonly ThemeDefinition[] = [
   {
-    id: "neon",
-    title: "Neon Drift",
-    rootBase: 48,
-    scale: NEON_SCALE,
+    id: "bach_dance",
+    title: "Bach Dance",
+    source: "Bach Minuet in G major (BWV Anh. 114) motif",
     leadWave: "triangle",
     bassWave: "sine",
-    leadPattern: [1, 0, 1, 1, 1, 0, 1, 0],
-    bassPattern: [1, 0, 0, 0, 1, 0, 0, 0],
-    tempoRange: { min: 112, max: 120 },
+    tempoRange: { min: 114, max: 120 },
+    leadMotif: [74, 79, 81, 83, 84, 83, 81, 79, 78, 79, 81, 83, 81, 79, 78, 79],
+    bassMotif: [55, null, 59, null, 62, null, 59, null],
+    transposeByVariant: [0, 2, 4],
   },
   {
-    id: "arcade",
-    title: "Arcade Drive",
-    rootBase: 50,
-    scale: ARCADE_SCALE,
+    id: "mozart_light",
+    title: "Mozart Light",
+    source: "Mozart Sonata K.545 motif",
     leadWave: "square",
     bassWave: "triangle",
-    leadPattern: [1, 1, 0, 1, 1, 1, 0, 1],
-    bassPattern: [1, 0, 1, 0, 1, 0, 1, 0],
     tempoRange: { min: 122, max: 130 },
+    leadMotif: [76, 74, 72, 74, 76, 79, 77, 76, 74, 72, 74, 76, 77, 79, 81, 79],
+    bassMotif: [48, null, 55, null, 52, null, 55, null],
+    transposeByVariant: [0, 2, 4],
   },
   {
-    id: "chase",
-    title: "Cyber Chase",
-    rootBase: 45,
-    scale: CHASE_SCALE,
+    id: "bach_counter",
+    title: "Bach Counter",
+    source: "Bach Invention No.1 (BWV 772) motif",
     leadWave: "sawtooth",
     bassWave: "square",
-    leadPattern: [1, 1, 1, 0, 1, 1, 0, 1],
-    bassPattern: [1, 0, 0, 1, 1, 0, 0, 1],
     tempoRange: { min: 132, max: 140 },
+    leadMotif: [74, 76, 77, 79, 81, 79, 77, 76, 74, 72, 71, 72, 74, 76, 77, 79],
+    bassMotif: [50, null, 57, null, 53, null, 57, null],
+    transposeByVariant: [0, 1, 3],
   },
   {
-    id: "final",
-    title: "Final Surge",
-    rootBase: 47,
-    scale: FINAL_SCALE,
+    id: "beethoven_drive",
+    title: "Beethoven Drive",
+    source: "Beethoven Symphony No.9 (Ode to Joy) motif",
     leadWave: "triangle",
     bassWave: "sawtooth",
-    leadPattern: [1, 1, 1, 1, 1, 1, 0, 1],
-    bassPattern: [1, 0, 1, 0, 1, 0, 1, 1],
-    tempoRange: { min: 142, max: 146 },
+    tempoRange: { min: 142, max: 148 },
+    leadMotif: [76, 76, 77, 79, 79, 77, 76, 74, 72, 72, 74, 76, 74, 72, 72, null],
+    bassMotif: [48, null, 55, null, 52, null, 55, null],
+    transposeByVariant: [0, 1, 2],
   },
 ] as const;
 
@@ -89,13 +85,6 @@ function clampStageNumber(stageNumber: number): number {
     return 1;
   }
   return Math.max(1, Math.min(STAGE_COUNT, Math.round(stageNumber)));
-}
-
-function stageTempo(stageNumber: number): number {
-  const stage = clampStageNumber(stageNumber);
-  const theme = getThemeByStage(stage);
-  const local = ((stage - 1) % 3) / 2;
-  return Math.round(theme.tempoRange.min + (theme.tempoRange.max - theme.tempoRange.min) * local);
 }
 
 function getThemeByStage(stageNumber: number): ThemeDefinition {
@@ -112,65 +101,107 @@ function getThemeByStage(stageNumber: number): ThemeDefinition {
   return THEMES[3];
 }
 
+function getThemeTempo(stageNumber: number): number {
+  const stage = clampStageNumber(stageNumber);
+  const theme = getThemeByStage(stage);
+  const localRatio = ((stage - 1) % 3) / 2;
+  return Math.round(theme.tempoRange.min + (theme.tempoRange.max - theme.tempoRange.min) * localRatio);
+}
+
 function buildTitleTrack(): BgmTrack {
-  const steps: BgmStep[] = [];
-  for (let index = 0; index < STEP_COUNT; index += 1) {
-    const scaleIndex = (index + (index % 3)) % NEON_SCALE.length;
-    const leadMidi = TITLE_ROOT + 12 + NEON_SCALE[scaleIndex];
-    const bassMidi =
-      index % 2 === 0 ? TITLE_ROOT - 12 + NEON_SCALE[(scaleIndex + 4) % NEON_SCALE.length] : undefined;
-    steps.push({
-      leadMidi,
-      bassMidi,
-      leadGain: index % 4 === 0 ? 0.1 : 0.075,
-      bassGain: bassMidi ? 0.062 : undefined,
-    });
-  }
+  const lead = repeatToLength([60, 64, 67, 72, 67, 64, 60, 64, 62, 65, 69, 74, 69, 65, 62, 65], STEP_COUNT);
+  const bass = repeatToLength([48, null, 55, null, 52, null, 55, null], STEP_COUNT);
   return {
     id: "title",
-    theme: "Title Prelude",
+    theme: "Classical Prelude",
     tempo: 108,
     leadWave: "triangle",
     bassWave: "sine",
-    steps,
+    steps: buildSteps(lead, bass, 0.102, 0.072),
   };
 }
 
 function buildStageTrack(stageNumber: number): BgmTrack {
   const stage = clampStageNumber(stageNumber);
   const theme = getThemeByStage(stage);
-  const root = theme.rootBase + ((stage - 1) % 3);
-  const rotation = stage % theme.scale.length;
-  const rhythmicOffset = stage % RHYTHM_LENGTH;
-  const steps: BgmStep[] = [];
-
-  for (let index = 0; index < STEP_COUNT; index += 1) {
-    const rotatedIndex = (index + rotation) % theme.scale.length;
-    const accentIndex = (index + rhythmicOffset) % RHYTHM_LENGTH;
-    const leadOn = theme.leadPattern[accentIndex] === 1;
-    const bassOn = theme.bassPattern[accentIndex] === 1;
-
-    const leadMidi = leadOn ? root + 12 + theme.scale[rotatedIndex] : undefined;
-    const bassMidi = bassOn ? root - 12 + theme.scale[(rotatedIndex + 3) % theme.scale.length] : undefined;
-    const leadAccent = accentIndex === 0 || accentIndex === 4;
-    const bassAccent = accentIndex === 0;
-
-    steps.push({
-      leadMidi,
-      bassMidi,
-      leadGain: leadMidi ? (leadAccent ? 0.12 : 0.088) : undefined,
-      bassGain: bassMidi ? (bassAccent ? 0.085 : 0.072) : undefined,
-    });
-  }
+  const variant = (stage - 1) % 3;
+  const transpose = theme.transposeByVariant[variant] ?? 0;
+  const leadRotation = variant * 2;
+  const bassRotation = variant;
+  const lead = transposeSequence(
+    rotateSequence(repeatToLength(theme.leadMotif, STEP_COUNT), leadRotation),
+    transpose,
+  );
+  const bass = transposeSequence(
+    rotateSequence(repeatToLength(theme.bassMotif, STEP_COUNT), bassRotation),
+    transpose,
+  );
 
   return {
     id: `stage-${stage}`,
-    theme: `${theme.title} S${stage}`,
-    tempo: stageTempo(stage),
+    theme: `${theme.title} S${stage} (${theme.source})`,
+    tempo: getThemeTempo(stage),
     leadWave: theme.leadWave,
     bassWave: theme.bassWave,
-    steps,
+    steps: buildSteps(lead, bass, 0.118, 0.084),
   };
+}
+
+function buildSteps(
+  leadNotes: readonly MidiNote[],
+  bassNotes: readonly MidiNote[],
+  leadBaseGain: number,
+  bassBaseGain: number,
+): BgmStep[] {
+  const steps: BgmStep[] = [];
+  for (let index = 0; index < STEP_COUNT; index += 1) {
+    const leadMidi = leadNotes[index] ?? undefined;
+    const bassMidi = bassNotes[index] ?? undefined;
+    const accent = index % 8 === 0;
+    const semiAccent = index % 8 === 4;
+    steps.push({
+      leadMidi,
+      bassMidi,
+      leadGain: leadMidi
+        ? accent
+          ? leadBaseGain + 0.02
+          : semiAccent
+            ? leadBaseGain + 0.01
+            : leadBaseGain
+        : undefined,
+      bassGain: bassMidi ? (accent ? bassBaseGain + 0.01 : bassBaseGain) : undefined,
+    });
+  }
+  return steps;
+}
+
+function repeatToLength<T>(source: readonly T[], length: number): T[] {
+  if (source.length === 0) {
+    return [];
+  }
+  const result: T[] = [];
+  for (let index = 0; index < length; index += 1) {
+    result.push(source[index % source.length]);
+  }
+  return result;
+}
+
+function rotateSequence(sequence: readonly MidiNote[], offset: number): MidiNote[] {
+  if (sequence.length === 0) {
+    return [];
+  }
+  const normalized = ((offset % sequence.length) + sequence.length) % sequence.length;
+  if (normalized === 0) {
+    return [...sequence];
+  }
+  return [...sequence.slice(normalized), ...sequence.slice(0, normalized)];
+}
+
+function transposeSequence(sequence: readonly MidiNote[], semitone: number): MidiNote[] {
+  if (semitone === 0) {
+    return [...sequence];
+  }
+  return sequence.map((note) => (typeof note === "number" ? note + semitone : null));
 }
 
 const TITLE_TRACK = buildTitleTrack();

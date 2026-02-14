@@ -6,9 +6,6 @@ import type { Ball, Brick, CollisionEvent } from "./types";
 
 const MAX_SUBSTEPS = 12;
 const MAX_MOVE = 4;
-const LOW_GRAVITY_ACCEL = 210;
-const LOW_GRAVITY_MAX_FALL_SPEED = 360;
-const LOW_GRAVITY_MIN_FALL_SPEED = 48;
 const WARP_COOLDOWN_SEC = 0.24;
 const WARP_EXIT_PUSH = 10;
 
@@ -34,7 +31,6 @@ export function stepPhysicsCore({
   const pierceDepth = Math.max(0, stepConfig?.pierceDepth ?? 0);
   const bombRadiusTiles = Math.max(0, stepConfig?.bombRadiusTiles ?? 0);
   const explodeOnHit = stepConfig?.explodeOnHit ?? false;
-  const lowGravity = stepConfig?.lowGravity ?? false;
   const warpZones = stepConfig?.warpZones ?? [];
   const balance = stepConfig?.balance ?? getGameplayBalance(config.difficulty);
 
@@ -113,9 +109,6 @@ export function stepPhysicsCore({
       nudgeForward(ball);
     }
 
-    if (lowGravity) {
-      applyLowGravity(ball, subDt);
-    }
     normalizeVelocity(ball, maxBallSpeed);
   }
 
@@ -439,13 +432,6 @@ function applyWarpZones(ball: Ball, zones: WarpZone[] | undefined): void {
       ball.warpCooldownSec = WARP_COOLDOWN_SEC;
       return;
     }
-  }
-}
-
-function applyLowGravity(ball: Ball, deltaSec: number): void {
-  ball.vel.y = Math.min(LOW_GRAVITY_MAX_FALL_SPEED, ball.vel.y + LOW_GRAVITY_ACCEL * deltaSec);
-  if (ball.vel.y > 0 && ball.vel.y < LOW_GRAVITY_MIN_FALL_SPEED) {
-    ball.vel.y = LOW_GRAVITY_MIN_FALL_SPEED;
   }
 }
 

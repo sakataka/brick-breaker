@@ -74,7 +74,6 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
     pierceDepth,
     bombRadiusTiles,
     explodeOnHit: bombRadiusTiles > 0,
-    lowGravity: stageModifier?.lowGravity,
     warpZones: stageModifier?.warpZones,
     onMiss: (target) => deps.tryShieldRescue(target, effectiveMaxSpeed),
   });

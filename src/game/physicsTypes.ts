@@ -10,7 +10,6 @@ export interface PhysicsConfig {
   pierceDepth?: number;
   bombRadiusTiles?: number;
   explodeOnHit?: boolean;
-  lowGravity?: boolean;
   warpZones?: WarpZone[];
   onMiss?: (ball: Ball) => boolean;
   balance?: GameplayBalance;

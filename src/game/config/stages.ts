@@ -25,7 +25,6 @@ export interface WarpZone {
 export interface StageModifier {
   label?: string;
   maxSpeedScale?: number;
-  lowGravity?: boolean;
   warpZones?: WarpZone[];
   spawnEnemy?: boolean;
 }
@@ -133,11 +132,6 @@ const STAGE_MODIFIERS: Partial<Record<number, StageModifier>> = {
         outY: 160,
       },
     ],
-  },
-  7: {
-    label: "低重力",
-    lowGravity: true,
-    maxSpeedScale: 1,
   },
   8: {
     label: "高速球",
