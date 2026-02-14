@@ -12,6 +12,7 @@ import {
   getPierceDepth,
   getSlowBallMaxSpeedScale,
   spawnDropsFromBrickEvents,
+  spawnGuaranteedDrop,
   syncMultiballStacksWithBallCount,
   updateFallingItems,
 } from "./itemSystem";
@@ -60,12 +61,20 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   const triggeredHazard = physics.events.some(
     (event) => event.kind === "brick" && event.brickKind === "hazard",
   );
+  const comboRewardBefore = state.combo.rewardGranted;
   state.score += applyComboHits(state.combo, state.elapsedSec, destroyedBricks, balance.scorePerBrick);
+  const comboRewardTriggered = !comboRewardBefore && state.combo.rewardGranted;
   const hadBallDrop = physics.lostBalls > 0;
   const lostAllBalls = physics.survivors.length <= 0;
   playCollisionSounds(deps.sfx, physics.events);
   applyCollisionEvents(state.vfx, physics.events, random);
   spawnDropsFromBrickEvents(state.items, physics.events, random);
+  if (comboRewardTriggered) {
+    const rewardOrigin = physics.survivors[0] ?? state.balls[0];
+    const rewardX = rewardOrigin?.pos.x ?? state.paddle.x + state.paddle.width / 2;
+    const rewardY = rewardOrigin?.pos.y ?? state.paddle.y - 28;
+    spawnGuaranteedDrop(state.items, random, rewardX, rewardY);
+  }
 
   const picks = updateFallingItems(state.items, state.paddle, config.height, config.fixedDeltaSec);
   let pickedMultiball = false;

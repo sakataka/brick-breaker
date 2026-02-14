@@ -248,6 +248,64 @@ describe("gamePipeline", () => {
     expect(thirdGain).toBe(100);
   });
 
+  test("grants one guaranteed drop when combo reaches x2.0", () => {
+    const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60 };
+    const state = createInitialGameState(config, true, "playing");
+    state.scene = "playing";
+    state.bricks = [
+      { id: 1, x: 30, y: 40, width: 36, height: 10, alive: true },
+      { id: 2, x: 70, y: 40, width: 36, height: 10, alive: true },
+      { id: 3, x: 110, y: 40, width: 36, height: 10, alive: true },
+      { id: 4, x: 150, y: 40, width: 36, height: 10, alive: true },
+      { id: 5, x: 190, y: 40, width: 36, height: 10, alive: true },
+      { id: 6, x: 190, y: 70, width: 36, height: 10, alive: true },
+    ];
+    state.items.falling = [];
+    overrideSingleBall(state, {
+      pos: { x: 48, y: 36 },
+      vel: { x: 0, y: 160 },
+      radius: 8,
+      speed: config.initialBallSpeed,
+    });
+
+    for (let i = 0; i < 5; i += 1) {
+      const ball = state.balls[0];
+      if (!ball) {
+        throw new Error("expected surviving ball");
+      }
+      ball.pos = { x: 48 + 40 * i, y: 36 };
+      ball.vel = { x: 0, y: 160 };
+      stepPlayingPipeline(state, {
+        config,
+        random,
+        sfx: sfxStub as never,
+        tryShieldRescue: () => false,
+        playPickupSfx: () => {},
+      });
+    }
+
+    expect(state.combo.multiplier).toBeGreaterThanOrEqual(2);
+    expect(state.combo.rewardGranted).toBe(true);
+    expect(state.items.falling.length).toBeGreaterThanOrEqual(1);
+    const countAfterTrigger = state.items.falling.length;
+
+    const ball = state.balls[0];
+    if (!ball) {
+      throw new Error("expected surviving ball");
+    }
+    ball.pos = { x: 190, y: 66 };
+    ball.vel = { x: 0, y: 160 };
+    stepPlayingPipeline(state, {
+      config,
+      random,
+      sfx: sfxStub as never,
+      tryShieldRescue: () => false,
+      playPickupSfx: () => {},
+    });
+
+    expect(state.items.falling.length).toBe(countAfterTrigger);
+  });
+
   test("destroying hazard brick clears slow stacks and starts temporary speed boost", () => {
     const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60 };
     const state = createInitialGameState(config, true, "playing");

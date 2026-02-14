@@ -48,6 +48,7 @@ function buildStageRound(
     multiplier: 1,
     streak: 0,
     lastHitSec: -1,
+    rewardGranted: false,
   };
   state.stageStats = {
     hitsTaken: 0,

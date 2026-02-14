@@ -132,6 +132,7 @@ export interface ComboState {
   multiplier: number;
   streak: number;
   lastHitSec: number;
+  rewardGranted: boolean;
 }
 
 export interface StageStats {

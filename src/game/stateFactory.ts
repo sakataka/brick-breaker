@@ -72,6 +72,7 @@ export function createInitialGameState(
       multiplier: 1,
       streak: 0,
       lastHitSec: -1,
+      rewardGranted: false,
     },
     stageStats: {
       hitsTaken: 0,

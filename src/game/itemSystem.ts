@@ -110,6 +110,22 @@ export function spawnDropsFromBrickEvents(
   }
 }
 
+export function spawnGuaranteedDrop(items: ItemState, random: RandomSource, x: number, y: number): boolean {
+  if (items.falling.length >= DROP_CONFIG.maxFalling) {
+    return false;
+  }
+  const excludedTypes: ItemType[] = getDropSuppressedTypes(items.active);
+  items.falling.push({
+    id: items.nextId,
+    type: pickWeightedItemType(random, excludedTypes),
+    pos: { x, y },
+    speed: DROP_CONFIG.fallSpeed,
+    size: ITEM_SIZE,
+  });
+  items.nextId += 1;
+  return true;
+}
+
 export function updateFallingItems(
   items: ItemState,
   paddle: Paddle,

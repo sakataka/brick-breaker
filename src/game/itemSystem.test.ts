@@ -15,6 +15,7 @@ import {
   getSlowBallMaxSpeedScale,
   getTargetBallCount,
   spawnDropsFromBrickEvents,
+  spawnGuaranteedDrop,
   updateFallingItems,
 } from "./itemSystem";
 import type { Ball, CollisionEvent, Paddle, RandomSource } from "./types";
@@ -115,6 +116,16 @@ describe("itemSystem", () => {
     // 2番目=0.85 は pierce/bomb 帯域に入る
     const hasAdvanced = items.falling.some((drop) => drop.type === "pierce" || drop.type === "bomb");
     expect(hasAdvanced).toBe(true);
+  });
+
+  test("spawnGuaranteedDrop always enqueues one drop when space is available", () => {
+    const items = createItemState();
+
+    const created = spawnGuaranteedDrop(items, sequenceRandom([0.3]), 120, 80);
+
+    expect(created).toBe(true);
+    expect(items.falling).toHaveLength(1);
+    expect(items.falling[0]?.pos).toEqual({ x: 120, y: 80 });
   });
 
   test("bomb does not drop while bomb effect is active", () => {

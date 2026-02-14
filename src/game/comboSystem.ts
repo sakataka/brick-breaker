@@ -5,6 +5,7 @@ export function resetCombo(combo: ComboState): void {
   combo.multiplier = COMBO_CONFIG.baseMultiplier;
   combo.streak = 0;
   combo.lastHitSec = -1;
+  combo.rewardGranted = false;
 }
 
 export function normalizeCombo(combo: ComboState, nowSec: number): void {
@@ -39,6 +40,9 @@ export function applyComboHits(
       combo.multiplier = Math.min(COMBO_CONFIG.maxMultiplier, combo.multiplier + COMBO_CONFIG.step);
     }
     combo.streak += 1;
+    if (!combo.rewardGranted && combo.multiplier >= 2) {
+      combo.rewardGranted = true;
+    }
     gained += Math.round(baseScorePerHit * combo.multiplier);
   }
 
