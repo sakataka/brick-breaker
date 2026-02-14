@@ -4,6 +4,7 @@ import {
   createItemModifiers,
   createItemStacks,
   getActiveItemLabelsFromRegistry,
+  getDropSuppressedTypes,
   pickWeightedItemType,
 } from "./itemRegistry";
 import type {
@@ -84,13 +85,7 @@ export function spawnDropsFromBrickEvents(
   events: CollisionEvent[],
   random: RandomSource,
 ): void {
-  const excludedTypes: ItemType[] = [];
-  if (items.active.bombStacks >= 1) {
-    excludedTypes.push("bomb");
-  }
-  if (items.active.pierceStacks >= 1) {
-    excludedTypes.push("pierce");
-  }
+  const excludedTypes: ItemType[] = getDropSuppressedTypes(items.active);
   for (const event of events) {
     if (event.kind !== "brick") {
       continue;

@@ -19,6 +19,7 @@ export interface RenderViewState {
   floatingTexts: FloatingText[];
   flashMs: number;
   reducedMotion: boolean;
+  highContrast: boolean;
   shake: {
     active: boolean;
     offset: Vector2;
@@ -39,6 +40,7 @@ export interface HudViewModel {
   stageText: string;
   comboText: string;
   itemsText: string;
+  accessibilityText: string;
   accentColor: string;
 }
 

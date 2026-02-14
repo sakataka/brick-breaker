@@ -3,6 +3,8 @@ import { describe, expect, test } from "bun:test";
 import {
   createItemModifiers,
   createItemStacks,
+  getDropSuppressedTypes,
+  getItemPickupSfxEvent,
   ITEM_REGISTRY,
   pickWeightedItemType,
   validateItemRegistry,
@@ -51,5 +53,15 @@ describe("itemRegistry", () => {
     const random = { next: () => 0.999 };
     const picked = pickWeightedItemType(random, ["bomb"]);
     expect(picked).not.toBe("bomb");
+  });
+
+  test("drop suppression and sfx mapping are driven by registry definitions", () => {
+    const stacks = createItemStacks();
+    stacks.bombStacks = 1;
+    stacks.pierceStacks = 1;
+
+    const suppressed = getDropSuppressedTypes(stacks);
+    expect(suppressed).toEqual(["pierce", "bomb"]);
+    expect(getItemPickupSfxEvent("shield")).toBe("item_shield");
   });
 });

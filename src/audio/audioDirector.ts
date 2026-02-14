@@ -1,3 +1,4 @@
+import { getItemPickupSfxEvent } from "../game/itemRegistry";
 import type { GameAudioSettings, ItemType, Scene } from "../game/types";
 import { getStageBgmTrack, getTitleBgmTrack } from "./bgmCatalog";
 import type { BgmController } from "./bgmSequencer";
@@ -85,15 +86,7 @@ export class AudioDirector {
   }
 
   playItemPickup(itemType: ItemType): void {
-    const itemSoundMap = {
-      paddle_plus: "item_paddle_plus",
-      slow_ball: "item_slow_ball",
-      multiball: "item_multiball",
-      shield: "item_shield",
-      pierce: "item_pierce",
-      bomb: "item_bomb",
-    } as const;
-    void this.sfx.play(itemSoundMap[itemType]);
+    void this.sfx.play(getItemPickupSfxEvent(itemType));
   }
 
   destroy(): void {

@@ -39,11 +39,22 @@ describe("renderPresenter", () => {
     const state = createInitialGameState(GAME_CONFIG, false, "playing");
     const idle = buildHudViewModel(state);
     expect(idle.comboText).toBe("コンボ x1.00");
+    expect(idle.accessibilityText).toBe("表示: 標準");
 
     state.combo.streak = 3;
     state.combo.multiplier = 1.5;
     const active = buildHudViewModel(state);
     expect(active.comboText).toBe("コンボ x1.50");
+  });
+
+  test("includes reduced motion and high contrast status in HUD/ViewState", () => {
+    const state = createInitialGameState(GAME_CONFIG, true, "playing", true);
+    const render = buildRenderViewState(state);
+    const hud = buildHudViewModel(state);
+
+    expect(render.reducedMotion).toBe(true);
+    expect(render.highContrast).toBe(true);
+    expect(hud.accessibilityText).toBe("表示: 動き抑制 / 高コントラスト");
   });
 
   test("builds campaign result list for clear scene", () => {

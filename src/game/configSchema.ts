@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { ItemRule } from "./config";
+import type { ItemRule } from "./config/items";
 import type { ItemType, StageDefinition } from "./types";
 
 const stageDefinitionSchema = z.object({

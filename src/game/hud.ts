@@ -12,6 +12,7 @@ export interface HudElements {
   stage: HTMLSpanElement;
   combo: HTMLSpanElement;
   items: HTMLSpanElement;
+  a11y: HTMLSpanElement;
 }
 
 export function updateHud(hud: HudElements, state: GameState): void {
@@ -27,16 +28,11 @@ export function applyHudViewModel(hud: HudElements, model: HudViewModel, score: 
   hud.stage.textContent = model.stageText;
   hud.combo.textContent = model.comboText;
   hud.items.textContent = model.itemsText;
+  hud.a11y.textContent = model.accessibilityText;
   const hudRoot = hud.score.parentElement;
   if (hudRoot) {
     hudRoot.style.setProperty("--hud-accent", model.accentColor);
   }
-}
-
-export function formatTime(totalSec: number): string {
-  const min = Math.floor(totalSec / 60);
-  const sec = Math.floor(totalSec % 60);
-  return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
 }
 
 function animateScorePop(element: HTMLSpanElement, score: number): void {

@@ -1,138 +1,97 @@
 # Brick Breaker Local
 
-TypeScript + Vite + Canvas で作ったローカル向けブロック崩しです。
-マウス操作中心、物理演算ベースで動作します。
+Bun + Vite + TypeScript + Canvas で作成したローカル向けブロック崩しです。  
+マウス操作を中心に、12ステージキャンペーン、6種アイテム、コンボ、評価、サウンド、開始前設定を備えています。
 
-## 使い方
+## セットアップ
 
 ```bash
-# 依存をインストール
 bun install
-
-# 開発サーバ起動
 bun run dev
-
-# 本番ビルド
-bun run build
-
-# 型チェック（app + test）
-bun run typecheck
-
-# lint / build / typecheck をまとめて実行
-bun run check
-
-# テスト
-bun test
 ```
 
-## 遊び方
+## 開発コマンド
 
-- 左クリック / `Enter` / `Space`: 開始・次ステージ・再開
+```bash
+# 型 + lint + build
+bun run check
+
+# unit/integration tests
+bun test
+
+# e2e tests (Playwright)
+bun run e2e
+```
+
+初回のみ Playwright ブラウザをインストールしてください。
+
+```bash
+bunx playwright install chromium
+```
+
+## 操作
+
+- マウス移動: パドル移動
+- 左クリック / `Enter` / `Space`: 開始・再開・次ステージ
 - `P`: 一時停止 / 再開
-- マウス移動: パドルを左右に移動
 
 ## 開始前設定
 
-- タイトル画面でマウス操作による設定が可能
-  - 難易度: `カジュアル / スタンダード / ハード`（デフォルト: `スタンダード`）
-  - 初期残機: `1..6`
-  - 速度: `75% / 100% / 125%`
-  - マルチボール上限: `2..6`（デフォルト: `4`）
-  - サウンド: `BGM ON/OFF` / `効果音 ON/OFF`
-- 速度設定は「初速 / 最高速」にのみ反映
-- 設定はセッション内のみ（永続保存なし）
-- HUDのアイテム欄は開始時から全種類を表示し、`×0` から所持数を確認可能
+タイトル画面でマウス選択できます。
 
-## サウンド仕様
+- 難易度: `カジュアル / スタンダード / ハード`（デフォルト `スタンダード`）
+- 初期残機: `1..6`
+- 速度: `75% / 100% / 125%`（初速/最高速のみに反映）
+- マルチ上限: `2..6`（デフォルト `4`）
+- サウンド: `BGM ON/OFF` / `効果音 ON/OFF`
 
-- 音源は WebAudio 合成のみ（外部音源ファイルなし）
-- タイトル画面は専用BGMをループ再生
-- プレイ中はステージごとに異なるBGM（12曲）へ切替
-- テーマは `1-3 / 4-6 / 7-9 / 10-12` の4帯域で明確に変化（進行が分かる構成）
-- 開始時/ステージクリア/最終クリア/ゲームオーバーで専用ジングルを再生
-- `BGM OFF` で BGM とジングルを停止
-- `効果音 OFF` で衝突SEとアイテムSEを停止
-- アイテムSEは種類別に固有化（`paddle_plus/slow_ball/multiball/shield/pierce/bomb`）
+## ゲーム仕様
 
-## キャンペーン仕様
+- 12ステージ直線キャンペーン
+- ステージ間で残機を持ち越し（ステージクリアで回復しない）
+- ライフ0で同ステージ再挑戦（ステージ開始スコアへ巻き戻し）
+- コンボ倍率: `1.8s` 窓、`x1.00 -> x3.00`
+- ステージ評価: ★1〜★3（時間/被弾/残機）
+- 9〜12面にエリートブロック（`durable` / `armored`）
 
-- 12ステージの直線キャンペーン
-- ステージクリア時は `STAGE CLEAR` オーバーレイを表示し、次ステージへ進行
-- 最終ステージ（12面）クリアでキャンペーン結果一覧を表示
-- ライフが尽きると同ステージ再挑戦（スコアはそのステージ開始時に巻き戻し）
-- ステージクリア時に星評価（★1〜★3）を表示
-- 9〜12面にはエリートブロック（`durable`/`armored`）を配置
-- 1〜4 / 5〜8 / 9〜12 面でテーマ帯を切り替え
-- ステージクリア時に残機は回復せず、そのまま次ステージへ持ち越し
+## アイテム仕様
 
-## スコア仕様
+- ドロップ率 `18%`、同時落下上限 `3`
+- 種類: `paddle_plus`, `slow_ball`, `multiball`, `shield`, `pierce`, `bomb`
+- スタック加算型（`pierce` と `bomb` は上限1）
+- ステージクリア時はアクティブ効果を次面へ持ち越し（`bomb` は持ち越さない）
+- 全ボール喪失で全効果解除
+- `bomb` / `pierce` 有効中は同種アイテムを再ドロップしない
 
-- ブロック破壊の基本点は `100`
-- コンボ時間窓は `1.8s`
-- 連続破壊で倍率 `+0.25`（`x1.0` 開始、上限 `x3.0`）
-- 落球が発生したフレームでコンボは即リセット
+## アクセシビリティ（自動適用）
 
-## アイテム仕様（落下取得）
+- `prefers-reduced-motion: reduce` を自動反映
+- `prefers-contrast: more` を自動反映
+- HUD に適用状態バッジを表示（`表示: 標準` / `表示: 動き抑制` など）
 
-- ブロック破壊時 `18%` でドロップ判定
-- 同時落下上限 `3`
-- 種類:
-  - `paddle_plus`: パドル幅スタック増加（`1 + 0.18 * stacks`）
-  - `slow_ball`: 速度上限を段階低下（`max(0.35, 0.82^stacks)`）+ 取得直後に減速
-  - `multiball`: スタックで目標球数増加（開始設定で上限を選択）
-  - `shield`: チャージを加算（ミス時に1消費）
-  - `pierce`: 貫通ON/OFF（最大1、重複取得しても増加しない）
-  - `bomb`: 直撃時に範囲破壊（所持上限1）
-- 効果持続は時間制ではなく、ステージクリア後も次ステージへ持ち越し
-- すべてのボールを落としてライフが減るタイミングで全アイテム効果を解除
-- 一部のボールを落としても残ったボールで続行し、自動で多球補充はしない
-- ステージ遷移時は落下中アイテムを破棄し、`bomb` 以外のアクティブ効果を保持
-- `multiball` 持ち越し時は次ステージ開始球数にも反映（開始設定の上限まで）
-- 同種取得は上書きではなくスタック加算
-- `bomb` は所持中に再ドロップしない（全ボール喪失またはステージ遷移で解除後に再び出現）
-- `pierce` も有効中は再ドロップしない
+## サウンド
 
-## 主要モジュール
+- WebAudio合成のみ（外部音源ファイルなし）
+- タイトルBGM + ステージ別BGM（12トラック）
+- 開始/ステージクリア/最終クリア/ゲームオーバーのジングル
+- アイテム6種は個別SE
 
-- `src/game/Game.ts`: オーケストレータ（ループ/入力/遷移の接続）
-- `src/game/gamePipeline.ts`: playing時の1tick処理順序
-- `src/game/gameRuntime.ts`: fixed-step実行と stage clear / life loss 適用
-- `src/audio/audioDirector.ts`: シーン遷移に連動したBGM/ジングル制御
-- `src/audio/bgmSequencer.ts`: WebAudioステップシーケンサ（ループBGM）
-- `src/audio/bgmCatalog.ts`: タイトル + 12ステージBGM定義
-- `src/audio/sfx.ts`: 衝突SE / アイテムSE / ジングル合成
-- `src/game/itemRegistry.ts`: アイテム定義レジストリ（追加拡張ポイント）
-- `src/game/itemSystem.ts`: ドロップ・取得・スタック・多球調整
-- `src/game/physicsCore.ts`: 物理コア（壁/バー/ブロック/貫通/爆発）
-- `src/game/physics.ts`: 互換ラッパーAPI
-- `src/game/renderPresenter.ts`: 描画/HUD/overlay ViewModel 生成
-- `src/game/renderer.ts`: Canvas描画専任
-- `src/game/configSchema.ts`: zodによる設定検証
+## 公開（GitHub Pages）
 
-## 現在の開発状況
+- `vite.config.ts` は GitHub Actions 上で `base: /brick-breaker/` を自動適用
+- Workflow:
+  - CI: `.github/workflows/ci.yml`（`check` + `test` + `e2e`）
+  - Deploy: `.github/workflows/deploy-pages.yml`
 
-- 責務分離リファクタを適用済み（`gamePipeline`/`physicsCore`/`itemRegistry`/`renderPresenter`）
-- ライブラリは最新系へ更新済み（Vite 7 / Biome 2 / XState 5）
-- 品質ゲートは `bun run check` と `bun test` を運用
+GitHub Pages 公開手順:
 
-## 設計ドキュメント
+1. GitHub リポジトリで Pages を `GitHub Actions` に設定
+2. `main` へ push
+3. `Deploy Pages` workflow の完了を確認
 
-- `docs/architecture.md`
-- `docs/refactor-roadmap.md`
-- `docs/ui-improvement-ideas.md`
-- `PLAN.md`
-- `refactor-plan.md`
+## 設計ドキュメント（正本）
 
-## 残タスク（概要）
+- `/Users/sakataka/youtube_speech/ブロック崩し/Brick Breaker/docs/architecture.md`
+- `/Users/sakataka/youtube_speech/ブロック崩し/Brick Breaker/README.md`
 
-- 色覚多様性テーマ / UIアクセシビリティ拡張
-- ステージ評価のセッション履歴表示
-- Web公開向け導線（紹介文・共有素材・デプロイ手順）
-
-詳細は `PLAN.md`, `refactor-plan.md`, `docs/ui-improvement-ideas.md` を参照。
-
-## 補足
-
-- 高解像度表示（高DPR）対応
-- `prefers-reduced-motion` 対応（演出抑制）
-- Bun 前提運用（`bun run dev/build/test`）
+他の計画系ドキュメントは履歴/補助参照で、未完了タスクの正本管理は `docs/architecture.md` の `Open Backlog` に統一しています。

@@ -28,9 +28,14 @@ export interface ItemDefinition {
   type: ItemType;
   label: string;
   hudLabel: string;
+  description: string;
   shortLabel: string;
   color: string;
   weight: number;
+  maxStacks: number;
+  dropSuppressedWhenActive: boolean;
+  hudOrder: number;
+  sfxEvent: ItemPickupSfxEvent;
   applyPickup: (context: ItemEffectContext) => void;
   getLabelStack: (stacks: ItemStackState) => number;
 }
@@ -46,3 +51,11 @@ export interface ItemWeightPicker {
   weighted: ItemWeightEntry[];
   pick: (random: RandomSource) => ItemType;
 }
+
+export type ItemPickupSfxEvent =
+  | "item_paddle_plus"
+  | "item_slow_ball"
+  | "item_multiball"
+  | "item_shield"
+  | "item_pierce"
+  | "item_bomb";

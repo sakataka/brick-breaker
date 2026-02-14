@@ -1,52 +1,27 @@
 # Agent Notes (Brick Breaker)
 
 ## プロジェクト概要
-- ローカル実行の Web ブロック崩し（Bun + Vite + TypeScript + Canvas）
-- 操作はマウス中心
-- 12ステージキャンペーン + アイテムスタック（6種）
-- 全ボール喪失時に全アイテム解除、ステージクリア時はアクティブ効果のみ持ち越し
-- コンボ倍率（1.8秒窓）とステージ星評価（★1〜★3）を実装済み
-- 後半ステージはエリートブロック + テーマ帯差分あり
-- タイトル画面で難易度/残機/速度を設定可能
+- Bun + Vite + TypeScript + Canvas のローカル用ブロック崩し
+- 12ステージキャンペーン、6種アイテム、コンボ、星評価、BGM/SE
+- 開始前設定（難易度/残機/速度/マルチ上限/音設定）あり
+- A11y は自動適用（reduced-motion / high-contrast）
 
 ## 実行コマンド
 - 開発: `bun run dev`
 - ビルド: `bun run build`
-- 型チェック: `bun run typecheck`
 - 品質ゲート: `bun run check`
-- テスト: `bun test`
+- ユニット/統合: `bun test`
+- e2e: `bun run e2e`
 
-## 現行アーキテクチャ
-- `src/game/Game.ts`
-  - オーケストレータ専用（入力/loop/scene連携）。
-- `src/game/gamePipeline.ts`
-  - playing tick の処理順序を管理。
-- `src/game/gameRuntime.ts`
-  - fixed-step ループと stage clear / life loss の適用。
-- `src/game/itemRegistry.ts`
-  - アイテム定義駆動（新アイテム拡張の主入口）。
-- `src/game/physicsCore.ts`
-  - 物理コア（純関数寄り）。
-- `src/game/renderPresenter.ts`
-  - `GameState` -> `RenderViewState/HudViewModel/OverlayViewModel` 変換。
-- `src/game/renderer.ts`
-  - 描画専任。
+## 設計ルール
+1. アイテム仕様は `src/game/itemRegistry.ts` を正本とする。
+2. 設定値は `src/game/config/*` に追加し、`configSchema` 検証を通す。
+3. 描画追加は `renderPresenter` と `renderer/layers/*` をセットで更新する。
+4. `Game.ts` にゲームロジックを直接積み増ししない（systemへ移す）。
+5. 変更後は `bun run check && bun test && bun run e2e` を実行する。
 
-## 変更時の優先ルール
-1. 新アイテムは `itemRegistry` を先に編集する。
-2. 物理ルールは `physicsCore` に集約する。
-3. `Game.ts` に新規ロジックを直接積み増ししない。
-4. 設定追加時は `configSchema` に検証を追加する。
-5. 変更後は `bun run check && bun test` を必ず通す。
+## 正本ドキュメント
+- `/Users/sakataka/youtube_speech/ブロック崩し/Brick Breaker/README.md`
+- `/Users/sakataka/youtube_speech/ブロック崩し/Brick Breaker/docs/architecture.md`
 
-## 参照ドキュメント
-- `docs/architecture.md`
-- `docs/refactor-roadmap.md`
-- `docs/ui-improvement-ideas.md`
-- `PLAN.md`
-- `refactor-plan.md`
-
-## Git 運用メモ
-- リポジトリ: `https://github.com/sakataka/brick-breaker`
-- 既定ブランチ: `main`
-- 変更は小さく分割し、テスト通過後にコミットする。
+未完了タスクは `docs/architecture.md` の `Open Backlog` のみ参照。

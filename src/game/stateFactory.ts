@@ -52,7 +52,12 @@ export function createServeBall(
   };
 }
 
-export function createInitialGameState(config: GameConfig, reducedMotion: boolean, scene: Scene): GameState {
+export function createInitialGameState(
+  config: GameConfig,
+  reducedMotion: boolean,
+  scene: Scene,
+  highContrast = false,
+): GameState {
   const stage = getStageByIndex(0);
   const stageSpeed = config.initialBallSpeed * stage.speedScale;
   const paddle = createBasePaddle(config);
@@ -84,6 +89,10 @@ export function createInitialGameState(config: GameConfig, reducedMotion: boolea
     items: createItemState(),
     assist: createAssistState(config),
     vfx: createVfxState(reducedMotion),
+    a11y: {
+      reducedMotion,
+      highContrast,
+    },
     errorMessage: null,
   };
 }

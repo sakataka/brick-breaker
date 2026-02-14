@@ -114,6 +114,7 @@ export interface RuntimeState {
   items: ItemState;
   assist: AssistState;
   vfx: VfxState;
+  a11y: A11yState;
 }
 
 export type GameState = GameSceneState & ProgressState & RuntimeState;
@@ -135,4 +136,9 @@ export interface StageStats {
   clearedAtSec?: number;
   starRating?: 1 | 2 | 3;
   ratingScore?: number;
+}
+
+export interface A11yState {
+  reducedMotion: boolean;
+  highContrast: boolean;
 }

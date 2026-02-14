@@ -1,6 +1,8 @@
 import { AudioDirector } from "../audio/audioDirector";
 import { SfxManager } from "../audio/sfx";
 import { type OverlayElements, readStartSettings } from "../ui/overlay";
+import { readAccessibility } from "./a11y";
+import { syncAudioScene } from "./audioSync";
 import { buildStartConfig, GAME_CONFIG } from "./config";
 import { computeFrameDelta, handleBallLoss, handleStageClear, runPlayingLoop } from "./gameRuntime";
 import { renderGameFrame, syncSceneOverlayUI } from "./gameUi";
@@ -12,6 +14,7 @@ import { defaultRandomSource } from "./random";
 import { Renderer } from "./renderer";
 import { advanceStage, resetRoundState } from "./roundSystem";
 import { type SceneEvent, SceneMachine } from "./sceneMachine";
+import { applySceneTransition, type SceneTransitionResult } from "./sceneSync";
 import { createInitialGameState } from "./stateFactory";
 import type { GameAudioSettings, GameConfig, GameState, RandomSource, Scene } from "./types";
 import { nextDensityScale, updateVfxState } from "./vfxSystem";
@@ -37,6 +40,8 @@ export class Game {
   private readonly documentRef: Document;
   private readonly windowRef: Window;
   private readonly lifecycle: LifecycleController;
+  private readonly reducedMotionQuery: MediaQueryList;
+  private readonly highContrastQuery: MediaQueryList;
   private state: GameState;
   private audioSettings: GameAudioSettings = {
     bgmEnabled: true,
@@ -60,9 +65,16 @@ export class Game {
     this.random = deps.random ?? defaultRandomSource;
     this.documentRef = deps.documentRef ?? document;
     this.windowRef = deps.windowRef ?? window;
-    const reducedMotion = this.windowRef.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    this.reducedMotionQuery = this.windowRef.matchMedia("(prefers-reduced-motion: reduce)");
+    this.highContrastQuery = this.windowRef.matchMedia("(prefers-contrast: more)");
+    const a11y = readAccessibility(this.windowRef);
     this.renderer = new Renderer(context, this.config);
-    this.state = createInitialGameState(this.config, reducedMotion, this.sceneMachine.value);
+    this.state = createInitialGameState(
+      this.config,
+      a11y.reducedMotion,
+      this.sceneMachine.value,
+      a11y.highContrast,
+    );
     this.input = new InputController({
       moveByMouseX: (clientX) => this.movePaddleByMouse(clientX),
       pauseToggle: () => this.togglePause(),
@@ -78,6 +90,7 @@ export class Game {
     this.runSafely(() => {
       this.adjustCanvasScale();
       this.bindOverlay();
+      this.bindA11yListeners();
       this.lifecycle.bind();
       this.audioDirector.setSettings(this.audioSettings);
       this.audioDirector.notifyStageChanged(this.state.campaign.stageIndex);
@@ -103,6 +116,7 @@ export class Game {
     this.isRunning = false;
     this.input.detach();
     this.lifecycle.unbind();
+    this.unbindA11yListeners();
     this.audioDirector.destroy();
     this.sceneMachine.stop();
   }
@@ -111,9 +125,8 @@ export class Game {
     this.overlay.button.addEventListener("click", () => {
       if (this.state.scene === "error") return this.windowRef.location.reload();
       if (this.state.scene === "clear") {
-        const previous = this.state.scene;
-        this.transition({ type: "BACK_TO_START" });
-        this.syncAudioScene(previous);
+        const result = this.transition({ type: "BACK_TO_START" });
+        this.syncAudioForTransition(result);
         syncSceneOverlayUI(this.overlay, this.state);
         return;
       }
@@ -124,46 +137,45 @@ export class Game {
 
   private startOrResume(): void {
     void this.audioDirector.unlock().catch(() => {});
-    const previous = this.state.scene;
-    if (previous === "clear") {
-      this.transition({ type: "BACK_TO_START" });
-      this.syncAudioScene(previous);
+    if (this.state.scene === "clear") {
+      const result = this.transition({ type: "BACK_TO_START" });
+      this.syncAudioForTransition(result);
       syncSceneOverlayUI(this.overlay, this.state);
       return;
     }
-    if (previous === "start") {
+    if (this.state.scene === "start") {
       this.applyStartSettings();
     }
-    if (this.transition({ type: "START_OR_RESUME" }) !== "playing") {
-      this.syncAudioScene(previous);
+
+    const result = this.transition({ type: "START_OR_RESUME" });
+    if (result.next !== "playing") {
+      this.syncAudioForTransition(result);
       return;
     }
-    if (previous === "start") {
+
+    if (result.previous === "start") {
       resetRoundState(this.state, this.config, this.state.vfx.reducedMotion, this.random);
-    } else if (previous === "stageclear") {
+    } else if (result.previous === "stageclear") {
       advanceStage(this.state, this.config, this.random);
     }
     this.lastFrameTime = 0;
     this.accumulator = 0;
-    this.syncAudioScene(previous);
+    this.syncAudioForTransition(result);
     syncSceneOverlayUI(this.overlay, this.state);
   }
 
   private togglePause(): void {
     void this.audioDirector.unlock().catch(() => {});
-    const previous = this.state.scene;
-    const next = this.transition({ type: "TOGGLE_PAUSE" });
-    if (previous === "paused" && next === "playing") {
+    const result = this.transition({ type: "TOGGLE_PAUSE" });
+    if (result.previous === "paused" && result.next === "playing") {
       this.lastFrameTime = 0;
       this.accumulator = 0;
     }
-    this.syncAudioScene(previous);
+    this.syncAudioForTransition(result);
   }
 
-  private transition(event: SceneEvent): Scene {
-    const next = this.sceneMachine.send(event);
-    if (next !== this.state.scene) this.state.scene = next;
-    return next;
+  private transition(event: SceneEvent): SceneTransitionResult {
+    return applySceneTransition(this.state, this.sceneMachine, event);
   }
 
   private loop = (timeMs: number): void => {
@@ -204,15 +216,20 @@ export class Game {
   };
 
   private handleStageClear(): void {
-    const previous = this.state.scene;
-    handleStageClear(this.state, this.config, (event) => this.transition({ type: event }));
-    this.syncAudioScene(previous);
+    let transitionResult: SceneTransitionResult | null = null;
+    handleStageClear(this.state, this.config, (event) => {
+      transitionResult = this.transition({ type: event });
+    });
+    if (transitionResult) {
+      this.syncAudioForTransition(transitionResult);
+    }
   }
 
   private handleBallLoss(): void {
-    const previous = this.state.scene;
-    handleBallLoss(this.state, this.config, this.random, () => this.transition({ type: "GAME_OVER" }));
-    this.syncAudioScene(previous);
+    handleBallLoss(this.state, this.config, this.random, () => {
+      const result = this.transition({ type: "GAME_OVER" });
+      this.syncAudioForTransition(result);
+    });
   }
 
   private movePaddleByMouse(clientX: number): void {
@@ -253,9 +270,8 @@ export class Game {
     this.isRunning = false;
     this.state.errorMessage = message;
     this.input.detach();
-    const previous = this.state.scene;
-    this.transition({ type: "RUNTIME_ERROR" });
-    this.syncAudioScene(previous);
+    const result = this.transition({ type: "RUNTIME_ERROR" });
+    this.syncAudioForTransition(result);
     try {
       renderGameFrame(this.renderer, this.hud, this.state);
       syncSceneOverlayUI(this.overlay, this.state);
@@ -272,11 +288,53 @@ export class Game {
     this.audioDirector.setSettings(this.audioSettings);
   }
 
-  private syncAudioScene(previousScene: Scene): void {
-    if (previousScene === this.state.scene) {
-      return;
-    }
-    this.audioDirector.notifyStageChanged(this.state.campaign.stageIndex);
-    this.audioDirector.syncScene(this.state.scene, previousScene);
+  private syncAudioForTransition(result: SceneTransitionResult): void {
+    syncAudioScene(this.audioDirector, result.previous, result.next, this.state.campaign.stageIndex);
   }
+
+  private bindA11yListeners(): void {
+    addMediaListener(this.reducedMotionQuery, this.handleAccessibilityChange);
+    addMediaListener(this.highContrastQuery, this.handleAccessibilityChange);
+  }
+
+  private unbindA11yListeners(): void {
+    removeMediaListener(this.reducedMotionQuery, this.handleAccessibilityChange);
+    removeMediaListener(this.highContrastQuery, this.handleAccessibilityChange);
+  }
+
+  private handleAccessibilityChange = (): void => {
+    this.applyAccessibilitySnapshot();
+    renderGameFrame(this.renderer, this.hud, this.state);
+  };
+
+  private applyAccessibilitySnapshot(): void {
+    const snapshot = readAccessibility(this.windowRef);
+    this.state.a11y.reducedMotion = snapshot.reducedMotion;
+    this.state.a11y.highContrast = snapshot.highContrast;
+    this.state.vfx.reducedMotion = snapshot.reducedMotion;
+  }
+
+  debugForceScene(scene: Scene): void {
+    const previous = this.state.scene;
+    this.state.scene = scene;
+    syncAudioScene(this.audioDirector, previous, this.state.scene, this.state.campaign.stageIndex);
+    renderGameFrame(this.renderer, this.hud, this.state);
+    syncSceneOverlayUI(this.overlay, this.state);
+  }
+}
+
+function addMediaListener(query: MediaQueryList, handler: () => void): void {
+  if (typeof query.addEventListener === "function") {
+    query.addEventListener("change", handler);
+    return;
+  }
+  query.addListener(handler);
+}
+
+function removeMediaListener(query: MediaQueryList, handler: () => void): void {
+  if (typeof query.removeEventListener === "function") {
+    query.removeEventListener("change", handler);
+    return;
+  }
+  query.removeListener(handler);
 }

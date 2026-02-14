@@ -2,6 +2,7 @@ import { getThemeBandByStageIndex } from "./config";
 import { getActiveItemLabels } from "./itemSystem";
 import type { HudViewModel, OverlayViewModel, RenderViewState } from "./renderTypes";
 import { getStageClearTimeSec } from "./roundSystem";
+import { formatTime } from "./time";
 import type { GameState } from "./types";
 
 export function buildRenderViewState(state: GameState): RenderViewState {
@@ -28,6 +29,7 @@ export function buildRenderViewState(state: GameState): RenderViewState {
     floatingTexts: state.vfx.floatingTexts,
     flashMs: state.vfx.flashMs,
     reducedMotion: state.vfx.reducedMotion,
+    highContrast: state.a11y.highContrast,
     shake: {
       active: !state.vfx.reducedMotion && state.vfx.shakeMs > 0 && state.vfx.shakePx > 0,
       offset: state.vfx.shakeOffset,
@@ -53,6 +55,7 @@ export function buildHudViewModel(state: GameState): HudViewModel {
     stageText: `ステージ: ${state.campaign.stageIndex + 1}/${state.campaign.totalStages}`,
     comboText: comboVisible ? `コンボ x${state.combo.multiplier.toFixed(2)}` : "コンボ x1.00",
     itemsText: `アイテム: ${activeItems.join(" / ")}`,
+    accessibilityText: buildAccessibilityBadge(state),
     accentColor: comboVisible ? COMBO_ACTIVE_COLOR : themeBand.hudAccent,
   };
 }
@@ -93,8 +96,13 @@ export function buildOverlayViewModel(state: GameState): OverlayViewModel {
 
 const COMBO_ACTIVE_COLOR = "#ffd46b";
 
-function formatTime(totalSec: number): string {
-  const min = Math.floor(totalSec / 60);
-  const sec = Math.floor(totalSec % 60);
-  return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+function buildAccessibilityBadge(state: GameState): string {
+  const flags: string[] = [];
+  if (state.a11y.reducedMotion) {
+    flags.push("動き抑制");
+  }
+  if (state.a11y.highContrast) {
+    flags.push("高コントラスト");
+  }
+  return flags.length > 0 ? `表示: ${flags.join(" / ")}` : "表示: 標準";
 }
