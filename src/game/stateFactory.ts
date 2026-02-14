@@ -1,5 +1,5 @@
 import { createAssistState } from "./assistSystem";
-import { getGameplayBalance, getStageByIndex, STAGE_CATALOG } from "./config";
+import { getGameplayBalance, getStageByIndex, getStageTimeTargetSec, STAGE_CATALOG } from "./config";
 import { createItemState } from "./itemSystem";
 import { buildBricksFromStage } from "./level";
 import { clamp } from "./math";
@@ -76,6 +76,7 @@ export function createInitialGameState(
     stageStats: {
       hitsTaken: 0,
       startedAtSec: 0,
+      missionTargetSec: getStageTimeTargetSec(0),
     },
     balls: [ball],
     paddle,

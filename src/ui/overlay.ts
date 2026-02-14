@@ -230,7 +230,8 @@ function formatStageResult(stageResult: StageResultView | undefined): string {
     return "";
   }
   const stars = "★".repeat(stageResult.stars);
-  return ` / 評価 ${stars} (${stageResult.ratingScore}) ・時間 ${stageResult.clearTime} ・被弾 ${stageResult.hitsTaken} ・残機 ${stageResult.livesLeft}`;
+  const missionText = stageResult.missionAchieved ? "達成" : "未達";
+  return ` / 評価 ${stars} (${stageResult.ratingScore}) ・時間 ${stageResult.clearTime} ・被弾 ${stageResult.hitsTaken} ・残機 ${stageResult.livesLeft} ・ミッション 制限時間 ${stageResult.missionTargetTime} 以内: ${missionText}`;
 }
 
 function renderCampaignResults(listElement: HTMLUListElement, results: StageResultSummaryView[]): void {
@@ -246,7 +247,8 @@ function renderCampaignResults(listElement: HTMLUListElement, results: StageResu
   for (const result of results) {
     const item = doc.createElement("li");
     const stars = "★".repeat(result.stars);
-    item.textContent = `ステージ ${result.stageNumber}: ${stars} (${result.ratingScore}) / 時間 ${result.clearTime} / 残機 ${result.livesLeft}`;
+    const missionText = result.missionAchieved ? "達成" : "未達";
+    item.textContent = `ステージ ${result.stageNumber}: ${stars} (${result.ratingScore}) / 時間 ${result.clearTime} / 残機 ${result.livesLeft} / ミッション ${result.missionTargetTime} 以内: ${missionText}`;
     listElement.append(item);
   }
 }

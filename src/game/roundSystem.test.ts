@@ -169,7 +169,22 @@ describe("roundSystem", () => {
     expect(state.stageStats.starRating).toBe(3);
     expect(typeof state.stageStats.ratingScore).toBe("number");
     expect(getStageClearTimeSec(state)).toBe(64);
+    expect(state.stageStats.missionTargetSec).toBeGreaterThan(0);
+    expect(state.stageStats.missionAchieved).toBe(true);
     expect(state.campaign.results[0]?.stageNumber).toBe(1);
     expect(state.campaign.results[0]?.clearTimeSec).toBe(64);
+    expect(state.campaign.results[0]?.missionAchieved).toBe(true);
+  });
+
+  test("finalizeStageStats marks mission failed when clear time exceeds target", () => {
+    const state = createInitialGameState(GAME_CONFIG, false, "playing");
+    resetRoundState(state, GAME_CONFIG, false, fixedRandom);
+    state.stageStats.startedAtSec = 0;
+    state.elapsedSec = 180;
+
+    finalizeStageStats(state);
+
+    expect(state.stageStats.missionAchieved).toBe(false);
+    expect(state.campaign.results[0]?.missionAchieved).toBe(false);
   });
 });

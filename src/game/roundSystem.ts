@@ -51,6 +51,7 @@ function buildStageRound(
   state.stageStats = {
     hitsTaken: 0,
     startedAtSec: state.elapsedSec,
+    missionTargetSec: getStageTimeTargetSec(state.campaign.stageIndex),
   };
 }
 
@@ -132,10 +133,14 @@ export function finalizeStageStats(state: GameState): void {
   const clearTimeSec = Math.max(0, state.elapsedSec - state.stageStats.startedAtSec);
   const ratingScore = computeStageRatingScore(state, clearTimeSec);
   const stars = getStarRatingByScore(ratingScore);
+  const missionTargetSec = getStageTimeTargetSec(state.campaign.stageIndex);
+  const missionAchieved = clearTimeSec <= missionTargetSec;
   state.stageStats.clearedAtSec = state.elapsedSec;
   state.stageStats.ratingScore = ratingScore;
   state.stageStats.starRating = stars;
-  upsertCampaignStageResult(state, clearTimeSec, stars, ratingScore);
+  state.stageStats.missionTargetSec = missionTargetSec;
+  state.stageStats.missionAchieved = missionAchieved;
+  upsertCampaignStageResult(state, clearTimeSec, stars, ratingScore, missionTargetSec, missionAchieved);
 }
 
 export function getStageClearTimeSec(state: GameState): number | null {
@@ -181,6 +186,8 @@ function upsertCampaignStageResult(
   clearTimeSec: number,
   stars: 1 | 2 | 3,
   ratingScore: number,
+  missionTargetSec: number,
+  missionAchieved: boolean,
 ): void {
   const stageNumber = state.campaign.stageIndex + 1;
   const entry = {
@@ -189,6 +196,8 @@ function upsertCampaignStageResult(
     stars,
     ratingScore,
     livesAtClear: state.lives,
+    missionTargetSec,
+    missionAchieved,
   };
   const existing = state.campaign.results.findIndex((result) => result.stageNumber === stageNumber);
   if (existing >= 0) {

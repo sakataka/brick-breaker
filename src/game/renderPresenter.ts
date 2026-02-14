@@ -79,6 +79,8 @@ export function buildOverlayViewModel(state: GameState): OverlayViewModel {
             clearTime: formatTime(clearSec),
             hitsTaken: state.stageStats.hitsTaken,
             livesLeft: state.lives,
+            missionTargetTime: formatTime(state.stageStats.missionTargetSec),
+            missionAchieved: state.stageStats.missionAchieved ?? false,
           }
         : undefined,
     campaignResults:
@@ -89,6 +91,8 @@ export function buildOverlayViewModel(state: GameState): OverlayViewModel {
             ratingScore: result.ratingScore,
             clearTime: formatTime(result.clearTimeSec),
             livesLeft: result.livesAtClear,
+            missionTargetTime: formatTime(result.missionTargetSec),
+            missionAchieved: result.missionAchieved,
           }))
         : undefined,
   };

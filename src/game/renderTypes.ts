@@ -61,6 +61,8 @@ export interface StageResultView {
   clearTime: string;
   hitsTaken: number;
   livesLeft: number;
+  missionTargetTime: string;
+  missionAchieved: boolean;
 }
 
 export interface StageResultSummaryView {
@@ -69,4 +71,6 @@ export interface StageResultSummaryView {
   ratingScore: number;
   clearTime: string;
   livesLeft: number;
+  missionTargetTime: string;
+  missionAchieved: boolean;
 }

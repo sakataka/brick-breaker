@@ -68,6 +68,8 @@ export interface StageResultEntry {
   stars: 1 | 2 | 3;
   ratingScore: number;
   livesAtClear: number;
+  missionTargetSec: number;
+  missionAchieved: boolean;
 }
 
 export interface FallingItem {
@@ -133,6 +135,8 @@ export interface ComboState {
 export interface StageStats {
   hitsTaken: number;
   startedAtSec: number;
+  missionTargetSec: number;
+  missionAchieved?: boolean;
   clearedAtSec?: number;
   starRating?: 1 | 2 | 3;
   ratingScore?: number;

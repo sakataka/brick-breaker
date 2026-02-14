@@ -30,7 +30,10 @@ describe("renderPresenter", () => {
     finalizeStageStats(state);
 
     state.scene = "stageclear";
-    expect(buildOverlayViewModel(state).stageResult?.stars).toBe(3);
+    const stageClearView = buildOverlayViewModel(state);
+    expect(stageClearView.stageResult?.stars).toBe(3);
+    expect(stageClearView.stageResult?.missionAchieved).toBe(true);
+    expect(stageClearView.stageResult?.missionTargetTime).toBe("01:32");
     state.scene = "clear";
     expect(buildOverlayViewModel(state).stageResult?.clearTime).toBe("00:52");
   });
@@ -76,5 +79,6 @@ describe("renderPresenter", () => {
     expect(view.campaignResults).toHaveLength(2);
     expect(view.campaignResults?.[0]?.stageNumber).toBe(1);
     expect(view.campaignResults?.[1]?.stageNumber).toBe(2);
+    expect(view.campaignResults?.[0]?.missionAchieved).toBe(true);
   });
 });
