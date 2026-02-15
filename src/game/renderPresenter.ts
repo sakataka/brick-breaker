@@ -67,6 +67,11 @@ export function buildHudViewModel(state: GameState): HudViewModel {
   const modifierText = modifierLabel ? ` / 修飾:${modifierLabel}` : "";
   const warpLegend = stageModifier?.warpZones?.length ? " / ワープ: 青=入口 / 黄=出口" : "";
   const riskText = state.options.riskMode ? " / 🔥リスクx1.35" : "";
+  const debugText = state.options.debugModeEnabled
+    ? state.options.debugRecordResults
+      ? " / 🧪DEBUG"
+      : " / 🧪DEBUG(記録OFF)"
+    : "";
   const rogueText =
     state.rogue.upgradesTaken > 0 ? ` / 強化:${state.rogue.upgradesTaken}/${ROGUE_CONFIG.maxUpgrades}` : "";
   const magicText =
@@ -77,7 +82,7 @@ export function buildHudViewModel(state: GameState): HudViewModel {
     scoreText: `スコア: ${state.score}`,
     livesText: `残機: ${state.lives}`,
     timeText: `時間: ${formatTime(state.elapsedSec)}`,
-    stageText: `ステージ: ${state.campaign.stageIndex + 1}/${state.campaign.totalStages}${routeLabel}${modifierText}${bossStageText}`,
+    stageText: `ステージ: ${state.campaign.stageIndex + 1}/${state.campaign.totalStages}${routeLabel}${modifierText}${bossStageText}${debugText}`,
     comboText: comboVisible ? `コンボ x${state.combo.multiplier.toFixed(2)}` : "コンボ x1.00",
     itemsText: `アイテム: ${activeItems.join(" / ")}${hazardBoostActive ? " / ⚠危険加速中" : ""}${pierceSlowSynergy ? " / ✨貫通+1" : ""}${riskText}${rogueText}${magicText}${warpLegend}`,
     accessibilityText: buildAccessibilityBadge(state),
@@ -97,13 +102,20 @@ function buildBossHudText(state: GameState): string {
 
 export function buildOverlayViewModel(state: GameState): OverlayViewModel {
   const clearSec = getStageClearTimeSec(state);
+  const debugBadge = state.options.debugModeEnabled
+    ? state.options.debugRecordResults
+      ? "DEBUG"
+      : "DEBUG 記録OFF"
+    : undefined;
+  const stageLabelPrefix = debugBadge ? `[${debugBadge}] ` : "";
   return {
     scene: state.scene,
     score: state.score,
     lives: state.lives,
     clearTime: state.scene === "clear" ? formatTime(state.elapsedSec) : undefined,
     errorMessage: state.errorMessage ?? undefined,
-    stageLabel: `ステージ ${state.campaign.stageIndex + 1} / ${state.campaign.totalStages}`,
+    debugBadge,
+    stageLabel: `${stageLabelPrefix}ステージ ${state.campaign.stageIndex + 1} / ${state.campaign.totalStages}`,
     stageResult:
       typeof state.stageStats.starRating === "number" &&
       typeof state.stageStats.ratingScore === "number" &&

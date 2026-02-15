@@ -11,6 +11,12 @@ describe("app store", () => {
         routePreference: "auto",
         multiballMaxBalls: 4,
         riskMode: false,
+        enableNewItemStacks: false,
+        debugModeEnabled: false,
+        debugStartStage: 1,
+        debugScenario: "normal",
+        debugItemPreset: "none",
+        debugRecordResults: false,
         challengeMode: false,
         dailyMode: false,
         bgmEnabled: true,
@@ -35,6 +41,9 @@ describe("app store", () => {
     expect(state.startSettings.speedPreset).toBe("1.25");
     expect(state.startSettings.difficulty).toBe("hard");
     expect(state.startSettings.bgmEnabled).toBe(true);
+    expect(state.startSettings.debugModeEnabled).toBe(false);
+    expect(state.startSettings.debugStartStage).toBe(1);
+    expect(state.startSettings.debugRecordResults).toBe(false);
   });
 
   test("routes UI trigger callbacks through registered handlers", () => {

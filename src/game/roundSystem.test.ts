@@ -31,6 +31,15 @@ describe("roundSystem", () => {
     expect(state.balls).toHaveLength(1);
   });
 
+  test("resetRoundState can start from a specific stage index", () => {
+    const state = createInitialGameState(GAME_CONFIG, false, "start");
+    resetRoundState(state, GAME_CONFIG, false, fixedRandom, { startStageIndex: 10 });
+
+    expect(state.campaign.stageIndex).toBe(10);
+    expect(state.stageStats.missionTargetSec).toBeGreaterThan(0);
+    expect(state.bricks.length).toBeGreaterThan(0);
+  });
+
   test("resetRoundState uses configured initial lives", () => {
     const customConfig = {
       ...GAME_CONFIG,
@@ -200,6 +209,18 @@ describe("roundSystem", () => {
 
     expect(state.stageStats.missionAchieved).toBe(false);
     expect(state.campaign.results[0]?.missionAchieved).toBe(false);
+  });
+
+  test("finalizeStageStats can skip persisting campaign results", () => {
+    const state = createInitialGameState(GAME_CONFIG, false, "playing");
+    resetRoundState(state, GAME_CONFIG, false, fixedRandom);
+    state.stageStats.startedAtSec = 0;
+    state.elapsedSec = 40;
+
+    finalizeStageStats(state, false);
+
+    expect(state.stageStats.starRating).toBeDefined();
+    expect(state.campaign.results).toHaveLength(0);
   });
 
   test("checkpoint stage prepares rogue upgrade offer", () => {

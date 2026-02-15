@@ -10,6 +10,7 @@ import {
 import type {
   Ball,
   CollisionEvent,
+  DebugItemPreset,
   FallingItem,
   ItemState,
   ItemType,
@@ -19,6 +20,11 @@ import type {
 } from "./types";
 
 const ITEM_SIZE = 16;
+const NEW_STACK_ITEM_TYPES = new Set<ItemType>(["laser", "sticky"]);
+
+export interface ItemPickupOptions {
+  enableNewItemStacks?: boolean;
+}
 
 export function createItemState(): ItemState {
   return {
@@ -86,8 +92,47 @@ export function consumeShield(items: ItemState): boolean {
   return true;
 }
 
-export function applyItemPickup(items: ItemState, type: ItemType, balls: Ball[]): void {
+export function applyItemPickup(
+  items: ItemState,
+  type: ItemType,
+  balls: Ball[],
+  options: ItemPickupOptions = {},
+): void {
+  if (options.enableNewItemStacks === false && NEW_STACK_ITEM_TYPES.has(type)) {
+    if (type === "laser") {
+      items.active.laserStacks = 1;
+      return;
+    }
+    if (type === "sticky") {
+      items.active.stickyStacks = 1;
+      return;
+    }
+  }
   applyItemPickupFromRegistry(items, type, balls);
+}
+
+export function applyDebugItemPreset(
+  items: ItemState,
+  preset: DebugItemPreset,
+  enableNewItemStacks: boolean,
+): void {
+  items.active = createItemStacks();
+  if (preset === "none") {
+    return;
+  }
+  if (preset === "combat_check") {
+    items.active.paddlePlusStacks = 1;
+    items.active.slowBallStacks = 1;
+    items.active.multiballStacks = 1;
+    items.active.shieldCharges = 1;
+    return;
+  }
+
+  items.active.shieldCharges = 2;
+  items.active.pierceStacks = 1;
+  items.active.bombStacks = 1;
+  items.active.laserStacks = enableNewItemStacks ? 2 : 1;
+  items.active.stickyStacks = 1;
 }
 
 export function spawnDropsFromBrickEvents(

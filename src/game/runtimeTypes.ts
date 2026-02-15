@@ -168,7 +168,15 @@ export interface HazardState {
 
 export interface RunOptions {
   riskMode: boolean;
+  enableNewItemStacks: boolean;
+  debugModeEnabled: boolean;
+  debugRecordResults: boolean;
+  debugScenario: DebugScenario;
+  debugItemPreset: DebugItemPreset;
 }
+
+export type DebugScenario = "normal" | "enemy_check" | "boss_check";
+export type DebugItemPreset = "none" | "combat_check" | "boss_check";
 
 export interface ShopState {
   usedThisStage: boolean;

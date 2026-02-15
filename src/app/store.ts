@@ -1,7 +1,13 @@
 import { create } from "zustand";
 import { GAME_CONFIG, type SpeedPreset } from "../game/config";
 import type { HudViewModel, OverlayViewModel } from "../game/renderTypes";
-import type { Difficulty, RogueUpgradeType, RoutePreference } from "../game/types";
+import type {
+  DebugItemPreset,
+  DebugScenario,
+  Difficulty,
+  RogueUpgradeType,
+  RoutePreference,
+} from "../game/types";
 
 export interface GameSettings {
   difficulty: Difficulty;
@@ -10,6 +16,12 @@ export interface GameSettings {
   routePreference: RoutePreference;
   multiballMaxBalls: number;
   riskMode: boolean;
+  enableNewItemStacks: boolean;
+  debugModeEnabled: boolean;
+  debugStartStage: number;
+  debugScenario: DebugScenario;
+  debugItemPreset: DebugItemPreset;
+  debugRecordResults: boolean;
   challengeMode: boolean;
   dailyMode: boolean;
 }
@@ -90,6 +102,12 @@ const DEFAULT_SETTINGS: StartSettingsSelection = {
   routePreference: "auto",
   multiballMaxBalls: GAME_CONFIG.multiballMaxBalls,
   riskMode: false,
+  enableNewItemStacks: false,
+  debugModeEnabled: false,
+  debugStartStage: 1,
+  debugScenario: "normal",
+  debugItemPreset: "none",
+  debugRecordResults: false,
   challengeMode: false,
   dailyMode: false,
   bgmEnabled: true,

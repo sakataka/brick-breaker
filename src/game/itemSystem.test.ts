@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  applyDebugItemPreset,
   applyItemPickup,
   canUseShield,
   clearActiveItemEffects,
@@ -210,6 +211,46 @@ describe("itemSystem", () => {
     expect(items.active.stickyStacks).toBe(1);
     expect(getLaserLevel(items)).toBe(2);
     expect(isStickyEnabled(items)).toBe(true);
+  });
+
+  test("new item stacking can be disabled per pickup option", () => {
+    const items = createItemState();
+    applyItemPickup(items, "laser", [createBall()], { enableNewItemStacks: false });
+    applyItemPickup(items, "laser", [createBall()], { enableNewItemStacks: false });
+
+    expect(items.active.laserStacks).toBe(1);
+    expect(getLaserLevel(items)).toBe(1);
+  });
+
+  test("debug presets apply expected stacks", () => {
+    const items = createItemState();
+
+    applyDebugItemPreset(items, "combat_check", false);
+    expect(items.active.paddlePlusStacks).toBe(1);
+    expect(items.active.slowBallStacks).toBe(1);
+    expect(items.active.multiballStacks).toBe(1);
+    expect(items.active.shieldCharges).toBe(1);
+
+    applyDebugItemPreset(items, "boss_check", false);
+    expect(items.active.shieldCharges).toBe(2);
+    expect(items.active.pierceStacks).toBe(1);
+    expect(items.active.bombStacks).toBe(1);
+    expect(items.active.laserStacks).toBe(1);
+    expect(items.active.stickyStacks).toBe(1);
+
+    applyDebugItemPreset(items, "boss_check", true);
+    expect(items.active.laserStacks).toBe(2);
+
+    applyDebugItemPreset(items, "none", true);
+    expect(items.active.multiballStacks).toBe(0);
+    expect(items.active.shieldCharges).toBe(0);
+  });
+
+  test("combat debug preset can expand balls via multiball target", () => {
+    const items = createItemState();
+    applyDebugItemPreset(items, "combat_check", true);
+    const balls = ensureMultiballCount(items, [createBall()], sequenceRandom([0.5, 0.2, 0.7]), 4);
+    expect(balls).toHaveLength(2);
   });
 
   test("clearActiveItemEffects resets all active stacks", () => {

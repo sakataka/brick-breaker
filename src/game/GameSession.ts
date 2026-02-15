@@ -1,4 +1,4 @@
-import { appStore, type ShopViewState } from "../app/store";
+import { appStore, type ShopViewState, type StartSettingsSelection } from "../app/store";
 import { AudioDirector } from "../audio/audioDirector";
 import { SfxManager } from "../audio/sfx";
 import { CoreEngine } from "../core/engine";
@@ -8,7 +8,7 @@ import { readAccessibility } from "./a11y";
 import { syncAudioScene } from "./audioSync";
 import { buildStartConfig, GAME_CONFIG, SHOP_CONFIG } from "./config";
 import { getDailyChallenge } from "./dailyChallenge";
-import { applyItemPickup, ensureMultiballCount } from "./itemSystem";
+import { applyDebugItemPreset, applyItemPickup, ensureMultiballCount } from "./itemSystem";
 import { LifecycleController } from "./lifecycle";
 import { clamp } from "./math";
 import { createSeededRandomSource, defaultRandomSource } from "./random";
@@ -54,6 +54,7 @@ export class GameSession {
     bgmEnabled: true,
     sfxEnabled: true,
   };
+  private pendingStartStageIndex = 0;
   private isRunning = false;
   private destroyed = false;
 
@@ -211,7 +212,10 @@ export class GameSession {
     }
 
     if (result.previous === "start") {
-      resetRoundState(this.state, this.config, this.state.vfx.reducedMotion, this.random);
+      resetRoundState(this.state, this.config, this.state.vfx.reducedMotion, this.random, {
+        startStageIndex: this.pendingStartStageIndex,
+      });
+      this.applyDebugPreset();
     } else if (result.previous === "story") {
       this.state.story.activeStageNumber = null;
     }
@@ -316,7 +320,9 @@ export class GameSession {
     this.state.score -= SHOP_CONFIG.purchaseCost;
     this.state.shop.usedThisStage = true;
     this.state.shop.lastChosen = picked;
-    applyItemPickup(this.state.items, picked, this.state.balls);
+    applyItemPickup(this.state.items, picked, this.state.balls, {
+      enableNewItemStacks: this.state.options.enableNewItemStacks,
+    });
     if (picked === "multiball") {
       this.state.balls = ensureMultiballCount(
         this.state.items,
@@ -389,7 +395,43 @@ export class GameSession {
     };
     this.audioPort.setSettings(this.audioSettings);
     this.state.options.riskMode = selected.riskMode;
+    this.state.options.enableNewItemStacks = selected.enableNewItemStacks;
+    this.state.options.debugModeEnabled = selected.debugModeEnabled;
+    this.state.options.debugRecordResults = selected.debugRecordResults;
+    this.state.options.debugScenario = selected.debugScenario;
+    this.state.options.debugItemPreset = selected.debugItemPreset;
+    this.pendingStartStageIndex = this.resolveStartStageIndex(selected);
     this.state.campaign.routePreference = selected.routePreference;
+  }
+
+  private resolveStartStageIndex(selected: StartSettingsSelection): number {
+    if (!selected.debugModeEnabled) {
+      return 0;
+    }
+    if (selected.debugScenario === "enemy_check") {
+      return 8;
+    }
+    if (selected.debugScenario === "boss_check") {
+      return 11;
+    }
+    return clamp(Math.round(selected.debugStartStage) - 1, 0, 11);
+  }
+
+  private applyDebugPreset(): void {
+    if (!this.state.options.debugModeEnabled) {
+      return;
+    }
+    applyDebugItemPreset(
+      this.state.items,
+      this.state.options.debugItemPreset,
+      this.state.options.enableNewItemStacks,
+    );
+    this.state.balls = ensureMultiballCount(
+      this.state.items,
+      this.state.balls,
+      this.random,
+      this.config.multiballMaxBalls,
+    );
   }
 
   private syncAudioForTransition(result: SceneTransitionResult): void {

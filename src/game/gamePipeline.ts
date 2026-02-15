@@ -134,7 +134,9 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   const picks = updateFallingItems(state.items, state.paddle, config.height, config.fixedDeltaSec);
   let pickedMultiball = false;
   for (const pick of picks) {
-    applyItemPickup(state.items, pick.type, physics.survivors);
+    applyItemPickup(state.items, pick.type, physics.survivors, {
+      enableNewItemStacks: state.options.enableNewItemStacks,
+    });
     if (pick.type === "multiball") {
       pickedMultiball = true;
     }

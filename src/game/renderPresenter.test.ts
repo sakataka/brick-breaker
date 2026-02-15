@@ -101,4 +101,17 @@ describe("renderPresenter", () => {
 
     expect(view.storyText).toContain("第4ステージ");
   });
+
+  test("shows debug badges in HUD and overlay when debug recording is off", () => {
+    const state = createInitialGameState(GAME_CONFIG, false, "stageclear");
+    state.options.debugModeEnabled = true;
+    state.options.debugRecordResults = false;
+
+    const hud = buildHudViewModel(state);
+    const overlay = buildOverlayViewModel(state);
+
+    expect(hud.stageText).toContain("🧪DEBUG(記録OFF)");
+    expect(overlay.debugBadge).toBe("DEBUG 記録OFF");
+    expect(overlay.stageLabel).toContain("[DEBUG 記録OFF]");
+  });
 });

@@ -20,6 +20,10 @@ interface BuildStageRoundOptions {
   resetLives?: boolean;
 }
 
+interface ResetRoundOptions {
+  startStageIndex?: number;
+}
+
 function buildStageRound(
   state: GameState,
   config: GameConfig,
@@ -76,10 +80,12 @@ export function resetRoundState(
   config: GameConfig,
   reducedMotion: boolean,
   random: RandomSource,
+  options: ResetRoundOptions = {},
 ): void {
+  const clampedStageIndex = Math.max(0, Math.min(STAGE_CATALOG.length - 1, options.startStageIndex ?? 0));
   state.score = 0;
   state.elapsedSec = 0;
-  state.campaign.stageIndex = 0;
+  state.campaign.stageIndex = clampedStageIndex;
   state.campaign.totalStages = STAGE_CATALOG.length;
   state.campaign.stageStartScore = 0;
   state.campaign.results = [];
@@ -167,7 +173,7 @@ export function getStageMaxBallSpeed(config: GameConfig, stageIndex: number): nu
   return config.maxBallSpeed * getStageForCampaign(stageIndex, null).speedScale;
 }
 
-export function finalizeStageStats(state: GameState): void {
+export function finalizeStageStats(state: GameState, persistResult = true): void {
   const clearTimeSec = Math.max(0, state.elapsedSec - state.stageStats.startedAtSec);
   const ratingScore = computeStageRatingScore(state, clearTimeSec);
   const stars = getStarRatingByScore(ratingScore);
@@ -178,7 +184,9 @@ export function finalizeStageStats(state: GameState): void {
   state.stageStats.starRating = stars;
   state.stageStats.missionTargetSec = missionTargetSec;
   state.stageStats.missionAchieved = missionAchieved;
-  upsertCampaignStageResult(state, clearTimeSec, stars, ratingScore, missionTargetSec, missionAchieved);
+  if (persistResult) {
+    upsertCampaignStageResult(state, clearTimeSec, stars, ratingScore, missionTargetSec, missionAchieved);
+  }
   prepareRogueUpgradeOffer(state);
 }
 

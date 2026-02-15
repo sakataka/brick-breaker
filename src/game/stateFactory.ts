@@ -82,6 +82,11 @@ export function createInitialGameState(
     },
     options: {
       riskMode: false,
+      enableNewItemStacks: false,
+      debugModeEnabled: false,
+      debugRecordResults: false,
+      debugScenario: "normal",
+      debugItemPreset: "none",
     },
     balls: [ball],
     paddle,

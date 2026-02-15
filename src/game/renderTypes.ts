@@ -72,6 +72,7 @@ export interface OverlayViewModel {
   lives: number;
   clearTime?: string;
   errorMessage?: string;
+  debugBadge?: string;
   stageLabel: string;
   stageResult?: StageResultView;
   campaignResults?: StageResultSummaryView[];

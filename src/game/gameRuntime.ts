@@ -70,7 +70,8 @@ export function handleStageClear(
   onTransition: (event: "GAME_CLEAR" | "STAGE_CLEAR") => void,
 ): void {
   const balance = getGameplayBalance(config.difficulty);
-  finalizeStageStats(state);
+  const persistResult = !state.options.debugModeEnabled || state.options.debugRecordResults;
+  finalizeStageStats(state, persistResult);
   triggerHitFreeze(state.vfx, 72);
   state.score += state.lives * balance.clearBonusPerLife;
   onTransition(state.campaign.stageIndex >= state.campaign.totalStages - 1 ? "GAME_CLEAR" : "STAGE_CLEAR");

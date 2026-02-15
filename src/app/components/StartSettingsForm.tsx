@@ -119,6 +119,97 @@ export function StartSettingsForm({ settings, onChange }: StartSettingsFormProps
         />
       </label>
       <label className="toggle-row">
+        <span>デバッグモード</span>
+        <input
+          id="setting-debug-mode"
+          type="checkbox"
+          checked={settings.debugModeEnabled}
+          onChange={(event) => {
+            onChange({ debugModeEnabled: event.target.checked });
+          }}
+        />
+      </label>
+      {settings.debugModeEnabled ? (
+        <>
+          <label>
+            開始ステージ
+            <select
+              id="setting-debug-start-stage"
+              value={String(settings.debugStartStage)}
+              onChange={(event) => {
+                onChange({
+                  debugStartStage: Number.parseInt(event.target.value, 10) || 1,
+                });
+              }}
+            >
+              {Array.from({ length: 12 }, (_, index) => index + 1).map((stage) => (
+                <option key={stage} value={stage}>
+                  {stage}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            シナリオ
+            <select
+              id="setting-debug-scenario"
+              value={settings.debugScenario}
+              onChange={(event) => {
+                onChange({
+                  debugScenario: event.target.value as typeof settings.debugScenario,
+                });
+              }}
+            >
+              <option value="normal">通常</option>
+              <option value="enemy_check">敵確認（9面）</option>
+              <option value="boss_check">ボス確認（12面）</option>
+            </select>
+          </label>
+          <label>
+            アイテムプリセット
+            <select
+              id="setting-debug-item-preset"
+              value={settings.debugItemPreset}
+              onChange={(event) => {
+                onChange({
+                  debugItemPreset: event.target.value as typeof settings.debugItemPreset,
+                });
+              }}
+            >
+              <option value="none">なし</option>
+              <option value="combat_check">戦闘確認</option>
+              <option value="boss_check">ボス確認</option>
+            </select>
+          </label>
+          <label>
+            結果記録
+            <select
+              id="setting-debug-record-results"
+              value={settings.debugRecordResults ? "true" : "false"}
+              onChange={(event) => {
+                onChange({
+                  debugRecordResults: event.target.value === "true",
+                });
+              }}
+            >
+              <option value="false">記録しない</option>
+              <option value="true">記録する</option>
+            </select>
+          </label>
+        </>
+      ) : null}
+      <label className="toggle-row">
+        <span>新アイテムのスタック</span>
+        <input
+          id="setting-new-item-stacks"
+          type="checkbox"
+          checked={settings.enableNewItemStacks}
+          onChange={(event) => {
+            onChange({ enableNewItemStacks: event.target.checked });
+          }}
+        />
+      </label>
+      <label className="toggle-row">
         <span>BGM</span>
         <input
           id="setting-bgm-enabled"

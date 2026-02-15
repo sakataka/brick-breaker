@@ -45,6 +45,7 @@ export function OverlayRoot({
         <p id="overlay-sub" className="subtle">
           {overlaySubText}
         </p>
+        {overlay.debugBadge ? <p className="subtle">{overlay.debugBadge}</p> : null}
 
         {overlay.scene === "start" ? (
           <StartSettingsForm settings={startSettings} onChange={onStartSettingsChange} />
