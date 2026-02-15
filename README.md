@@ -140,10 +140,6 @@ GitHub Pages 公開手順:
 - `docs/architecture.md`
 - `README.md`
 
-## プレイヤー向けガイド
-
-- `docs/game-guide.md`
-
 ## 実装メモ
 
 - 実行エントリは `src/game/GameSession.ts`（オーケストレータ）で、`src/core/engine.ts`（進行ロジック）を駆動します。
@@ -154,8 +150,4 @@ GitHub Pages 公開手順:
 - UI は `src/app/AppUi.tsx` と `src/app/components/*` で宣言的に構成し、`src/app/store.ts` の `START_SETTINGS_OPTIONS` を開始設定UIの単一定義として使います。
 - 音制御は `src/audio/audioDirector.ts`（facade） -> `src/audio/toneDirector.ts` の経路で管理します。
 
-## アイディアリスト（実装検討用）
-
-- `docs/idea-list.md`
-
-他の計画系ドキュメントは履歴/補助参照として扱い、未完了タスク管理は `docs/architecture.md` の `Open Backlog` に統一しています。
+未完了タスク管理は `docs/architecture.md` の `Open Backlog` に統一しています。

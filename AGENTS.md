@@ -18,7 +18,6 @@
 - 利用者向け仕様: `README.md`
 - 実装者向け設計: `docs/architecture.md`
 - 未完了タスク管理: `docs/architecture.md` の `Open Backlog`
-- 機能アイデア台帳: `docs/idea-list.md` / `docs/idea-progress.md`
 
 ## 3. アーキテクチャ責務
 - Coreロジック: `src/core/*`, `src/game/gamePipeline.ts`, `src/game/physicsCore.ts`, `src/game/itemSystem.ts`, `src/game/roundSystem.ts`
@@ -45,7 +44,7 @@
 3. UI反映（React/Phaser）
 4. サウンド反映（必要な場合）
 5. テスト追加・更新
-6. ドキュメント更新（`README.md`, `docs/architecture.md`, 必要に応じて `docs/game-guide.md`）
+6. ドキュメント更新（`README.md`, `docs/architecture.md`）
 
 ## 6. 品質ゲート（必須）
 ```bash

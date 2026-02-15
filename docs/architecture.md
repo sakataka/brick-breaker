@@ -107,7 +107,6 @@
 - ショップ操作処理: `src/game/session/shopActions.ts`
 - View同期: `src/game/session/viewSync.ts`
 - デバッグ開始ロジック: `src/game/session/startSettings.ts` + `src/game/roundSystem.ts`
-- 機能台帳: `docs/idea-list.md` と `docs/idea-progress.md`
 - 未完了タスク: この文書末尾の `Open Backlog` のみ
 
 ## 追加時の手順
