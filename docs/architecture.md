@@ -59,6 +59,7 @@
 - ゲーム本体との接続点は store のみ。
 - `StartSettingsForm` が通常設定とデバッグ設定（開始ステージ/シナリオ/プリセット/記録可否）を一元管理。
 - `OverlayRoot` は開始画面のみ「ヘッダー / 設定スクロール / 固定CTAフッター」を適用し、設定増加時も開始操作を維持する。
+- `AppUi` はプレイ中のみ「上段情報バー（HUD+ショップ） / 下段ゲーム枠」の2分割レイアウトを有効化する。
 
 ### 5. Audio
 
@@ -85,10 +86,10 @@
 
 - 設定値: `src/game/config/*`
 - アイテム仕様: `src/game/itemRegistry.ts`
+- アイテム表示情報（色/絵文字/短縮文字）: `src/game/itemRegistry.ts`
 - UI状態: `src/app/store.ts`
 - デバッグ開始ロジック: `src/game/GameSession.ts` + `src/game/roundSystem.ts`
 - 機能台帳: `docs/idea-list.md` と `docs/idea-progress.md`
-- Cycle 01 記録: `docs/archive/idea-cycle-01-2026-02.md`
 - 未完了タスク: この文書末尾の `Open Backlog` のみ
 
 ## 追加時の手順

@@ -1,8 +1,9 @@
 import type Phaser from "phaser";
 import { THEME_BANDS } from "../../game/config";
+import { getItemColor, getItemEmoji, getItemShortLabel } from "../../game/itemRegistry";
 import { DEFAULT_RENDER_THEME, resolveRenderTheme } from "../../game/renderer/theme";
 import type { RenderViewState } from "../../game/renderTypes";
-import type { GameConfig, ItemType } from "../../game/types";
+import type { GameConfig } from "../../game/types";
 
 interface ParsedColor {
   value: number;
@@ -15,16 +16,10 @@ interface BackdropTheme {
   frame: string;
 }
 
-const ITEM_COLOR_BY_TYPE: Record<ItemType, string> = {
-  paddle_plus: "#8fd4ff",
-  slow_ball: "#6fc3a4",
-  multiball: "#d2a3ff",
-  shield: "#85f2da",
-  pierce: "#ffd36b",
-  bomb: "#ff7f7f",
-  laser: "#ff8a8a",
-  sticky: "#8fff9a",
-};
+interface ItemLabelNodes {
+  emoji: Phaser.GameObjects.Text;
+  short: Phaser.GameObjects.Text;
+}
 
 const BACKDROP_BY_BAND: Record<RenderViewState["themeBandId"], BackdropTheme> = {
   early: {
@@ -49,6 +44,7 @@ export class PhaserRenderPort {
   private readonly world: Phaser.GameObjects.Graphics;
   private readonly effects: Phaser.GameObjects.Graphics;
   private readonly overlay: Phaser.GameObjects.Graphics;
+  private readonly itemLabels = new Map<number, ItemLabelNodes>();
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -178,7 +174,8 @@ export class PhaserRenderPort {
     drawLaserProjectiles(this.world, view, offsetX, offsetY);
 
     drawEnemies(this.world, view, offsetX, offsetY);
-    drawFallingItems(this.world, view, offsetX, offsetY);
+    const visibleItemIds = drawFallingItems(this.world, view, offsetX, offsetY, lineWidth);
+    this.syncFallingItemLabels(view, visibleItemIds, offsetX, offsetY);
     drawParticles(this.effects, view, offsetX, offsetY);
     drawImpactRings(this.effects, view, offsetX, offsetY);
     drawFloatingTexts(this.effects, view, offsetX, offsetY);
@@ -198,10 +195,67 @@ export class PhaserRenderPort {
   }
 
   destroy(): void {
+    this.clearItemLabels();
     this.backdrop.destroy();
     this.world.destroy();
     this.effects.destroy();
     this.overlay.destroy();
+  }
+
+  private syncFallingItemLabels(
+    view: RenderViewState,
+    visibleItemIds: Set<number>,
+    offsetX: number,
+    offsetY: number,
+  ): void {
+    for (const item of view.fallingItems) {
+      let nodes = this.itemLabels.get(item.id);
+      if (!nodes) {
+        nodes = {
+          emoji: this.scene.add
+            .text(0, 0, getItemEmoji(item.type), {
+              fontFamily: "Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif",
+              fontSize: "12px",
+              color: "#ffffff",
+            })
+            .setDepth(9)
+            .setOrigin(0.5, 0.65),
+          short: this.scene.add
+            .text(0, 0, getItemShortLabel(item.type), {
+              fontFamily: '"Avenir Next", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif',
+              fontSize: "8px",
+              color: "#f7fcff",
+              stroke: "#0b1320",
+              strokeThickness: 2,
+            })
+            .setDepth(9)
+            .setOrigin(0.5, -0.2),
+        };
+        this.itemLabels.set(item.id, nodes);
+      }
+
+      nodes.emoji.setPosition(snapPixel(item.pos.x + offsetX), snapPixel(item.pos.y + offsetY));
+      nodes.short.setPosition(snapPixel(item.pos.x + offsetX), snapPixel(item.pos.y + offsetY));
+      nodes.emoji.setVisible(true);
+      nodes.short.setVisible(true);
+    }
+
+    for (const [id, nodes] of this.itemLabels.entries()) {
+      if (visibleItemIds.has(id)) {
+        continue;
+      }
+      nodes.emoji.destroy();
+      nodes.short.destroy();
+      this.itemLabels.delete(id);
+    }
+  }
+
+  private clearItemLabels(): void {
+    for (const nodes of this.itemLabels.values()) {
+      nodes.emoji.destroy();
+      nodes.short.destroy();
+    }
+    this.itemLabels.clear();
   }
 }
 
@@ -332,18 +386,21 @@ function drawFallingItems(
   view: RenderViewState,
   offsetX: number,
   offsetY: number,
-): void {
+  lineWidth: number,
+): Set<number> {
+  const visibleIds = new Set<number>();
   for (const item of view.fallingItems) {
-    const itemColor = parseColor(ITEM_COLOR_BY_TYPE[item.type], { value: 0xdfe9ff, alpha: 0.95 });
+    const itemColor = parseColor(getItemColor(item.type), { value: 0xdfe9ff, alpha: 0.95 });
+    const itemStroke = parseColor("rgba(245, 252, 255, 0.88)", { value: 0xf5fcff, alpha: 0.88 });
+    const x = snapPixel(item.pos.x - item.size / 2 + offsetX);
+    const y = snapPixel(item.pos.y - item.size / 2 + offsetY);
     graphics.fillStyle(itemColor.value, itemColor.alpha);
-    graphics.fillRoundedRect(
-      item.pos.x - item.size / 2 + offsetX,
-      item.pos.y - item.size / 2 + offsetY,
-      item.size,
-      item.size,
-      4,
-    );
+    graphics.fillRoundedRect(x, y, item.size, item.size, 4);
+    graphics.lineStyle(Math.max(1, lineWidth), itemStroke.value, itemStroke.alpha);
+    graphics.strokeRoundedRect(x, y, item.size, item.size, 4);
+    visibleIds.add(item.id);
   }
+  return visibleIds;
 }
 
 function drawParticles(

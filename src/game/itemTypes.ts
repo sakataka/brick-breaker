@@ -32,6 +32,7 @@ export interface ItemDefinition {
   type: ItemType;
   label: string;
   hudLabel: string;
+  emoji: string;
   description: string;
   shortLabel: string;
   color: string;

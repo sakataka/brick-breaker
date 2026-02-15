@@ -7,8 +7,9 @@ export interface ShopPanelProps {
 }
 
 export function ShopPanel({ shop, onSelect }: ShopPanelProps): ReactElement {
+  const className = shop.visible ? "shop-panel" : "shop-panel shop-panel-hidden";
   return (
-    <div id="shop-panel" className={shop.visible ? "shop-panel" : "shop-panel panel-hidden"}>
+    <div id="shop-panel" className={className}>
       <p id="shop-status">{shop.status}</p>
       <div className="shop-buttons">
         <button

@@ -26,6 +26,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
     type: "paddle_plus",
     label: ITEM_CONFIG.paddle_plus.label,
     hudLabel: "🟦パドル(幅)",
+    emoji: "🟦",
     description: "パドル幅を増やす",
     shortLabel: "幅",
     color: "rgba(104, 216, 255, 0.8)",
@@ -43,6 +44,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
     type: "slow_ball",
     label: ITEM_CONFIG.slow_ball.label,
     hudLabel: "🐢スロー(減速)",
+    emoji: "🐢",
     description: "ボール速度を下げる",
     shortLabel: "遅",
     color: "rgba(255, 191, 112, 0.85)",
@@ -65,6 +67,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
     type: "shield",
     label: ITEM_CONFIG.shield.label,
     hudLabel: "🛡シールド(防御)",
+    emoji: "🛡",
     description: "落球を1回防ぐ",
     shortLabel: "盾",
     color: "rgba(112, 255, 210, 0.78)",
@@ -82,6 +85,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
     type: "multiball",
     label: ITEM_CONFIG.multiball.label,
     hudLabel: "🎱マルチ(多球)",
+    emoji: "🎱",
     description: "ボール数を増やす",
     shortLabel: "多",
     color: "rgba(197, 143, 255, 0.82)",
@@ -99,6 +103,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
     type: "pierce",
     label: ITEM_CONFIG.pierce.label,
     hudLabel: "🗡貫通",
+    emoji: "🗡",
     description: "ブロックを貫通する",
     shortLabel: "貫",
     color: "rgba(255, 130, 110, 0.86)",
@@ -116,6 +121,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
     type: "bomb",
     label: ITEM_CONFIG.bomb.label,
     hudLabel: "💣ボム(爆発)",
+    emoji: "💣",
     description: "直撃時に範囲破壊",
     shortLabel: "爆",
     color: "rgba(255, 95, 95, 0.88)",
@@ -133,6 +139,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
     type: "laser",
     label: ITEM_CONFIG.laser.label,
     hudLabel: "🔫レーザー",
+    emoji: "🔫",
     description: "自動でレーザーを発射",
     shortLabel: "砲",
     color: "rgba(255, 122, 122, 0.88)",
@@ -150,6 +157,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
     type: "sticky",
     label: ITEM_CONFIG.sticky.label,
     hudLabel: "🧲スティッキー",
+    emoji: "🧲",
     description: "ボールを一時保持して自動発射",
     shortLabel: "粘",
     color: "rgba(161, 255, 151, 0.86)",
@@ -224,6 +232,10 @@ export function getActiveItemLabelsFromRegistry(stacks: ItemStackState): string[
 
 export function getItemShortLabel(type: ItemType): string {
   return ITEM_REGISTRY[type].shortLabel;
+}
+
+export function getItemEmoji(type: ItemType): string {
+  return ITEM_REGISTRY[type].emoji;
 }
 
 export function getItemColor(type: ItemType): string {

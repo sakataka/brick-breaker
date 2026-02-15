@@ -16,6 +16,7 @@ export function AppUi(): ReactElement {
   const triggerShopOption = useAppStore((state) => state.triggerShopOption);
   const scoreRef = useRef<HTMLSpanElement>(null);
   const lastScoreRef = useRef(0);
+  const playLayoutActive = overlay.scene === "playing" || overlay.scene === "paused";
 
   useEffect(() => {
     const element = scoreRef.current;
@@ -43,9 +44,28 @@ export function AppUi(): ReactElement {
     return undefined;
   }, [overlay.score]);
 
+  useEffect(() => {
+    const stageWrap = document.getElementById("stage-wrap");
+    if (!stageWrap) {
+      return;
+    }
+    stageWrap.classList.toggle("layout-play", playLayoutActive);
+    return () => {
+      stageWrap.classList.remove("layout-play");
+    };
+  }, [playLayoutActive]);
+
   return (
     <>
-      <HudPanel hud={hud} scoreRef={scoreRef} />
+      <div id="play-topbar" className={playLayoutActive ? "play-topbar active" : "play-topbar"}>
+        <HudPanel hud={hud} scoreRef={scoreRef} />
+        <ShopPanel
+          shop={shop}
+          onSelect={(index) => {
+            triggerShopOption(index);
+          }}
+        />
+      </div>
       <OverlayRoot
         overlay={overlay}
         startSettings={startSettings}
@@ -53,12 +73,6 @@ export function AppUi(): ReactElement {
         onStartSettingsChange={setStartSettings}
         onRogueSelectionChange={setRogueSelection}
         onPrimaryAction={triggerPrimaryAction}
-      />
-      <ShopPanel
-        shop={shop}
-        onSelect={(index) => {
-          triggerShopOption(index);
-        }}
       />
     </>
   );

@@ -4,6 +4,7 @@ import {
   createItemModifiers,
   createItemStacks,
   getDropSuppressedTypes,
+  getItemEmoji,
   getItemPickupSfxEvent,
   ITEM_REGISTRY,
   pickWeightedItemType,
@@ -77,5 +78,11 @@ describe("itemRegistry", () => {
     const suppressed = getDropSuppressedTypes(stacks);
     expect(suppressed).toEqual(["pierce", "bomb"]);
     expect(getItemPickupSfxEvent("shield")).toBe("item_shield");
+  });
+
+  test("all item definitions expose emoji labels", () => {
+    const emojis = Object.values(ITEM_REGISTRY).map((item) => item.emoji);
+    expect(emojis.every((emoji) => emoji.length > 0)).toBe(true);
+    expect(getItemEmoji("bomb")).toBe("💣");
   });
 });

@@ -5,12 +5,24 @@ test("start -> playing -> paused -> playing", async ({ page }) => {
 
   await expect(page.locator("#overlay")).toBeVisible();
   await expect(page.locator("#overlay")).toHaveAttribute("data-scene", "start");
+  await expect(page.locator("#stage-wrap")).not.toHaveClass(/layout-play/);
 
   await page.locator("#overlay-button").click();
   await expect(page.locator("#overlay")).toHaveClass(/hidden/);
+  await expect(page.locator("#stage-wrap")).toHaveClass(/layout-play/);
+  await expect(page.locator("#play-topbar")).toHaveClass(/active/);
+
+  const topbarBox = await page.locator("#play-topbar").boundingBox();
+  const canvasBox = await page.locator("#game-canvas").boundingBox();
+  expect(topbarBox).not.toBeNull();
+  expect(canvasBox).not.toBeNull();
+  if (topbarBox && canvasBox) {
+    expect(topbarBox.y + topbarBox.height).toBeLessThanOrEqual(canvasBox.y + 1);
+  }
 
   await page.keyboard.press("KeyP");
   await expect(page.locator("#overlay")).toHaveAttribute("data-scene", "paused");
+  await expect(page.locator("#stage-wrap")).toHaveClass(/layout-play/);
 
   await page.locator("#overlay-button").click();
   await expect(page.locator("#overlay")).toHaveClass(/hidden/);
