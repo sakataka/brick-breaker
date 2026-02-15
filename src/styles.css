@@ -173,6 +173,52 @@ body::before {
   animation: card-in 360ms ease;
 }
 
+.overlay[data-scene="start"] .overlay-card-layout {
+  max-height: min(92vh, 760px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 0.8rem;
+  padding: 1.35rem 1.25rem 1rem;
+}
+
+.overlay-card-header {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.overlay-settings-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.45rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(105, 202, 255, 0.62) rgba(6, 26, 57, 0.45);
+}
+
+.overlay-settings-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.overlay-settings-scroll::-webkit-scrollbar-track {
+  background: rgba(6, 26, 57, 0.45);
+  border-radius: 999px;
+}
+
+.overlay-settings-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(88, 194, 255, 0.9), rgba(50, 147, 255, 0.82));
+  border-radius: 999px;
+  border: 2px solid rgba(6, 26, 57, 0.45);
+}
+
+.overlay-fixed-footer {
+  margin-top: 0.08rem;
+  padding-top: 0.72rem;
+  border-top: 1px solid rgba(101, 196, 255, 0.22);
+  background: linear-gradient(180deg, rgba(8, 20, 44, 0), rgba(8, 20, 44, 0.28));
+  display: grid;
+  justify-items: center;
+  gap: 0.3rem;
+}
+
 @keyframes card-in {
   from {
     transform: translateY(8px) scale(0.985);
@@ -214,9 +260,9 @@ body::before {
 
 .start-settings {
   display: grid;
-  gap: 0.46rem;
-  margin: 0.55rem auto 0.4rem;
-  width: min(380px, 84vw);
+  gap: 0.7rem;
+  margin: 0.26rem auto 0.4rem;
+  width: min(410px, 96%);
   text-align: left;
 }
 
@@ -238,6 +284,52 @@ body::before {
   width: 18px;
   height: 18px;
   accent-color: var(--hud-accent);
+}
+
+.settings-section {
+  border: 1px solid rgba(111, 183, 235, 0.28);
+  border-radius: 12px;
+  background: rgba(8, 26, 52, 0.48);
+  padding: 0.54rem 0.65rem 0.6rem;
+  display: grid;
+  gap: 0.42rem;
+}
+
+.settings-section-title {
+  margin: 0 0 0.2rem;
+  font-size: 0.84rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  color: rgba(164, 220, 255, 0.96);
+}
+
+.settings-section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+}
+
+.compact-toggle {
+  margin: 0;
+  padding: 0;
+  gap: 0.45rem;
+}
+
+.settings-section-note {
+  margin: 0.12rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-2);
+  opacity: 0.88;
+}
+
+.debug-settings {
+  transition: border-color 140ms ease;
+}
+
+.debug-section-open {
+  border-color: rgba(116, 211, 255, 0.6);
+  box-shadow: inset 0 0 0 1px rgba(116, 211, 255, 0.12);
 }
 
 .start-settings select {
@@ -346,6 +438,11 @@ body::before {
     filter 120ms ease;
 }
 
+.overlay-fixed-footer #overlay-button {
+  margin-top: 0;
+  width: min(320px, 80%);
+}
+
 #overlay-button:hover,
 #overlay-button:focus-visible {
   transform: translateY(-1px) scale(1.01);
@@ -378,6 +475,21 @@ body::before {
 
   #overlay-button {
     width: min(280px, 72vw);
+  }
+
+  .overlay[data-scene="start"] .overlay-card-layout {
+    max-height: min(94vh, 700px);
+    width: min(620px, 94vw);
+    padding: 1rem 0.9rem 0.85rem;
+    gap: 0.62rem;
+  }
+
+  .overlay-settings-scroll {
+    padding-right: 0.32rem;
+  }
+
+  .overlay-fixed-footer #overlay-button {
+    width: min(300px, 84%);
   }
 }
 
