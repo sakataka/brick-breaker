@@ -81,7 +81,7 @@
 4. `RenderPort`（Phaser）と `UiPort`（Zustand）へ同期。
 5. シーン変化時は `audioSync` 経由で `AudioPort` を同期。
 
-## 正本ルール
+## ドキュメント運用ルール
 
 - 設定値: `src/game/config/*`
 - アイテム仕様: `src/game/itemRegistry.ts`

@@ -1,6 +1,6 @@
 # Idea Cycle 01 Archive (2026-02)
 
-この文書は Cycle 01 の固定記録です。新規実装の正本は `docs/idea-list.md`（Cycle 02）と `docs/idea-progress.md` を参照してください。
+この文書は Cycle 01 の固定記録です。新規実装の記録は `docs/idea-list.md`（Cycle 02）と `docs/idea-progress.md` を参照してください。
 
 ## Scope
 

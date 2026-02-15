@@ -129,7 +129,7 @@ GitHub Pages 公開手順:
 2. `main` へ push
 3. `Deploy Pages` workflow の完了を確認
 
-## 設計ドキュメント（正本）
+## 設計ドキュメント
 
 - `docs/architecture.md`
 - `README.md`
@@ -149,4 +149,4 @@ GitHub Pages 公開手順:
 
 - `docs/idea-list.md`
 
-他の計画系ドキュメントは履歴/補助参照で、未完了タスクの正本管理は `docs/architecture.md` の `Open Backlog` に統一しています。
+他の計画系ドキュメントは履歴/補助参照として扱い、未完了タスク管理は `docs/architecture.md` の `Open Backlog` に統一しています。
