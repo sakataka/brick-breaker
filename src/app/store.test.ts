@@ -12,6 +12,7 @@ describe("app store", () => {
         multiballMaxBalls: 4,
         riskMode: false,
         enableNewItemStacks: false,
+        stickyItemEnabled: false,
         debugModeEnabled: false,
         debugStartStage: 1,
         debugScenario: "normal",
@@ -26,6 +27,7 @@ describe("app store", () => {
       handlers: {
         primaryAction: () => {},
         shopOption: () => {},
+        shopReroll: () => {},
       },
     });
   });
@@ -41,6 +43,7 @@ describe("app store", () => {
     expect(state.startSettings.speedPreset).toBe("1.25");
     expect(state.startSettings.difficulty).toBe("hard");
     expect(state.startSettings.bgmEnabled).toBe(true);
+    expect(state.startSettings.stickyItemEnabled).toBe(false);
     expect(state.startSettings.debugModeEnabled).toBe(false);
     expect(state.startSettings.debugStartStage).toBe(1);
     expect(state.startSettings.debugRecordResults).toBe(false);
@@ -49,6 +52,7 @@ describe("app store", () => {
   test("routes UI trigger callbacks through registered handlers", () => {
     let primaryFired = false;
     let selectedIndex: 0 | 1 | -1 = -1;
+    let rerollFired = false;
     appStore.getState().setHandlers({
       primaryAction: () => {
         primaryFired = true;
@@ -56,12 +60,17 @@ describe("app store", () => {
       shopOption: (index) => {
         selectedIndex = index;
       },
+      shopReroll: () => {
+        rerollFired = true;
+      },
     });
 
     appStore.getState().triggerPrimaryAction();
     appStore.getState().triggerShopOption(1);
+    appStore.getState().triggerShopReroll();
 
     expect(primaryFired).toBe(true);
     expect(selectedIndex as number).toBe(1);
+    expect(rerollFired).toBe(true);
   });
 });

@@ -225,30 +225,30 @@ describe("itemSystem", () => {
   test("debug presets apply expected stacks", () => {
     const items = createItemState();
 
-    applyDebugItemPreset(items, "combat_check", false);
+    applyDebugItemPreset(items, "combat_check", false, true);
     expect(items.active.paddlePlusStacks).toBe(1);
     expect(items.active.slowBallStacks).toBe(1);
     expect(items.active.multiballStacks).toBe(1);
     expect(items.active.shieldCharges).toBe(1);
 
-    applyDebugItemPreset(items, "boss_check", false);
+    applyDebugItemPreset(items, "boss_check", false, true);
     expect(items.active.shieldCharges).toBe(2);
     expect(items.active.pierceStacks).toBe(1);
     expect(items.active.bombStacks).toBe(1);
     expect(items.active.laserStacks).toBe(1);
     expect(items.active.stickyStacks).toBe(1);
 
-    applyDebugItemPreset(items, "boss_check", true);
+    applyDebugItemPreset(items, "boss_check", true, true);
     expect(items.active.laserStacks).toBe(2);
 
-    applyDebugItemPreset(items, "none", true);
+    applyDebugItemPreset(items, "none", true, true);
     expect(items.active.multiballStacks).toBe(0);
     expect(items.active.shieldCharges).toBe(0);
   });
 
   test("combat debug preset can expand balls via multiball target", () => {
     const items = createItemState();
-    applyDebugItemPreset(items, "combat_check", true);
+    applyDebugItemPreset(items, "combat_check", true, true);
     const balls = ensureMultiballCount(items, [createBall()], sequenceRandom([0.5, 0.2, 0.7]), 4);
     expect(balls).toHaveLength(2);
   });
@@ -277,5 +277,22 @@ describe("itemSystem", () => {
 
     expect(items.active.multiballStacks).toBe(2);
     expect(items.active.shieldCharges).toBe(1);
+  });
+
+  test("sticky can be excluded from drops and debug preset", () => {
+    const items = createItemState();
+    const events: CollisionEvent[] = Array.from({ length: 20 }, () => ({
+      kind: "brick",
+      x: 120,
+      y: 90,
+    }));
+
+    spawnDropsFromBrickEvents(items, events, sequenceRandom(Array(40).fill(0.99)), {
+      stickyItemEnabled: false,
+    });
+    expect(items.falling.every((drop) => drop.type !== "sticky")).toBe(true);
+
+    applyDebugItemPreset(items, "boss_check", true, false);
+    expect(items.active.stickyStacks).toBe(0);
   });
 });

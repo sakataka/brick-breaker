@@ -4,13 +4,15 @@ import type { ShopViewState } from "../store";
 export interface ShopPanelProps {
   shop: ShopViewState;
   onSelect: (index: 0 | 1) => void;
+  onReroll: () => void;
 }
 
-export function ShopPanel({ shop, onSelect }: ShopPanelProps): ReactElement {
+export function ShopPanel({ shop, onSelect, onReroll }: ShopPanelProps): ReactElement {
   const className = shop.visible ? "shop-panel" : "shop-panel shop-panel-hidden";
   return (
     <div id="shop-panel" className={className}>
       <p id="shop-status">{shop.status}</p>
+      <p id="shop-cost">価格: {shop.currentCostText}</p>
       <div className="shop-buttons">
         <button
           id="shop-option-a"
@@ -33,6 +35,17 @@ export function ShopPanel({ shop, onSelect }: ShopPanelProps): ReactElement {
           {shop.optionBLabel}
         </button>
       </div>
+      {shop.rerollVisible ? (
+        <button
+          id="shop-reroll"
+          type="button"
+          className="shop-reroll"
+          disabled={shop.rerollDisabled}
+          onClick={onReroll}
+        >
+          {shop.rerollLabel}
+        </button>
+      ) : null}
     </div>
   );
 }

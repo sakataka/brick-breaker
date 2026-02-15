@@ -69,7 +69,9 @@ export interface RiskModeConfig {
 }
 
 export interface ShopConfig {
-  purchaseCost: number;
+  basePurchaseCost: number;
+  growthFactor: number;
+  roundUnit: number;
 }
 
 export interface RogueConfig {
@@ -227,7 +229,9 @@ export const RISK_MODE_CONFIG: RiskModeConfig = {
 };
 
 export const SHOP_CONFIG: ShopConfig = {
-  purchaseCost: 1200,
+  basePurchaseCost: 1200,
+  growthFactor: 1.35,
+  roundUnit: 100,
 };
 
 export const ROGUE_CONFIG: RogueConfig = {
@@ -288,4 +292,10 @@ export function buildStartConfig(base: GameConfig, setup: StartSetupOptions): Ga
     assistPaddleScale: preset.config.assistPaddleScale,
     assistMaxSpeedScale: preset.config.assistMaxSpeedScale,
   };
+}
+
+export function getShopPurchaseCost(purchaseCount: number): number {
+  const clampedCount = Math.max(0, Math.floor(purchaseCount));
+  const raw = SHOP_CONFIG.basePurchaseCost * SHOP_CONFIG.growthFactor ** clampedCount;
+  return Math.max(SHOP_CONFIG.roundUnit, Math.round(raw / SHOP_CONFIG.roundUnit) * SHOP_CONFIG.roundUnit);
 }

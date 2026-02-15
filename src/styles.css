@@ -441,6 +441,13 @@ body::before {
   color: #ffe0b2;
 }
 
+#shop-cost {
+  margin-top: -0.18rem;
+  margin-bottom: 0.45rem;
+  font-size: 0.72rem;
+  color: rgba(255, 230, 188, 0.9);
+}
+
 .shop-buttons {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -460,6 +467,25 @@ body::before {
 }
 
 .shop-buttons button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.shop-reroll {
+  margin-top: 0.4rem;
+  width: 100%;
+  appearance: none;
+  border: 1px dashed rgba(255, 214, 153, 0.56);
+  border-radius: 9px;
+  background: rgba(255, 179, 88, 0.08);
+  color: #ffeaca;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 0.35rem 0.45rem;
+  cursor: pointer;
+}
+
+.shop-reroll:disabled {
   opacity: 0.45;
   cursor: default;
 }

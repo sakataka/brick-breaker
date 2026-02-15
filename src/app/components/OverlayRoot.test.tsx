@@ -12,6 +12,7 @@ const BASE_SETTINGS: StartSettingsSelection = {
   multiballMaxBalls: 4,
   riskMode: false,
   enableNewItemStacks: false,
+  stickyItemEnabled: false,
   debugModeEnabled: false,
   debugStartStage: 1,
   debugScenario: "normal",
@@ -49,6 +50,7 @@ describe("OverlayRoot", () => {
     expect(markup).toContain("overlay-card-layout");
     expect(markup).toContain("overlay-settings-scroll");
     expect(markup).toContain("overlay-fixed-footer");
+    expect(markup).toContain('id="setting-sticky-item-enabled"');
   });
 
   test("debug options remain collapsed when debug mode is OFF", () => {

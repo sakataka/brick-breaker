@@ -49,7 +49,7 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   const balance = getGameplayBalance(config.difficulty);
   const hadAliveBricksBeforeTick = state.bricks.some((brick) => brick.alive);
   const stageModifier = getStageModifier(state.campaign.stageIndex + 1);
-  ensureShopOffer(state, random);
+  ensureShopOffer(state, random, state.options.stickyItemEnabled);
   updateEnemies(state, config, config.fixedDeltaSec);
   state.magic.cooldownSec = Math.max(0, state.magic.cooldownSec - config.fixedDeltaSec);
   state.elapsedSec += config.fixedDeltaSec;
@@ -125,12 +125,16 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   const lostAllBalls = physics.survivors.length <= 0;
   playCollisionSounds(deps.sfx, physics.events);
   applyCollisionEvents(state.vfx, physics.events, random);
-  spawnDropsFromBrickEvents(state.items, physics.events, random);
+  spawnDropsFromBrickEvents(state.items, physics.events, random, {
+    stickyItemEnabled: state.options.stickyItemEnabled,
+  });
   if (comboRewardTriggered) {
     const rewardOrigin = physics.survivors[0] ?? state.balls[0];
     const rewardX = rewardOrigin?.pos.x ?? state.paddle.x + state.paddle.width / 2;
     const rewardY = rewardOrigin?.pos.y ?? state.paddle.y - 28;
-    spawnGuaranteedDrop(state.items, random, rewardX, rewardY);
+    spawnGuaranteedDrop(state.items, random, rewardX, rewardY, {
+      stickyItemEnabled: state.options.stickyItemEnabled,
+    });
   }
 
   const picks = updateFallingItems(state.items, state.paddle, config.height, config.fixedDeltaSec);
@@ -197,13 +201,18 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   return "continue";
 }
 
-function ensureShopOffer(state: GameState, random: RandomSource): void {
+export function generateShopOffer(random: RandomSource, stickyItemEnabled: boolean): [ItemType, ItemType] {
+  const excluded: ItemType[] = stickyItemEnabled ? [] : ["sticky"];
+  const first = pickWeightedItemType(random, excluded);
+  const second = pickWeightedItemType(random, [...excluded, first]);
+  return [first, second];
+}
+
+function ensureShopOffer(state: GameState, random: RandomSource, stickyItemEnabled: boolean): void {
   if (state.shop.usedThisStage || state.shop.lastOffer) {
     return;
   }
-  const first = pickWeightedItemType(random);
-  const second = pickWeightedItemType(random, [first]);
-  state.shop.lastOffer = [first, second];
+  state.shop.lastOffer = generateShopOffer(random, stickyItemEnabled);
 }
 
 function updateEnemies(state: GameState, config: GameConfig, deltaSec: number): void {

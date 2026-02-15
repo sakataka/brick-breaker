@@ -132,6 +132,17 @@ export function StartSettingsForm({ settings, onChange }: StartSettingsFormProps
           />
         </label>
         <label className="toggle-row">
+          <span>Stickyアイテム有効</span>
+          <input
+            id="setting-sticky-item-enabled"
+            type="checkbox"
+            checked={settings.stickyItemEnabled}
+            onChange={(event) => {
+              onChange({ stickyItemEnabled: event.target.checked });
+            }}
+          />
+        </label>
+        <label className="toggle-row">
           <span>BGM</span>
           <input
             id="setting-bgm-enabled"

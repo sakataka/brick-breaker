@@ -6,8 +6,9 @@ import type { AudioPort, RenderPort, UiPort } from "../core/ports";
 import { GameHost } from "../phaser/GameHost";
 import { readAccessibility } from "./a11y";
 import { syncAudioScene } from "./audioSync";
-import { buildStartConfig, GAME_CONFIG, SHOP_CONFIG } from "./config";
+import { buildStartConfig, GAME_CONFIG, getShopPurchaseCost } from "./config";
 import { getDailyChallenge } from "./dailyChallenge";
+import { generateShopOffer } from "./gamePipeline";
 import { applyDebugItemPreset, applyItemPickup, ensureMultiballCount } from "./itemSystem";
 import { LifecycleController } from "./lifecycle";
 import { clamp } from "./math";
@@ -167,6 +168,9 @@ export class GameSession {
       shopOption: (index) => {
         this.runSafely(() => this.purchaseShopOption(index), "ショップ購入に失敗しました。");
       },
+      shopReroll: () => {
+        this.runSafely(() => this.rerollShopOffer(), "ショップ更新に失敗しました。");
+      },
     });
   }
 
@@ -312,13 +316,15 @@ export class GameSession {
       return;
     }
     const offer = this.state.shop.lastOffer;
-    if (!offer || this.state.score < SHOP_CONFIG.purchaseCost) {
+    const purchaseCost = getShopPurchaseCost(this.state.shop.purchaseCount);
+    if (!offer || this.state.score < purchaseCost) {
       return;
     }
 
     const picked = offer[index];
-    this.state.score -= SHOP_CONFIG.purchaseCost;
+    this.state.score -= purchaseCost;
     this.state.shop.usedThisStage = true;
+    this.state.shop.purchaseCount += 1;
     this.state.shop.lastChosen = picked;
     applyItemPickup(this.state.items, picked, this.state.balls, {
       enableNewItemStacks: this.state.options.enableNewItemStacks,
@@ -336,6 +342,18 @@ export class GameSession {
       spawnItemPickupFeedback(this.state.vfx, picked, anchor.pos.x, anchor.pos.y);
     }
     this.audioPort.playItemPickup(picked);
+    this.syncViewPorts();
+  }
+
+  private rerollShopOffer(): void {
+    if (this.state.scene !== "playing") {
+      return;
+    }
+    if (this.state.shop.usedThisStage || this.state.shop.rerolledThisStage || !this.state.shop.lastOffer) {
+      return;
+    }
+    this.state.shop.lastOffer = generateShopOffer(this.random, this.state.options.stickyItemEnabled);
+    this.state.shop.rerolledThisStage = true;
     this.syncViewPorts();
   }
 
@@ -396,6 +414,7 @@ export class GameSession {
     this.audioPort.setSettings(this.audioSettings);
     this.state.options.riskMode = selected.riskMode;
     this.state.options.enableNewItemStacks = selected.enableNewItemStacks;
+    this.state.options.stickyItemEnabled = selected.stickyItemEnabled;
     this.state.options.debugModeEnabled = selected.debugModeEnabled;
     this.state.options.debugRecordResults = selected.debugRecordResults;
     this.state.options.debugScenario = selected.debugScenario;
@@ -425,6 +444,7 @@ export class GameSession {
       this.state.items,
       this.state.options.debugItemPreset,
       this.state.options.enableNewItemStacks,
+      this.state.options.stickyItemEnabled,
     );
     this.state.balls = ensureMultiballCount(
       this.state.items,

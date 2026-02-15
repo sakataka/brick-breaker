@@ -59,6 +59,7 @@
 - 表示は宣言的に実装。
 - ゲーム本体との接続点は store のみ。
 - `StartSettingsForm` が通常設定とデバッグ設定（開始ステージ/シナリオ/プリセット/記録可否）を一元管理。
+- Stickyアイテムの有効/無効は開始設定で切替え、無効時はドロップ/ショップ/デバッグ付与の抽選対象から除外する。
 - `OverlayRoot` は開始画面のみ「ヘッダー / 設定スクロール / 固定CTAフッター」を適用し、設定増加時も開始操作を維持する。
 - `AppUi` はプレイ中のみ「上段情報バー（HUD+ショップ） / 下段ゲーム枠」の2分割レイアウトを有効化する。
 
@@ -86,9 +87,11 @@
 ## ドキュメント運用ルール
 
 - 設定値: `src/game/config/*`
+- ショップ価格計算: `src/game/config/gameplay.ts` (`getShopPurchaseCost`)
 - ブロックHP/破壊判定: `src/game/brickDamage.ts`
 - アイテム仕様: `src/game/itemRegistry.ts`
 - アイテム表示情報（色/絵文字/短縮文字）: `src/game/itemRegistry.ts`
+- ショップ候補生成とSticky除外連携: `src/game/gamePipeline.ts` (`generateShopOffer`)
 - UI状態: `src/app/store.ts`
 - デバッグ開始ロジック: `src/game/GameSession.ts` + `src/game/roundSystem.ts`
 - 機能台帳: `docs/idea-list.md` と `docs/idea-progress.md`

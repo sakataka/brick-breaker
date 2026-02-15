@@ -1,23 +1,31 @@
-import { SHOP_CONFIG } from "./config";
+import { getShopPurchaseCost } from "./config";
 import { ITEM_REGISTRY } from "./itemRegistry";
 import type { GameState } from "./types";
 
 export interface ShopUiView {
   visible: boolean;
   status: string;
+  currentCostText: string;
   optionALabel: string;
   optionBLabel: string;
   optionADisabled: boolean;
   optionBDisabled: boolean;
+  rerollVisible: boolean;
+  rerollDisabled: boolean;
+  rerollLabel: string;
 }
 
 const HIDDEN_VIEW: ShopUiView = {
   visible: false,
   status: "ショップ",
+  currentCostText: "0点",
   optionALabel: "選択肢A",
   optionBLabel: "選択肢B",
   optionADisabled: true,
   optionBDisabled: true,
+  rerollVisible: false,
+  rerollDisabled: true,
+  rerollLabel: "リロール",
 };
 
 export function buildShopUiView(state: GameState): ShopUiView {
@@ -28,16 +36,24 @@ export function buildShopUiView(state: GameState): ShopUiView {
   if (!offer) {
     return HIDDEN_VIEW;
   }
-  const canBuy = !state.shop.usedThisStage && state.score >= SHOP_CONFIG.purchaseCost;
+  const purchaseCost = getShopPurchaseCost(state.shop.purchaseCount);
+  const canBuy = !state.shop.usedThisStage && state.score >= purchaseCost;
+  const canReroll = !state.shop.usedThisStage && !state.shop.rerolledThisStage;
+  const optionA = ITEM_REGISTRY[offer[0]];
+  const optionB = ITEM_REGISTRY[offer[1]];
   const status = state.shop.usedThisStage
     ? "ショップ: このステージは購入済み"
-    : `ショップ: 1回限定 (${SHOP_CONFIG.purchaseCost}点)`;
+    : `ショップ: 1回限定 (現在価格 ${purchaseCost}点)`;
   return {
     visible: true,
     status,
-    optionALabel: ITEM_REGISTRY[offer[0]].label,
-    optionBLabel: ITEM_REGISTRY[offer[1]].label,
+    currentCostText: `${purchaseCost}点`,
+    optionALabel: `${optionA.emoji} ${optionA.label}`,
+    optionBLabel: `${optionB.emoji} ${optionB.label}`,
     optionADisabled: !canBuy,
     optionBDisabled: !canBuy,
+    rerollVisible: true,
+    rerollDisabled: !canReroll,
+    rerollLabel: state.shop.rerolledThisStage ? "リロール済み" : "無料リロール",
   };
 }

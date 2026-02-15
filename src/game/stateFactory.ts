@@ -83,6 +83,7 @@ export function createInitialGameState(
     options: {
       riskMode: false,
       enableNewItemStacks: false,
+      stickyItemEnabled: false,
       debugModeEnabled: false,
       debugRecordResults: false,
       debugScenario: "normal",
@@ -119,6 +120,8 @@ export function createInitialGameState(
     },
     shop: {
       usedThisStage: false,
+      purchaseCount: 0,
+      rerolledThisStage: false,
       lastOffer: null,
       lastChosen: null,
     },

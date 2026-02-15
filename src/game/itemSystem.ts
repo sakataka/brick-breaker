@@ -26,6 +26,10 @@ export interface ItemPickupOptions {
   enableNewItemStacks?: boolean;
 }
 
+export interface DropOptions {
+  stickyItemEnabled?: boolean;
+}
+
 export function createItemState(): ItemState {
   return {
     falling: [],
@@ -115,6 +119,7 @@ export function applyDebugItemPreset(
   items: ItemState,
   preset: DebugItemPreset,
   enableNewItemStacks: boolean,
+  stickyItemEnabled = true,
 ): void {
   items.active = createItemStacks();
   if (preset === "none") {
@@ -132,15 +137,19 @@ export function applyDebugItemPreset(
   items.active.pierceStacks = 1;
   items.active.bombStacks = 1;
   items.active.laserStacks = enableNewItemStacks ? 2 : 1;
-  items.active.stickyStacks = 1;
+  items.active.stickyStacks = stickyItemEnabled ? 1 : 0;
 }
 
 export function spawnDropsFromBrickEvents(
   items: ItemState,
   events: CollisionEvent[],
   random: RandomSource,
+  options: DropOptions = {},
 ): void {
   const excludedTypes: ItemType[] = getDropSuppressedTypes(items.active);
+  if (options.stickyItemEnabled === false) {
+    excludedTypes.push("sticky");
+  }
   for (const event of events) {
     if (event.kind !== "brick") {
       continue;
@@ -165,11 +174,20 @@ export function spawnDropsFromBrickEvents(
   }
 }
 
-export function spawnGuaranteedDrop(items: ItemState, random: RandomSource, x: number, y: number): boolean {
+export function spawnGuaranteedDrop(
+  items: ItemState,
+  random: RandomSource,
+  x: number,
+  y: number,
+  options: DropOptions = {},
+): boolean {
   if (items.falling.length >= DROP_CONFIG.maxFalling) {
     return false;
   }
   const excludedTypes: ItemType[] = getDropSuppressedTypes(items.active);
+  if (options.stickyItemEnabled === false) {
+    excludedTypes.push("sticky");
+  }
   items.falling.push({
     id: items.nextId,
     type: pickWeightedItemType(random, excludedTypes),

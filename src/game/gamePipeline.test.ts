@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { GAME_CONFIG } from "./config";
-import { stepPlayingPipeline } from "./gamePipeline";
+import { generateShopOffer, stepPlayingPipeline } from "./gamePipeline";
 import { advanceStage } from "./roundSystem";
 import { createInitialGameState } from "./stateFactory";
 import type { Ball, RandomSource } from "./types";
@@ -16,6 +16,11 @@ function overrideSingleBall(state: ReturnType<typeof createInitialGameState>, ba
 }
 
 describe("gamePipeline", () => {
+  test("generateShopOffer excludes sticky when sticky item is disabled", () => {
+    const offer = generateShopOffer({ next: () => 0.99 }, false);
+    expect(offer.includes("sticky")).toBe(false);
+  });
+
   test("returns stageclear when final brick is destroyed", () => {
     const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60 };
     const state = createInitialGameState(config, true, "playing");
