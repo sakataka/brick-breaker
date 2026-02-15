@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import type { StartSettingsSelection } from "../store";
+import { START_SETTINGS_OPTIONS, type StartSettingsSelection } from "../store";
 
 export interface StartSettingsFormProps {
   settings: StartSettingsSelection;
@@ -7,163 +7,172 @@ export interface StartSettingsFormProps {
 }
 
 export function StartSettingsForm({ settings, onChange }: StartSettingsFormProps): ReactElement {
+  const basicSelectRows: Array<{
+    id: string;
+    label: string;
+    value: string;
+    options: ReadonlyArray<{ value: string | number; label: string }>;
+    patch: (value: string) => Partial<StartSettingsSelection>;
+  }> = [
+    {
+      id: "setting-difficulty",
+      label: "難易度",
+      value: settings.difficulty,
+      options: START_SETTINGS_OPTIONS.difficulty,
+      patch: (value) => ({ difficulty: value as StartSettingsSelection["difficulty"] }),
+    },
+    {
+      id: "setting-lives",
+      label: "初期残機",
+      value: String(settings.initialLives),
+      options: START_SETTINGS_OPTIONS.initialLives,
+      patch: (value) => ({ initialLives: Number.parseInt(value, 10) || 4 }),
+    },
+    {
+      id: "setting-speed",
+      label: "速度",
+      value: settings.speedPreset,
+      options: START_SETTINGS_OPTIONS.speedPreset,
+      patch: (value) => ({ speedPreset: value as StartSettingsSelection["speedPreset"] }),
+    },
+    {
+      id: "setting-route",
+      label: "ルート選択",
+      value: settings.routePreference,
+      options: START_SETTINGS_OPTIONS.routePreference,
+      patch: (value) => ({ routePreference: value as StartSettingsSelection["routePreference"] }),
+    },
+    {
+      id: "setting-multiball-max",
+      label: "マルチ上限",
+      value: String(settings.multiballMaxBalls),
+      options: START_SETTINGS_OPTIONS.multiballMaxBalls,
+      patch: (value) => ({ multiballMaxBalls: Number.parseInt(value, 10) || 4 }),
+    },
+  ];
+
+  const basicToggleRows: Array<{
+    id: string;
+    label: string;
+    checked: boolean;
+    patch: (checked: boolean) => Partial<StartSettingsSelection>;
+  }> = [
+    {
+      id: "setting-challenge-mode",
+      label: "チャレンジ固定シード",
+      checked: settings.challengeMode,
+      patch: (checked) => ({ challengeMode: checked }),
+    },
+    {
+      id: "setting-daily-mode",
+      label: "デイリーモード",
+      checked: settings.dailyMode,
+      patch: (checked) => ({ dailyMode: checked }),
+    },
+    {
+      id: "setting-risk-mode",
+      label: "リスク倍率モード",
+      checked: settings.riskMode,
+      patch: (checked) => ({ riskMode: checked }),
+    },
+    {
+      id: "setting-new-item-stacks",
+      label: "新アイテムのスタック",
+      checked: settings.enableNewItemStacks,
+      patch: (checked) => ({ enableNewItemStacks: checked }),
+    },
+    {
+      id: "setting-sticky-item-enabled",
+      label: "Stickyアイテム有効",
+      checked: settings.stickyItemEnabled,
+      patch: (checked) => ({ stickyItemEnabled: checked }),
+    },
+    {
+      id: "setting-bgm-enabled",
+      label: "BGM",
+      checked: settings.bgmEnabled,
+      patch: (checked) => ({ bgmEnabled: checked }),
+    },
+    {
+      id: "setting-sfx-enabled",
+      label: "効果音",
+      checked: settings.sfxEnabled,
+      patch: (checked) => ({ sfxEnabled: checked }),
+    },
+  ];
+
+  const debugSelectRows: Array<{
+    id: string;
+    label: string;
+    value: string;
+    options: ReadonlyArray<{ value: string | number; label: string }>;
+    patch: (value: string) => Partial<StartSettingsSelection>;
+  }> = [
+    {
+      id: "setting-debug-start-stage",
+      label: "開始ステージ",
+      value: String(settings.debugStartStage),
+      options: START_SETTINGS_OPTIONS.debugStartStage,
+      patch: (value) => ({ debugStartStage: Number.parseInt(value, 10) || 1 }),
+    },
+    {
+      id: "setting-debug-scenario",
+      label: "シナリオ",
+      value: settings.debugScenario,
+      options: START_SETTINGS_OPTIONS.debugScenario,
+      patch: (value) => ({ debugScenario: value as StartSettingsSelection["debugScenario"] }),
+    },
+    {
+      id: "setting-debug-item-preset",
+      label: "アイテムプリセット",
+      value: settings.debugItemPreset,
+      options: START_SETTINGS_OPTIONS.debugItemPreset,
+      patch: (value) => ({ debugItemPreset: value as StartSettingsSelection["debugItemPreset"] }),
+    },
+    {
+      id: "setting-debug-record-results",
+      label: "結果記録",
+      value: settings.debugRecordResults ? "true" : "false",
+      options: START_SETTINGS_OPTIONS.debugRecordResults,
+      patch: (value) => ({ debugRecordResults: value === "true" }),
+    },
+  ];
+
   return (
     <div id="start-settings" className="start-settings">
       <section className="settings-section basic-settings">
         <p className="settings-section-title">基本設定</p>
-        <label>
-          難易度
-          <select
-            id="setting-difficulty"
-            value={settings.difficulty}
-            onChange={(event) => {
-              onChange({ difficulty: event.target.value as typeof settings.difficulty });
-            }}
-          >
-            <option value="casual">カジュアル</option>
-            <option value="standard">スタンダード</option>
-            <option value="hard">ハード</option>
-          </select>
-        </label>
-        <label>
-          初期残機
-          <select
-            id="setting-lives"
-            value={String(settings.initialLives)}
-            onChange={(event) => {
-              onChange({ initialLives: Number.parseInt(event.target.value, 10) || 4 });
-            }}
-          >
-            {[1, 2, 3, 4, 5, 6].map((lives) => (
-              <option key={lives} value={lives}>
-                {lives}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          速度
-          <select
-            id="setting-speed"
-            value={settings.speedPreset}
-            onChange={(event) => {
-              onChange({ speedPreset: event.target.value as typeof settings.speedPreset });
-            }}
-          >
-            <option value="0.75">75%</option>
-            <option value="1.00">100%</option>
-            <option value="1.25">125%</option>
-          </select>
-        </label>
-        <label>
-          ルート選択
-          <select
-            id="setting-route"
-            value={settings.routePreference}
-            onChange={(event) => {
-              onChange({
-                routePreference: event.target.value as typeof settings.routePreference,
-              });
-            }}
-          >
-            <option value="auto">自動</option>
-            <option value="A">Aルート</option>
-            <option value="B">Bルート</option>
-          </select>
-        </label>
-        <label>
-          マルチ上限
-          <select
-            id="setting-multiball-max"
-            value={String(settings.multiballMaxBalls)}
-            onChange={(event) => {
-              onChange({ multiballMaxBalls: Number.parseInt(event.target.value, 10) || 4 });
-            }}
-          >
-            {[2, 3, 4, 5, 6].map((count) => (
-              <option key={count} value={count}>
-                {count}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="toggle-row">
-          <span>チャレンジ固定シード</span>
-          <input
-            id="setting-challenge-mode"
-            type="checkbox"
-            checked={settings.challengeMode}
-            onChange={(event) => {
-              onChange({ challengeMode: event.target.checked });
-            }}
-          />
-        </label>
-        <label className="toggle-row">
-          <span>デイリーモード</span>
-          <input
-            id="setting-daily-mode"
-            type="checkbox"
-            checked={settings.dailyMode}
-            onChange={(event) => {
-              onChange({ dailyMode: event.target.checked });
-            }}
-          />
-        </label>
-        <label className="toggle-row">
-          <span>リスク倍率モード</span>
-          <input
-            id="setting-risk-mode"
-            type="checkbox"
-            checked={settings.riskMode}
-            onChange={(event) => {
-              onChange({ riskMode: event.target.checked });
-            }}
-          />
-        </label>
-        <label className="toggle-row">
-          <span>新アイテムのスタック</span>
-          <input
-            id="setting-new-item-stacks"
-            type="checkbox"
-            checked={settings.enableNewItemStacks}
-            onChange={(event) => {
-              onChange({ enableNewItemStacks: event.target.checked });
-            }}
-          />
-        </label>
-        <label className="toggle-row">
-          <span>Stickyアイテム有効</span>
-          <input
-            id="setting-sticky-item-enabled"
-            type="checkbox"
-            checked={settings.stickyItemEnabled}
-            onChange={(event) => {
-              onChange({ stickyItemEnabled: event.target.checked });
-            }}
-          />
-        </label>
-        <label className="toggle-row">
-          <span>BGM</span>
-          <input
-            id="setting-bgm-enabled"
-            type="checkbox"
-            checked={settings.bgmEnabled}
-            onChange={(event) => {
-              onChange({ bgmEnabled: event.target.checked });
-            }}
-          />
-        </label>
-        <label className="toggle-row">
-          <span>効果音</span>
-          <input
-            id="setting-sfx-enabled"
-            type="checkbox"
-            checked={settings.sfxEnabled}
-            onChange={(event) => {
-              onChange({ sfxEnabled: event.target.checked });
-            }}
-          />
-        </label>
+        {basicSelectRows.map((row) => (
+          <label key={row.id}>
+            {row.label}
+            <select
+              id={row.id}
+              value={row.value}
+              onChange={(event) => {
+                onChange(row.patch(event.target.value));
+              }}
+            >
+              {row.options.map((option) => (
+                <option key={String(option.value)} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ))}
+        {basicToggleRows.map((row) => (
+          <label key={row.id} className="toggle-row">
+            <span>{row.label}</span>
+            <input
+              id={row.id}
+              type="checkbox"
+              checked={row.checked}
+              onChange={(event) => {
+                onChange(row.patch(event.target.checked));
+              }}
+            />
+          </label>
+        ))}
       </section>
 
       <section
@@ -185,73 +194,24 @@ export function StartSettingsForm({ settings, onChange }: StartSettingsFormProps
         </div>
 
         {settings.debugModeEnabled ? (
-          <>
-            <label>
-              開始ステージ
+          debugSelectRows.map((row) => (
+            <label key={row.id}>
+              {row.label}
               <select
-                id="setting-debug-start-stage"
-                value={String(settings.debugStartStage)}
+                id={row.id}
+                value={row.value}
                 onChange={(event) => {
-                  onChange({
-                    debugStartStage: Number.parseInt(event.target.value, 10) || 1,
-                  });
+                  onChange(row.patch(event.target.value));
                 }}
               >
-                {Array.from({ length: 12 }, (_, index) => index + 1).map((stage) => (
-                  <option key={stage} value={stage}>
-                    {stage}
+                {row.options.map((option) => (
+                  <option key={String(option.value)} value={option.value}>
+                    {option.label}
                   </option>
                 ))}
               </select>
             </label>
-            <label>
-              シナリオ
-              <select
-                id="setting-debug-scenario"
-                value={settings.debugScenario}
-                onChange={(event) => {
-                  onChange({
-                    debugScenario: event.target.value as typeof settings.debugScenario,
-                  });
-                }}
-              >
-                <option value="normal">通常</option>
-                <option value="enemy_check">敵確認（9面）</option>
-                <option value="boss_check">ボス確認（12面）</option>
-              </select>
-            </label>
-            <label>
-              アイテムプリセット
-              <select
-                id="setting-debug-item-preset"
-                value={settings.debugItemPreset}
-                onChange={(event) => {
-                  onChange({
-                    debugItemPreset: event.target.value as typeof settings.debugItemPreset,
-                  });
-                }}
-              >
-                <option value="none">なし</option>
-                <option value="combat_check">戦闘確認</option>
-                <option value="boss_check">ボス確認</option>
-              </select>
-            </label>
-            <label>
-              結果記録
-              <select
-                id="setting-debug-record-results"
-                value={settings.debugRecordResults ? "true" : "false"}
-                onChange={(event) => {
-                  onChange({
-                    debugRecordResults: event.target.value === "true",
-                  });
-                }}
-              >
-                <option value="false">記録しない</option>
-                <option value="true">記録する</option>
-              </select>
-            </label>
-          </>
+          ))
         ) : (
           <p className="settings-section-note">デバッグモードをONにすると検証用オプションを表示します。</p>
         )}

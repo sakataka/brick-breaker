@@ -34,6 +34,23 @@ export interface AudioSettings {
 
 export interface StartSettingsSelection extends GameSettings, AudioSettings {}
 
+export interface SelectOption<T extends string | number> {
+  value: T;
+  label: string;
+}
+
+export interface StartSettingsOptionCatalog {
+  difficulty: readonly SelectOption<Difficulty>[];
+  initialLives: readonly SelectOption<number>[];
+  speedPreset: readonly SelectOption<SpeedPreset>[];
+  routePreference: readonly SelectOption<RoutePreference>[];
+  multiballMaxBalls: readonly SelectOption<number>[];
+  debugStartStage: readonly SelectOption<number>[];
+  debugScenario: readonly SelectOption<DebugScenario>[];
+  debugItemPreset: readonly SelectOption<DebugItemPreset>[];
+  debugRecordResults: readonly SelectOption<"false" | "true">[];
+}
+
 export interface UiOverlayState {
   model: OverlayViewModel;
 }
@@ -106,7 +123,45 @@ const DEFAULT_SHOP: ShopViewState = {
   rerollLabel: "リロール",
 };
 
-const DEFAULT_SETTINGS: StartSettingsSelection = {
+export const START_SETTINGS_OPTIONS: StartSettingsOptionCatalog = {
+  difficulty: [
+    { value: "casual", label: "カジュアル" },
+    { value: "standard", label: "スタンダード" },
+    { value: "hard", label: "ハード" },
+  ] as const,
+  initialLives: [1, 2, 3, 4, 5, 6].map((value) => ({ value, label: String(value) })),
+  speedPreset: [
+    { value: "0.75", label: "75%" },
+    { value: "1.00", label: "100%" },
+    { value: "1.25", label: "125%" },
+  ] as const,
+  routePreference: [
+    { value: "auto", label: "自動" },
+    { value: "A", label: "Aルート" },
+    { value: "B", label: "Bルート" },
+  ] as const,
+  multiballMaxBalls: [2, 3, 4, 5, 6].map((value) => ({ value, label: String(value) })),
+  debugStartStage: Array.from({ length: 12 }, (_, index) => index + 1).map((value) => ({
+    value,
+    label: String(value),
+  })),
+  debugScenario: [
+    { value: "normal", label: "通常" },
+    { value: "enemy_check", label: "敵確認（9面）" },
+    { value: "boss_check", label: "ボス確認（12面）" },
+  ] as const,
+  debugItemPreset: [
+    { value: "none", label: "なし" },
+    { value: "combat_check", label: "戦闘確認" },
+    { value: "boss_check", label: "ボス確認" },
+  ] as const,
+  debugRecordResults: [
+    { value: "false", label: "記録しない" },
+    { value: "true", label: "記録する" },
+  ] as const,
+};
+
+export const START_SETTINGS_DEFAULT: StartSettingsSelection = {
   difficulty: "standard",
   initialLives: GAME_CONFIG.initialLives,
   speedPreset: "1.00",
@@ -130,7 +185,7 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
   hud: DEFAULT_HUD,
   overlay: { model: DEFAULT_OVERLAY },
   shop: DEFAULT_SHOP,
-  startSettings: DEFAULT_SETTINGS,
+  startSettings: START_SETTINGS_DEFAULT,
   rogueSelection: "score_core",
   handlers: {
     primaryAction: () => {},

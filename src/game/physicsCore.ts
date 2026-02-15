@@ -1,18 +1,15 @@
 import { applyBrickDamage } from "./brickDamage";
 import { type GameplayBalance, getGameplayBalance } from "./config";
-import type { WarpZone } from "./config/stages";
 import { clamp } from "./math";
+import { applyFluxField } from "./physics/fluxField";
+import { updateStickyHold } from "./physics/stickyHold";
+import { normalizeVelocity } from "./physics/velocity";
+import { applyWarpZones } from "./physics/warpZones";
 import type { PhysicsFrameResult, PhysicsInput } from "./physicsTypes";
 import type { Ball, Brick, CollisionEvent } from "./types";
 
 const MAX_SUBSTEPS = 12;
 const MAX_MOVE = 4;
-const WARP_COOLDOWN_SEC = 0.24;
-const WARP_EXIT_PUSH = 10;
-const FLUX_RADIUS = 180;
-const FLUX_PULL_ACCEL = 340;
-const FLUX_PUSH_ACCEL = 220;
-const FLUX_DELTA_V_LIMIT = 180;
 
 interface BrickHitResult {
   scoreGain: number;
@@ -444,111 +441,4 @@ function nudgeForward(ball: Ball): void {
   const push = ball.radius * 0.55;
   ball.pos.x += (ball.vel.x / speed) * push;
   ball.pos.y += (ball.vel.y / speed) * push;
-}
-
-function updateStickyHold(
-  ball: Ball,
-  paddleX: number,
-  paddleY: number,
-  paddleWidth: number,
-  deltaSec: number,
-  initialBallSpeed: number,
-  balance: GameplayBalance,
-  maxBallSpeed: number,
-): void {
-  const timer = Math.max(0, (ball.stickTimerSec ?? 0) - deltaSec);
-  ball.stickTimerSec = timer;
-  const ratio = clamp(ball.stickOffsetRatio ?? 0, -1, 1);
-  ball.pos.x = paddleX + paddleWidth / 2 + ratio * (paddleWidth / 2);
-  ball.pos.y = paddleY - ball.radius;
-  ball.vel.x = 0;
-  ball.vel.y = 0;
-  if (timer > 0) {
-    return;
-  }
-  const angle = ratio * balance.paddleMaxBounceAngle;
-  const speed = Math.min(maxBallSpeed, Math.max(initialBallSpeed, ball.speed || initialBallSpeed));
-  ball.vel.x = Math.sin(angle) * speed;
-  ball.vel.y = -Math.cos(angle) * speed;
-  ball.speed = speed;
-}
-
-function normalizeVelocity(ball: Ball, maxSpeed: number): void {
-  const current = Math.hypot(ball.vel.x, ball.vel.y);
-  if (current === 0) {
-    return;
-  }
-  const factor = Math.min(maxSpeed, current) / current;
-  ball.vel.x *= factor;
-  ball.vel.y *= factor;
-}
-
-function applyFluxField(
-  ball: Ball,
-  paddleX: number,
-  paddleY: number,
-  paddleWidth: number,
-  deltaSec: number,
-): void {
-  const paddleCenterX = paddleX + paddleWidth / 2;
-  const paddleCenterY = paddleY;
-  const dx = paddleCenterX - ball.pos.x;
-  const dy = paddleCenterY - ball.pos.y;
-  const distance = Math.hypot(dx, dy);
-  if (distance <= 0 || distance > FLUX_RADIUS) {
-    return;
-  }
-  const weight = 1 - distance / FLUX_RADIUS;
-  const towardCenter = dx / distance;
-  const direction = ball.vel.y >= 0 ? towardCenter : -towardCenter;
-  const accel = (ball.vel.y >= 0 ? FLUX_PULL_ACCEL : FLUX_PUSH_ACCEL) * weight;
-  const deltaVx = clamp(
-    direction * accel * deltaSec,
-    -FLUX_DELTA_V_LIMIT * deltaSec,
-    FLUX_DELTA_V_LIMIT * deltaSec,
-  );
-  ball.vel.x += deltaVx;
-}
-
-function applyWarpZones(ball: Ball, zones: WarpZone[] | undefined): void {
-  if (!zones || zones.length <= 0) {
-    return;
-  }
-  if ((ball.warpCooldownSec ?? 0) > 0) {
-    return;
-  }
-  for (const zone of zones) {
-    if (isInsideWarpZone(ball, zone)) {
-      ball.pos.x = zone.outX;
-      ball.pos.y = zone.outY;
-      pushWarpExit(ball, zones);
-      ball.warpCooldownSec = WARP_COOLDOWN_SEC;
-      return;
-    }
-  }
-}
-
-function isInsideWarpZone(ball: Ball, zone: WarpZone): boolean {
-  return (
-    ball.pos.x >= zone.inXMin &&
-    ball.pos.x <= zone.inXMax &&
-    ball.pos.y >= zone.inYMin &&
-    ball.pos.y <= zone.inYMax
-  );
-}
-
-function pushWarpExit(ball: Ball, zones: WarpZone[]): void {
-  const speed = Math.hypot(ball.vel.x, ball.vel.y);
-  if (speed > 0) {
-    ball.pos.x += (ball.vel.x / speed) * WARP_EXIT_PUSH;
-    ball.pos.y += (ball.vel.y / speed) * WARP_EXIT_PUSH;
-  }
-  for (let i = 0; i < 4; i += 1) {
-    const occupied = zones.some((zone) => isInsideWarpZone(ball, zone));
-    if (!occupied) {
-      return;
-    }
-    ball.pos.y += WARP_EXIT_PUSH;
-    ball.pos.x += speed > 0 ? (ball.vel.x / speed) * (WARP_EXIT_PUSH * 0.6) : 0;
-  }
 }

@@ -1,4 +1,4 @@
-import { appStore, type ShopViewState, type StartSettingsSelection } from "../app/store";
+import { appStore, type ShopViewState } from "../app/store";
 import { AudioDirector } from "../audio/audioDirector";
 import { SfxManager } from "../audio/sfx";
 import { CoreEngine } from "../core/engine";
@@ -6,22 +6,23 @@ import type { AudioPort, RenderPort, UiPort } from "../core/ports";
 import { GameHost } from "../phaser/GameHost";
 import { readAccessibility } from "./a11y";
 import { syncAudioScene } from "./audioSync";
-import { buildStartConfig, GAME_CONFIG, getShopPurchaseCost } from "./config";
-import { getDailyChallenge } from "./dailyChallenge";
-import { generateShopOffer } from "./gamePipeline";
-import { applyDebugItemPreset, applyItemPickup, ensureMultiballCount } from "./itemSystem";
+import { buildStartConfig, GAME_CONFIG } from "./config";
 import { LifecycleController } from "./lifecycle";
 import { clamp } from "./math";
-import { createSeededRandomSource, defaultRandomSource } from "./random";
-import { buildHudViewModel, buildOverlayViewModel, buildRenderViewState } from "./renderPresenter";
+import { defaultRandomSource } from "./random";
 import type { HudViewModel, OverlayViewModel, RenderViewState } from "./renderTypes";
 import { advanceStage, applyRogueUpgradeSelection, prepareStageStory, resetRoundState } from "./roundSystem";
 import { type SceneEvent, SceneMachine } from "./sceneMachine";
 import { applySceneTransition, type SceneTransitionResult } from "./sceneSync";
-import { buildShopUiView } from "./shopUi";
+import { purchaseShopOption, rerollShopOffer } from "./session/shopActions";
+import {
+  applyDebugPresetOnRoundStart,
+  applyStartSettingsToState,
+  computeAppliedStartSettings,
+} from "./session/startSettings";
+import { syncViewPorts } from "./session/viewSync";
 import { createInitialGameState } from "./stateFactory";
 import type { GameAudioSettings, GameConfig, GameState, RandomSource, Scene } from "./types";
-import { spawnItemPickupFeedback } from "./vfxSystem";
 import { applyCanvasViewport } from "./viewport";
 
 export interface GameSessionDeps {
@@ -219,7 +220,7 @@ export class GameSession {
       resetRoundState(this.state, this.config, this.state.vfx.reducedMotion, this.random, {
         startStageIndex: this.pendingStartStageIndex,
       });
-      this.applyDebugPreset();
+      applyDebugPresetOnRoundStart(this.state, this.random, this.config.multiballMaxBalls);
     } else if (result.previous === "story") {
       this.state.story.activeStageNumber = null;
     }
@@ -312,53 +313,19 @@ export class GameSession {
   }
 
   private purchaseShopOption(index: 0 | 1): void {
-    if (this.state.scene !== "playing" || this.state.shop.usedThisStage) {
+    const picked = purchaseShopOption(this.state, index, this.config, this.random);
+    if (!picked) {
       return;
-    }
-    const offer = this.state.shop.lastOffer;
-    const purchaseCost = getShopPurchaseCost(this.state.shop.purchaseCount);
-    if (!offer || this.state.score < purchaseCost) {
-      return;
-    }
-
-    const picked = offer[index];
-    this.state.score -= purchaseCost;
-    this.state.shop.usedThisStage = true;
-    this.state.shop.purchaseCount += 1;
-    this.state.shop.lastChosen = picked;
-    applyItemPickup(this.state.items, picked, this.state.balls, {
-      enableNewItemStacks: this.state.options.enableNewItemStacks,
-    });
-    if (picked === "multiball") {
-      this.state.balls = ensureMultiballCount(
-        this.state.items,
-        this.state.balls,
-        this.random,
-        this.config.multiballMaxBalls,
-      );
-    }
-    const anchor = this.state.balls[0];
-    if (anchor) {
-      spawnItemPickupFeedback(this.state.vfx, picked, anchor.pos.x, anchor.pos.y);
     }
     this.audioPort.playItemPickup(picked);
-    this.syncViewPorts();
+    this.syncPorts();
   }
 
   private rerollShopOffer(): void {
-    if (this.state.scene !== "playing") {
+    if (!rerollShopOffer(this.state, this.random)) {
       return;
     }
-    if (this.state.shop.usedThisStage || this.state.shop.rerolledThisStage || !this.state.shop.lastOffer) {
-      return;
-    }
-    this.state.shop.lastOffer = generateShopOffer(this.random, this.state.options.stickyItemEnabled);
-    this.state.shop.rerolledThisStage = true;
-    this.syncViewPorts();
-  }
-
-  private updateShopPanel(): void {
-    this.uiPort.syncShop(buildShopUiView(this.state));
+    this.syncPorts();
   }
 
   private adjustCanvasScale(): void {
@@ -399,59 +366,13 @@ export class GameSession {
 
   private applyStartSettings(): void {
     const selected = appStore.getState().startSettings;
-    this.config = buildStartConfig(this.baseConfig, selected);
-    if (selected.dailyMode) {
-      this.random = createSeededRandomSource(getDailyChallenge().seed);
-    } else if (selected.challengeMode) {
-      this.random = createSeededRandomSource(CHALLENGE_MODE_SEED);
-    } else {
-      this.random = this.baseRandom;
-    }
-    this.audioSettings = {
-      bgmEnabled: selected.bgmEnabled,
-      sfxEnabled: selected.sfxEnabled,
-    };
+    const applied = computeAppliedStartSettings(this.baseConfig, this.baseRandom, selected, buildStartConfig);
+    this.config = applied.config;
+    this.random = applied.random;
+    this.audioSettings = applied.audioSettings;
+    this.pendingStartStageIndex = applied.pendingStartStageIndex;
     this.audioPort.setSettings(this.audioSettings);
-    this.state.options.riskMode = selected.riskMode;
-    this.state.options.enableNewItemStacks = selected.enableNewItemStacks;
-    this.state.options.stickyItemEnabled = selected.stickyItemEnabled;
-    this.state.options.debugModeEnabled = selected.debugModeEnabled;
-    this.state.options.debugRecordResults = selected.debugRecordResults;
-    this.state.options.debugScenario = selected.debugScenario;
-    this.state.options.debugItemPreset = selected.debugItemPreset;
-    this.pendingStartStageIndex = this.resolveStartStageIndex(selected);
-    this.state.campaign.routePreference = selected.routePreference;
-  }
-
-  private resolveStartStageIndex(selected: StartSettingsSelection): number {
-    if (!selected.debugModeEnabled) {
-      return 0;
-    }
-    if (selected.debugScenario === "enemy_check") {
-      return 8;
-    }
-    if (selected.debugScenario === "boss_check") {
-      return 11;
-    }
-    return clamp(Math.round(selected.debugStartStage) - 1, 0, 11);
-  }
-
-  private applyDebugPreset(): void {
-    if (!this.state.options.debugModeEnabled) {
-      return;
-    }
-    applyDebugItemPreset(
-      this.state.items,
-      this.state.options.debugItemPreset,
-      this.state.options.enableNewItemStacks,
-      this.state.options.stickyItemEnabled,
-    );
-    this.state.balls = ensureMultiballCount(
-      this.state.items,
-      this.state.balls,
-      this.random,
-      this.config.multiballMaxBalls,
-    );
+    applyStartSettingsToState(this.state, selected);
   }
 
   private syncAudioForTransition(result: SceneTransitionResult): void {
@@ -487,15 +408,14 @@ export class GameSession {
     this.syncViewPorts();
   }
 
+  private syncPorts(): void {
+    syncViewPorts(this.state, this.renderPort, this.uiPort);
+  }
+
   private syncViewPorts(): void {
-    this.renderPort.render(buildRenderViewState(this.state));
-    this.uiPort.syncHud(buildHudViewModel(this.state));
-    this.uiPort.syncOverlay(buildOverlayViewModel(this.state));
-    this.updateShopPanel();
+    this.syncPorts();
   }
 }
-
-const CHALLENGE_MODE_SEED = 0x2f6e2b1d;
 
 function addMediaListener(query: MediaQueryList, handler: () => void): void {
   if (typeof query.addEventListener === "function") {

@@ -1,12 +1,7 @@
 import { validateItemConfig } from "../configSchema";
 import type { ItemType } from "../types";
 import { DEFAULT_MULTIBALL_MAX_BALLS } from "./gameplay";
-
-export interface ItemRule {
-  type: ItemType;
-  weight: number;
-  label: string;
-}
+import type { ItemRule } from "./types";
 
 export interface DropConfig {
   chance: number;

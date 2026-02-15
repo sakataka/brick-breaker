@@ -12,7 +12,9 @@
 - `src/core/engine.ts`
 - `src/core/ports.ts`
 - `src/game/gamePipeline.ts`
+- `src/game/pipeline/*`
 - `src/game/physicsCore.ts`
+- `src/game/physics/*`
 - `src/game/brickDamage.ts`
 - `src/game/itemSystem.ts`
 - `src/game/roundSystem.ts`
@@ -27,6 +29,9 @@
 - `src/game/GameSession.ts`
 - `src/game/sceneSync.ts`
 - `src/game/audioSync.ts`
+- `src/game/session/startSettings.ts`
+- `src/game/session/shopActions.ts`
+- `src/game/session/viewSync.ts`
 
 責務:
 - 入力・シーン遷移・フレーム進行のオーケストレーション。
@@ -38,6 +43,11 @@
 - `src/phaser/scenes/RuntimeScene.ts`
 - `src/phaser/scenes/BootScene.ts`
 - `src/phaser/render/PhaserRenderPort.ts`
+- `src/phaser/render/color.ts`
+- `src/phaser/render/layers/backdrop.ts`
+- `src/phaser/render/layers/world.ts`
+- `src/phaser/render/layers/effects.ts`
+- `src/phaser/render/layers/overlay.ts`
 
 責務:
 - Pointer/Keyboard 入力を受け取り `GameSession` へコマンド通知。
@@ -58,7 +68,7 @@
 責務:
 - 表示は宣言的に実装。
 - ゲーム本体との接続点は store のみ。
-- `StartSettingsForm` が通常設定とデバッグ設定（開始ステージ/シナリオ/プリセット/記録可否）を一元管理。
+- `StartSettingsForm` は `src/app/store.ts` の `START_SETTINGS_OPTIONS` を参照し、設定UIを定義駆動で生成する。
 - Stickyアイテムの有効/無効は開始設定で切替え、無効時はドロップ/ショップ/デバッグ付与の抽選対象から除外する。
 - `OverlayRoot` は開始画面のみ「ヘッダー / 設定スクロール / 固定CTAフッター」を適用し、設定増加時も開始操作を維持する。
 - `AppUi` はプレイ中のみ「上段情報バー（HUD+ショップ） / 下段ゲーム枠」の2分割レイアウトを有効化する。
@@ -79,7 +89,7 @@
 ## データフロー
 
 1. `RuntimeScene.update` がフレーム時刻を `GameSession.loop` に渡す。
-2. `CoreEngine.tick` が fixed-step で `gamePipeline` を進行。
+2. `CoreEngine.tick` が fixed-step で `gamePipeline` を進行し、内部で `pipeline/*` フェーズを順に適用する。
 3. `GameSession` が `RenderViewState` / `HudViewModel` / `OverlayViewModel` を構築。
 4. `RenderPort`（Phaser）と `UiPort`（Zustand）へ同期。
 5. シーン変化時は `audioSync` 経由で `AudioPort` を同期。
@@ -93,7 +103,10 @@
 - アイテム表示情報（色/絵文字/短縮文字）: `src/game/itemRegistry.ts`
 - ショップ候補生成とSticky除外連携: `src/game/gamePipeline.ts` (`generateShopOffer`)
 - UI状態: `src/app/store.ts`
-- デバッグ開始ロジック: `src/game/GameSession.ts` + `src/game/roundSystem.ts`
+- 開始設定の反映: `src/game/session/startSettings.ts`
+- ショップ操作処理: `src/game/session/shopActions.ts`
+- View同期: `src/game/session/viewSync.ts`
+- デバッグ開始ロジック: `src/game/session/startSettings.ts` + `src/game/roundSystem.ts`
 - 機能台帳: `docs/idea-list.md` と `docs/idea-progress.md`
 - 未完了タスク: この文書末尾の `Open Backlog` のみ
 
@@ -110,7 +123,7 @@
 
 1. `src/game/renderTypes.ts` を拡張。
 2. `src/game/renderPresenter.ts` で ViewModel 生成。
-3. Phaser 側または React 側の対応コンポーネントを更新。
+3. Phaser 側なら `src/phaser/render/layers/*`、React 側なら `src/app/components/*` を更新。
 
 ## 品質ゲート
 

@@ -82,6 +82,44 @@ describe("gamePipeline", () => {
     expect(state.combat.laserProjectiles).toHaveLength(0);
   });
 
+  test("does not auto-respawn lasers after all balls are lost in the same tick", () => {
+    const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60 };
+    const state = createInitialGameState(config, true, "playing");
+    state.scene = "playing";
+    state.bricks = [];
+    state.items.active.laserStacks = 2;
+    state.combat.laserCooldownSec = 0;
+    state.combat.laserProjectiles = [
+      {
+        id: 1,
+        x: 100,
+        y: 20,
+        speed: 760,
+      },
+    ];
+    overrideSingleBall(state, {
+      pos: { x: 130, y: 190 },
+      vel: { x: 0, y: 260 },
+      radius: 6,
+      speed: config.initialBallSpeed,
+    });
+
+    const outcome = stepPlayingPipeline(state, {
+      config,
+      random,
+      sfx: sfxStub as never,
+      tryShieldRescue: () => false,
+      playPickupSfx: () => {},
+      playComboFillSfx: () => {},
+      playMagicCastSfx: () => {},
+    });
+
+    expect(outcome).toBe("ballloss");
+    expect(state.balls).toHaveLength(0);
+    expect(state.combat.laserProjectiles).toHaveLength(0);
+    expect(state.combat.laserCooldownSec).toBe(0);
+  });
+
   test("keeps running when shield rescue succeeds", () => {
     const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60 };
     const state = createInitialGameState(config, true, "playing");
