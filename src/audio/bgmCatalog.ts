@@ -1,9 +1,13 @@
 export interface BgmStep {
   leadMidi?: number;
   harmonyMidis?: readonly number[];
+  counterMidi?: number;
+  padMidis?: readonly number[];
   bassMidi?: number;
   leadGain?: number;
   harmonyGain?: number;
+  counterGain?: number;
+  padGain?: number;
   bassGain?: number;
 }
 
@@ -30,6 +34,13 @@ interface ThemeDefinition {
   leadMotif: readonly MidiNote[];
   bassMotif: readonly MidiNote[];
   harmonyIntervals: readonly [number, number];
+  counterOffsets: readonly number[];
+  padIntervals: readonly [number, number];
+  arrangement: {
+    harmonyDensity: readonly [number, number, number];
+    counterDensity: readonly [number, number, number];
+    padEverySteps: readonly [number, number, number];
+  };
   transposeByVariant: readonly number[];
 }
 
@@ -37,6 +48,7 @@ const STAGE_COUNT = 12;
 const BARS = 8;
 const STEPS_PER_BAR = 4;
 const STEP_COUNT = BARS * STEPS_PER_BAR;
+const STAGE_INTENSITY_COUNT = 3;
 
 const THEMES: readonly ThemeDefinition[] = [
   {
@@ -50,6 +62,13 @@ const THEMES: readonly ThemeDefinition[] = [
     leadMotif: [74, 79, 81, 83, 84, 83, 81, 79, 78, 79, 81, 83, 81, 79, 78, 79],
     bassMotif: [55, null, 59, null, 62, null, 59, null],
     harmonyIntervals: [-4, -7],
+    counterOffsets: [7, 4, 7, 2],
+    padIntervals: [-5, -9],
+    arrangement: {
+      harmonyDensity: [0.38, 0.62, 0.84],
+      counterDensity: [0.18, 0.34, 0.56],
+      padEverySteps: [16, 8, 4],
+    },
     transposeByVariant: [0, 2, 4],
   },
   {
@@ -63,6 +82,13 @@ const THEMES: readonly ThemeDefinition[] = [
     leadMotif: [76, 74, 72, 74, 76, 79, 77, 76, 74, 72, 74, 76, 77, 79, 81, 79],
     bassMotif: [48, null, 55, null, 52, null, 55, null],
     harmonyIntervals: [-4, -7],
+    counterOffsets: [4, 7, 9, 7],
+    padIntervals: [-4, -7],
+    arrangement: {
+      harmonyDensity: [0.34, 0.58, 0.8],
+      counterDensity: [0.14, 0.3, 0.52],
+      padEverySteps: [16, 8, 4],
+    },
     transposeByVariant: [0, 2, 4],
   },
   {
@@ -76,6 +102,13 @@ const THEMES: readonly ThemeDefinition[] = [
     leadMotif: [74, 76, 77, 79, 81, 79, 77, 76, 74, 72, 71, 72, 74, 76, 77, 79],
     bassMotif: [50, null, 57, null, 53, null, 57, null],
     harmonyIntervals: [-3, -7],
+    counterOffsets: [3, 5, 7, 10],
+    padIntervals: [-3, -7],
+    arrangement: {
+      harmonyDensity: [0.44, 0.68, 0.88],
+      counterDensity: [0.24, 0.42, 0.64],
+      padEverySteps: [16, 8, 4],
+    },
     transposeByVariant: [0, 1, 3],
   },
   {
@@ -89,6 +122,13 @@ const THEMES: readonly ThemeDefinition[] = [
     leadMotif: [76, 76, 77, 79, 79, 77, 76, 74, 72, 72, 74, 76, 74, 72, 72, null],
     bassMotif: [48, null, 55, null, 52, null, 55, null],
     harmonyIntervals: [-3, -7],
+    counterOffsets: [12, 7, 5, 7],
+    padIntervals: [-5, -8],
+    arrangement: {
+      harmonyDensity: [0.48, 0.7, 0.9],
+      counterDensity: [0.2, 0.38, 0.58],
+      padEverySteps: [8, 4, 4],
+    },
     transposeByVariant: [0, 1, 2],
   },
 ] as const;
@@ -131,7 +171,20 @@ function buildTitleTrack(): BgmTrack {
     leadWave: "triangle",
     harmonyWave: "square",
     bassWave: "sine",
-    steps: buildSteps(lead, bass, 0.102, 0.05, 0.072, [-5, -9]),
+    steps: buildSteps(lead, bass, {
+      stageNumber: 1,
+      harmonyIntervals: [-5, -9],
+      counterOffsets: [7, 9, 12, 9],
+      padIntervals: [-5, -9],
+      arrangement: {
+        harmonyDensity: [0.5, 0.5, 0.5],
+        counterDensity: [0.24, 0.24, 0.24],
+        padEverySteps: [8, 8, 8],
+      },
+      leadBaseGain: 0.102,
+      harmonyBaseGain: 0.045,
+      bassBaseGain: 0.072,
+    }),
   };
 }
 
@@ -158,38 +211,77 @@ function buildStageTrack(stageNumber: number): BgmTrack {
     leadWave: theme.leadWave,
     harmonyWave: theme.harmonyWave,
     bassWave: theme.bassWave,
-    steps: buildSteps(lead, bass, 0.118, 0.056, 0.084, theme.harmonyIntervals),
+    steps: buildSteps(lead, bass, {
+      stageNumber: stage,
+      harmonyIntervals: theme.harmonyIntervals,
+      counterOffsets: theme.counterOffsets,
+      padIntervals: theme.padIntervals,
+      arrangement: theme.arrangement,
+      leadBaseGain: 0.114,
+      harmonyBaseGain: 0.051,
+      bassBaseGain: 0.082,
+    }),
   };
+}
+
+interface BuildStepOptions {
+  stageNumber: number;
+  harmonyIntervals: readonly [number, number];
+  counterOffsets: readonly number[];
+  padIntervals: readonly [number, number];
+  arrangement: ThemeDefinition["arrangement"];
+  leadBaseGain: number;
+  harmonyBaseGain: number;
+  bassBaseGain: number;
 }
 
 function buildSteps(
   leadNotes: readonly MidiNote[],
   bassNotes: readonly MidiNote[],
-  leadBaseGain: number,
-  harmonyBaseGain: number,
-  bassBaseGain: number,
-  harmonyIntervals: readonly [number, number],
+  options: BuildStepOptions,
 ): BgmStep[] {
+  const intensity = getStageLocalIntensity(options.stageNumber);
+  const harmonyDensity = options.arrangement.harmonyDensity[intensity];
+  const counterDensity = options.arrangement.counterDensity[intensity];
+  const padEverySteps = options.arrangement.padEverySteps[intensity];
   const steps: BgmStep[] = [];
   for (let index = 0; index < STEP_COUNT; index += 1) {
     const leadMidi = leadNotes[index] ?? undefined;
     const bassMidi = bassNotes[index] ?? undefined;
     const accent = index % 8 === 0;
     const semiAccent = index % 8 === 4;
-    const harmonyMidis = buildHarmonyMidis(leadMidi, index, accent || semiAccent, harmonyIntervals);
+    const harmonyMidis = buildHarmonyMidis(
+      leadMidi,
+      bassMidi,
+      index,
+      accent || semiAccent,
+      options.harmonyIntervals,
+      harmonyDensity,
+    );
+    const counterMidi = buildCounterMidi(leadMidi, bassMidi, index, options.counterOffsets, counterDensity);
+    const padMidis = buildPadMidis(leadMidi, bassMidi, index, padEverySteps, options.padIntervals);
     steps.push({
       leadMidi,
       harmonyMidis,
+      counterMidi,
+      padMidis,
       bassMidi,
       leadGain: leadMidi
         ? accent
-          ? leadBaseGain + 0.02
+          ? options.leadBaseGain + 0.02
           : semiAccent
-            ? leadBaseGain + 0.01
-            : leadBaseGain
+            ? options.leadBaseGain + 0.01
+            : options.leadBaseGain
         : undefined,
-      harmonyGain: harmonyMidis.length > 0 ? (accent ? harmonyBaseGain + 0.012 : harmonyBaseGain) : undefined,
-      bassGain: bassMidi ? (accent ? bassBaseGain + 0.01 : bassBaseGain) : undefined,
+      harmonyGain:
+        harmonyMidis.length > 0
+          ? accent
+            ? options.harmonyBaseGain + 0.01
+            : options.harmonyBaseGain
+          : undefined,
+      counterGain: typeof counterMidi === "number" ? (semiAccent ? 0.048 : 0.042) : undefined,
+      padGain: padMidis.length > 0 ? (accent ? 0.03 : 0.026) : undefined,
+      bassGain: bassMidi ? (accent ? options.bassBaseGain + 0.008 : options.bassBaseGain) : undefined,
     });
   }
   return steps;
@@ -197,22 +289,99 @@ function buildSteps(
 
 function buildHarmonyMidis(
   leadMidi: number | undefined,
+  bassMidi: number | undefined,
   index: number,
   emphasize: boolean,
   harmonyIntervals: readonly [number, number],
+  density: number,
 ): number[] {
   if (typeof leadMidi !== "number") {
     return [];
   }
+  if (!matchesDensity(index, density, 11)) {
+    return [];
+  }
   const primary = leadMidi + harmonyIntervals[0];
   const secondary = leadMidi + harmonyIntervals[1];
+  const candidates = [primary, secondary].filter((midi) => midi >= 40);
+  const filtered = removeBassClashes(candidates, bassMidi);
   if (emphasize) {
-    return [primary, secondary].filter((midi) => midi >= 36);
+    return filtered;
   }
-  if (index % 2 === 0 && primary >= 36) {
-    return [primary];
+  if (index % 2 === 0 && filtered.length > 0) {
+    return [filtered[0]];
   }
   return [];
+}
+
+function buildCounterMidi(
+  leadMidi: number | undefined,
+  bassMidi: number | undefined,
+  index: number,
+  counterOffsets: readonly number[],
+  density: number,
+): number | undefined {
+  if (typeof leadMidi !== "number" || !matchesDensity(index, density, 29)) {
+    return undefined;
+  }
+  if (index % 2 === 0) {
+    return undefined;
+  }
+  const offset = counterOffsets[index % counterOffsets.length] ?? 7;
+  const candidate = leadMidi + offset;
+  if (candidate < 48) {
+    return undefined;
+  }
+  if (typeof bassMidi === "number" && Math.abs(candidate - bassMidi) < 7) {
+    return candidate + 12;
+  }
+  return candidate;
+}
+
+function buildPadMidis(
+  leadMidi: number | undefined,
+  bassMidi: number | undefined,
+  index: number,
+  everySteps: number,
+  padIntervals: readonly [number, number],
+): number[] {
+  if (typeof leadMidi !== "number" || everySteps <= 0 || index % everySteps !== 0) {
+    return [];
+  }
+  const first = leadMidi + padIntervals[0];
+  const second = leadMidi + padIntervals[1];
+  const candidates = [first, second].filter((midi) => midi >= 40);
+  return removeBassClashes(candidates, bassMidi);
+}
+
+function removeBassClashes(notes: readonly number[], bassMidi: number | undefined): number[] {
+  if (typeof bassMidi !== "number") {
+    return [...notes];
+  }
+  return notes.filter((midi) => Math.abs(midi - bassMidi) >= 5);
+}
+
+function matchesDensity(index: number, density: number, salt: number): boolean {
+  if (density >= 1) {
+    return true;
+  }
+  if (density <= 0) {
+    return false;
+  }
+  const normalized = ((index * 37 + salt * 13) % 100) / 100;
+  return normalized < density;
+}
+
+function getStageLocalIntensity(stageNumber: number): 0 | 1 | 2 {
+  const stage = clampStageNumber(stageNumber);
+  const local = (stage - 1) % STAGE_INTENSITY_COUNT;
+  if (local === 0) {
+    return 0;
+  }
+  if (local === 1) {
+    return 1;
+  }
+  return 2;
 }
 
 function repeatToLength<T>(source: readonly T[], length: number): T[] {

@@ -23,11 +23,28 @@ type TimerId = ReturnType<typeof setInterval>;
 const LOOKAHEAD_MS = 50;
 const SCHEDULE_AHEAD_SEC = 0.2;
 const DEFAULT_FADE_MS = 220;
+const MAX_NOTES_PER_STEP = 6;
+
+const VOICE_GAIN = {
+  lead: 0.086,
+  bass: 0.074,
+  harmony: 0.042,
+  counter: 0.035,
+  pad: 0.028,
+} as const;
+
+const VOICE_DURATION = {
+  lead: 0.84,
+  bass: 0.96,
+  harmony: 0.72,
+  counter: 0.64,
+  pad: 1.36,
+} as const;
 
 export class BgmSequencer implements BgmController {
   private context: AudioContext | null = null;
   private enabled = true;
-  private targetGain = 0.2;
+  private targetGain = 0.19;
   private activeLayer: PlaybackLayer | null = null;
   private paused = false;
   private pendingTrack: BgmTrack | null = null;
@@ -187,36 +204,75 @@ export class BgmSequencer implements BgmController {
     while (layer.nextStepTime < context.currentTime + SCHEDULE_AHEAD_SEC) {
       const step = layer.track.steps[layer.stepIndex];
       if (step) {
+        let notesScheduled = 0;
         if (typeof step.bassMidi === "number") {
-          this.scheduleNote(
+          notesScheduled += this.scheduleNote(
             layer,
             step.bassMidi,
             layer.nextStepTime,
-            stepDurationSec * 0.98,
-            step.bassGain ?? 0.065,
+            stepDurationSec * VOICE_DURATION.bass,
+            Math.min(step.bassGain ?? VOICE_GAIN.bass, VOICE_GAIN.bass),
             layer.track.bassWave,
+            notesScheduled,
           );
         }
         if (typeof step.leadMidi === "number") {
-          this.scheduleNote(
+          notesScheduled += this.scheduleNote(
             layer,
             step.leadMidi,
             layer.nextStepTime,
-            stepDurationSec * 0.82,
-            step.leadGain ?? 0.08,
+            stepDurationSec * VOICE_DURATION.lead,
+            Math.min(step.leadGain ?? VOICE_GAIN.lead, VOICE_GAIN.lead),
             layer.track.leadWave,
+            notesScheduled,
           );
         }
-        if (step.harmonyMidis && step.harmonyMidis.length > 0) {
-          const perNoteGain = (step.harmonyGain ?? 0.05) / Math.max(1, step.harmonyMidis.length);
-          for (const harmonyMidi of step.harmonyMidis) {
-            this.scheduleNote(
+        if (step.harmonyMidis && step.harmonyMidis.length > 0 && notesScheduled < MAX_NOTES_PER_STEP) {
+          const remaining = MAX_NOTES_PER_STEP - notesScheduled;
+          const notes = step.harmonyMidis.slice(0, remaining);
+          const perNoteGain = Math.min(
+            (step.harmonyGain ?? VOICE_GAIN.harmony) / Math.max(1, notes.length),
+            VOICE_GAIN.harmony,
+          );
+          for (const harmonyMidi of notes) {
+            notesScheduled += this.scheduleNote(
               layer,
               harmonyMidi,
               layer.nextStepTime,
-              stepDurationSec * 0.74,
+              stepDurationSec * VOICE_DURATION.harmony,
               perNoteGain,
               layer.track.harmonyWave,
+              notesScheduled,
+            );
+          }
+        }
+        if (typeof step.counterMidi === "number" && notesScheduled < MAX_NOTES_PER_STEP) {
+          notesScheduled += this.scheduleNote(
+            layer,
+            step.counterMidi,
+            layer.nextStepTime,
+            stepDurationSec * VOICE_DURATION.counter,
+            Math.min(step.counterGain ?? VOICE_GAIN.counter, VOICE_GAIN.counter),
+            layer.track.harmonyWave,
+            notesScheduled,
+          );
+        }
+        if (step.padMidis && step.padMidis.length > 0 && notesScheduled < MAX_NOTES_PER_STEP) {
+          const remaining = MAX_NOTES_PER_STEP - notesScheduled;
+          const notes = step.padMidis.slice(0, remaining);
+          const perNoteGain = Math.min(
+            (step.padGain ?? VOICE_GAIN.pad) / Math.max(1, notes.length),
+            VOICE_GAIN.pad,
+          );
+          for (const padMidi of notes) {
+            notesScheduled += this.scheduleNote(
+              layer,
+              padMidi,
+              layer.nextStepTime,
+              stepDurationSec * VOICE_DURATION.pad,
+              perNoteGain,
+              layer.track.harmonyWave,
+              notesScheduled,
             );
           }
         }
@@ -234,10 +290,14 @@ export class BgmSequencer implements BgmController {
     durationSec: number,
     gainValue: number,
     oscillatorType: OscillatorType,
-  ): void {
+    notesScheduled: number,
+  ): number {
+    if (notesScheduled >= MAX_NOTES_PER_STEP) {
+      return 0;
+    }
     const context = this.context;
     if (!context) {
-      return;
+      return 0;
     }
 
     const osc = context.createOscillator();
@@ -250,6 +310,7 @@ export class BgmSequencer implements BgmController {
     gain.connect(layer.gainNode);
     osc.start(timeSec);
     osc.stop(timeSec + durationSec);
+    return 1;
   }
 }
 

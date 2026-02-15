@@ -46,4 +46,34 @@ describe("bgmCatalog", () => {
     expect(harmonySteps.length).toBeGreaterThan(0);
     expect(triadSteps.length).toBeGreaterThan(0);
   });
+
+  test("adds counter melody and pad steps for layered accompaniment", () => {
+    const stage2 = getStageBgmTrack(2);
+    const counterSteps = stage2.steps.filter((step) => typeof step.counterMidi === "number");
+    const padSteps = stage2.steps.filter((step) => (step.padMidis?.length ?? 0) > 0);
+
+    expect(counterSteps.length).toBeGreaterThan(0);
+    expect(padSteps.length).toBeGreaterThan(0);
+  });
+
+  test("increases accompaniment density across stage 1/2/3 in the same theme", () => {
+    const stage1 = getStageBgmTrack(1);
+    const stage2 = getStageBgmTrack(2);
+    const stage3 = getStageBgmTrack(3);
+
+    const scoreTrackDensity = (track: ReturnType<typeof getStageBgmTrack>): number =>
+      track.steps.reduce((score, step) => {
+        const harmony = step.harmonyMidis?.length ?? 0;
+        const counter = typeof step.counterMidi === "number" ? 1 : 0;
+        const pad = step.padMidis?.length ?? 0;
+        return score + harmony + counter + pad;
+      }, 0);
+
+    const d1 = scoreTrackDensity(stage1);
+    const d2 = scoreTrackDensity(stage2);
+    const d3 = scoreTrackDensity(stage3);
+
+    expect(d1).toBeLessThan(d2);
+    expect(d2).toBeLessThan(d3);
+  });
 });
