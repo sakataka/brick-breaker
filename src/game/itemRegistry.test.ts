@@ -15,7 +15,7 @@ describe("itemRegistry", () => {
   test("includes all item definitions with valid weights", () => {
     const result = validateItemRegistry();
     expect(result.valid).toBe(true);
-    expect(Object.keys(ITEM_REGISTRY)).toHaveLength(8);
+    expect(Object.keys(ITEM_REGISTRY)).toHaveLength(10);
   });
 
   test("detects invalid definition shape", () => {
@@ -41,6 +41,8 @@ describe("itemRegistry", () => {
     stacks.bombStacks = 1;
     stacks.laserStacks = 3;
     stacks.stickyStacks = 1;
+    stacks.homingStacks = 2;
+    stacks.railStacks = 2;
 
     const modifiers = createItemModifiers(stacks, 5);
     expect(modifiers.paddleScale).toBeGreaterThan(1);
@@ -52,6 +54,8 @@ describe("itemRegistry", () => {
     expect(modifiers.explodeOnHit).toBe(true);
     expect(modifiers.laserLevel).toBe(2);
     expect(modifiers.stickyEnabled).toBe(true);
+    expect(modifiers.homingStrength).toBeGreaterThan(0);
+    expect(modifiers.railLevel).toBe(2);
   });
 
   test("pierce + slow_ball synergy adds extra pierce depth", () => {

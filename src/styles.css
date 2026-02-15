@@ -157,6 +157,10 @@ body::before {
   color: var(--hud-accent);
 }
 
+#focus {
+  color: #ffd891;
+}
+
 #a11y-badge {
   font-size: 0.74rem;
   color: var(--text-2);
@@ -376,7 +380,9 @@ body::before {
   box-shadow: inset 0 0 0 1px rgba(116, 211, 255, 0.12);
 }
 
-.start-settings select {
+.start-settings select,
+.start-settings input[type="text"],
+.start-settings textarea {
   appearance: none;
   border: 1px solid rgba(149, 211, 255, 0.48);
   border-radius: 10px;
@@ -384,6 +390,25 @@ body::before {
   color: var(--text-1);
   font-size: 0.92rem;
   padding: 0.42rem 0.55rem;
+}
+
+.start-settings textarea {
+  min-height: 120px;
+  resize: vertical;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+#setting-custom-stage-json-fill {
+  border: 1px solid rgba(149, 211, 255, 0.48);
+  border-radius: 10px;
+  background: rgba(12, 44, 86, 0.72);
+  color: var(--text-1);
+  padding: 0.38rem 0.56rem;
+  font-size: 0.8rem;
+  cursor: pointer;
 }
 
 .results-section {
@@ -459,6 +484,13 @@ body::before {
   margin: 0 0 0.28rem;
   font-size: 0.7rem;
   color: rgba(255, 230, 188, 0.9);
+}
+
+#shop-price-band {
+  margin: 0 0 0.28rem;
+  font-size: 0.66rem;
+  color: rgba(255, 217, 150, 0.88);
+  letter-spacing: 0.06em;
 }
 
 .shop-buttons {

@@ -34,6 +34,7 @@ describe("renderPresenter", () => {
     expect(stageClearView.stageResult?.stars).toBe(3);
     expect(stageClearView.stageResult?.missionAchieved).toBe(true);
     expect(stageClearView.stageResult?.missionTargetTime).toBe("01:32");
+    expect(stageClearView.stageResult?.missionResults).toHaveLength(2);
     state.scene = "clear";
     expect(buildOverlayViewModel(state).stageResult?.clearTime).toBe("00:52");
   });
@@ -42,6 +43,7 @@ describe("renderPresenter", () => {
     const state = createInitialGameState(GAME_CONFIG, false, "playing");
     const idle = buildHudViewModel(state);
     expect(idle.comboText).toBe("コンボ x1.00");
+    expect(idle.focusText).toContain("READY");
     expect(idle.accessibilityText).toBe("表示: 標準");
 
     state.combo.streak = 3;

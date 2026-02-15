@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { GAME_CONFIG, STAGE_CATALOG } from "./config";
+import { GAME_CONFIG, MODE_CONFIG, STAGE_CATALOG } from "./config";
 import {
   advanceStage,
   applyLifeLoss,
@@ -50,6 +50,38 @@ describe("roundSystem", () => {
     resetRoundState(state, customConfig, false, fixedRandom);
 
     expect(state.lives).toBe(6);
+  });
+
+  test("resetRoundState applies endless mode virtual stage length", () => {
+    const state = createInitialGameState(GAME_CONFIG, false, "start");
+    state.options.gameMode = "endless";
+    resetRoundState(state, GAME_CONFIG, false, fixedRandom);
+    expect(state.campaign.totalStages).toBe(MODE_CONFIG.endlessVirtualStages);
+  });
+
+  test("resetRoundState applies boss rush rounds and boss stage", () => {
+    const state = createInitialGameState(GAME_CONFIG, false, "start");
+    state.options.gameMode = "boss_rush";
+    resetRoundState(state, GAME_CONFIG, false, fixedRandom);
+    expect(state.campaign.totalStages).toBe(MODE_CONFIG.bossRushRounds);
+    expect(state.bricks.some((brick) => brick.kind === "boss")).toBe(true);
+  });
+
+  test("custom stage catalog override is used when enabled", () => {
+    const state = createInitialGameState(GAME_CONFIG, false, "start");
+    state.options.customStageCatalog = [
+      {
+        id: 1,
+        speedScale: 1,
+        layout: [
+          [1, 0],
+          [0, 1],
+        ],
+      },
+    ];
+    resetRoundState(state, GAME_CONFIG, false, fixedRandom);
+    expect(state.campaign.totalStages).toBe(1);
+    expect(state.bricks.length).toBe(2);
   });
 
   test("advanceStage increments until final stage", () => {
@@ -194,9 +226,11 @@ describe("roundSystem", () => {
     expect(getStageClearTimeSec(state)).toBe(64);
     expect(state.stageStats.missionTargetSec).toBeGreaterThan(0);
     expect(state.stageStats.missionAchieved).toBe(true);
+    expect(state.stageStats.missionResults).toHaveLength(2);
     expect(state.campaign.results[0]?.stageNumber).toBe(1);
     expect(state.campaign.results[0]?.clearTimeSec).toBe(64);
     expect(state.campaign.results[0]?.missionAchieved).toBe(true);
+    expect(state.campaign.results[0]?.missionResults).toHaveLength(2);
   });
 
   test("finalizeStageStats marks mission failed when clear time exceeds target", () => {
@@ -209,6 +243,20 @@ describe("roundSystem", () => {
 
     expect(state.stageStats.missionAchieved).toBe(false);
     expect(state.campaign.results[0]?.missionAchieved).toBe(false);
+  });
+
+  test("finalizeStageStats marks no-shop mission as failed when shop was used", () => {
+    const state = createInitialGameState(GAME_CONFIG, false, "playing");
+    resetRoundState(state, GAME_CONFIG, false, fixedRandom);
+    state.stageStats.startedAtSec = 0;
+    state.elapsedSec = 40;
+    state.shop.usedThisStage = true;
+
+    finalizeStageStats(state);
+
+    const noShopMission = state.stageStats.missionResults?.find((mission) => mission.key === "no_shop");
+    expect(noShopMission?.achieved).toBe(false);
+    expect(state.stageStats.missionAchieved).toBe(false);
   });
 
   test("finalizeStageStats can skip persisting campaign results", () => {

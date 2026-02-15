@@ -81,11 +81,15 @@ export function createInitialGameState(
       hitsTaken: 0,
       startedAtSec: 0,
       missionTargetSec: getStageTimeTargetSec(0),
+      missionResults: [],
     },
     options: {
+      gameMode: "campaign",
       riskMode: false,
       enableNewItemStacks: false,
       stickyItemEnabled: false,
+      ghostReplayEnabled: false,
+      customStageCatalog: null,
       debugModeEnabled: false,
       debugRecordResults: false,
       debugScenario: "normal",
@@ -100,6 +104,12 @@ export function createInitialGameState(
       laserProjectiles: [],
       heldBalls: [],
       shieldBurstQueued: false,
+      focusRequest: false,
+      focusRemainingSec: 0,
+      focusCooldownSec: 0,
+      bossPhase: 0,
+      bossPhaseSummonCooldownSec: 0,
+      enemyWaveCooldownSec: 0,
     },
     enemies: [],
     magic: {
@@ -137,6 +147,12 @@ export function createInitialGameState(
     story: {
       activeStageNumber: null,
       seenStageNumbers: [],
+    },
+    ghost: {
+      playbackEnabled: false,
+      recordAccumulatorSec: 0,
+      recording: [],
+      playback: [],
     },
     vfx: createVfxState(reducedMotion),
     a11y: {

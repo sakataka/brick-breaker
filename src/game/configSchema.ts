@@ -20,6 +20,9 @@ const stageDefinitionSchema = z.object({
           z.literal("regen"),
           z.literal("hazard"),
           z.literal("boss"),
+          z.literal("split"),
+          z.literal("summon"),
+          z.literal("thorns"),
         ]),
       }),
     )
@@ -62,7 +65,7 @@ export function validateStageCatalog(catalog: StageDefinition[]): StageDefinitio
 
 export function validateItemConfig(config: Record<ItemType, ItemRule>): Record<ItemType, ItemRule> {
   const entries = Object.values(config);
-  const parsed = z.array(itemRuleSchema).length(8).safeParse(entries);
+  const parsed = z.array(itemRuleSchema).length(10).safeParse(entries);
   if (!parsed.success) {
     throw new Error(`Invalid ITEM_CONFIG: ${parsed.error.issues.map((issue) => issue.message).join(", ")}`);
   }

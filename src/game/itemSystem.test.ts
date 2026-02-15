@@ -120,20 +120,16 @@ describe("itemSystem", () => {
     expect(canUseShield(items)).toBe(false);
   });
 
-  test("spawnDrops includes new item types with weighted picker", () => {
+  test("spawnGuaranteedDrop can pick extended attack item types", () => {
     const items = createItemState();
-    const events: CollisionEvent[] = Array.from({ length: 6 }, (_, idx) => ({
-      kind: "brick",
-      x: 100 + idx,
-      y: 90,
-    }));
+    const random = sequenceRandom([0.85, 0.95, 0.99]);
+    spawnGuaranteedDrop(items, random, 100, 90);
+    spawnGuaranteedDrop(items, random, 110, 90);
+    spawnGuaranteedDrop(items, random, 120, 90);
 
-    spawnDropsFromBrickEvents(items, events, sequenceRandom([0.1, 0.85, 0.1, 0.95, 0.1, 0.99]));
     expect(items.falling.length).toBeGreaterThan(0);
-
-    // 0.85, 0.95 は新規帯域(laser/sticky)に入る
-    expect(items.falling.some((drop) => drop.type === "laser")).toBe(true);
-    expect(items.falling.some((drop) => drop.type === "sticky")).toBe(true);
+    expect(items.falling.some((drop) => drop.type === "rail")).toBe(true);
+    expect(items.falling.some((drop) => drop.type === "homing" || drop.type === "rail")).toBe(true);
   });
 
   test("spawnGuaranteedDrop always enqueues one drop when space is available", () => {
@@ -205,13 +201,17 @@ describe("itemSystem", () => {
     applyItemPickup(items, "pierce", [createBall()]);
     applyItemPickup(items, "pierce", [createBall()]);
     applyItemPickup(items, "laser", [createBall()]);
+    applyItemPickup(items, "homing", [createBall()]);
+    applyItemPickup(items, "rail", [createBall()]);
 
     const labels = getActiveItemLabels(items);
-    expect(labels).toHaveLength(8);
+    expect(labels).toHaveLength(10);
     expect(labels.some((label) => label.includes("🎱マルチ(多球)×1"))).toBe(true);
     expect(labels.some((label) => label.includes("🗡貫通×1"))).toBe(true);
     expect(labels.some((label) => label.includes("💣ボム(爆発)×0"))).toBe(true);
     expect(labels.some((label) => label.includes("🔫レーザー×1"))).toBe(true);
+    expect(labels.some((label) => label.includes("🛰ホーミング×1"))).toBe(true);
+    expect(labels.some((label) => label.includes("⚡レール×1"))).toBe(true);
   });
 
   test("laser and sticky stacks respect their caps", () => {

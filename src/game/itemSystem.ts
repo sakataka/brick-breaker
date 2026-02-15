@@ -20,7 +20,7 @@ import type {
 } from "./types";
 
 const ITEM_SIZE = 16;
-const NEW_STACK_ITEM_TYPES = new Set<ItemType>(["laser", "sticky"]);
+const NEW_STACK_ITEM_TYPES = new Set<ItemType>(["laser", "sticky", "homing", "rail"]);
 
 export interface ItemPickupOptions {
   enableNewItemStacks?: boolean;
@@ -52,6 +52,8 @@ export function cloneActiveItemState(active: ItemState["active"]): ItemState["ac
     bombStacks: active.bombStacks,
     laserStacks: active.laserStacks,
     stickyStacks: active.stickyStacks,
+    homingStacks: active.homingStacks,
+    railStacks: active.railStacks,
   };
 }
 
@@ -83,6 +85,14 @@ export function isStickyEnabled(items: ItemState): boolean {
   return createItemModifiers(items.active).stickyEnabled;
 }
 
+export function getHomingStrength(items: ItemState): number {
+  return createItemModifiers(items.active).homingStrength;
+}
+
+export function getRailLevel(items: ItemState): number {
+  return createItemModifiers(items.active).railLevel;
+}
+
 export function canUseShield(items: ItemState): boolean {
   return items.active.shieldCharges > 0;
 }
@@ -109,6 +119,14 @@ export function applyItemPickup(
     }
     if (type === "sticky") {
       items.active.stickyStacks = 1;
+      return;
+    }
+    if (type === "homing") {
+      items.active.homingStacks = 1;
+      return;
+    }
+    if (type === "rail") {
+      items.active.railStacks = 1;
       return;
     }
   }
@@ -138,6 +156,8 @@ export function applyDebugItemPreset(
   items.active.bombStacks = 1;
   items.active.laserStacks = enableNewItemStacks ? 2 : 1;
   items.active.stickyStacks = stickyItemEnabled ? 1 : 0;
+  items.active.homingStacks = enableNewItemStacks ? 2 : 1;
+  items.active.railStacks = enableNewItemStacks ? 2 : 1;
 }
 
 export function spawnDropsFromBrickEvents(

@@ -5,11 +5,13 @@ import type {
   DebugItemPreset,
   DebugScenario,
   Difficulty,
+  GameMode,
   RogueUpgradeType,
   RoutePreference,
 } from "../game/types";
 
 export interface GameSettings {
+  gameMode: GameMode;
   difficulty: Difficulty;
   initialLives: number;
   speedPreset: SpeedPreset;
@@ -18,6 +20,7 @@ export interface GameSettings {
   riskMode: boolean;
   enableNewItemStacks: boolean;
   stickyItemEnabled: boolean;
+  ghostReplayEnabled: boolean;
   debugModeEnabled: boolean;
   debugStartStage: number;
   debugScenario: DebugScenario;
@@ -25,6 +28,9 @@ export interface GameSettings {
   debugRecordResults: boolean;
   challengeMode: boolean;
   dailyMode: boolean;
+  challengeSeedCode: string;
+  customStageJsonEnabled: boolean;
+  customStageJson: string;
 }
 
 export interface AudioSettings {
@@ -40,6 +46,7 @@ export interface SelectOption<T extends string | number> {
 }
 
 export interface StartSettingsOptionCatalog {
+  gameMode: readonly SelectOption<GameMode>[];
   difficulty: readonly SelectOption<Difficulty>[];
   initialLives: readonly SelectOption<number>[];
   speedPreset: readonly SelectOption<SpeedPreset>[];
@@ -59,6 +66,7 @@ export interface ShopViewState {
   visible: boolean;
   status: string;
   currentCostText: string;
+  priceBandText: string;
   optionALabel: string;
   optionBLabel: string;
   optionADisabled: boolean;
@@ -93,6 +101,7 @@ const DEFAULT_HUD: HudViewModel = {
   timeText: "時間: 00:00",
   stageText: "ステージ: 1/12",
   comboText: "コンボ x1.00",
+  focusText: "FOCUS: READY(F)",
   itemsText: "アイテム: -",
   accessibilityText: "表示: 標準",
   accentColor: "#29d3ff",
@@ -109,6 +118,7 @@ const DEFAULT_SHOP: ShopViewState = {
   visible: false,
   status: "ショップ",
   currentCostText: "0点",
+  priceBandText: "",
   optionALabel: "選択肢A",
   optionBLabel: "選択肢B",
   optionADisabled: true,
@@ -116,6 +126,11 @@ const DEFAULT_SHOP: ShopViewState = {
 };
 
 export const START_SETTINGS_OPTIONS: StartSettingsOptionCatalog = {
+  gameMode: [
+    { value: "campaign", label: "キャンペーン" },
+    { value: "endless", label: "エンドレス" },
+    { value: "boss_rush", label: "ボスラッシュ" },
+  ] as const,
   difficulty: [
     { value: "casual", label: "カジュアル" },
     { value: "standard", label: "スタンダード" },
@@ -154,6 +169,7 @@ export const START_SETTINGS_OPTIONS: StartSettingsOptionCatalog = {
 };
 
 export const START_SETTINGS_DEFAULT: StartSettingsSelection = {
+  gameMode: "campaign",
   difficulty: "standard",
   initialLives: GAME_CONFIG.initialLives,
   speedPreset: "1.00",
@@ -162,6 +178,7 @@ export const START_SETTINGS_DEFAULT: StartSettingsSelection = {
   riskMode: false,
   enableNewItemStacks: false,
   stickyItemEnabled: false,
+  ghostReplayEnabled: false,
   debugModeEnabled: false,
   debugStartStage: 1,
   debugScenario: "normal",
@@ -169,6 +186,9 @@ export const START_SETTINGS_DEFAULT: StartSettingsSelection = {
   debugRecordResults: false,
   challengeMode: false,
   dailyMode: false,
+  challengeSeedCode: "",
+  customStageJsonEnabled: false,
+  customStageJson: "",
   bgmEnabled: true,
   sfxEnabled: true,
 };

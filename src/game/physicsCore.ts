@@ -1,5 +1,5 @@
 import { applyBrickDamage } from "./brickDamage";
-import { type GameplayBalance, getGameplayBalance } from "./config";
+import { type GameplayBalance, getGameplayBalance, ITEM_BALANCE } from "./config";
 import { clamp } from "./math";
 import { applyFluxField } from "./physics/fluxField";
 import { updateStickyHold } from "./physics/stickyHold";
@@ -36,6 +36,7 @@ export function stepPhysicsCore({
   const stickyEnabled = stepConfig?.stickyEnabled ?? false;
   const stickyHoldSec = stepConfig?.stickyHoldSec ?? 0.55;
   const stickyRecaptureCooldownSec = stepConfig?.stickyRecaptureCooldownSec ?? 1.2;
+  const homingStrength = Math.max(0, stepConfig?.homingStrength ?? 0);
   const fluxField = stepConfig?.fluxField ?? false;
   const warpZones = stepConfig?.warpZones ?? [];
   const balance = stepConfig?.balance ?? getGameplayBalance(config.difficulty);
@@ -72,6 +73,9 @@ export function stepPhysicsCore({
         maxBallSpeed,
       );
       continue;
+    }
+    if (homingStrength > 0) {
+      applyHomingAssist(ball, bricks, subDt, homingStrength, maxBallSpeed);
     }
     integratePosition(ball, subDt);
     applyWarpZones(ball, warpZones);
@@ -375,6 +379,7 @@ function applyBrickCollision(
     y: target.y + target.height / 2,
     color: target.color,
     brickKind: target.kind ?? "normal",
+    brickId: target.id,
   }));
 
   return {
@@ -481,4 +486,49 @@ function nudgeForward(ball: Ball): void {
   const push = ball.radius * 0.55;
   ball.pos.x += (ball.vel.x / speed) * push;
   ball.pos.y += (ball.vel.y / speed) * push;
+}
+
+function applyHomingAssist(
+  ball: Ball,
+  bricks: Brick[],
+  deltaSec: number,
+  strength: number,
+  maxBallSpeed: number,
+): void {
+  const target = findNearestAliveBrick(ball, bricks);
+  if (!target) {
+    return;
+  }
+  const cx = target.x + target.width / 2;
+  const cy = target.y + target.height / 2;
+  const dx = cx - ball.pos.x;
+  const dy = cy - ball.pos.y;
+  const distance = Math.hypot(dx, dy);
+  if (distance < 1) {
+    return;
+  }
+  const accel = ITEM_BALANCE.homingAcceleration * strength;
+  ball.vel.x += (dx / distance) * accel * deltaSec;
+  ball.vel.y += (dy / distance) * accel * deltaSec;
+  normalizeVelocity(ball, maxBallSpeed);
+}
+
+function findNearestAliveBrick(ball: Ball, bricks: Brick[]): Brick | null {
+  let nearest: Brick | null = null;
+  let nearestDistanceSq = Number.POSITIVE_INFINITY;
+  for (const brick of bricks) {
+    if (!brick.alive) {
+      continue;
+    }
+    const cx = brick.x + brick.width / 2;
+    const cy = brick.y + brick.height / 2;
+    const dx = cx - ball.pos.x;
+    const dy = cy - ball.pos.y;
+    const distanceSq = dx * dx + dy * dy;
+    if (distanceSq < nearestDistanceSq) {
+      nearestDistanceSq = distanceSq;
+      nearest = brick;
+    }
+  }
+  return nearest;
 }

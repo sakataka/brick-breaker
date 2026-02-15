@@ -12,9 +12,12 @@ export type EventName =
   | "item_bomb"
   | "item_laser"
   | "item_sticky"
+  | "item_homing"
+  | "item_rail"
   | "shield_burst"
   | "magic_cast"
   | "combo_fill"
+  | "focus_activate"
   | "jingle_start"
   | "jingle_stage_clear"
   | "jingle_game_clear"
@@ -131,6 +134,11 @@ export class SfxManager {
         { freq: 430, type: "triangle", durationMs: 80, gain: 0.065 },
         { freq: 520, type: "triangle", durationMs: 120, gain: 0.065 },
       ],
+      item_homing: [
+        { freq: 740, type: "triangle", durationMs: 90, gain: 0.07 },
+        { freq: 880, type: "triangle", durationMs: 110, gain: 0.068 },
+      ],
+      item_rail: [{ freq: 1040, type: "square", durationMs: 140, gain: 0.075, glideTo: 1320 }],
       shield_burst: [
         { freq: 300, type: "sawtooth", durationMs: 100, gain: 0.07 },
         { freq: 620, type: "triangle", durationMs: 110, gain: 0.07 },
@@ -145,6 +153,11 @@ export class SfxManager {
         { freq: 980, type: "triangle", durationMs: 90, gain: 0.07 },
         { freq: 1220, type: "triangle", durationMs: 100, gain: 0.07 },
         { freq: 1480, type: "triangle", durationMs: 120, gain: 0.068 },
+      ],
+      focus_activate: [
+        { freq: 540, type: "triangle", durationMs: 80, gain: 0.07 },
+        { freq: 760, type: "triangle", durationMs: 90, gain: 0.072 },
+        { freq: 980, type: "triangle", durationMs: 100, gain: 0.075 },
       ],
       jingle_start: [
         { freq: 560, type: "triangle", durationMs: 180, gain: 0.08 },

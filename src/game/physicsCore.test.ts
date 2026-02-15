@@ -416,6 +416,32 @@ describe("physicsCore", () => {
     expect((ball.stickCooldownSec ?? 0) > 0).toBe(true);
   });
 
+  test("homing assist bends ball velocity toward nearest brick", () => {
+    const ball: Ball = {
+      pos: { x: 40, y: 130 },
+      vel: { x: 0, y: -160 },
+      radius: 6,
+      speed: 260,
+    };
+    const bricks: Brick[] = [
+      { id: 1, x: 140, y: 40, width: 30, height: 10, alive: true, hp: 1 },
+      { id: 2, x: 20, y: 40, width: 30, height: 10, alive: true, hp: 1 },
+    ];
+
+    stepPhysicsCore({
+      ball,
+      paddle: basePaddle(),
+      bricks,
+      config: baseConfig,
+      deltaSec: 1 / 60,
+      stepConfig: {
+        homingStrength: 0.24,
+      },
+    });
+
+    expect(Math.abs(ball.vel.x)).toBeGreaterThan(0);
+  });
+
   test("flux field pulls descending balls inward and pushes ascending balls outward", () => {
     const paddle = basePaddle();
     const descending: Ball = {

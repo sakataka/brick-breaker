@@ -5,6 +5,7 @@ describe("app store", () => {
   beforeEach(() => {
     useAppStore.setState({
       startSettings: {
+        gameMode: "campaign",
         difficulty: "standard",
         initialLives: 4,
         speedPreset: "1.00",
@@ -13,6 +14,7 @@ describe("app store", () => {
         riskMode: false,
         enableNewItemStacks: false,
         stickyItemEnabled: false,
+        ghostReplayEnabled: false,
         debugModeEnabled: false,
         debugStartStage: 1,
         debugScenario: "normal",
@@ -20,6 +22,9 @@ describe("app store", () => {
         debugRecordResults: false,
         challengeMode: false,
         dailyMode: false,
+        challengeSeedCode: "",
+        customStageJsonEnabled: false,
+        customStageJson: "",
         bgmEnabled: true,
         sfxEnabled: true,
       },

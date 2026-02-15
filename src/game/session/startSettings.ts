@@ -1,8 +1,9 @@
 import type { StartSettingsSelection } from "../../app/store";
+import { validateStageCatalog } from "../configSchema";
 import { getDailyChallenge } from "../dailyChallenge";
 import { applyDebugItemPreset, ensureMultiballCount } from "../itemSystem";
 import { createSeededRandomSource } from "../random";
-import type { GameAudioSettings, GameConfig, GameState, RandomSource } from "../types";
+import type { GameAudioSettings, GameConfig, GameState, RandomSource, StageDefinition } from "../types";
 
 const CHALLENGE_MODE_SEED = 0x2f6e2b1d;
 
@@ -14,6 +15,9 @@ export interface AppliedStartSettings {
 }
 
 export function resolveStartStageIndex(selected: StartSettingsSelection): number {
+  if (!selected.debugModeEnabled && selected.gameMode === "boss_rush") {
+    return 0;
+  }
   if (!selected.debugModeEnabled) {
     return 0;
   }
@@ -27,9 +31,12 @@ export function resolveStartStageIndex(selected: StartSettingsSelection): number
 }
 
 export function applyStartSettingsToState(state: GameState, selected: StartSettingsSelection): void {
+  state.options.gameMode = selected.gameMode;
   state.options.riskMode = selected.riskMode;
   state.options.enableNewItemStacks = selected.enableNewItemStacks;
   state.options.stickyItemEnabled = selected.stickyItemEnabled;
+  state.options.ghostReplayEnabled = selected.ghostReplayEnabled;
+  state.options.customStageCatalog = parseCustomStageCatalog(selected);
   state.options.debugModeEnabled = selected.debugModeEnabled;
   state.options.debugRecordResults = selected.debugRecordResults;
   state.options.debugScenario = selected.debugScenario;
@@ -74,6 +81,10 @@ export function applyDebugPresetOnRoundStart(
 }
 
 function resolveRandomSource(baseRandom: RandomSource, selected: StartSettingsSelection): RandomSource {
+  const customSeed = selected.challengeSeedCode.trim();
+  if (customSeed.length > 0) {
+    return createSeededRandomSource(hashSeedText(customSeed));
+  }
   if (selected.dailyMode) {
     return createSeededRandomSource(getDailyChallenge().seed);
   }
@@ -81,4 +92,29 @@ function resolveRandomSource(baseRandom: RandomSource, selected: StartSettingsSe
     return createSeededRandomSource(CHALLENGE_MODE_SEED);
   }
   return baseRandom;
+}
+
+function hashSeedText(seedText: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < seedText.length; i += 1) {
+    hash ^= seedText.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function parseCustomStageCatalog(selected: StartSettingsSelection): StageDefinition[] | null {
+  if (!selected.customStageJsonEnabled) {
+    return null;
+  }
+  const raw = selected.customStageJson.trim();
+  if (raw.length <= 0) {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(raw) as StageDefinition[];
+    return validateStageCatalog(parsed);
+  } catch {
+    return null;
+  }
 }

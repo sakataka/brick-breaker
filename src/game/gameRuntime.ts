@@ -1,6 +1,7 @@
 import type { SfxManager } from "../audio/sfx";
 import { COMBAT_CONFIG, getGameplayBalance } from "./config";
 import { stepPlayingPipeline } from "./gamePipeline";
+import { updateGhostRecording } from "./ghostSystem";
 import { consumeShield } from "./itemSystem";
 import { applyLifeLoss, finalizeStageStats, retryCurrentStage } from "./roundSystem";
 import type { Ball, GameConfig, GameState, ItemType, RandomSource } from "./types";
@@ -48,6 +49,7 @@ export function runPlayingLoop(
       playComboFillSfx: deps.playComboFillSfx,
       playMagicCastSfx: deps.playMagicCastSfx,
     });
+    updateGhostRecording(state, deps.config.fixedDeltaSec);
     updateVfxState(state.vfx, deps.config.fixedDeltaSec, deps.random);
     if (outcome === "stageclear") {
       onStageClear();
@@ -74,7 +76,9 @@ export function handleStageClear(
   finalizeStageStats(state, persistResult);
   triggerHitFreeze(state.vfx, 72);
   state.score += state.lives * balance.clearBonusPerLife;
-  onTransition(state.campaign.stageIndex >= state.campaign.totalStages - 1 ? "GAME_CLEAR" : "STAGE_CLEAR");
+  const reachedFinalStage = state.campaign.stageIndex >= state.campaign.totalStages - 1;
+  const shouldClearGame = state.options.gameMode !== "endless" && reachedFinalStage;
+  onTransition(shouldClearGame ? "GAME_CLEAR" : "STAGE_CLEAR");
 }
 
 export function handleBallLoss(

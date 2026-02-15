@@ -8,6 +8,7 @@ export interface RuntimeSceneHandlers {
   onPauseToggle: () => void;
   onStartOrRestart: () => void;
   onCastMagic: () => void;
+  onFocusToggle: () => void;
 }
 
 export class RuntimeScene extends Phaser.Scene {
@@ -54,6 +55,9 @@ export class RuntimeScene extends Phaser.Scene {
     });
     this.input.keyboard?.on("keydown-SPACE", () => {
       this.handlers?.onStartOrRestart();
+    });
+    this.input.keyboard?.on("keydown-F", () => {
+      this.handlers?.onFocusToggle();
     });
   }
 

@@ -12,6 +12,7 @@ export function ShopPanel({ shop, onSelect }: ShopPanelProps): ReactElement {
     <div id="shop-panel" className={className}>
       <p id="shop-status">{shop.status}</p>
       <p id="shop-cost">価格: {shop.currentCostText}</p>
+      {shop.priceBandText ? <p id="shop-price-band">{shop.priceBandText}</p> : null}
       <div className="shop-buttons">
         <button
           id="shop-option-a"

@@ -23,6 +23,7 @@ describe("shopUi", () => {
 
     expect(view.visible).toBe(true);
     expect(view.currentCostText).toBe("2200点");
+    expect(view.priceBandText).toBe("価格帯: MID");
     expect(view.optionALabel).toContain("🛡");
     expect(view.optionALabel).toContain("シールド");
     expect(view.optionBLabel).toContain("🔫");

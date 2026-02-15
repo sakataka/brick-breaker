@@ -10,26 +10,34 @@ export interface LaserHitEvent {
   brickKind?: GameState["bricks"][number]["kind"];
 }
 
-export function updateLaserProjectiles(state: GameState, deltaSec: number): LaserHitEvent[] {
+export function updateLaserProjectiles(state: GameState, deltaSec: number, railLevel = 0): LaserHitEvent[] {
   if (state.combat.laserProjectiles.length <= 0) {
     return [];
   }
+  const maxHitsPerShot =
+    railLevel >= 2
+      ? ITEM_BALANCE.railPierceHitsByLevel[1]
+      : railLevel >= 1
+        ? ITEM_BALANCE.railPierceHitsByLevel[0]
+        : 1;
   const events: LaserHitEvent[] = [];
   const nextProjectiles = [];
   for (const shot of state.combat.laserProjectiles) {
     const nextY = shot.y - shot.speed * deltaSec;
-    if (nextY < 0) {
-      continue;
-    }
-    const hitBrick = state.bricks.find(
-      (brick) =>
-        brick.alive &&
-        shot.x >= brick.x &&
-        shot.x <= brick.x + brick.width &&
-        nextY >= brick.y &&
-        nextY <= brick.y + brick.height,
-    );
-    if (hitBrick) {
+    const yTop = Math.min(nextY, shot.y);
+    const yBottom = Math.max(nextY, shot.y);
+    const candidates = state.bricks
+      .filter(
+        (brick) =>
+          brick.alive &&
+          shot.x >= brick.x &&
+          shot.x <= brick.x + brick.width &&
+          yBottom >= brick.y &&
+          yTop <= brick.y + brick.height,
+      )
+      .sort((a, b) => b.y - a.y);
+    let hits = 0;
+    for (const hitBrick of candidates) {
       const destroyed = applyDirectBrickDamage(hitBrick);
       if (destroyed) {
         events.push({
@@ -40,6 +48,12 @@ export function updateLaserProjectiles(state: GameState, deltaSec: number): Lase
           brickKind: hitBrick.kind ?? "normal",
         });
       }
+      hits += 1;
+      if (hits >= maxHitsPerShot) {
+        break;
+      }
+    }
+    if (hits >= maxHitsPerShot || nextY < 0) {
       continue;
     }
     nextProjectiles.push({

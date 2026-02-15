@@ -1,5 +1,5 @@
 import { COMBAT_CONFIG } from "../config";
-import type { Ball, GameConfig, GameState } from "../types";
+import type { Ball, GameConfig, GameState, RandomSource } from "../types";
 
 export interface EnemyHitEvent {
   kind: "brick";
@@ -32,6 +32,40 @@ export function updateEnemies(state: GameState, config: GameConfig, deltaSec: nu
       enemy.vx = -Math.abs(enemy.vx);
     }
   }
+}
+
+export function updateEnemyWaveEvent(
+  state: GameState,
+  config: Pick<GameConfig, "width">,
+  random: RandomSource,
+  deltaSec: number,
+  enabled: boolean,
+): boolean {
+  if (!enabled) {
+    state.combat.enemyWaveCooldownSec = 0;
+    return false;
+  }
+  state.combat.enemyWaveCooldownSec = Math.max(0, state.combat.enemyWaveCooldownSec - deltaSec);
+  if (state.combat.enemyWaveCooldownSec > 0) {
+    return false;
+  }
+  if (state.enemies.length >= 4) {
+    state.combat.enemyWaveCooldownSec = 3.5;
+    return false;
+  }
+  const nextId = state.enemies.reduce((max, enemy) => Math.max(max, enemy.id), 0) + 1;
+  const stageFactor = Math.min(0.7, state.campaign.stageIndex * 0.035);
+  const intervalSec = Math.max(3.2, 6.5 - stageFactor);
+  state.combat.enemyWaveCooldownSec = intervalSec;
+  state.enemies.push({
+    id: nextId,
+    x: 100 + random.next() * (config.width - 200),
+    y: 136 + random.next() * 20,
+    vx: random.next() > 0.5 ? 108 : -108,
+    radius: 10,
+    alive: true,
+  });
+  return true;
 }
 
 export function resolveEnemyHits(state: GameState, balls: Ball[], scoreScale: number): EnemyHitResult {

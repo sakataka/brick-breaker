@@ -8,8 +8,19 @@ export type ItemType =
   | "pierce"
   | "bomb"
   | "laser"
-  | "sticky";
-export type BrickKind = "normal" | "durable" | "armored" | "regen" | "hazard" | "boss";
+  | "sticky"
+  | "homing"
+  | "rail";
+export type BrickKind =
+  | "normal"
+  | "durable"
+  | "armored"
+  | "regen"
+  | "hazard"
+  | "boss"
+  | "split"
+  | "summon"
+  | "thorns";
 
 export interface Vector2 {
   x: number;
@@ -84,5 +95,8 @@ export interface StageDefinition {
 export interface StageElitePlacement {
   row: number;
   col: number;
-  kind: Extract<BrickKind, "durable" | "armored" | "regen" | "hazard" | "boss">;
+  kind: Extract<
+    BrickKind,
+    "durable" | "armored" | "regen" | "hazard" | "boss" | "split" | "summon" | "thorns"
+  >;
 }

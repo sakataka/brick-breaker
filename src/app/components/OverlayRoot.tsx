@@ -97,7 +97,7 @@ export function OverlayRoot({
           <button id="overlay-button" type="button" onClick={onPrimaryAction}>
             {copy.button}
           </button>
-          <p className="subtle">Pキーで一時停止</p>
+          <p className="subtle">Pキーで一時停止 / FキーでFOCUS</p>
         </div>
       </div>
     </div>

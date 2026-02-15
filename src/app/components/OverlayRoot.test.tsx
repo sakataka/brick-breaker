@@ -5,6 +5,7 @@ import type { StartSettingsSelection } from "../store";
 import { OverlayRoot } from "./OverlayRoot";
 
 const BASE_SETTINGS: StartSettingsSelection = {
+  gameMode: "campaign",
   difficulty: "standard",
   initialLives: 4,
   speedPreset: "1.00",
@@ -13,6 +14,7 @@ const BASE_SETTINGS: StartSettingsSelection = {
   riskMode: false,
   enableNewItemStacks: false,
   stickyItemEnabled: false,
+  ghostReplayEnabled: false,
   debugModeEnabled: false,
   debugStartStage: 1,
   debugScenario: "normal",
@@ -20,6 +22,9 @@ const BASE_SETTINGS: StartSettingsSelection = {
   debugRecordResults: false,
   challengeMode: false,
   dailyMode: false,
+  challengeSeedCode: "",
+  customStageJsonEnabled: false,
+  customStageJson: "",
   bgmEnabled: true,
   sfxEnabled: true,
 };

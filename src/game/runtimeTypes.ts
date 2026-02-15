@@ -1,4 +1,13 @@
-import type { Ball, Brick, BrickKind, ItemType, Paddle, Scene, Vector2 } from "./domainTypes";
+import type {
+  Ball,
+  Brick,
+  BrickKind,
+  ItemType,
+  Paddle,
+  Scene,
+  StageDefinition,
+  Vector2,
+} from "./domainTypes";
 
 export interface AssistState {
   untilSec: number;
@@ -54,6 +63,7 @@ export interface CollisionEvent {
   y: number;
   color?: string;
   brickKind?: BrickKind;
+  brickId?: number;
 }
 
 export interface CampaignState {
@@ -73,6 +83,7 @@ export interface StageResultEntry {
   livesAtClear: number;
   missionTargetSec: number;
   missionAchieved: boolean;
+  missionResults: StageMissionStatus[];
 }
 
 export interface FallingItem {
@@ -97,6 +108,8 @@ export interface ActiveItemState {
   bombStacks: number;
   laserStacks: number;
   stickyStacks: number;
+  homingStacks: number;
+  railStacks: number;
 }
 
 export interface ItemState {
@@ -128,6 +141,7 @@ export interface RuntimeState {
   shop: ShopState;
   rogue: RogueState;
   story: StoryState;
+  ghost: GhostState;
   vfx: VfxState;
   a11y: A11yState;
 }
@@ -152,9 +166,19 @@ export interface StageStats {
   startedAtSec: number;
   missionTargetSec: number;
   missionAchieved?: boolean;
+  missionResults?: StageMissionStatus[];
   clearedAtSec?: number;
   starRating?: 1 | 2 | 3;
   ratingScore?: number;
+}
+
+export type StageMissionKey = "time_limit" | "no_shop";
+
+export interface StageMissionStatus {
+  key: StageMissionKey;
+  label: string;
+  targetText?: string;
+  achieved: boolean;
 }
 
 export interface A11yState {
@@ -167,9 +191,12 @@ export interface HazardState {
 }
 
 export interface RunOptions {
+  gameMode: GameMode;
   riskMode: boolean;
   enableNewItemStacks: boolean;
   stickyItemEnabled: boolean;
+  ghostReplayEnabled: boolean;
+  customStageCatalog: StageDefinition[] | null;
   debugModeEnabled: boolean;
   debugRecordResults: boolean;
   debugScenario: DebugScenario;
@@ -178,6 +205,7 @@ export interface RunOptions {
 
 export type DebugScenario = "normal" | "enemy_check" | "boss_check";
 export type DebugItemPreset = "none" | "combat_check" | "boss_check";
+export type GameMode = "campaign" | "endless" | "boss_rush";
 
 export interface ShopState {
   usedThisStage: boolean;
@@ -204,6 +232,20 @@ export interface RogueState {
 export interface StoryState {
   activeStageNumber: number | null;
   seenStageNumbers: number[];
+}
+
+export interface GhostSample {
+  t: number;
+  paddleX: number;
+  ballX: number;
+  ballY: number;
+}
+
+export interface GhostState {
+  playbackEnabled: boolean;
+  recordAccumulatorSec: number;
+  recording: GhostSample[];
+  playback: GhostSample[];
 }
 
 export type RoutePreference = "auto" | "A" | "B";
@@ -237,4 +279,10 @@ export interface CombatState {
   laserProjectiles: LaserProjectile[];
   heldBalls: HeldBallState[];
   shieldBurstQueued: boolean;
+  focusRequest: boolean;
+  focusRemainingSec: number;
+  focusCooldownSec: number;
+  bossPhase: 0 | 1 | 2;
+  bossPhaseSummonCooldownSec: number;
+  enemyWaveCooldownSec: number;
 }

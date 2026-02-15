@@ -1,4 +1,5 @@
 import type { ThemeBandId } from "./config";
+import type { StageMissionStatus } from "./runtimeTypes";
 import type { Ball, Brick, FallingItem, FloatingText, ImpactRing, Particle, Scene, Vector2 } from "./types";
 
 export interface RenderViewState {
@@ -53,6 +54,11 @@ export interface RenderViewState {
     outX: number;
     outY: number;
   }>;
+  ghostPlayback?: {
+    paddleX: number;
+    ballX: number;
+    ballY: number;
+  };
 }
 
 export interface HudViewModel {
@@ -61,6 +67,7 @@ export interface HudViewModel {
   timeText: string;
   stageText: string;
   comboText: string;
+  focusText: string;
   itemsText: string;
   accessibilityText: string;
   accentColor: string;
@@ -88,6 +95,7 @@ export interface StageResultView {
   livesLeft: number;
   missionTargetTime: string;
   missionAchieved: boolean;
+  missionResults: StageMissionStatus[];
 }
 
 export interface StageResultSummaryView {
@@ -98,6 +106,7 @@ export interface StageResultSummaryView {
   livesLeft: number;
   missionTargetTime: string;
   missionAchieved: boolean;
+  missionResults: StageMissionStatus[];
 }
 
 export interface RogueOfferView {

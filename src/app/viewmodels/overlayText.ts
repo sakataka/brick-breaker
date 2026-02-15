@@ -26,8 +26,8 @@ export function formatStageResult(stageResult: StageResultView | undefined): str
     return "";
   }
   const stars = "★".repeat(stageResult.stars);
-  const missionText = stageResult.missionAchieved ? "達成" : "未達";
-  return ` / 評価 ${stars} (${stageResult.ratingScore}) ・時間 ${stageResult.clearTime} ・被弾 ${stageResult.hitsTaken} ・残機 ${stageResult.livesLeft} ・ミッション 制限時間 ${stageResult.missionTargetTime} 以内: ${missionText}`;
+  const missionText = formatMissionSummary(stageResult.missionResults);
+  return ` / 評価 ${stars} (${stageResult.ratingScore}) ・時間 ${stageResult.clearTime} ・被弾 ${stageResult.hitsTaken} ・残機 ${stageResult.livesLeft} ・ミッション ${missionText}`;
 }
 
 export function buildCampaignResultRows(results: StageResultSummaryView[]): string[] {
@@ -37,8 +37,8 @@ export function buildCampaignResultRows(results: StageResultSummaryView[]): stri
 
   return results.map((result) => {
     const stars = "★".repeat(result.stars);
-    const missionText = result.missionAchieved ? "達成" : "未達";
-    return `ステージ ${result.stageNumber}: ${stars} (${result.ratingScore}) / 時間 ${result.clearTime} / 残機 ${result.livesLeft} / ミッション ${result.missionTargetTime} 以内: ${missionText}`;
+    const missionText = formatMissionSummary(result.missionResults);
+    return `ステージ ${result.stageNumber}: ${stars} (${result.ratingScore}) / 時間 ${result.clearTime} / 残機 ${result.livesLeft} / ミッション ${missionText}`;
   });
 }
 
@@ -50,4 +50,16 @@ export function formatRogueUpgradeLabel(upgrade: "paddle_core" | "speed_core" | 
     return "速度コア";
   }
   return "スコアコア";
+}
+
+function formatMissionSummary(missions: StageResultView["missionResults"]): string {
+  if (!missions || missions.length === 0) {
+    return "-";
+  }
+  return missions
+    .map(
+      (mission) =>
+        `${mission.label}${mission.targetText ? `(${mission.targetText})` : ""}:${mission.achieved ? "達成" : "未達"}`,
+    )
+    .join(" / ");
 }

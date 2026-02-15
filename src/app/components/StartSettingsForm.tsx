@@ -1,4 +1,5 @@
 import type { ReactElement } from "react";
+import { STAGE_CATALOG } from "../../game/config";
 import { START_SETTINGS_OPTIONS, type StartSettingsSelection } from "../store";
 
 export interface StartSettingsFormProps {
@@ -14,6 +15,13 @@ export function StartSettingsForm({ settings, onChange }: StartSettingsFormProps
     options: ReadonlyArray<{ value: string | number; label: string }>;
     patch: (value: string) => Partial<StartSettingsSelection>;
   }> = [
+    {
+      id: "setting-mode",
+      label: "モード",
+      value: settings.gameMode,
+      options: START_SETTINGS_OPTIONS.gameMode,
+      patch: (value) => ({ gameMode: value as StartSettingsSelection["gameMode"] }),
+    },
     {
       id: "setting-difficulty",
       label: "難易度",
@@ -88,6 +96,12 @@ export function StartSettingsForm({ settings, onChange }: StartSettingsFormProps
       patch: (checked) => ({ stickyItemEnabled: checked }),
     },
     {
+      id: "setting-ghost-replay-enabled",
+      label: "ゴースト再生",
+      checked: settings.ghostReplayEnabled,
+      patch: (checked) => ({ ghostReplayEnabled: checked }),
+    },
+    {
       id: "setting-bgm-enabled",
       label: "BGM",
       checked: settings.bgmEnabled,
@@ -160,6 +174,18 @@ export function StartSettingsForm({ settings, onChange }: StartSettingsFormProps
             </select>
           </label>
         ))}
+        <label>
+          シードコード（任意）
+          <input
+            id="setting-seed-code"
+            type="text"
+            value={settings.challengeSeedCode}
+            placeholder="例: C03-BOSS-777"
+            onChange={(event) => {
+              onChange({ challengeSeedCode: event.target.value.trim() });
+            }}
+          />
+        </label>
         {basicToggleRows.map((row) => (
           <label key={row.id} className="toggle-row">
             <span>{row.label}</span>
@@ -194,24 +220,64 @@ export function StartSettingsForm({ settings, onChange }: StartSettingsFormProps
         </div>
 
         {settings.debugModeEnabled ? (
-          debugSelectRows.map((row) => (
-            <label key={row.id}>
-              {row.label}
-              <select
-                id={row.id}
-                value={row.value}
+          <>
+            {debugSelectRows.map((row) => (
+              <label key={row.id}>
+                {row.label}
+                <select
+                  id={row.id}
+                  value={row.value}
+                  onChange={(event) => {
+                    onChange(row.patch(event.target.value));
+                  }}
+                >
+                  {row.options.map((option) => (
+                    <option key={String(option.value)} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ))}
+            <label className="toggle-row">
+              <span>カスタムステージJSON</span>
+              <input
+                id="setting-custom-stage-json-enabled"
+                type="checkbox"
+                checked={settings.customStageJsonEnabled}
                 onChange={(event) => {
-                  onChange(row.patch(event.target.value));
+                  onChange({ customStageJsonEnabled: event.target.checked });
                 }}
-              >
-                {row.options.map((option) => (
-                  <option key={String(option.value)} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              />
             </label>
-          ))
+            {settings.customStageJsonEnabled ? (
+              <>
+                <label>
+                  ステージJSON
+                  <textarea
+                    id="setting-custom-stage-json"
+                    value={settings.customStageJson}
+                    placeholder='[{"id":1,"speedScale":1,"layout":[[1,0]],"elite":[]}]'
+                    onChange={(event) => {
+                      onChange({ customStageJson: event.target.value });
+                    }}
+                  />
+                </label>
+                <button
+                  id="setting-custom-stage-json-fill"
+                  type="button"
+                  onClick={() => {
+                    onChange({
+                      customStageJsonEnabled: true,
+                      customStageJson: JSON.stringify(STAGE_CATALOG, null, 2),
+                    });
+                  }}
+                >
+                  現在の標準ステージJSONを読み込む
+                </button>
+              </>
+            ) : null}
+          </>
         ) : (
           <p className="settings-section-note">デバッグモードをONにすると検証用オプションを表示します。</p>
         )}

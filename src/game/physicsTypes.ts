@@ -13,6 +13,7 @@ export interface PhysicsConfig {
   stickyEnabled?: boolean;
   stickyHoldSec?: number;
   stickyRecaptureCooldownSec?: number;
+  homingStrength?: number;
   fluxField?: boolean;
   warpZones?: WarpZone[];
   onMiss?: (ball: Ball) => boolean;

@@ -95,6 +95,30 @@ export interface CombatConfig {
   };
 }
 
+export interface FocusConfig {
+  scoreCost: number;
+  durationSec: number;
+  cooldownSec: number;
+  timeScale: number;
+}
+
+export interface BossPhaseConfig {
+  phase2Ratio: number;
+  phase2SpeedScale: number;
+  summonIntervalSec: number;
+}
+
+export interface MissionConfig {
+  bonusStarsOnAllClear: number;
+}
+
+export interface ModeConfig {
+  endlessVirtualStages: number;
+  bossRushRounds: number;
+  bossRushSpeedScaleStep: number;
+  bossRushBossHpStep: number;
+}
+
 export const DEFAULT_MULTIBALL_MAX_BALLS = 4;
 
 export const START_SETTING_LIMITS = {
@@ -253,6 +277,30 @@ export const COMBAT_CONFIG: CombatConfig = {
     minSpreadX: 40,
     spreadRatio: 0.28,
   },
+} as const;
+
+export const FOCUS_CONFIG: FocusConfig = {
+  scoreCost: 250,
+  durationSec: 2.2,
+  cooldownSec: 6,
+  timeScale: 0.56,
+} as const;
+
+export const BOSS_PHASE_CONFIG: BossPhaseConfig = {
+  phase2Ratio: 0.5,
+  phase2SpeedScale: 1.08,
+  summonIntervalSec: 5.5,
+} as const;
+
+export const MISSION_CONFIG: MissionConfig = {
+  bonusStarsOnAllClear: 1,
+} as const;
+
+export const MODE_CONFIG: ModeConfig = {
+  endlessVirtualStages: 999,
+  bossRushRounds: 5,
+  bossRushSpeedScaleStep: 0.04,
+  bossRushBossHpStep: 2,
 } as const;
 
 export function getGameplayBalance(difficulty: Difficulty): GameplayBalance {

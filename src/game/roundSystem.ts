@@ -5,6 +5,8 @@ import {
   getStageModifier,
   getStageStory,
   getStageTimeTargetSec,
+  MISSION_CONFIG,
+  MODE_CONFIG,
   RATING_CONFIG,
   ROGUE_CONFIG,
   STAGE_CATALOG,
@@ -12,7 +14,15 @@ import {
 import { cloneActiveItemState, createItemState, ensureMultiballCount } from "./itemSystem";
 import { buildBricksFromStage } from "./level";
 import { createBasePaddle, createServeBall } from "./stateFactory";
-import type { EnemyUnit, GameConfig, GameState, RandomSource, RogueUpgradeType, StageRoute } from "./types";
+import type {
+  EnemyUnit,
+  GameConfig,
+  GameMode,
+  GameState,
+  RandomSource,
+  RogueUpgradeType,
+  StageRoute,
+} from "./types";
 import { createVfxState } from "./vfxSystem";
 
 interface BuildStageRoundOptions {
@@ -30,13 +40,32 @@ function buildStageRound(
   random: RandomSource,
   options: BuildStageRoundOptions = {},
 ): void {
-  const stage = getStageForCampaign(state.campaign.stageIndex, state.campaign.resolvedRoute);
+  const activeCatalog = getActiveStageCatalog(state);
+  const runtimeStageIndex = getModeEffectiveStageIndex(
+    state.campaign.stageIndex,
+    state.options.gameMode,
+    activeCatalog.length,
+  );
+  const stage =
+    state.options.customStageCatalog && activeCatalog.length > 0
+      ? (activeCatalog[runtimeStageIndex] ?? activeCatalog[activeCatalog.length - 1] ?? STAGE_CATALOG[0])
+      : getStageForCampaign(
+          runtimeStageIndex,
+          state.options.gameMode === "campaign" ? state.campaign.resolvedRoute : null,
+        );
+  const stageModifier = getStageModifier(runtimeStageIndex + 1);
   const balance = getGameplayBalance(config.difficulty);
-  const stageInitialSpeed = getStageInitialBallSpeed(config, state.campaign.stageIndex);
+  const stageInitialSpeed = getStageInitialBallSpeed(
+    config,
+    state.campaign.stageIndex,
+    state.options.gameMode,
+    state.options.customStageCatalog,
+  );
   if (options.resetLives ?? true) {
     state.lives = config.initialLives;
   }
   state.bricks = buildBricksFromStage(stage);
+  applyModeSpecificBrickTweaks(state);
   state.items = createItemState();
   if (options.carriedActiveItems) {
     state.items.active = cloneActiveItemState(options.carriedActiveItems);
@@ -53,6 +82,12 @@ function buildStageRound(
   state.combat.laserProjectiles = [];
   state.combat.heldBalls = [];
   state.combat.shieldBurstQueued = false;
+  state.combat.focusRequest = false;
+  state.combat.focusRemainingSec = 0;
+  state.combat.focusCooldownSec = 0;
+  state.combat.bossPhase = 0;
+  state.combat.bossPhaseSummonCooldownSec = 0;
+  state.combat.enemyWaveCooldownSec = stageModifier?.spawnEnemy ? 6 : 0;
   state.balls = ensureMultiballCount(
     state.items,
     [createServeBall(config, state.paddle, balance.ballRadius, random, stageInitialSpeed)],
@@ -70,8 +105,9 @@ function buildStageRound(
     hitsTaken: 0,
     startedAtSec: state.elapsedSec,
     missionTargetSec: getStageTimeTargetSec(state.campaign.stageIndex),
+    missionResults: [],
   };
-  state.enemies = createStageEnemies(state.campaign.stageIndex, config);
+  state.enemies = createStageEnemies(runtimeStageIndex, config);
   state.magic.requestCast = false;
 }
 
@@ -82,11 +118,18 @@ export function resetRoundState(
   random: RandomSource,
   options: ResetRoundOptions = {},
 ): void {
-  const clampedStageIndex = Math.max(0, Math.min(STAGE_CATALOG.length - 1, options.startStageIndex ?? 0));
+  const stageStartCap =
+    state.options.gameMode === "boss_rush"
+      ? MODE_CONFIG.bossRushRounds - 1
+      : getActiveStageCatalog(state).length - 1;
+  const clampedStageIndex = Math.max(0, Math.min(stageStartCap, options.startStageIndex ?? 0));
   state.score = 0;
   state.elapsedSec = 0;
   state.campaign.stageIndex = clampedStageIndex;
-  state.campaign.totalStages = STAGE_CATALOG.length;
+  state.campaign.totalStages = getTotalStagesForMode(
+    state.options.gameMode,
+    getActiveStageCatalog(state).length,
+  );
   state.campaign.stageStartScore = 0;
   state.campaign.results = [];
   state.campaign.resolvedRoute = null;
@@ -100,6 +143,8 @@ export function resetRoundState(
   };
   state.story.activeStageNumber = null;
   state.story.seenStageNumbers = [];
+  state.ghost.recordAccumulatorSec = 0;
+  state.ghost.recording = [];
   state.shop.purchaseCount = 0;
   state.vfx = createVfxState(reducedMotion);
   buildStageRound(state, config, random, { resetLives: true });
@@ -111,7 +156,11 @@ export function advanceStage(state: GameState, config: GameConfig, random: Rando
     return false;
   }
 
-  if (state.campaign.stageIndex === 3 && state.campaign.resolvedRoute === null) {
+  if (
+    state.options.gameMode === "campaign" &&
+    state.campaign.stageIndex === 3 &&
+    state.campaign.resolvedRoute === null
+  ) {
     state.campaign.resolvedRoute = resolveRoute(state, random);
   }
 
@@ -154,39 +203,71 @@ export function applyLifeLoss(
   state.combat.laserProjectiles = [];
   state.combat.heldBalls = [];
   state.combat.shieldBurstQueued = false;
+  state.combat.focusRequest = false;
+  state.combat.focusRemainingSec = 0;
+  state.combat.focusCooldownSec = 0;
+  state.combat.bossPhase = 0;
+  state.combat.bossPhaseSummonCooldownSec = 0;
+  state.combat.enemyWaveCooldownSec = getStageModifier(state.campaign.stageIndex + 1)?.spawnEnemy ? 6 : 0;
   state.balls = [
     createServeBall(
       config,
       state.paddle,
       balance.ballRadius,
       random,
-      getStageInitialBallSpeed(config, state.campaign.stageIndex),
+      getStageInitialBallSpeed(
+        config,
+        state.campaign.stageIndex,
+        state.options.gameMode,
+        state.options.customStageCatalog,
+      ),
     ),
   ];
   return true;
 }
 
-export function getStageInitialBallSpeed(config: GameConfig, stageIndex: number): number {
-  return config.initialBallSpeed * getStageForCampaign(stageIndex, null).speedScale;
+export function getStageInitialBallSpeed(
+  config: GameConfig,
+  stageIndex: number,
+  mode: GameMode = "campaign",
+  customCatalog: GameState["options"]["customStageCatalog"] = null,
+): number {
+  return getModeScaledBallSpeed(config.initialBallSpeed, stageIndex, mode, customCatalog);
 }
 
-export function getStageMaxBallSpeed(config: GameConfig, stageIndex: number): number {
-  return config.maxBallSpeed * getStageForCampaign(stageIndex, null).speedScale;
+export function getStageMaxBallSpeed(
+  config: GameConfig,
+  stageIndex: number,
+  mode: GameMode = "campaign",
+  customCatalog: GameState["options"]["customStageCatalog"] = null,
+): number {
+  return getModeScaledBallSpeed(config.maxBallSpeed, stageIndex, mode, customCatalog);
 }
 
 export function finalizeStageStats(state: GameState, persistResult = true): void {
   const clearTimeSec = Math.max(0, state.elapsedSec - state.stageStats.startedAtSec);
   const ratingScore = computeStageRatingScore(state, clearTimeSec);
-  const stars = getStarRatingByScore(ratingScore);
   const missionTargetSec = getStageTimeTargetSec(state.campaign.stageIndex);
-  const missionAchieved = clearTimeSec <= missionTargetSec;
+  const missionResults = buildStageMissionResults(state, clearTimeSec, missionTargetSec);
+  const missionAchieved = missionResults.every((mission) => mission.achieved);
+  const missionBonusStars = missionAchieved ? MISSION_CONFIG.bonusStarsOnAllClear : 0;
+  const stars = Math.min(3, getStarRatingByScore(ratingScore) + missionBonusStars) as 1 | 2 | 3;
   state.stageStats.clearedAtSec = state.elapsedSec;
   state.stageStats.ratingScore = ratingScore;
   state.stageStats.starRating = stars;
   state.stageStats.missionTargetSec = missionTargetSec;
   state.stageStats.missionAchieved = missionAchieved;
+  state.stageStats.missionResults = missionResults;
   if (persistResult) {
-    upsertCampaignStageResult(state, clearTimeSec, stars, ratingScore, missionTargetSec, missionAchieved);
+    upsertCampaignStageResult(
+      state,
+      clearTimeSec,
+      stars,
+      ratingScore,
+      missionTargetSec,
+      missionAchieved,
+      missionResults,
+    );
   }
   prepareRogueUpgradeOffer(state);
 }
@@ -236,6 +317,7 @@ function upsertCampaignStageResult(
   ratingScore: number,
   missionTargetSec: number,
   missionAchieved: boolean,
+  missionResults: GameState["stageStats"]["missionResults"],
 ): void {
   const stageNumber = state.campaign.stageIndex + 1;
   const entry = {
@@ -246,6 +328,7 @@ function upsertCampaignStageResult(
     livesAtClear: state.lives,
     missionTargetSec,
     missionAchieved,
+    missionResults: missionResults ?? [],
   };
   const existing = state.campaign.results.findIndex((result) => result.stageNumber === stageNumber);
   if (existing >= 0) {
@@ -254,6 +337,28 @@ function upsertCampaignStageResult(
   }
   state.campaign.results.push(entry);
   state.campaign.results.sort((a, b) => a.stageNumber - b.stageNumber);
+}
+
+function buildStageMissionResults(
+  state: GameState,
+  clearTimeSec: number,
+  missionTargetSec: number,
+): NonNullable<GameState["stageStats"]["missionResults"]> {
+  const timeAchieved = clearTimeSec <= missionTargetSec;
+  const noShopAchieved = !state.shop.usedThisStage;
+  return [
+    {
+      key: "time_limit",
+      label: "制限時間",
+      targetText: `${Math.round(missionTargetSec)}秒以内`,
+      achieved: timeAchieved,
+    },
+    {
+      key: "no_shop",
+      label: "ショップ未使用",
+      achieved: noShopAchieved,
+    },
+  ];
 }
 
 function resolveRoute(state: GameState, random: RandomSource): StageRoute {
@@ -267,6 +372,9 @@ function resolveRoute(state: GameState, random: RandomSource): StageRoute {
 }
 
 export function prepareStageStory(state: GameState): boolean {
+  if (state.options.gameMode !== "campaign") {
+    return false;
+  }
   const stageNumber = state.campaign.stageIndex + 1;
   if (!getStageStory(stageNumber)) {
     return false;
@@ -317,6 +425,78 @@ function createStageEnemies(stageIndex: number, config: GameConfig): EnemyUnit[]
       alive: true,
     },
   ];
+}
+
+function getTotalStagesForMode(mode: GameMode, stageCount: number): number {
+  const safeStageCount = Math.max(1, stageCount);
+  if (mode === "endless") {
+    return MODE_CONFIG.endlessVirtualStages;
+  }
+  if (mode === "boss_rush") {
+    return MODE_CONFIG.bossRushRounds;
+  }
+  return safeStageCount;
+}
+
+function applyModeSpecificBrickTweaks(state: GameState): void {
+  if (state.options.gameMode !== "boss_rush") {
+    return;
+  }
+  const round = Math.max(0, state.campaign.stageIndex);
+  const hpBonus = round * MODE_CONFIG.bossRushBossHpStep;
+  for (const brick of state.bricks) {
+    if (brick.kind !== "boss") {
+      continue;
+    }
+    const baseHp = brick.maxHp ?? brick.hp ?? 12;
+    const scaledHp = baseHp + hpBonus;
+    brick.maxHp = scaledHp;
+    brick.hp = scaledHp;
+  }
+}
+
+export function getModeEffectiveStageIndex(
+  stageIndex: number,
+  mode: GameMode,
+  stageCount = STAGE_CATALOG.length,
+): number {
+  const safeStageCount = Math.max(1, stageCount);
+  if (mode === "boss_rush") {
+    return safeStageCount - 1;
+  }
+  if (mode === "endless") {
+    return stageIndex % safeStageCount;
+  }
+  return stageIndex;
+}
+
+function getModeScaledBallSpeed(
+  baseSpeed: number,
+  stageIndex: number,
+  mode: GameMode,
+  customCatalog: GameState["options"]["customStageCatalog"],
+): number {
+  const activeCatalog = customCatalog && customCatalog.length > 0 ? customCatalog : STAGE_CATALOG;
+  const effectiveStage = getModeEffectiveStageIndex(stageIndex, mode, activeCatalog.length);
+  const stageDef =
+    customCatalog && customCatalog.length > 0
+      ? (activeCatalog[effectiveStage] ?? activeCatalog[activeCatalog.length - 1] ?? STAGE_CATALOG[0])
+      : getStageForCampaign(effectiveStage, null);
+  const baseScale = stageDef.speedScale;
+  if (mode !== "boss_rush") {
+    return baseSpeed * baseScale;
+  }
+  const rushScale = 1 + Math.max(0, stageIndex) * MODE_CONFIG.bossRushSpeedScaleStep;
+  return baseSpeed * baseScale * rushScale;
+}
+
+function getActiveStageCatalog(
+  state: Pick<GameState, "options">,
+): NonNullable<GameState["options"]["customStageCatalog"]> | typeof STAGE_CATALOG {
+  if (state.options.customStageCatalog && state.options.customStageCatalog.length > 0) {
+    return state.options.customStageCatalog;
+  }
+  return STAGE_CATALOG;
 }
 
 function prepareRogueUpgradeOffer(state: GameState): void {

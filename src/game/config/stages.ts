@@ -63,6 +63,7 @@ const ELITE_STAGE_MAP: Partial<Record<number, NonNullable<StageDefinition["elite
     { row: 2, col: 2, kind: "armored" },
     { row: 3, col: 4, kind: "regen" },
     { row: 4, col: 3, kind: "hazard" },
+    { row: 2, col: 7, kind: "split" },
   ],
   10: [
     { row: 0, col: 3, kind: "durable" },
@@ -70,6 +71,7 @@ const ELITE_STAGE_MAP: Partial<Record<number, NonNullable<StageDefinition["elite
     { row: 2, col: 4, kind: "durable" },
     { row: 4, col: 4, kind: "regen" },
     { row: 3, col: 4, kind: "hazard" },
+    { row: 5, col: 2, kind: "summon" },
   ],
   11: [
     { row: 0, col: 2, kind: "armored" },
@@ -77,6 +79,7 @@ const ELITE_STAGE_MAP: Partial<Record<number, NonNullable<StageDefinition["elite
     { row: 3, col: 5, kind: "armored" },
     { row: 4, col: 4, kind: "regen" },
     { row: 2, col: 4, kind: "hazard" },
+    { row: 5, col: 7, kind: "thorns" },
   ],
   12: [{ row: 2, col: 4, kind: "boss" }],
 };

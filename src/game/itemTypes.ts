@@ -9,6 +9,8 @@ export interface ItemStackState {
   bombStacks: number;
   laserStacks: number;
   stickyStacks: number;
+  homingStacks: number;
+  railStacks: number;
 }
 
 export interface ItemEffectContext {
@@ -26,6 +28,8 @@ export interface ItemModifierBundle {
   shieldCharges: number;
   laserLevel: number;
   stickyEnabled: boolean;
+  homingStrength: number;
+  railLevel: number;
 }
 
 export interface ItemDefinition {
@@ -65,4 +69,6 @@ export type ItemPickupSfxEvent =
   | "item_pierce"
   | "item_bomb"
   | "item_laser"
-  | "item_sticky";
+  | "item_sticky"
+  | "item_homing"
+  | "item_rail";

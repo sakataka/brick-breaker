@@ -17,6 +17,8 @@ const ITEM_TYPE_ORDER = [
   "pierce",
   "bomb",
   "laser",
+  "homing",
+  "rail",
   "sticky",
 ] as const;
 const ITEM_ORDER: ItemType[] = [...ITEM_TYPE_ORDER];
@@ -153,6 +155,42 @@ export const ITEM_REGISTRY: ItemRegistry = {
     },
     getLabelStack: (stacks) => stacks.laserStacks,
   },
+  homing: {
+    type: "homing",
+    label: ITEM_CONFIG.homing.label,
+    hudLabel: "🛰ホーミング",
+    emoji: "🛰",
+    description: "ボール軌道を近くのブロックへ補正",
+    shortLabel: "追",
+    color: "rgba(136, 197, 255, 0.88)",
+    weight: ITEM_CONFIG.homing.weight,
+    maxStacks: 2,
+    dropSuppressedWhenActive: false,
+    hudOrder: 8,
+    sfxEvent: "item_homing",
+    applyPickup: ({ stacks }) => {
+      stacks.homingStacks = Math.min(2, stacks.homingStacks + 1);
+    },
+    getLabelStack: (stacks) => stacks.homingStacks,
+  },
+  rail: {
+    type: "rail",
+    label: ITEM_CONFIG.rail.label,
+    hudLabel: "⚡レール",
+    emoji: "⚡",
+    description: "レーザーが複数のブロックを貫く",
+    shortLabel: "線",
+    color: "rgba(255, 206, 128, 0.9)",
+    weight: ITEM_CONFIG.rail.weight,
+    maxStacks: 2,
+    dropSuppressedWhenActive: false,
+    hudOrder: 9,
+    sfxEvent: "item_rail",
+    applyPickup: ({ stacks }) => {
+      stacks.railStacks = Math.min(2, stacks.railStacks + 1);
+    },
+    getLabelStack: (stacks) => stacks.railStacks,
+  },
   sticky: {
     type: "sticky",
     label: ITEM_CONFIG.sticky.label,
@@ -164,7 +202,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
     weight: ITEM_CONFIG.sticky.weight,
     maxStacks: 1,
     dropSuppressedWhenActive: false,
-    hudOrder: 8,
+    hudOrder: 10,
     sfxEvent: "item_sticky",
     applyPickup: ({ stacks }) => {
       stacks.stickyStacks = 1;
@@ -183,6 +221,8 @@ export function createItemStacks(): ItemStackState {
     bombStacks: 0,
     laserStacks: 0,
     stickyStacks: 0,
+    homingStacks: 0,
+    railStacks: 0,
   };
 }
 
@@ -207,6 +247,8 @@ export function createItemModifiers(
         );
   const synergyPierceBonus =
     stacks.pierceStacks > 0 && stacks.slowBallStacks > 0 ? ITEM_BALANCE.pierceSlowBonusDepth : 0;
+  const homingLevel = Math.min(2, stacks.homingStacks);
+  const railLevel = Math.min(2, stacks.railStacks);
 
   return {
     paddleScale,
@@ -218,6 +260,8 @@ export function createItemModifiers(
     shieldCharges: stacks.shieldCharges,
     laserLevel: Math.min(2, stacks.laserStacks),
     stickyEnabled: stacks.stickyStacks > 0,
+    homingStrength: (ITEM_BALANCE.homingMaxStrength * homingLevel) / 2,
+    railLevel,
   };
 }
 
@@ -330,6 +374,8 @@ function getStackCount(stacks: ItemStackState, type: ItemType): number {
     .with("pierce", () => Math.min(1, stacks.pierceStacks))
     .with("bomb", () => stacks.bombStacks)
     .with("laser", () => stacks.laserStacks)
+    .with("homing", () => stacks.homingStacks)
+    .with("rail", () => stacks.railStacks)
     .with("sticky", () => stacks.stickyStacks)
     .exhaustive();
 }

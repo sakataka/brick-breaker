@@ -7,6 +7,7 @@ import { GameHost } from "../phaser/GameHost";
 import { readAccessibility } from "./a11y";
 import { syncAudioScene } from "./audioSync";
 import { buildStartConfig, GAME_CONFIG } from "./config";
+import { normalizeGhostSamples } from "./ghostSystem";
 import { LifecycleController } from "./lifecycle";
 import { clamp } from "./math";
 import { defaultRandomSource } from "./random";
@@ -34,6 +35,7 @@ export interface GameSessionDeps {
 }
 
 export class GameSession {
+  private static readonly GHOST_STORAGE_KEY = "brick_breaker:last_ghost";
   private readonly baseRandom: RandomSource;
   private readonly baseConfig: GameConfig;
   private config: GameConfig;
@@ -179,6 +181,7 @@ export class GameSession {
       onPauseToggle: () => this.togglePause(),
       onStartOrRestart: () => this.startOrResume(),
       onCastMagic: () => this.castMagic(),
+      onFocusToggle: () => this.requestFocus(),
     });
   }
 
@@ -218,6 +221,7 @@ export class GameSession {
         startStageIndex: this.pendingStartStageIndex,
       });
       applyDebugPresetOnRoundStart(this.state, this.random, this.config.multiballMaxBalls);
+      this.prepareGhostPlayback();
     } else if (result.previous === "story") {
       this.state.story.activeStageNumber = null;
     }
@@ -272,9 +276,14 @@ export class GameSession {
 
   private handleStageClear(): void {
     let transitionResult: SceneTransitionResult | null = null;
+    let reachedClear = false;
     this.engine.applyStageClear((event) => {
+      reachedClear = event === "GAME_CLEAR";
       transitionResult = this.transition({ type: event });
     });
+    if (reachedClear) {
+      this.saveGhostRecording();
+    }
     if (transitionResult) {
       this.syncAudioForTransition(transitionResult);
     }
@@ -286,6 +295,9 @@ export class GameSession {
       const result = this.transition({ type: "GAME_OVER" });
       this.syncAudioForTransition(result);
     });
+    if (this.state.scene === "gameover") {
+      this.saveGhostRecording();
+    }
     this.syncViewPorts();
   }
 
@@ -307,6 +319,13 @@ export class GameSession {
       return;
     }
     this.state.magic.requestCast = true;
+  }
+
+  private requestFocus(): void {
+    if (this.state.scene !== "playing") {
+      return;
+    }
+    this.state.combat.focusRequest = true;
   }
 
   private purchaseShopOption(index: 0 | 1): void {
@@ -400,6 +419,37 @@ export class GameSession {
 
   private syncViewPorts(): void {
     syncViewPorts(this.state, this.renderPort, this.uiPort);
+  }
+
+  private prepareGhostPlayback(): void {
+    this.state.ghost.playbackEnabled = this.state.options.ghostReplayEnabled;
+    this.state.ghost.recording = [];
+    this.state.ghost.recordAccumulatorSec = 0;
+    if (!this.state.options.ghostReplayEnabled) {
+      this.state.ghost.playback = [];
+      return;
+    }
+    try {
+      const raw = this.windowRef.localStorage.getItem(GameSession.GHOST_STORAGE_KEY);
+      if (!raw) {
+        this.state.ghost.playback = [];
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      this.state.ghost.playback = normalizeGhostSamples(parsed);
+    } catch {
+      this.state.ghost.playback = [];
+    }
+  }
+
+  private saveGhostRecording(): void {
+    if (!this.state.options.ghostReplayEnabled || this.state.ghost.recording.length <= 0) {
+      return;
+    }
+    try {
+      const trimmed = this.state.ghost.recording.slice(-3000);
+      this.windowRef.localStorage.setItem(GameSession.GHOST_STORAGE_KEY, JSON.stringify(trimmed));
+    } catch {}
   }
 }
 

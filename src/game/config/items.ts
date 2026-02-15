@@ -21,48 +21,61 @@ export interface ItemBalance {
   laserProjectileSpeed: number;
   stickyHoldSec: number;
   stickyRecaptureCooldownSec: number;
+  homingMaxStrength: number;
+  homingAcceleration: number;
+  railPierceHitsByLevel: readonly [number, number];
 }
 
 export const ITEM_CONFIG: Record<ItemType, ItemRule> = {
   paddle_plus: {
     type: "paddle_plus",
-    weight: 0.14,
+    weight: 0.12,
     label: "パドル+",
   },
   slow_ball: {
     type: "slow_ball",
-    weight: 0.14,
+    weight: 0.12,
     label: "スロー",
   },
   shield: {
     type: "shield",
-    weight: 0.13,
+    weight: 0.11,
     label: "シールド",
   },
   multiball: {
     type: "multiball",
-    weight: 0.14,
+    weight: 0.12,
     label: "マルチ",
   },
   pierce: {
     type: "pierce",
-    weight: 0.11,
+    weight: 0.1,
     label: "貫通",
   },
   bomb: {
     type: "bomb",
-    weight: 0.11,
+    weight: 0.09,
     label: "ボム",
   },
   laser: {
     type: "laser",
-    weight: 0.12,
+    weight: 0.1,
     label: "レーザー",
   },
   sticky: {
     type: "sticky",
-    weight: 0.11,
+    weight: 0.08,
     label: "スティッキー",
+  },
+  homing: {
+    type: "homing",
+    weight: 0.08,
+    label: "ホーミング",
+  },
+  rail: {
+    type: "rail",
+    weight: 0.08,
+    label: "レール",
   },
 };
 
@@ -78,6 +91,9 @@ export const ITEM_BALANCE: ItemBalance = {
   laserProjectileSpeed: 760,
   stickyHoldSec: 0.55,
   stickyRecaptureCooldownSec: 1.2,
+  homingMaxStrength: 0.24,
+  homingAcceleration: 320,
+  railPierceHitsByLevel: [2, 4],
 };
 
 export const DROP_CONFIG: DropConfig = {

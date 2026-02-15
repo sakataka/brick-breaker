@@ -16,6 +16,7 @@ export function HudPanel({ hud, scoreRef }: HudPanelProps): ReactElement {
       <span id="time">{hud.timeText}</span>
       <span id="stage">{hud.stageText}</span>
       <span id="combo">{hud.comboText}</span>
+      <span id="focus">{hud.focusText}</span>
       <span id="a11y-badge">{hud.accessibilityText}</span>
       <span id="items">{hud.itemsText}</span>
     </div>
