@@ -125,9 +125,9 @@ bunx playwright install chromium
 
 GitHub Pages 公開手順:
 
-1. GitHub リポジトリで Pages を `GitHub Actions` に設定
-2. `main` へ push
-3. `Deploy Pages` workflow の完了を確認
+1. `main` へ push（`deploy-pages.yml` の `configure-pages` は `enablement: true` で自動有効化を試行）
+2. `Deploy Pages` workflow の完了を確認
+3. もし権限不足で失敗した場合のみ、GitHub の `Settings > Pages > Build and deployment` で `GitHub Actions` を手動設定して再実行
 
 ## 設計ドキュメント
 
