@@ -6,6 +6,15 @@ const githubPagesBase = "/brick-breaker/";
 export default defineConfig({
   plugins: [react()],
   base: process.env.GITHUB_ACTIONS === "true" ? githubPagesBase : "/",
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          phaser: ["phaser"],
+        },
+      },
+    },
+  },
   server: {
     host: true,
   },

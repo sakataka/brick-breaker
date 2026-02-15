@@ -80,6 +80,19 @@ export interface RogueConfig {
   scoreScaleStep: number;
 }
 
+export interface CombatConfig {
+  enemyDefeatScore: number;
+  magicStrikeScore: number;
+  laserMaxProjectiles: number;
+  laserSpawnYOffset: number;
+  shieldRescue: {
+    yOffset: number;
+    minUpwardSpeed: number;
+    minSpreadX: number;
+    spreadRatio: number;
+  };
+}
+
 export const DEFAULT_MULTIBALL_MAX_BALLS = 4;
 
 export const START_SETTING_LIMITS = {
@@ -224,6 +237,19 @@ export const ROGUE_CONFIG: RogueConfig = {
   maxSpeedScaleStep: 0.07,
   scoreScaleStep: 0.15,
 };
+
+export const COMBAT_CONFIG: CombatConfig = {
+  enemyDefeatScore: 150,
+  magicStrikeScore: 120,
+  laserMaxProjectiles: 18,
+  laserSpawnYOffset: 8,
+  shieldRescue: {
+    yOffset: 10,
+    minUpwardSpeed: 120,
+    minSpreadX: 40,
+    spreadRatio: 0.28,
+  },
+} as const;
 
 export function getGameplayBalance(difficulty: Difficulty): GameplayBalance {
   return {

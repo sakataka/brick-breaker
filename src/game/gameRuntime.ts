@@ -1,5 +1,5 @@
 import type { SfxManager } from "../audio/sfx";
-import { getGameplayBalance } from "./config";
+import { COMBAT_CONFIG, getGameplayBalance } from "./config";
 import { stepPlayingPipeline } from "./gamePipeline";
 import { consumeShield } from "./itemSystem";
 import { applyLifeLoss, finalizeStageStats, retryCurrentStage } from "./roundSystem";
@@ -100,10 +100,13 @@ function tryShieldRescue(
     return false;
   }
   state.combat.shieldBurstQueued = true;
-  ball.pos.y = config.height - ball.radius - 10;
-  ball.vel.y = -Math.max(120, Math.abs(ball.vel.y));
-  if (Math.abs(ball.vel.x) < 40) {
-    const spread = Math.max(40, fallbackSpeed * 0.28);
+  ball.pos.y = config.height - ball.radius - COMBAT_CONFIG.shieldRescue.yOffset;
+  ball.vel.y = -Math.max(COMBAT_CONFIG.shieldRescue.minUpwardSpeed, Math.abs(ball.vel.y));
+  if (Math.abs(ball.vel.x) < COMBAT_CONFIG.shieldRescue.minSpreadX) {
+    const spread = Math.max(
+      COMBAT_CONFIG.shieldRescue.minSpreadX,
+      fallbackSpeed * COMBAT_CONFIG.shieldRescue.spreadRatio,
+    );
     ball.vel.x = (random.next() * 2 - 1) * spread;
   }
   return true;

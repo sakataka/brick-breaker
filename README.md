@@ -143,6 +143,7 @@ GitHub Pages 公開手順:
 ## 実装メモ
 
 - 実行エントリは `src/game/GameSession.ts`（オーケストレータ）で、`src/core/engine.ts`（進行ロジック）を駆動します。
+- ブロックHP/破壊判定は `src/game/brickDamage.ts` に集約し、`physicsCore` と `gamePipeline` で共通利用します。
 - 描画は `src/phaser/scenes/RuntimeScene.ts` + `src/phaser/render/PhaserRenderPort.ts` 経由で実行します。
 - UI は `src/app/AppUi.tsx` と `src/app/components/*` で宣言的に構成し、`src/app/store.ts` で同期します。
 - 音制御は `src/audio/audioDirector.ts`（facade） -> `src/audio/toneDirector.ts` の経路で管理します。

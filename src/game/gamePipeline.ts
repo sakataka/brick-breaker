@@ -1,8 +1,10 @@
 import type { SfxManager } from "../audio/sfx";
 import { applyAssistToPaddle, getCurrentMaxBallSpeed } from "./assistSystem";
+import { applyDirectBrickDamage, destroyBrickImmediately } from "./brickDamage";
 import { playCollisionSounds } from "./collisionEffects";
 import { applyComboHits, normalizeCombo, resetCombo } from "./comboSystem";
 import {
+  COMBAT_CONFIG,
   getGameplayBalance,
   getStageModifier,
   HAZARD_CONFIG,
@@ -240,7 +242,6 @@ function resolveEnemyHits(
 } {
   let scoreGain = 0;
   const events: Array<{ kind: "brick"; x: number; y: number; color?: string }> = [];
-  const enemyScore = 150;
 
   for (const ball of balls) {
     for (const enemy of state.enemies) {
@@ -256,7 +257,7 @@ function resolveEnemyHits(
       }
 
       enemy.alive = false;
-      scoreGain += Math.round(enemyScore * scoreScale);
+      scoreGain += Math.round(COMBAT_CONFIG.enemyDefeatScore * scoreScale);
       events.push({
         kind: "brick",
         x: enemy.x,
@@ -291,9 +292,10 @@ function castMagicStrike(
   if (!target) {
     return;
   }
-  target.alive = false;
-  target.hp = 0;
-  state.score += Math.round(120 * scoreScale);
+  if (!destroyBrickImmediately(target)) {
+    return;
+  }
+  state.score += Math.round(COMBAT_CONFIG.magicStrikeScore * scoreScale);
   state.magic.cooldownSec = state.magic.cooldownMaxSec;
   state.vfx.flashMs = Math.max(state.vfx.flashMs, 90);
   state.vfx.shakeMs = Math.max(state.vfx.shakeMs, 80);
@@ -385,7 +387,7 @@ function updateLaserProjectiles(
         nextY <= brick.y + brick.height,
     );
     if (hitBrick) {
-      const destroyed = applyDirectDamage(hitBrick);
+      const destroyed = applyDirectBrickDamage(hitBrick);
       if (destroyed) {
         events.push({
           kind: "brick",
@@ -418,11 +420,11 @@ function updateAutoLaserSpawner(state: GameState, deltaSec: number, laserLevel: 
       : ITEM_BALANCE.laserFireIntervalSecByLevel[0];
   state.combat.laserCooldownSec = Math.max(0, state.combat.laserCooldownSec - deltaSec);
   while (state.combat.laserCooldownSec <= 0) {
-    if (state.combat.laserProjectiles.length < 18) {
+    if (state.combat.laserProjectiles.length < COMBAT_CONFIG.laserMaxProjectiles) {
       state.combat.laserProjectiles.push({
         id: state.combat.nextLaserId,
         x: state.paddle.x + state.paddle.width / 2,
-        y: state.paddle.y - 8,
+        y: state.paddle.y - COMBAT_CONFIG.laserSpawnYOffset,
         speed: ITEM_BALANCE.laserProjectileSpeed,
       });
       state.combat.nextLaserId += 1;
@@ -495,7 +497,7 @@ function processShieldBurst(
     if (!target.alive) {
       continue;
     }
-    const destroyed = applyDirectDamage(target);
+    const destroyed = applyDirectBrickDamage(target);
     if (!destroyed) {
       continue;
     }
@@ -508,27 +510,6 @@ function processShieldBurst(
     });
   }
   return events;
-}
-
-function applyDirectDamage(brick: GameState["bricks"][number]): boolean {
-  const kind = brick.kind ?? "normal";
-  const defaultHp = kind === "boss" ? 12 : kind === "normal" || kind === "hazard" ? 1 : 2;
-  const currentHp = typeof brick.hp === "number" && Number.isFinite(brick.hp) ? brick.hp : defaultHp;
-  const nextHp = Math.max(0, currentHp - 1);
-  if (kind === "regen" && nextHp === 1) {
-    const charges = Math.max(0, brick.regenCharges ?? 1);
-    if (charges > 0) {
-      brick.regenCharges = charges - 1;
-      brick.hp = 2;
-      return false;
-    }
-  }
-  brick.hp = nextHp;
-  if (nextHp > 0) {
-    return false;
-  }
-  brick.alive = false;
-  return true;
 }
 
 function syncHeldBallsSnapshot(state: GameState): void {

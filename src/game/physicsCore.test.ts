@@ -245,6 +245,44 @@ describe("physicsCore", () => {
     expect(bricks[0]?.hp).toBe(11);
   });
 
+  test("pierce does not apply multiple hits to boss in a single frame", () => {
+    const ball: Ball = {
+      pos: { x: 120, y: 88 },
+      vel: { x: 0, y: -220 },
+      radius: 8,
+      speed: 320,
+    };
+    const bricks: Brick[] = [
+      {
+        id: 1,
+        x: 48,
+        y: 50,
+        width: 144,
+        height: 26,
+        alive: true,
+        kind: "boss",
+        hp: 12,
+        maxHp: 12,
+      },
+    ];
+
+    const result = stepPhysicsCore({
+      ball,
+      paddle: basePaddle(),
+      bricks,
+      config: baseConfig,
+      deltaSec: 0.2,
+      stepConfig: {
+        pierceDepth: 8,
+        maxMove: 12,
+        maxSubSteps: 24,
+      },
+    });
+
+    expect(bricks[0]?.hp).toBe(11);
+    expect(result.collision.brick).toBe(0);
+  });
+
   test("sticky capture holds the ball and auto-releases upward", () => {
     const ball: Ball = {
       pos: { x: 120, y: 154 },

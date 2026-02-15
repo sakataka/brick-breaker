@@ -13,6 +13,7 @@
 - `src/core/ports.ts`
 - `src/game/gamePipeline.ts`
 - `src/game/physicsCore.ts`
+- `src/game/brickDamage.ts`
 - `src/game/itemSystem.ts`
 - `src/game/roundSystem.ts`
 
@@ -85,6 +86,7 @@
 ## ドキュメント運用ルール
 
 - 設定値: `src/game/config/*`
+- ブロックHP/破壊判定: `src/game/brickDamage.ts`
 - アイテム仕様: `src/game/itemRegistry.ts`
 - アイテム表示情報（色/絵文字/短縮文字）: `src/game/itemRegistry.ts`
 - UI状態: `src/app/store.ts`

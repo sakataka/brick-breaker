@@ -1,3 +1,4 @@
+import { applyBrickDamage } from "./brickDamage";
 import { type GameplayBalance, getGameplayBalance } from "./config";
 import type { WarpZone } from "./config/stages";
 import { clamp } from "./math";
@@ -57,6 +58,7 @@ export function stepPhysicsCore({
       brick: 0,
     },
   };
+  const protectedPierceHits = new Set<number>();
 
   for (let i = 0; i < iterations; i += 1) {
     ball.warpCooldownSec = Math.max(0, (ball.warpCooldownSec ?? 0) - subDt);
@@ -125,6 +127,13 @@ export function stepPhysicsCore({
       if (hitBrickIndex < 0) {
         break;
       }
+      const hitBrick = bricks[hitBrickIndex];
+      const repeatedPierceProtectedHit =
+        pierceDepth > 0 && shouldLimitPierceRepeatHit(hitBrick) && protectedPierceHits.has(hitBrick.id);
+      if (repeatedPierceProtectedHit) {
+        nudgeForward(ball);
+        break;
+      }
 
       const canPierce = directHits < pierceDepth;
       const hit = applyBrickCollision(ball, bricks, hitBrickIndex, balance, maxBallSpeed, {
@@ -132,6 +141,9 @@ export function stepPhysicsCore({
         bombRadiusTiles: explodeOnHit ? bombRadiusTiles : 0,
       });
       if (hit.destroyedCount <= 0) {
+        if (shouldLimitPierceRepeatHit(hitBrick)) {
+          protectedPierceHits.add(hitBrick.id);
+        }
         break;
       }
 
@@ -140,6 +152,9 @@ export function stepPhysicsCore({
       result.events.push(...hit.events);
       if (hit.cleared) {
         result.cleared = true;
+      }
+      if (shouldLimitPierceRepeatHit(hitBrick)) {
+        protectedPierceHits.add(hitBrick.id);
       }
 
       directHits += 1;
@@ -319,7 +334,7 @@ function applyBrickCollision(
   }
 
   const destroyed: Brick[] = [];
-  damageBrick(brick, "direct", destroyed);
+  applyDamageAndTrack(brick, "direct", destroyed);
 
   if (options.bombRadiusTiles > 0) {
     damageExplodedBricks(bricks, brick, options.bombRadiusTiles, destroyed);
@@ -367,41 +382,6 @@ function applyBrickCollision(
   };
 }
 
-type BrickDamageSource = "direct" | "explosion";
-
-function damageBrick(brick: Brick, source: BrickDamageSource, destroyed: Brick[]): void {
-  if (!brick.alive) {
-    return;
-  }
-
-  const kind = brick.kind ?? "normal";
-  const defaultHp = kind === "boss" ? 12 : kind === "normal" || kind === "hazard" ? 1 : 2;
-  const currentHp = typeof brick.hp === "number" && Number.isFinite(brick.hp) ? brick.hp : defaultHp;
-  const nextHp = Math.max(0, currentHp - 1);
-
-  if (source === "explosion" && kind === "armored") {
-    brick.hp = Math.max(1, nextHp);
-    return;
-  }
-
-  if (source === "direct" && kind === "regen" && nextHp === 1) {
-    const regenCharges = Math.max(0, brick.regenCharges ?? 1);
-    if (regenCharges > 0) {
-      brick.regenCharges = regenCharges - 1;
-      brick.hp = 2;
-      return;
-    }
-  }
-
-  brick.hp = nextHp;
-  if (brick.hp > 0) {
-    return;
-  }
-
-  brick.alive = false;
-  destroyed.push(brick);
-}
-
 function damageExplodedBricks(bricks: Brick[], center: Brick, radiusTiles: number, destroyed: Brick[]): void {
   for (const candidate of bricks) {
     if (!candidate.alive || candidate.id === center.id) {
@@ -409,8 +389,15 @@ function damageExplodedBricks(bricks: Brick[], center: Brick, radiusTiles: numbe
     }
 
     if (isWithinExplosionRange(candidate, center, radiusTiles)) {
-      damageBrick(candidate, "explosion", destroyed);
+      applyDamageAndTrack(candidate, "explosion", destroyed);
     }
+  }
+}
+
+function applyDamageAndTrack(brick: Brick, source: "direct" | "explosion", destroyed: Brick[]): void {
+  const result = applyBrickDamage(brick, source);
+  if (result.destroyed) {
+    destroyed.push(brick);
   }
 }
 
@@ -438,6 +425,15 @@ function isWithinExplosionRange(candidate: Brick, center: Brick, radiusTiles: nu
     Math.abs(candidateX - centerX) <= tileW * radiusTiles + tileW * 0.5 &&
     Math.abs(candidateY - centerY) <= tileH * radiusTiles + tileH * 0.5
   );
+}
+
+function shouldLimitPierceRepeatHit(brick: Brick): boolean {
+  const kind = brick.kind ?? "normal";
+  if (kind === "boss" || kind === "durable" || kind === "armored" || kind === "regen") {
+    return true;
+  }
+  const maxHp = brick.maxHp ?? brick.hp ?? 1;
+  return maxHp > 1;
 }
 
 function nudgeForward(ball: Ball): void {
