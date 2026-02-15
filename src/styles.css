@@ -11,7 +11,7 @@
   --accent-b: #ff9f45;
   --danger: #ff6a6a;
   --hud-accent: #29d3ff;
-  --play-topbar-height: 96px;
+  --play-topbar-height: 116px;
 }
 
 * {
@@ -119,7 +119,7 @@ body::before {
   grid-template-columns: minmax(0, 1fr) minmax(248px, 300px);
   gap: 0.72rem;
   align-items: stretch;
-  padding: 12px;
+  padding: 6px 10px;
   pointer-events: none;
   z-index: 18;
 }
@@ -132,7 +132,7 @@ body::before {
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 72px;
+  min-height: 0;
   border-radius: 12px;
   display: grid;
   grid-template-columns: repeat(6, 1fr);
@@ -423,15 +423,16 @@ body::before {
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 72px;
+  min-height: 0;
   border-radius: 12px;
   border: 1px solid rgba(255, 195, 116, 0.52);
   background: linear-gradient(160deg, rgba(32, 20, 6, 0.78), rgba(88, 54, 12, 0.62));
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.28);
-  padding: 0.55rem 0.68rem;
+  padding: 0.42rem 0.6rem;
   backdrop-filter: blur(8px);
   pointer-events: auto;
   z-index: 1;
+  overflow: hidden;
 }
 
 .shop-panel-hidden {
@@ -441,23 +442,29 @@ body::before {
 }
 
 .shop-panel p {
-  margin: 0 0 0.42rem;
+  margin: 0 0 0.22rem;
   font-size: 0.8rem;
   font-weight: 700;
+  line-height: 1.15;
   color: #ffe0b2;
 }
 
+#shop-status {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 #shop-cost {
-  margin-top: -0.18rem;
-  margin-bottom: 0.45rem;
-  font-size: 0.72rem;
+  margin: 0 0 0.28rem;
+  font-size: 0.7rem;
   color: rgba(255, 230, 188, 0.9);
 }
 
 .shop-buttons {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.38rem;
+  gap: 0.3rem;
 }
 
 .shop-buttons button {
@@ -466,9 +473,9 @@ body::before {
   border-radius: 9px;
   background: rgba(255, 179, 88, 0.12);
   color: #ffeaca;
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 700;
-  padding: 0.42rem 0.35rem;
+  padding: 0.34rem 0.3rem;
   cursor: pointer;
 }
 
@@ -518,7 +525,7 @@ body::before {
 
 @media (max-width: 768px) {
   :root {
-    --play-topbar-height: 112px;
+    --play-topbar-height: 192px;
   }
 
   #hud {

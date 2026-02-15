@@ -34,9 +34,7 @@ export function buildShopUiView(state: GameState): ShopUiView {
   const canBuy = !state.shop.usedThisStage && state.score >= purchaseCost;
   const optionA = ITEM_REGISTRY[offer[0]];
   const optionB = ITEM_REGISTRY[offer[1]];
-  const status = state.shop.usedThisStage
-    ? "ショップ: このステージは購入済み"
-    : `ショップ: 1回限定 (現在価格 ${purchaseCost}点)`;
+  const status = state.shop.usedThisStage ? "ショップ: このステージは購入済み" : "ショップ: 1回限定";
   return {
     visible: true,
     status,
