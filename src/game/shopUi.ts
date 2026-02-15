@@ -10,9 +10,6 @@ export interface ShopUiView {
   optionBLabel: string;
   optionADisabled: boolean;
   optionBDisabled: boolean;
-  rerollVisible: boolean;
-  rerollDisabled: boolean;
-  rerollLabel: string;
 }
 
 const HIDDEN_VIEW: ShopUiView = {
@@ -23,9 +20,6 @@ const HIDDEN_VIEW: ShopUiView = {
   optionBLabel: "選択肢B",
   optionADisabled: true,
   optionBDisabled: true,
-  rerollVisible: false,
-  rerollDisabled: true,
-  rerollLabel: "リロール",
 };
 
 export function buildShopUiView(state: GameState): ShopUiView {
@@ -38,7 +32,6 @@ export function buildShopUiView(state: GameState): ShopUiView {
   }
   const purchaseCost = getShopPurchaseCost(state.shop.purchaseCount);
   const canBuy = !state.shop.usedThisStage && state.score >= purchaseCost;
-  const canReroll = !state.shop.usedThisStage && !state.shop.rerolledThisStage;
   const optionA = ITEM_REGISTRY[offer[0]];
   const optionB = ITEM_REGISTRY[offer[1]];
   const status = state.shop.usedThisStage
@@ -52,8 +45,5 @@ export function buildShopUiView(state: GameState): ShopUiView {
     optionBLabel: `${optionB.emoji} ${optionB.label}`,
     optionADisabled: !canBuy,
     optionBDisabled: !canBuy,
-    rerollVisible: true,
-    rerollDisabled: !canReroll,
-    rerollLabel: state.shop.rerolledThisStage ? "リロール済み" : "無料リロール",
   };
 }

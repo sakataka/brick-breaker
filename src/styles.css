@@ -101,19 +101,25 @@ body::before {
 #ui-root {
   position: absolute;
   inset: 0;
+  display: grid;
+  grid-template-rows: 0 minmax(0, 1fr);
   pointer-events: none;
 }
 
+#stage-wrap.layout-play #ui-root {
+  grid-template-rows: var(--play-topbar-height) minmax(0, 1fr);
+}
+
 #play-topbar {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  right: 12px;
-  height: calc(var(--play-topbar-height) - 16px);
+  grid-row: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
   display: none;
   grid-template-columns: minmax(0, 1fr) minmax(248px, 300px);
   gap: 0.72rem;
   align-items: stretch;
+  padding: 12px;
   pointer-events: none;
   z-index: 18;
 }
@@ -471,25 +477,6 @@ body::before {
   cursor: default;
 }
 
-.shop-reroll {
-  margin-top: 0.4rem;
-  width: 100%;
-  appearance: none;
-  border: 1px dashed rgba(255, 214, 153, 0.56);
-  border-radius: 9px;
-  background: rgba(255, 179, 88, 0.08);
-  color: #ffeaca;
-  font-size: 0.74rem;
-  font-weight: 700;
-  padding: 0.35rem 0.45rem;
-  cursor: pointer;
-}
-
-.shop-reroll:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
 #overlay-button {
   margin-top: 0.72rem;
   appearance: none;
@@ -539,12 +526,9 @@ body::before {
   }
 
   #play-topbar {
-    top: 10px;
-    left: 10px;
-    right: 10px;
     grid-template-columns: 1fr;
     gap: 0.52rem;
-    height: calc(var(--play-topbar-height) - 14px);
+    padding: 10px;
   }
 
   #overlay-button {

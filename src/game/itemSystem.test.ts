@@ -93,6 +93,21 @@ describe("itemSystem", () => {
     expect(trimmed).toHaveLength(4);
   });
 
+  test("newly spawned multiballs clear contact latch state", () => {
+    const items = createItemState();
+    items.active.multiballStacks = 2;
+    const sourceBall: Ball = {
+      ...createBall(),
+      lastDamageBrickId: 99,
+    };
+
+    const expanded = ensureMultiballCount(items, [sourceBall], sequenceRandom([0.5, 0.5]), 4);
+
+    expect(expanded).toHaveLength(3);
+    expect(expanded[1]?.lastDamageBrickId).toBeUndefined();
+    expect(expanded[2]?.lastDamageBrickId).toBeUndefined();
+  });
+
   test("shield accumulates charges and consumes one by one", () => {
     const items = createItemState();
     applyItemPickup(items, "shield", [createBall()]);

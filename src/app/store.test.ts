@@ -27,7 +27,6 @@ describe("app store", () => {
       handlers: {
         primaryAction: () => {},
         shopOption: () => {},
-        shopReroll: () => {},
       },
     });
   });
@@ -52,7 +51,6 @@ describe("app store", () => {
   test("routes UI trigger callbacks through registered handlers", () => {
     let primaryFired = false;
     let selectedIndex: 0 | 1 | -1 = -1;
-    let rerollFired = false;
     appStore.getState().setHandlers({
       primaryAction: () => {
         primaryFired = true;
@@ -60,17 +58,12 @@ describe("app store", () => {
       shopOption: (index) => {
         selectedIndex = index;
       },
-      shopReroll: () => {
-        rerollFired = true;
-      },
     });
 
     appStore.getState().triggerPrimaryAction();
     appStore.getState().triggerShopOption(1);
-    appStore.getState().triggerShopReroll();
 
     expect(primaryFired).toBe(true);
     expect(selectedIndex as number).toBe(1);
-    expect(rerollFired).toBe(true);
   });
 });

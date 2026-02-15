@@ -14,7 +14,7 @@ import type { HudViewModel, OverlayViewModel, RenderViewState } from "./renderTy
 import { advanceStage, applyRogueUpgradeSelection, prepareStageStory, resetRoundState } from "./roundSystem";
 import { type SceneEvent, SceneMachine } from "./sceneMachine";
 import { applySceneTransition, type SceneTransitionResult } from "./sceneSync";
-import { purchaseShopOption, rerollShopOffer } from "./session/shopActions";
+import { purchaseShopOption } from "./session/shopActions";
 import {
   applyDebugPresetOnRoundStart,
   applyStartSettingsToState,
@@ -169,9 +169,6 @@ export class GameSession {
       shopOption: (index) => {
         this.runSafely(() => this.purchaseShopOption(index), "ショップ購入に失敗しました。");
       },
-      shopReroll: () => {
-        this.runSafely(() => this.rerollShopOffer(), "ショップ更新に失敗しました。");
-      },
     });
   }
 
@@ -318,14 +315,7 @@ export class GameSession {
       return;
     }
     this.audioPort.playItemPickup(picked);
-    this.syncPorts();
-  }
-
-  private rerollShopOffer(): void {
-    if (!rerollShopOffer(this.state, this.random)) {
-      return;
-    }
-    this.syncPorts();
+    this.syncViewPorts();
   }
 
   private adjustCanvasScale(): void {
@@ -408,12 +398,8 @@ export class GameSession {
     this.syncViewPorts();
   }
 
-  private syncPorts(): void {
-    syncViewPorts(this.state, this.renderPort, this.uiPort);
-  }
-
   private syncViewPorts(): void {
-    this.syncPorts();
+    syncViewPorts(this.state, this.renderPort, this.uiPort);
   }
 }
 

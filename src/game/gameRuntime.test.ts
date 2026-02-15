@@ -136,6 +136,53 @@ describe("gameRuntime", () => {
     expect(state.balls).toHaveLength(1);
   });
 
+  test("runPlayingLoop does not one-shot boss during high-delta catch-up with pierce", () => {
+    const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 120 };
+    const state = createInitialGameState(config, true, "playing");
+    state.scene = "playing";
+    state.bricks = [
+      {
+        id: 1,
+        x: 48,
+        y: 50,
+        width: 144,
+        height: 26,
+        alive: true,
+        kind: "boss",
+        hp: 12,
+        maxHp: 12,
+      },
+    ];
+    state.items.active.pierceStacks = 1;
+    state.balls = [
+      {
+        pos: { x: 120, y: 88 },
+        vel: { x: 0, y: -220 },
+        radius: 8,
+        speed: config.initialBallSpeed,
+      },
+    ];
+
+    runPlayingLoop(
+      state,
+      {
+        config,
+        random,
+        sfx: sfxStub as never,
+        playPickupSfx: () => {},
+        playComboFillSfx: () => {},
+        playMagicCastSfx: () => {},
+      },
+      0,
+      0.25,
+      () => {},
+      () => {},
+    );
+
+    expect(state.bricks[0]?.alive).toBe(true);
+    expect((state.bricks[0]?.hp ?? 0) > 0).toBe(true);
+  });
+
   test("handleBallLoss retries stage and emits game over when lives are exhausted", () => {
     const config = { ...GAME_CONFIG, width: 260, height: 180 };
     const state = createInitialGameState(config, true, "playing");

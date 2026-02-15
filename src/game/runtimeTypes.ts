@@ -182,7 +182,6 @@ export type DebugItemPreset = "none" | "combat_check" | "boss_check";
 export interface ShopState {
   usedThisStage: boolean;
   purchaseCount: number;
-  rerolledThisStage: boolean;
   lastOffer: [ItemType, ItemType] | null;
   lastChosen: ItemType | null;
 }

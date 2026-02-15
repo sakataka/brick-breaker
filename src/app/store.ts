@@ -63,15 +63,11 @@ export interface ShopViewState {
   optionBLabel: string;
   optionADisabled: boolean;
   optionBDisabled: boolean;
-  rerollVisible: boolean;
-  rerollDisabled: boolean;
-  rerollLabel: string;
 }
 
 interface UiHandlers {
   primaryAction: () => void;
   shopOption: (index: 0 | 1) => void;
-  shopReroll: () => void;
 }
 
 interface AppStoreState {
@@ -89,7 +85,6 @@ interface AppStoreState {
   setHandlers: (handlers: Partial<UiHandlers>) => void;
   triggerPrimaryAction: () => void;
   triggerShopOption: (index: 0 | 1) => void;
-  triggerShopReroll: () => void;
 }
 
 const DEFAULT_HUD: HudViewModel = {
@@ -118,9 +113,6 @@ const DEFAULT_SHOP: ShopViewState = {
   optionBLabel: "選択肢B",
   optionADisabled: true,
   optionBDisabled: true,
-  rerollVisible: false,
-  rerollDisabled: true,
-  rerollLabel: "リロール",
 };
 
 export const START_SETTINGS_OPTIONS: StartSettingsOptionCatalog = {
@@ -190,7 +182,6 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
   handlers: {
     primaryAction: () => {},
     shopOption: () => {},
-    shopReroll: () => {},
   },
   setHud: (hud) => set({ hud }),
   setOverlayModel: (model) => set({ overlay: { model } }),
@@ -215,9 +206,6 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
   },
   triggerShopOption: (index) => {
     get().handlers.shopOption(index);
-  },
-  triggerShopReroll: () => {
-    get().handlers.shopReroll();
   },
 }));
 

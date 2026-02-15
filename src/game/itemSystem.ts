@@ -262,6 +262,7 @@ export function ensureMultiballCount(
         vel: { x: source.vel.x * -1 + spread * dir, y: source.vel.y },
         radius: source.radius,
         speed: currentSpeed,
+        lastDamageBrickId: undefined,
       },
     ];
   }

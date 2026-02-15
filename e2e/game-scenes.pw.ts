@@ -14,11 +14,15 @@ test("start -> playing -> paused -> playing", async ({ page }) => {
 
   const topbarBox = await page.locator("#play-topbar").boundingBox();
   const canvasBox = await page.locator("#game-canvas").boundingBox();
+  const shopBox = await page.locator("#shop-panel").boundingBox();
   expect(topbarBox).not.toBeNull();
   expect(canvasBox).not.toBeNull();
-  if (topbarBox && canvasBox) {
+  expect(shopBox).not.toBeNull();
+  if (topbarBox && canvasBox && shopBox) {
     expect(topbarBox.y + topbarBox.height).toBeLessThanOrEqual(canvasBox.y + 1);
+    expect(shopBox.y + shopBox.height).toBeLessThanOrEqual(canvasBox.y + 1);
   }
+  await expect(page.locator("#shop-reroll")).toHaveCount(0);
 
   await page.keyboard.press("KeyP");
   await expect(page.locator("#overlay")).toHaveAttribute("data-scene", "paused");

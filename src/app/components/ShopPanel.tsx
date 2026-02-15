@@ -4,10 +4,9 @@ import type { ShopViewState } from "../store";
 export interface ShopPanelProps {
   shop: ShopViewState;
   onSelect: (index: 0 | 1) => void;
-  onReroll: () => void;
 }
 
-export function ShopPanel({ shop, onSelect, onReroll }: ShopPanelProps): ReactElement {
+export function ShopPanel({ shop, onSelect }: ShopPanelProps): ReactElement {
   const className = shop.visible ? "shop-panel" : "shop-panel shop-panel-hidden";
   return (
     <div id="shop-panel" className={className}>
@@ -35,17 +34,6 @@ export function ShopPanel({ shop, onSelect, onReroll }: ShopPanelProps): ReactEl
           {shop.optionBLabel}
         </button>
       </div>
-      {shop.rerollVisible ? (
-        <button
-          id="shop-reroll"
-          type="button"
-          className="shop-reroll"
-          disabled={shop.rerollDisabled}
-          onClick={onReroll}
-        >
-          {shop.rerollLabel}
-        </button>
-      ) : null}
     </div>
   );
 }

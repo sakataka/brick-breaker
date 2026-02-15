@@ -25,6 +25,7 @@ export interface Ball {
   vel: Vector2;
   radius: number;
   speed: number;
+  lastDamageBrickId?: number;
   warpCooldownSec?: number;
   stickTimerSec?: number;
   stickCooldownSec?: number;

@@ -283,6 +283,94 @@ describe("physicsCore", () => {
     expect(result.collision.brick).toBe(0);
   });
 
+  test("contact latch skips damage while still touching same multi-HP target", () => {
+    const ball: Ball = {
+      pos: { x: 120, y: 70 },
+      vel: { x: 0, y: 0 },
+      radius: 8,
+      speed: 320,
+      lastDamageBrickId: 1,
+    };
+    const bricks: Brick[] = [
+      {
+        id: 1,
+        x: 48,
+        y: 50,
+        width: 144,
+        height: 26,
+        alive: true,
+        kind: "boss",
+        hp: 12,
+        maxHp: 12,
+      },
+    ];
+    const stepInput = {
+      paddle: basePaddle(),
+      bricks,
+      config: baseConfig,
+      deltaSec: 0.2,
+      stepConfig: {
+        pierceDepth: 8,
+        maxMove: 12,
+        maxSubSteps: 24,
+      },
+    } as const;
+
+    stepPhysicsCore({
+      ...stepInput,
+      ball,
+    });
+    expect(bricks[0]?.hp).toBe(12);
+  });
+
+  test("contact latch is cleared after detach and allows next hit", () => {
+    const ball: Ball = {
+      pos: { x: 24, y: 20 },
+      vel: { x: 0, y: 0 },
+      radius: 8,
+      speed: 320,
+      lastDamageBrickId: 1,
+    };
+    const bricks: Brick[] = [
+      {
+        id: 1,
+        x: 48,
+        y: 50,
+        width: 144,
+        height: 26,
+        alive: true,
+        kind: "boss",
+        hp: 12,
+        maxHp: 12,
+      },
+    ];
+    const stepInput = {
+      paddle: basePaddle(),
+      bricks,
+      config: baseConfig,
+      deltaSec: 0.2,
+      stepConfig: {
+        pierceDepth: 8,
+        maxMove: 12,
+        maxSubSteps: 24,
+      },
+    } as const;
+
+    stepPhysicsCore({
+      ...stepInput,
+      ball,
+    });
+    expect(ball.lastDamageBrickId).toBeUndefined();
+
+    ball.pos = { x: 120, y: 88 };
+    ball.vel = { x: 0, y: -220 };
+    stepPhysicsCore({
+      ...stepInput,
+      ball,
+    });
+    expect(bricks[0]?.hp).toBe(11);
+  });
+
   test("sticky capture holds the ball and auto-releases upward", () => {
     const ball: Ball = {
       pos: { x: 120, y: 154 },

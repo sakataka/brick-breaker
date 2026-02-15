@@ -1,5 +1,4 @@
 import { getShopPurchaseCost } from "../config";
-import { generateShopOffer } from "../gamePipeline";
 import { applyItemPickup, ensureMultiballCount } from "../itemSystem";
 import type { GameConfig, GameState, ItemType, RandomSource } from "../types";
 import { spawnItemPickupFeedback } from "../vfxSystem";
@@ -35,16 +34,4 @@ export function purchaseShopOption(
     spawnItemPickupFeedback(state.vfx, picked, anchor.pos.x, anchor.pos.y);
   }
   return picked;
-}
-
-export function rerollShopOffer(state: GameState, random: RandomSource): boolean {
-  if (state.scene !== "playing") {
-    return false;
-  }
-  if (state.shop.usedThisStage || state.shop.rerolledThisStage || !state.shop.lastOffer) {
-    return false;
-  }
-  state.shop.lastOffer = generateShopOffer(random, state.options.stickyItemEnabled);
-  state.shop.rerolledThisStage = true;
-  return true;
 }

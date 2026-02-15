@@ -43,7 +43,6 @@ function buildStageRound(
   }
   state.assist = createAssistState(config);
   state.shop.usedThisStage = false;
-  state.shop.rerolledThisStage = false;
   state.shop.lastOffer = null;
   state.shop.lastChosen = null;
   state.hazard.speedBoostUntilSec = 0;
@@ -102,7 +101,6 @@ export function resetRoundState(
   state.story.activeStageNumber = null;
   state.story.seenStageNumbers = [];
   state.shop.purchaseCount = 0;
-  state.shop.rerolledThisStage = false;
   state.vfx = createVfxState(reducedMotion);
   buildStageRound(state, config, random, { resetLives: true });
   state.campaign.stageStartScore = state.score;

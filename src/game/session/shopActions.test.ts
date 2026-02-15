@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { GAME_CONFIG } from "../config";
 import { createInitialGameState } from "../stateFactory";
 import type { RandomSource } from "../types";
-import { purchaseShopOption, rerollShopOffer } from "./shopActions";
+import { purchaseShopOption } from "./shopActions";
 
 const random: RandomSource = { next: () => 0.3 };
 
@@ -20,18 +20,5 @@ describe("session/shopActions", () => {
     expect(state.shop.purchaseCount).toBe(1);
     expect(state.shop.lastChosen).toBe("multiball");
     expect(state.score).toBeLessThan(5_000);
-  });
-
-  test("rerollShopOffer only works once before purchase", () => {
-    const state = createInitialGameState(GAME_CONFIG, true, "playing");
-    state.scene = "playing";
-    state.shop.lastOffer = ["shield", "multiball"];
-
-    expect(rerollShopOffer(state, random)).toBe(true);
-    expect(state.shop.rerolledThisStage).toBe(true);
-    expect(rerollShopOffer(state, random)).toBe(false);
-
-    state.shop.usedThisStage = true;
-    expect(rerollShopOffer(state, random)).toBe(false);
   });
 });

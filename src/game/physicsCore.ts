@@ -75,6 +75,7 @@ export function stepPhysicsCore({
     }
     integratePosition(ball, subDt);
     applyWarpZones(ball, warpZones);
+    resetDamageLatchIfDetached(ball, bricks);
 
     if (
       resolveWallCollision(
@@ -127,7 +128,9 @@ export function stepPhysicsCore({
       const hitBrick = bricks[hitBrickIndex];
       const repeatedPierceProtectedHit =
         pierceDepth > 0 && shouldLimitPierceRepeatHit(hitBrick) && protectedPierceHits.has(hitBrick.id);
-      if (repeatedPierceProtectedHit) {
+      const repeatedLatchedHit =
+        pierceDepth > 0 && isMultiHpTarget(hitBrick) && ball.lastDamageBrickId === hitBrick.id;
+      if (repeatedPierceProtectedHit || repeatedLatchedHit) {
         nudgeForward(ball);
         break;
       }
@@ -137,6 +140,9 @@ export function stepPhysicsCore({
         reflect: !canPierce,
         bombRadiusTiles: explodeOnHit ? bombRadiusTiles : 0,
       });
+      if (pierceDepth > 0 && isMultiHpTarget(hitBrick)) {
+        ball.lastDamageBrickId = hitBrick.id;
+      }
       if (hit.destroyedCount <= 0) {
         if (shouldLimitPierceRepeatHit(hitBrick)) {
           protectedPierceHits.add(hitBrick.id);
@@ -425,12 +431,46 @@ function isWithinExplosionRange(candidate: Brick, center: Brick, radiusTiles: nu
 }
 
 function shouldLimitPierceRepeatHit(brick: Brick): boolean {
+  if (isMultiHpTarget(brick)) {
+    return true;
+  }
+  return false;
+}
+
+function isMultiHpTarget(brick: Brick): boolean {
   const kind = brick.kind ?? "normal";
   if (kind === "boss" || kind === "durable" || kind === "armored" || kind === "regen") {
     return true;
   }
   const maxHp = brick.maxHp ?? brick.hp ?? 1;
   return maxHp > 1;
+}
+
+function resetDamageLatchIfDetached(ball: Ball, bricks: Brick[]): void {
+  if (typeof ball.lastDamageBrickId !== "number") {
+    return;
+  }
+  const latchedBrick = bricks.find((brick) => brick.id === ball.lastDamageBrickId);
+  if (!latchedBrick || !latchedBrick.alive || !isBallTouchingBrick(ball, latchedBrick)) {
+    ball.lastDamageBrickId = undefined;
+  }
+}
+
+function isBallTouchingBrick(ball: Ball, brick: Brick): boolean {
+  if (
+    ball.pos.x + ball.radius < brick.x ||
+    ball.pos.x - ball.radius > brick.x + brick.width ||
+    ball.pos.y + ball.radius < brick.y ||
+    ball.pos.y - ball.radius > brick.y + brick.height
+  ) {
+    return false;
+  }
+
+  const closestX = clamp(ball.pos.x, brick.x, brick.x + brick.width);
+  const closestY = clamp(ball.pos.y, brick.y, brick.y + brick.height);
+  const dx = ball.pos.x - closestX;
+  const dy = ball.pos.y - closestY;
+  return dx * dx + dy * dy <= ball.radius * ball.radius;
 }
 
 function nudgeForward(ball: Ball): void {

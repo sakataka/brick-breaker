@@ -14,7 +14,6 @@ export function AppUi(): ReactElement {
   const setRogueSelection = useAppStore((state) => state.setRogueSelection);
   const triggerPrimaryAction = useAppStore((state) => state.triggerPrimaryAction);
   const triggerShopOption = useAppStore((state) => state.triggerShopOption);
-  const triggerShopReroll = useAppStore((state) => state.triggerShopReroll);
   const scoreRef = useRef<HTMLSpanElement>(null);
   const lastScoreRef = useRef(0);
   const playLayoutActive = overlay.scene === "playing" || overlay.scene === "paused";
@@ -65,7 +64,6 @@ export function AppUi(): ReactElement {
           onSelect={(index) => {
             triggerShopOption(index);
           }}
-          onReroll={triggerShopReroll}
         />
       </div>
       <OverlayRoot

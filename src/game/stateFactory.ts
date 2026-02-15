@@ -26,6 +26,7 @@ export function createRestingBall(config: GameConfig, paddle: Paddle, speed = co
     vel: { x: 0, y: 0 },
     radius: balance.ballRadius,
     speed,
+    lastDamageBrickId: undefined,
   };
 }
 
@@ -49,6 +50,7 @@ export function createServeBall(
     vel: { x: vx, y: vy },
     radius,
     speed,
+    lastDamageBrickId: undefined,
   };
 }
 
@@ -121,7 +123,6 @@ export function createInitialGameState(
     shop: {
       usedThisStage: false,
       purchaseCount: 0,
-      rerolledThisStage: false,
       lastOffer: null,
       lastChosen: null,
     },
