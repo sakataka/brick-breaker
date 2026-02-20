@@ -130,6 +130,10 @@
 ## 品質ゲート
 
 - `bun run check`
+- `bun run check:fast`
+- `bun run guard:local`
+- `bun run verify:change-coverage`
+- `bun run check:arch`
 - `bun run deadcode`
 - `bun test`
 - `bun run e2e`

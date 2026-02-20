@@ -10,11 +10,25 @@ bun install
 bun run dev
 ```
 
+`bun install` 時に `lefthook` の `pre-push` フックが自動インストールされます。
+
 ## 開発コマンド
 
 ```bash
 # 型 + lint + deadcode + build
 bun run check
+
+# 反復開発向け（buildを省いた高速ゲート）
+bun run check:fast
+
+# pre-pushと同じガード
+bun run guard:local
+
+# 差分に応じた対応漏れ検知
+bun run verify:change-coverage
+
+# レイヤー依存の境界チェック
+bun run check:arch
 
 # deadcode scan (CI-compatible)
 bun run deadcode
@@ -27,6 +41,12 @@ bun test
 
 # e2e tests (Playwright)
 bun run e2e
+
+# CI同等のe2e（previewサーバ利用）
+bun run e2e:ci
+
+# 新機能の雛形生成（本体 + テスト + doc TODOコメント）
+bun run scaffold:feature -- <feature-name>
 ```
 
 初回のみ Playwright ブラウザをインストールしてください。
@@ -142,7 +162,7 @@ bunx playwright install chromium
 
 - `vite.config.ts` は GitHub Actions 上で `base: /brick-breaker/` を自動適用
 - Workflow:
-  - CI: `.github/workflows/ci.yml`（`check` + `test` + `e2e`）
+  - CI: `.github/workflows/ci.yml`（`quick-guard` + `build` + `e2e`）
   - Deploy: `.github/workflows/deploy-pages.yml`
 
 GitHub Pages 公開手順:

@@ -1,0 +1,9 @@
+pre-push:
+  parallel: false
+  commands:
+    guard-local:
+      run: bun run guard:local
+    verify-change-coverage:
+      run: bun run verify:change-coverage
+    check-arch:
+      run: bun run check:arch

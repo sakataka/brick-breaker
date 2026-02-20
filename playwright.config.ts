@@ -1,5 +1,8 @@
 import { defineConfig } from "@playwright/test";
 
+const webServerCommand =
+  process.env.PLAYWRIGHT_WEB_SERVER_COMMAND ?? "bun run dev --host 127.0.0.1 --port 4173";
+
 export default defineConfig({
   testDir: "./e2e",
   testMatch: "**/*.pw.ts",
@@ -10,7 +13,7 @@ export default defineConfig({
     headless: true,
   },
   webServer: {
-    command: "bun run dev --host 127.0.0.1 --port 4173",
+    command: webServerCommand,
     url: "http://127.0.0.1:4173",
     timeout: 120_000,
     reuseExistingServer: !process.env.CI,
