@@ -121,7 +121,7 @@ export interface ModeConfig {
 
 export const DEFAULT_MULTIBALL_MAX_BALLS = 4;
 
-export const START_SETTING_LIMITS = {
+const START_SETTING_LIMITS = {
   minLives: 1,
   maxLives: 6,
   minMultiballMaxBalls: 2,
@@ -156,7 +156,7 @@ const BASE_BALANCE: Omit<
   clearBonusPerLife: 500,
 };
 
-export const DIFFICULTY_PRESETS: Record<Difficulty, DifficultyPreset> = {
+const DIFFICULTY_PRESETS: Record<Difficulty, DifficultyPreset> = {
   casual: {
     config: {
       initialLives: 4,
@@ -207,7 +207,7 @@ export const DIFFICULTY_PRESETS: Record<Difficulty, DifficultyPreset> = {
   },
 } as const;
 
-export const DEFAULT_DIFFICULTY: Difficulty = "standard";
+const DEFAULT_DIFFICULTY: Difficulty = "standard";
 const activePreset = DIFFICULTY_PRESETS[DEFAULT_DIFFICULTY];
 
 export const GAME_CONFIG: GameConfig = {
@@ -216,11 +216,6 @@ export const GAME_CONFIG: GameConfig = {
   ...activePreset.config,
   multiballMaxBalls: DEFAULT_MULTIBALL_MAX_BALLS,
 };
-
-export const GAME_BALANCE: GameplayBalance = {
-  ...BASE_BALANCE,
-  ...activePreset.balance,
-} as const;
 
 export const COMBO_CONFIG: ComboConfig = {
   windowSec: 1.8,
@@ -252,7 +247,7 @@ export const RISK_MODE_CONFIG: RiskModeConfig = {
   maxSpeedScale: 1.12,
 };
 
-export const SHOP_CONFIG: ShopConfig = {
+const SHOP_CONFIG: ShopConfig = {
   basePurchaseCost: 1200,
   growthFactor: 1.35,
   roundUnit: 100,
@@ -310,7 +305,7 @@ export function getGameplayBalance(difficulty: Difficulty): GameplayBalance {
   };
 }
 
-export function resolveSpeedScale(speedPreset: SpeedPreset): number {
+function resolveSpeedScale(speedPreset: SpeedPreset): number {
   const parsed = Number(speedPreset);
   if (Number.isNaN(parsed)) {
     return 1;

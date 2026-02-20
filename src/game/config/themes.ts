@@ -18,7 +18,7 @@ export interface ThemeBandDefinition {
   brickPalette: BrickTheme["palette"];
 }
 
-export const BRICK_PALETTE: BrickTheme["palette"] = [
+const BRICK_PALETTE: BrickTheme["palette"] = [
   "rgba(255, 122, 122, 0.45)",
   "rgba(255, 196, 118, 0.45)",
   "rgba(122, 232, 176, 0.45)",
@@ -85,7 +85,7 @@ export function getBrickPaletteColor(row: number, palette: BrickTheme["palette"]
   return palette[row % palette.length];
 }
 
-export function getThemeBandByStage(stageNumber: number): ThemeBandDefinition {
+function getThemeBandByStage(stageNumber: number): ThemeBandDefinition {
   const normalized = Math.max(1, Math.min(STAGE_CATALOG.length, stageNumber));
   const found = THEME_BANDS.find((band) => normalized >= band.startStage && normalized <= band.endStage);
   return found ?? THEME_BANDS[0];

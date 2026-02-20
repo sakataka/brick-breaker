@@ -7,12 +7,10 @@ import type {
   Particle,
   RandomSource,
   Scene,
-  Vector2,
   VfxState,
 } from "./types";
 
 const MAX_PARTICLES = 220;
-const MAX_TRAIL_POINTS = 12;
 const MAX_IMPACT_RINGS = 10;
 const MAX_FLOATING_TEXTS = 8;
 
@@ -150,28 +148,6 @@ export function updateVfxState(vfx: VfxState, deltaSec: number, random: RandomSo
     label.pos.y -= deltaSec * 28;
     return true;
   });
-}
-
-export function recordTrailPoint(vfx: VfxState, scene: Scene, point?: Vector2): void {
-  if (scene !== "playing") {
-    if (scene !== "paused") {
-      vfx.trail = [];
-    }
-    return;
-  }
-
-  if (!point) {
-    return;
-  }
-
-  vfx.trail.push({
-    x: point.x,
-    y: point.y,
-  });
-
-  while (vfx.trail.length > MAX_TRAIL_POINTS) {
-    vfx.trail.shift();
-  }
 }
 
 function bumpShake(vfx: VfxState, shakePx: number, durationMs: number): void {

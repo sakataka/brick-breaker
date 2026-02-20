@@ -21,7 +21,7 @@ export function buildOverlaySubText(copySub: string, overlay: OverlayViewModel):
   return copySub;
 }
 
-export function formatStageResult(stageResult: StageResultView | undefined): string {
+function formatStageResult(stageResult: StageResultView | undefined): string {
   if (!stageResult) {
     return "";
   }

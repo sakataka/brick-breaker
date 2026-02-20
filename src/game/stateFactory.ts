@@ -16,7 +16,7 @@ export function createBasePaddle(config: GameConfig): Paddle {
   };
 }
 
-export function createRestingBall(config: GameConfig, paddle: Paddle, speed = config.initialBallSpeed): Ball {
+function createRestingBall(config: GameConfig, paddle: Paddle, speed = config.initialBallSpeed): Ball {
   const balance = getGameplayBalance(config.difficulty);
   return {
     pos: {

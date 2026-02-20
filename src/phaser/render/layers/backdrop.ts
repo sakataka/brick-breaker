@@ -26,7 +26,7 @@ const BACKDROP_BY_BAND: Record<RenderViewState["themeBandId"], BackdropTheme> = 
   },
 };
 
-export function drawProgressBar(
+function drawProgressBar(
   graphics: Phaser.GameObjects.Graphics,
   progressRatio: number,
   width: number,
@@ -66,7 +66,7 @@ export function drawBackdropLayer(
   drawWarpZones(graphics, view.warpZones, lineWidth);
 }
 
-export function drawWarpZones(
+function drawWarpZones(
   graphics: Phaser.GameObjects.Graphics,
   warpZones: RenderViewState["warpZones"],
   lineWidth: number,
@@ -98,7 +98,7 @@ export function drawWarpZones(
   }
 }
 
-export function resolveBackdropTheme(
+function resolveBackdropTheme(
   themeBandId: RenderViewState["themeBandId"],
   highContrast: boolean,
 ): BackdropTheme {

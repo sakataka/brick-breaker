@@ -168,7 +168,7 @@ export const START_SETTINGS_OPTIONS: StartSettingsOptionCatalog = {
   ] as const,
 };
 
-export const START_SETTINGS_DEFAULT: StartSettingsSelection = {
+const START_SETTINGS_DEFAULT: StartSettingsSelection = {
   gameMode: "campaign",
   difficulty: "standard",
   initialLives: GAME_CONFIG.initialLives,

@@ -130,6 +130,7 @@
 ## 品質ゲート
 
 - `bun run check`
+- `bun run deadcode`
 - `bun test`
 - `bun run e2e`
 

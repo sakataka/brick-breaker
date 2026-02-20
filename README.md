@@ -13,8 +13,14 @@ bun run dev
 ## 開発コマンド
 
 ```bash
-# 型 + lint + build
+# 型 + lint + deadcode + build
 bun run check
+
+# deadcode scan (CI-compatible)
+bun run deadcode
+
+# deadcode scan (report only)
+bun run deadcode:report
 
 # unit/integration tests
 bun test

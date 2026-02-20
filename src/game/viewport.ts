@@ -1,8 +1,8 @@
 import { clamp } from "./math";
 
-export const MIN_CANVAS_CSS_WIDTH = 320;
-export const MIN_CANVAS_CSS_HEIGHT = 180;
-export const MAX_RENDER_SCALE = 4;
+const MIN_CANVAS_CSS_WIDTH = 320;
+const MIN_CANVAS_CSS_HEIGHT = 180;
+const MAX_RENDER_SCALE = 4;
 
 export interface CanvasFit {
   cssWidth: number;

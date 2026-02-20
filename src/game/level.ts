@@ -6,18 +6,6 @@ import {
 } from "./config";
 import type { Brick, BrickKind, StageDefinition } from "./types";
 
-export function buildBricks(layout: BrickLayout = DEFAULT_BRICK_LAYOUT): Brick[] {
-  const fullLayout = Array.from({ length: layout.rows }, () => Array.from({ length: layout.cols }, () => 1));
-  return buildBricksFromStage(
-    {
-      id: 1,
-      speedScale: 1,
-      layout: fullLayout,
-    },
-    layout,
-  );
-}
-
 export function buildBricksFromStage(
   stage: StageDefinition,
   layout: BrickLayout = DEFAULT_BRICK_LAYOUT,
