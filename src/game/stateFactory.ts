@@ -69,6 +69,7 @@ export function createInitialGameState(
     scene,
     score: 0,
     lives: config.initialLives,
+    lastGameOverScore: null,
     elapsedSec: 0,
     combo: {
       multiplier: 1,
@@ -104,9 +105,6 @@ export function createInitialGameState(
       laserProjectiles: [],
       heldBalls: [],
       shieldBurstQueued: false,
-      focusRequest: false,
-      focusRemainingSec: 0,
-      focusCooldownSec: 0,
       bossPhase: 0,
       bossPhaseSummonCooldownSec: 0,
       enemyWaveCooldownSec: 0,

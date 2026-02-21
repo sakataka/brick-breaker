@@ -101,9 +101,8 @@ const DEFAULT_HUD: HudViewModel = {
   timeText: "時間: 00:00",
   stageText: "ステージ: 1/12",
   comboText: "コンボ x1.00",
-  focusText: "FOCUS: READY(F)",
+  progressRatio: 0,
   itemsText: "アイテム: -",
-  accessibilityText: "表示: 標準",
   accentColor: "#29d3ff",
 };
 

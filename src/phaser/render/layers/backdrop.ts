@@ -1,6 +1,7 @@
 import type Phaser from "phaser";
 import type { RenderViewState } from "../../../game/renderTypes";
-import { type ParsedColor, parseColor, snapPixel } from "../color";
+import { type ParsedColor, parseColor } from "../color";
+import { snapByStep } from "../dpiProfile";
 
 interface BackdropTheme {
   base: string;
@@ -26,28 +27,14 @@ const BACKDROP_BY_BAND: Record<RenderViewState["themeBandId"], BackdropTheme> = 
   },
 };
 
-function drawProgressBar(
-  graphics: Phaser.GameObjects.Graphics,
-  progressRatio: number,
-  width: number,
-  color: string,
-): void {
-  const ratio = Math.max(0, Math.min(1, progressRatio));
-  const base = parseColor("rgba(255,255,255,0.16)", { value: 0xffffff, alpha: 0.16 });
-  const accent = parseColor(color, { value: 0x29d3ff, alpha: 0.9 });
-  graphics.fillStyle(base.value, base.alpha);
-  graphics.fillRect(20, 16, width - 40, 6);
-  graphics.fillStyle(accent.value, accent.alpha);
-  graphics.fillRect(20, 16, (width - 40) * ratio, 6);
-}
-
 export function drawBackdropLayer(
   graphics: Phaser.GameObjects.Graphics,
   view: RenderViewState,
   width: number,
   height: number,
-  progressColor: string,
+  _progressColor: string,
   lineWidth: number,
+  snapStep: number,
 ): void {
   const backdropTheme = resolveBackdropTheme(view.themeBandId, view.highContrast);
   const background = parseColor(backdropTheme.base, { value: 0x0b1020, alpha: 1 });
@@ -55,21 +42,45 @@ export function drawBackdropLayer(
   graphics.fillRect(0, 0, width, height);
 
   const header = parseColor(backdropTheme.top, { value: 0x161d30, alpha: 1 });
-  graphics.fillStyle(header.value, 0.72);
-  graphics.fillRect(0, 0, width, 72);
+  drawTopVignette(graphics, header, width);
 
   const frame = parseColor(backdropTheme.frame, { value: 0x29d3ff, alpha: 1 });
   graphics.lineStyle(lineWidth, frame.value, 0.24);
-  graphics.strokeRect(0.5, 0.5, width - 1, height - 1);
+  graphics.strokeRect(
+    snapByStep(0.5, snapStep),
+    snapByStep(0.5, snapStep),
+    snapByStep(width - 1, snapStep),
+    snapByStep(height - 1, snapStep),
+  );
+  graphics.lineStyle(Math.max(1, lineWidth + 0.4), frame.value, 0.6);
+  graphics.beginPath();
+  graphics.moveTo(snapByStep(1, snapStep), snapByStep(1, snapStep));
+  graphics.lineTo(snapByStep(width - 1, snapStep), snapByStep(1, snapStep));
+  graphics.strokePath();
 
-  drawProgressBar(graphics, view.progressRatio, width, progressColor);
-  drawWarpZones(graphics, view.warpZones, lineWidth);
+  drawWarpZones(graphics, view.warpZones, lineWidth, snapStep);
+}
+
+function drawTopVignette(graphics: Phaser.GameObjects.Graphics, header: ParsedColor, width: number): void {
+  const height = 72;
+  const steps = 8;
+  const stripeHeight = height / steps;
+  for (let index = 0; index < steps; index += 1) {
+    const ratio = 1 - index / steps;
+    const alpha = 0.42 * ratio * ratio;
+    if (alpha <= 0) {
+      continue;
+    }
+    graphics.fillStyle(header.value, header.alpha * alpha);
+    graphics.fillRect(0, index * stripeHeight, width, stripeHeight + 1);
+  }
 }
 
 function drawWarpZones(
   graphics: Phaser.GameObjects.Graphics,
   warpZones: RenderViewState["warpZones"],
   lineWidth: number,
+  snapStep: number,
 ): void {
   if (!warpZones || warpZones.length === 0) {
     return;
@@ -84,17 +95,17 @@ function drawWarpZones(
   for (const zone of warpZones) {
     const width = Math.max(1, zone.inXMax - zone.inXMin);
     const height = Math.max(1, zone.inYMax - zone.inYMin);
-    const entryX = snapPixel(zone.inXMin);
-    const entryY = snapPixel(zone.inYMin);
+    const entryX = snapByStep(zone.inXMin, snapStep);
+    const entryY = snapByStep(zone.inYMin, snapStep);
     const entryCenterX = zone.inXMin + width / 2;
     const entryCenterY = zone.inYMin + height / 2;
     graphics.fillRect(entryX, entryY, width, height);
     graphics.strokeRect(entryX, entryY, width, height);
-    drawGuideSegments(graphics, entryCenterX, entryCenterY, zone.outX, zone.outY, guide, lineWidth);
+    drawGuideSegments(graphics, entryCenterX, entryCenterY, zone.outX, zone.outY, guide, lineWidth, snapStep);
     graphics.fillStyle(exitFill.value, exitFill.alpha);
-    graphics.fillCircle(snapPixel(zone.outX), snapPixel(zone.outY), 3.6);
+    graphics.fillCircle(snapByStep(zone.outX, snapStep), snapByStep(zone.outY, snapStep), 3.6);
     graphics.lineStyle(lineWidth, exitRing.value, exitRing.alpha);
-    graphics.strokeCircle(snapPixel(zone.outX), snapPixel(zone.outY), 7.2);
+    graphics.strokeCircle(snapByStep(zone.outX, snapStep), snapByStep(zone.outY, snapStep), 7.2);
   }
 }
 
@@ -120,6 +131,7 @@ function drawGuideSegments(
   toY: number,
   color: ParsedColor,
   lineWidth: number,
+  snapStep: number,
 ): void {
   const dx = toX - fromX;
   const dy = toY - fromY;
@@ -137,8 +149,8 @@ function drawGuideSegments(
     const start = cursor;
     const end = Math.min(distance, cursor + dashLength);
     graphics.beginPath();
-    graphics.moveTo(snapPixel(fromX + unitX * start), snapPixel(fromY + unitY * start));
-    graphics.lineTo(snapPixel(fromX + unitX * end), snapPixel(fromY + unitY * end));
+    graphics.moveTo(snapByStep(fromX + unitX * start, snapStep), snapByStep(fromY + unitY * start, snapStep));
+    graphics.lineTo(snapByStep(fromX + unitX * end, snapStep), snapByStep(fromY + unitY * end, snapStep));
     graphics.strokePath();
     cursor += dashLength + gapLength;
   }

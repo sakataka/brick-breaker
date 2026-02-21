@@ -30,6 +30,9 @@ bun run verify:change-coverage
 # レイヤー依存の境界チェック
 bun run check:arch
 
+# リファクタ監査（ドキュメント乖離/重複設定/巨大ファイル）
+bun run refactor:audit
+
 # deadcode scan (CI-compatible)
 bun run deadcode
 
@@ -60,7 +63,6 @@ bunx playwright install chromium
 - マウス移動: パドル移動
 - 左クリック / `Enter` / `Space`: 開始・再開・次ステージ
 - `P`: 一時停止 / 再開
-- `F`: Focus発動（スコア消費・時間減速）
 - 右クリック: 魔法スキル
 
 ## 開始前設定
@@ -103,7 +105,6 @@ bunx playwright install chromium
 - ライフ0で同ステージ再挑戦（ステージ開始スコアへ巻き戻し）
 - コンボ倍率: `1.8s` 窓、`x1.00 -> x3.00`
 - コンボ `x2.0` 到達時に1回だけ確定アイテムドロップ
-- Focus: `250点`消費で短時間スローモーション（クールダウン制）
 - ステージ評価: ★1〜★3（時間/被弾/残機）+ ミッション補正
 - ステージクリア時にミッション（`制限時間` / `ショップ未使用`）の達成/未達を表示
 - 9〜11面にエリートブロック（`durable` / `armored` / `regen` / `hazard` / `split` / `summon` / `thorns`）
@@ -139,13 +140,13 @@ bunx playwright install chromium
 - `bomb` / `pierce` 有効中は同種アイテムを再ドロップしない
 - シナジー: `pierce` + `slow_ball` 同時有効で貫通深度 `+1`
 - 落下アイテム表示は「色付きタイル + 絵文字 + 短縮文字」のハイブリッド（高視認性）
-- 描画は `DPR上限2` で高解像度表示（4K環境でも視認性を維持）
+- 描画は `DPR連動（上限4）` + サブピクセルsnap補正で高解像度表示
 
 ## アクセシビリティ（自動適用）
 
 - `prefers-reduced-motion: reduce` を自動反映
 - `prefers-contrast: more` を自動反映
-- HUD に適用状態バッジを表示（`表示: 標準` / `表示: 動き抑制` など）
+- HUDバッジ表示は行わず、描画・演出の挙動側へ自動反映
 
 ## サウンド
 

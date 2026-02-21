@@ -6,6 +6,7 @@ const webServerCommand =
 export default defineConfig({
   testDir: "./e2e",
   testMatch: "**/*.pw.ts",
+  snapshotPathTemplate: "{testDir}/{testFilePath}-snapshots/{arg}{ext}",
   timeout: 30_000,
   retries: process.env.CI ? 2 : 0,
   use: {

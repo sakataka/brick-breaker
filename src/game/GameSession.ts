@@ -7,7 +7,6 @@ import { GameHost } from "../phaser/GameHost";
 import { readAccessibility } from "./a11y";
 import { syncAudioScene } from "./audioSync";
 import { buildStartConfig, GAME_CONFIG } from "./config";
-import { normalizeGhostSamples } from "./ghostSystem";
 import { LifecycleController } from "./lifecycle";
 import { clamp } from "./math";
 import { defaultRandomSource } from "./random";
@@ -15,6 +14,8 @@ import type { HudViewModel, OverlayViewModel, RenderViewState } from "./renderTy
 import { advanceStage, applyRogueUpgradeSelection, prepareStageStory, resetRoundState } from "./roundSystem";
 import { type SceneEvent, SceneMachine } from "./sceneMachine";
 import { applySceneTransition, type SceneTransitionResult } from "./sceneSync";
+import { prepareGhostPlayback, saveGhostRecording } from "./session/sessionPersistence";
+import { applySessionViewport } from "./session/sessionViewport";
 import { purchaseShopOption } from "./session/shopActions";
 import {
   applyDebugPresetOnRoundStart,
@@ -24,7 +25,6 @@ import {
 import { syncViewPorts } from "./session/viewSync";
 import { createInitialGameState } from "./stateFactory";
 import type { GameAudioSettings, GameConfig, GameState, RandomSource, Scene } from "./types";
-import { applyCanvasViewport } from "./viewport";
 
 export interface GameSessionDeps {
   config?: Partial<GameConfig>;
@@ -54,6 +54,7 @@ export class GameSession {
   private readonly highContrastQuery: MediaQueryList;
   private state: GameState;
   private readonly engine: CoreEngine;
+  private lastDevicePixelRatio = 1;
   private audioSettings: GameAudioSettings = {
     bgmEnabled: true,
     sfxEnabled: true,
@@ -80,7 +81,6 @@ export class GameSession {
         canvas: this.canvas,
         width: this.baseConfig.width,
         height: this.baseConfig.height,
-        zoom: Math.max(1, Math.min(2, this.windowRef.devicePixelRatio || 1)),
       });
     this.renderPort = {
       render: (view) => this.host.render(view),
@@ -181,7 +181,6 @@ export class GameSession {
       onPauseToggle: () => this.togglePause(),
       onStartOrRestart: () => this.startOrResume(),
       onCastMagic: () => this.castMagic(),
-      onFocusToggle: () => this.requestFocus(),
     });
   }
 
@@ -221,7 +220,7 @@ export class GameSession {
         startStageIndex: this.pendingStartStageIndex,
       });
       applyDebugPresetOnRoundStart(this.state, this.random, this.config.multiballMaxBalls);
-      this.prepareGhostPlayback();
+      prepareGhostPlayback(this.state, this.windowRef.localStorage, GameSession.GHOST_STORAGE_KEY);
     } else if (result.previous === "story") {
       this.state.story.activeStageNumber = null;
     }
@@ -249,6 +248,7 @@ export class GameSession {
       return;
     }
     try {
+      this.syncViewportForDpi();
       this.engine.tick(
         timeMs,
         {
@@ -282,7 +282,7 @@ export class GameSession {
       transitionResult = this.transition({ type: event });
     });
     if (reachedClear) {
-      this.saveGhostRecording();
+      saveGhostRecording(this.state, this.windowRef.localStorage, GameSession.GHOST_STORAGE_KEY);
     }
     if (transitionResult) {
       this.syncAudioForTransition(transitionResult);
@@ -296,7 +296,7 @@ export class GameSession {
       this.syncAudioForTransition(result);
     });
     if (this.state.scene === "gameover") {
-      this.saveGhostRecording();
+      saveGhostRecording(this.state, this.windowRef.localStorage, GameSession.GHOST_STORAGE_KEY);
     }
     this.syncViewPorts();
   }
@@ -321,13 +321,6 @@ export class GameSession {
     this.state.magic.requestCast = true;
   }
 
-  private requestFocus(): void {
-    if (this.state.scene !== "playing") {
-      return;
-    }
-    this.state.combat.focusRequest = true;
-  }
-
   private purchaseShopOption(index: 0 | 1): void {
     const picked = purchaseShopOption(this.state, index, this.config, this.random);
     if (!picked) {
@@ -342,15 +335,23 @@ export class GameSession {
     if (!wrapper) {
       return;
     }
-    applyCanvasViewport(
+    const currentDpr = applySessionViewport(
       this.canvas,
       wrapper,
       this.config.width,
       this.config.height,
       this.windowRef.devicePixelRatio || 1,
-      { resizeBuffer: false },
     );
+    this.lastDevicePixelRatio = currentDpr;
     this.syncViewPorts();
+  }
+
+  private syncViewportForDpi(): void {
+    const currentDpr = Math.max(1, Math.min(4, this.windowRef.devicePixelRatio || 1));
+    if (Math.abs(currentDpr - this.lastDevicePixelRatio) < 0.01) {
+      return;
+    }
+    this.adjustCanvasScale();
   }
 
   private runSafely(action: () => void, fallbackMessage: string): void {
@@ -417,39 +418,18 @@ export class GameSession {
     this.syncViewPorts();
   }
 
+  debugSetGameOverScore(score: number, lives = this.state.lives): void {
+    const previous = this.state.scene;
+    this.state.lastGameOverScore = Math.max(0, Math.round(score));
+    this.state.score = 0;
+    this.state.lives = Math.max(0, Math.round(lives));
+    this.state.scene = "gameover";
+    syncAudioScene(this.audioPort, previous, this.state.scene, this.state.campaign.stageIndex);
+    this.syncViewPorts();
+  }
+
   private syncViewPorts(): void {
     syncViewPorts(this.state, this.renderPort, this.uiPort);
-  }
-
-  private prepareGhostPlayback(): void {
-    this.state.ghost.playbackEnabled = this.state.options.ghostReplayEnabled;
-    this.state.ghost.recording = [];
-    this.state.ghost.recordAccumulatorSec = 0;
-    if (!this.state.options.ghostReplayEnabled) {
-      this.state.ghost.playback = [];
-      return;
-    }
-    try {
-      const raw = this.windowRef.localStorage.getItem(GameSession.GHOST_STORAGE_KEY);
-      if (!raw) {
-        this.state.ghost.playback = [];
-        return;
-      }
-      const parsed = JSON.parse(raw);
-      this.state.ghost.playback = normalizeGhostSamples(parsed);
-    } catch {
-      this.state.ghost.playback = [];
-    }
-  }
-
-  private saveGhostRecording(): void {
-    if (!this.state.options.ghostReplayEnabled || this.state.ghost.recording.length <= 0) {
-      return;
-    }
-    try {
-      const trimmed = this.state.ghost.recording.slice(-3000);
-      this.windowRef.localStorage.setItem(GameSession.GHOST_STORAGE_KEY, JSON.stringify(trimmed));
-    } catch {}
   }
 }
 

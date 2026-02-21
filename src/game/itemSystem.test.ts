@@ -206,9 +206,9 @@ describe("itemSystem", () => {
 
     const labels = getActiveItemLabels(items);
     expect(labels).toHaveLength(10);
-    expect(labels.some((label) => label.includes("🎱マルチ(多球)×1"))).toBe(true);
+    expect(labels.some((label) => label.includes("🎱マルチ×1"))).toBe(true);
     expect(labels.some((label) => label.includes("🗡貫通×1"))).toBe(true);
-    expect(labels.some((label) => label.includes("💣ボム(爆発)×0"))).toBe(true);
+    expect(labels.some((label) => label.includes("💣ボム×0"))).toBe(true);
     expect(labels.some((label) => label.includes("🔫レーザー×1"))).toBe(true);
     expect(labels.some((label) => label.includes("🛰ホーミング×1"))).toBe(true);
     expect(labels.some((label) => label.includes("⚡レール×1"))).toBe(true);

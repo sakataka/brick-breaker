@@ -3,12 +3,17 @@ import { getItemColor } from "../../../game/itemRegistry";
 import type { RenderTheme } from "../../../game/renderer/theme";
 import type { RenderViewState } from "../../../game/renderTypes";
 import { parseColor, snapPixel } from "../color";
+import { snapByStep } from "../dpiProfile";
 
 interface DrawWorldOptions {
   offsetX: number;
   offsetY: number;
   lineWidth: number;
   heavyLineWidth: number;
+  snapStep: number;
+  brickFillAlphaMin: number;
+  brickStrokeAlpha: number;
+  brickCornerRadius: number;
   theme: RenderTheme;
   width: number;
   height: number;
@@ -20,8 +25,33 @@ export function drawWorldLayer(
   view: RenderViewState,
   options: DrawWorldOptions,
 ): Set<number> {
-  const { offsetX, offsetY, lineWidth, heavyLineWidth, theme, fallbackBrickPalette, width, height } = options;
-  drawBricks(graphics, view, offsetX, offsetY, lineWidth, fallbackBrickPalette, theme.brickStroke);
+  const {
+    offsetX,
+    offsetY,
+    lineWidth,
+    heavyLineWidth,
+    snapStep,
+    brickFillAlphaMin,
+    brickStrokeAlpha,
+    brickCornerRadius,
+    theme,
+    fallbackBrickPalette,
+    width,
+    height,
+  } = options;
+  drawBricks(
+    graphics,
+    view,
+    offsetX,
+    offsetY,
+    lineWidth,
+    snapStep,
+    brickFillAlphaMin,
+    brickStrokeAlpha,
+    brickCornerRadius,
+    fallbackBrickPalette,
+    theme.brickStroke,
+  );
   drawGhostPlayback(graphics, view, offsetX, offsetY);
   drawPaddle(graphics, view, offsetX, offsetY, lineWidth, heavyLineWidth);
   drawFluxField(graphics, view, offsetX, offsetY);
@@ -64,6 +94,10 @@ function drawBricks(
   offsetX: number,
   offsetY: number,
   lineWidth: number,
+  snapStep: number,
+  brickFillAlphaMin: number,
+  brickStrokeAlpha: number,
+  cornerRadius: number,
   fallbackBrickPalette: readonly string[],
   brickStrokeColor: string,
 ): void {
@@ -74,12 +108,18 @@ function drawBricks(
     }
     const fallbackColor = fallbackBrickPalette[(brick.row ?? 0) % fallbackBrickPalette.length] ?? "#ffffff";
     const body = parseColor(brick.color ?? fallbackColor, { value: 0xa0c8ff, alpha: 0.55 });
-    const brickX = snapPixel(brick.x + offsetX);
-    const brickY = snapPixel(brick.y + offsetY);
-    graphics.fillStyle(body.value, body.alpha);
-    graphics.fillRoundedRect(brickX, brickY, brick.width, brick.height, 5);
-    graphics.lineStyle(lineWidth, stroke.value, stroke.alpha);
-    graphics.strokeRoundedRect(brickX, brickY, brick.width, brick.height, 5);
+    const brickX = snapByStep(brick.x + offsetX, snapStep);
+    const brickY = snapByStep(brick.y + offsetY, snapStep);
+    graphics.fillStyle(body.value, Math.max(body.alpha, brickFillAlphaMin));
+    graphics.fillRoundedRect(brickX, brickY, brick.width, brick.height, cornerRadius);
+    graphics.lineStyle(lineWidth, stroke.value, brickStrokeAlpha);
+    graphics.strokeRoundedRect(
+      brickX + lineWidth / 2,
+      brickY + lineWidth / 2,
+      Math.max(0, brick.width - lineWidth),
+      Math.max(0, brick.height - lineWidth),
+      Math.max(0, cornerRadius - lineWidth / 2),
+    );
 
     if (brick.kind && brick.kind !== "normal") {
       const markerColor = parseColor(getBrickMarkerColor(brick.kind), { value: 0xffffff, alpha: 0.95 });

@@ -1,10 +1,4 @@
-import {
-  FOCUS_CONFIG,
-  getStageModifier,
-  getStageStory,
-  getThemeBandByStageIndex,
-  ROGUE_CONFIG,
-} from "./config";
+import { getStageModifier, getStageStory, getThemeBandByStageIndex, ROGUE_CONFIG } from "./config";
 import { getGhostPlaybackSample } from "./ghostSystem";
 import { getActiveItemLabels } from "./itemSystem";
 import type { HudViewModel, OverlayViewModel, RenderViewState } from "./renderTypes";
@@ -18,9 +12,7 @@ export function buildRenderViewState(state: GameState): RenderViewState {
     state.options.gameMode,
     state.options.customStageCatalog?.length,
   );
-  const total = state.bricks.length;
-  const alive = state.bricks.reduce((count, brick) => count + (brick.alive ? 1 : 0), 0);
-  const progressRatio = total <= 0 ? 0 : Math.max(0, Math.min(1, (total - alive) / total));
+  const progressRatio = computeProgressRatio(state);
   const themeBand = getThemeBandByStageIndex(effectiveStageIndex);
   const stageModifier = getStageModifier(effectiveStageIndex + 1);
   const ghostSample =
@@ -83,6 +75,7 @@ export function buildHudViewModel(state: GameState): HudViewModel {
     state.options.gameMode,
     state.options.customStageCatalog?.length,
   );
+  const progressRatio = computeProgressRatio(state);
   const activeItems = getActiveItemLabels(state.items);
   const themeBand = getThemeBandByStageIndex(effectiveStageIndex);
   const comboVisible = state.combo.streak > 1;
@@ -103,15 +96,7 @@ export function buildHudViewModel(state: GameState): HudViewModel {
   const rogueText =
     state.rogue.upgradesTaken > 0 ? ` / 強化:${state.rogue.upgradesTaken}/${ROGUE_CONFIG.maxUpgrades}` : "";
   const magicText =
-    state.magic.cooldownSec <= 0
-      ? " / ✨魔法:READY(右クリック)"
-      : ` / ✨魔法:${state.magic.cooldownSec.toFixed(1)}s`;
-  const focusText =
-    state.combat.focusRemainingSec > 0
-      ? `FOCUS: ON ${state.combat.focusRemainingSec.toFixed(1)}s`
-      : state.combat.focusCooldownSec > 0
-        ? `FOCUS: CD ${state.combat.focusCooldownSec.toFixed(1)}s`
-        : `FOCUS: READY(F / ${FOCUS_CONFIG.scoreCost}点)`;
+    state.magic.cooldownSec <= 0 ? " / ✨魔法:準備OK" : ` / ✨魔法:${state.magic.cooldownSec.toFixed(1)}s`;
   const stagePrefix =
     state.options.gameMode === "boss_rush"
       ? "ボスラッシュ"
@@ -128,9 +113,8 @@ export function buildHudViewModel(state: GameState): HudViewModel {
     timeText: `時間: ${formatTime(state.elapsedSec)}`,
     stageText: `${stagePrefix}: ${stageCounter}${routeLabel}${modifierText}${bossStageText}${debugText}`,
     comboText: comboVisible ? `コンボ x${state.combo.multiplier.toFixed(2)}` : "コンボ x1.00",
-    focusText,
+    progressRatio,
     itemsText: `アイテム: ${activeItems.join(" / ")}${hazardBoostActive ? " / ⚠危険加速中" : ""}${pierceSlowSynergy ? " / ✨貫通+1" : ""}${riskText}${rogueText}${magicText}${warpLegend}`,
-    accessibilityText: buildAccessibilityBadge(state),
     accentColor: comboVisible ? COMBO_ACTIVE_COLOR : themeBand.hudAccent,
   };
 }
@@ -164,9 +148,13 @@ export function buildOverlayViewModel(state: GameState): OverlayViewModel {
     state.options.gameMode === "endless"
       ? `${state.campaign.stageIndex + 1} / ∞`
       : `${state.campaign.stageIndex + 1} / ${state.campaign.totalStages}`;
+  const overlayScore =
+    state.scene === "gameover" && typeof state.lastGameOverScore === "number"
+      ? state.lastGameOverScore
+      : state.score;
   return {
     scene: state.scene,
-    score: state.score,
+    score: overlayScore,
     lives: state.lives,
     clearTime: state.scene === "clear" ? formatTime(state.elapsedSec) : undefined,
     errorMessage: state.errorMessage ?? undefined,
@@ -216,13 +204,8 @@ export function buildOverlayViewModel(state: GameState): OverlayViewModel {
 
 const COMBO_ACTIVE_COLOR = "#ffd46b";
 
-function buildAccessibilityBadge(state: GameState): string {
-  const flags: string[] = [];
-  if (state.a11y.reducedMotion) {
-    flags.push("動き抑制");
-  }
-  if (state.a11y.highContrast) {
-    flags.push("高コントラスト");
-  }
-  return flags.length > 0 ? `表示: ${flags.join(" / ")}` : "表示: 標準";
+function computeProgressRatio(state: GameState): number {
+  const total = state.bricks.length;
+  const alive = state.bricks.reduce((count, brick) => count + (brick.alive ? 1 : 0), 0);
+  return total <= 0 ? 0 : Math.max(0, Math.min(1, (total - alive) / total));
 }

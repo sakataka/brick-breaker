@@ -198,6 +198,7 @@ describe("gameRuntime", () => {
 
     expect(gameOverCount).toBe(1);
     expect(state.score).toBe(1200);
+    expect(state.lastGameOverScore).toBe(3000);
     expect(state.lives).toBe(config.initialLives);
   });
 

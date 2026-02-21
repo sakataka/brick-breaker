@@ -5,6 +5,7 @@ import { DEFAULT_RENDER_THEME, resolveRenderTheme } from "../../game/renderer/th
 import type { RenderViewState } from "../../game/renderTypes";
 import type { GameConfig } from "../../game/types";
 import { readDevicePixelRatio, snapPixel } from "./color";
+import { resolveDpiRenderProfile } from "./dpiProfile";
 import { drawBackdropLayer } from "./layers/backdrop";
 import { drawEffectsLayer } from "./layers/effects";
 import { drawOverlayLayer } from "./layers/overlay";
@@ -37,9 +38,7 @@ export class PhaserRenderPort {
     const band = THEME_BANDS.find((candidate) => candidate.id === view.themeBandId) ?? THEME_BANDS[0];
     const offsetX = view.shake.active ? view.shake.offset.x : 0;
     const offsetY = view.shake.active ? view.shake.offset.y : 0;
-    const dpr = readDevicePixelRatio(this.scene);
-    const lineWidth = dpr >= 1.5 ? 1.4 : 1.2;
-    const heavyLineWidth = dpr >= 1.5 ? 1.7 : 1.4;
+    const profile = resolveDpiRenderProfile(readDevicePixelRatio(this.scene));
 
     this.backdrop.clear();
     this.world.clear();
@@ -52,20 +51,28 @@ export class PhaserRenderPort {
       this.config.width,
       this.config.height,
       theme.progressBar,
-      lineWidth,
+      profile.lineWidth,
+      profile.snapStep,
     );
 
     const visibleItemIds = drawWorldLayer(this.world, view, {
       offsetX,
       offsetY,
-      lineWidth,
-      heavyLineWidth,
+      lineWidth: profile.lineWidth,
+      heavyLineWidth: profile.heavyLineWidth,
+      snapStep: profile.snapStep,
+      brickFillAlphaMin: profile.brickFillAlphaMin,
+      brickStrokeAlpha: profile.brickStrokeAlpha,
+      brickCornerRadius: profile.brickCornerRadius,
       theme,
       width: this.config.width,
       height: this.config.height,
       fallbackBrickPalette: band.brickPalette,
     });
-    drawEffectsLayer(this.effects, view, offsetX, offsetY);
+    drawEffectsLayer(this.effects, view, offsetX, offsetY, {
+      lineWidth: profile.lineWidth,
+      snapStep: profile.snapStep,
+    });
     drawOverlayLayer(this.overlay, view, this.config.width, this.config.height, theme);
     this.syncFallingItemLabels(view, visibleItemIds, offsetX, offsetY);
   }

@@ -27,7 +27,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
   paddle_plus: {
     type: "paddle_plus",
     label: ITEM_CONFIG.paddle_plus.label,
-    hudLabel: "🟦パドル(幅)",
+    hudLabel: "🟦幅増加",
     emoji: "🟦",
     description: "パドル幅を増やす",
     shortLabel: "幅",
@@ -45,7 +45,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
   slow_ball: {
     type: "slow_ball",
     label: ITEM_CONFIG.slow_ball.label,
-    hudLabel: "🐢スロー(減速)",
+    hudLabel: "🐢スロー",
     emoji: "🐢",
     description: "ボール速度を下げる",
     shortLabel: "遅",
@@ -68,7 +68,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
   shield: {
     type: "shield",
     label: ITEM_CONFIG.shield.label,
-    hudLabel: "🛡シールド(防御)",
+    hudLabel: "🛡シールド",
     emoji: "🛡",
     description: "落球を1回防ぐ",
     shortLabel: "盾",
@@ -86,7 +86,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
   multiball: {
     type: "multiball",
     label: ITEM_CONFIG.multiball.label,
-    hudLabel: "🎱マルチ(多球)",
+    hudLabel: "🎱マルチ",
     emoji: "🎱",
     description: "ボール数を増やす",
     shortLabel: "多",
@@ -122,7 +122,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
   bomb: {
     type: "bomb",
     label: ITEM_CONFIG.bomb.label,
-    hudLabel: "💣ボム(爆発)",
+    hudLabel: "💣ボム",
     emoji: "💣",
     description: "直撃時に範囲破壊",
     shortLabel: "爆",

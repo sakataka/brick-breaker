@@ -121,6 +121,7 @@ export interface ItemState {
 export interface ProgressState {
   score: number;
   lives: number;
+  lastGameOverScore: number | null;
   elapsedSec: number;
   campaign: CampaignState;
   combo: ComboState;
@@ -279,9 +280,6 @@ export interface CombatState {
   laserProjectiles: LaserProjectile[];
   heldBalls: HeldBallState[];
   shieldBurstQueued: boolean;
-  focusRequest: boolean;
-  focusRemainingSec: number;
-  focusCooldownSec: number;
   bossPhase: 0 | 1 | 2;
   bossPhaseSummonCooldownSec: number;
   enemyWaveCooldownSec: number;

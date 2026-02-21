@@ -88,7 +88,9 @@ export function handleBallLoss(
   onGameOver: () => void,
 ): void {
   if (!applyLifeLoss(state, 1, config, random)) {
+    const gameOverScore = state.score;
     retryCurrentStage(state, config, random);
+    state.lastGameOverScore = gameOverScore;
     onGameOver();
   }
 }

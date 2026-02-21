@@ -7,11 +7,11 @@ export interface ParsedColor {
 
 export function readDevicePixelRatio(scene: Phaser.Scene): number {
   const ratio = scene.game.canvas.ownerDocument?.defaultView?.devicePixelRatio ?? 1;
-  return Math.max(1, Math.min(2, ratio));
+  return Math.max(1, Math.min(4, ratio));
 }
 
 export function snapPixel(value: number): number {
-  return Math.round(value) + 0.5;
+  return Math.round(value);
 }
 
 export function parseColor(input: string, fallback: ParsedColor): ParsedColor {

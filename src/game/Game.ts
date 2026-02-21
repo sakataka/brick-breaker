@@ -21,4 +21,8 @@ export class Game {
   debugForceScene(scene: Scene): void {
     this.session.debugForceScene(scene);
   }
+
+  debugSetGameOverScore(score: number, lives?: number): void {
+    this.session.debugSetGameOverScore(score, lives);
+  }
 }

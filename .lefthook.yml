@@ -3,6 +3,8 @@ pre-push:
   commands:
     guard-local:
       run: bun run guard:local
+    refactor-audit:
+      run: bun run refactor:audit
     verify-change-coverage:
       run: bun run verify:change-coverage
     check-arch:

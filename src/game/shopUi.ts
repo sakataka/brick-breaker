@@ -37,25 +37,14 @@ export function buildShopUiView(state: GameState): ShopUiView {
   const optionA = ITEM_REGISTRY[offer[0]];
   const optionB = ITEM_REGISTRY[offer[1]];
   const status = state.shop.usedThisStage ? "ショップ: このステージは購入済み" : "ショップ: 1回限定";
-  const priceBandText = `価格帯: ${getPriceBandLabel(purchaseCost)}`;
   return {
     visible: true,
     status,
     currentCostText: `${purchaseCost}点`,
-    priceBandText,
+    priceBandText: "",
     optionALabel: `${optionA.emoji} ${optionA.label}`,
     optionBLabel: `${optionB.emoji} ${optionB.label}`,
     optionADisabled: !canBuy,
     optionBDisabled: !canBuy,
   };
-}
-
-function getPriceBandLabel(cost: number): string {
-  if (cost < 2000) {
-    return "LOW";
-  }
-  if (cost < 4000) {
-    return "MID";
-  }
-  return "HIGH";
 }

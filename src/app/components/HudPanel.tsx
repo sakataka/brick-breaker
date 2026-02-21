@@ -7,8 +7,12 @@ export interface HudPanelProps {
 }
 
 export function HudPanel({ hud, scoreRef }: HudPanelProps): ReactElement {
+  const progressPercent = `${Math.round(Math.max(0, Math.min(1, hud.progressRatio)) * 1000) / 10}%`;
   return (
     <div id="hud" aria-live="polite" style={{ "--hud-accent": hud.accentColor } as CSSProperties}>
+      <div id="hud-progress-track" aria-hidden="true">
+        <div id="hud-progress-fill" style={{ width: progressPercent }} />
+      </div>
       <span id="score" ref={scoreRef}>
         {hud.scoreText}
       </span>
@@ -16,8 +20,6 @@ export function HudPanel({ hud, scoreRef }: HudPanelProps): ReactElement {
       <span id="time">{hud.timeText}</span>
       <span id="stage">{hud.stageText}</span>
       <span id="combo">{hud.comboText}</span>
-      <span id="focus">{hud.focusText}</span>
-      <span id="a11y-badge">{hud.accessibilityText}</span>
       <span id="items">{hud.itemsText}</span>
     </div>
   );

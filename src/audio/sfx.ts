@@ -17,7 +17,6 @@ export type EventName =
   | "shield_burst"
   | "magic_cast"
   | "combo_fill"
-  | "focus_activate"
   | "jingle_start"
   | "jingle_stage_clear"
   | "jingle_game_clear"
@@ -153,11 +152,6 @@ export class SfxManager {
         { freq: 980, type: "triangle", durationMs: 90, gain: 0.07 },
         { freq: 1220, type: "triangle", durationMs: 100, gain: 0.07 },
         { freq: 1480, type: "triangle", durationMs: 120, gain: 0.068 },
-      ],
-      focus_activate: [
-        { freq: 540, type: "triangle", durationMs: 80, gain: 0.07 },
-        { freq: 760, type: "triangle", durationMs: 90, gain: 0.072 },
-        { freq: 980, type: "triangle", durationMs: 100, gain: 0.075 },
       ],
       jingle_start: [
         { freq: 560, type: "triangle", durationMs: 180, gain: 0.08 },

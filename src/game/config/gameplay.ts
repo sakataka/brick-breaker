@@ -95,13 +95,6 @@ export interface CombatConfig {
   };
 }
 
-export interface FocusConfig {
-  scoreCost: number;
-  durationSec: number;
-  cooldownSec: number;
-  timeScale: number;
-}
-
 export interface BossPhaseConfig {
   phase2Ratio: number;
   phase2SpeedScale: number;
@@ -272,13 +265,6 @@ export const COMBAT_CONFIG: CombatConfig = {
     minSpreadX: 40,
     spreadRatio: 0.28,
   },
-} as const;
-
-export const FOCUS_CONFIG: FocusConfig = {
-  scoreCost: 250,
-  durationSec: 2.2,
-  cooldownSec: 6,
-  timeScale: 0.56,
 } as const;
 
 export const BOSS_PHASE_CONFIG: BossPhaseConfig = {

@@ -67,9 +67,8 @@ export interface HudViewModel {
   timeText: string;
   stageText: string;
   comboText: string;
-  focusText: string;
+  progressRatio: number;
   itemsText: string;
-  accessibilityText: string;
   accentColor: string;
 }
 
