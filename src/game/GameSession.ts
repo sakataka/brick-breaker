@@ -81,6 +81,7 @@ export class GameSession {
         canvas: this.canvas,
         width: this.baseConfig.width,
         height: this.baseConfig.height,
+        zoom: Math.max(1, Math.min(2, this.windowRef.devicePixelRatio || 1)),
       });
     this.renderPort = {
       render: (view) => this.host.render(view),
