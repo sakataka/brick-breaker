@@ -566,6 +566,17 @@ body::before {
   opacity: 0.88;
 }
 
+.overlay-doc-link {
+  color: #9edcff;
+  text-underline-offset: 2px;
+  pointer-events: auto;
+}
+
+.overlay-doc-link:hover,
+.overlay-doc-link:focus-visible {
+  color: #c7eeff;
+}
+
 @media (max-width: 768px) {
   :root {
     --play-topbar-height: 192px;

@@ -1,6 +1,9 @@
 ---
 name: idea-realization
-description: Implement one gameplay idea at a time from docs/idea-list.md in this Brick Breaker repository. Use when the user asks to realize an idea with end-to-end flow: select target idea, design implementation plan, implement code, add or update tests, run quality gates, update docs/progress, then automatically commit and push.
+description: >-
+  Implement one gameplay idea at a time from docs/idea-list.md in this Brick Breaker repository.
+  Use when the user asks to realize an idea with end-to-end flow: select target idea, design implementation plan,
+  implement code, add or update tests, run quality gates, update docs/progress, then automatically commit and push.
 ---
 
 # Idea Realization

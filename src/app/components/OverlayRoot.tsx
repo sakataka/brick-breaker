@@ -29,6 +29,8 @@ export function OverlayRoot({
   onRogueSelectionChange,
   onPrimaryAction,
 }: OverlayRootProps): ReactElement {
+  const baseUrl = import.meta.env?.BASE_URL ?? "/";
+  const appSummaryPdfHref = `${baseUrl}docs/brick-breaker-app-summary.pdf`;
   const copy = OVERLAY_COPY[overlay.scene];
   const dailyChallenge = getDailyChallenge();
   const overlaySubText = buildOverlaySubText(copy.sub, overlay);
@@ -94,6 +96,17 @@ export function OverlayRoot({
         )}
 
         <div className={isStartScene ? "overlay-fixed-footer" : undefined}>
+          {isStartScene ? (
+            <a
+              id="app-summary-pdf-link"
+              className="overlay-doc-link subtle"
+              href={appSummaryPdfHref}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              アプリ概要PDFを開く
+            </a>
+          ) : null}
           <button id="overlay-button" type="button" onClick={onPrimaryAction}>
             {copy.button}
           </button>

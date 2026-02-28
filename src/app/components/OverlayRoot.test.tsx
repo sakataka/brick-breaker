@@ -56,6 +56,8 @@ describe("OverlayRoot", () => {
     expect(markup).toContain("overlay-settings-scroll");
     expect(markup).toContain("overlay-fixed-footer");
     expect(markup).toContain('id="setting-sticky-item-enabled"');
+    expect(markup).toContain('id="app-summary-pdf-link"');
+    expect(markup).toContain('href="/docs/brick-breaker-app-summary.pdf"');
   });
 
   test("debug options remain collapsed when debug mode is OFF", () => {
