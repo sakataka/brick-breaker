@@ -1,33 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { OverlayViewModel } from "../../game/renderTypes";
-import type { StartSettingsSelection } from "../store";
+import { START_SETTINGS_DEFAULT, type StartSettingsSelection } from "../../game/startSettingsSchema";
 import { OverlayRoot } from "./OverlayRoot";
 
-const BASE_SETTINGS: StartSettingsSelection = {
-  gameMode: "campaign",
-  difficulty: "standard",
-  initialLives: 4,
-  speedPreset: "1.00",
-  routePreference: "auto",
-  multiballMaxBalls: 4,
-  riskMode: false,
-  enableNewItemStacks: false,
-  stickyItemEnabled: false,
-  ghostReplayEnabled: false,
-  debugModeEnabled: false,
-  debugStartStage: 1,
-  debugScenario: "normal",
-  debugItemPreset: "none",
-  debugRecordResults: false,
-  challengeMode: false,
-  dailyMode: false,
-  challengeSeedCode: "",
-  customStageJsonEnabled: false,
-  customStageJson: "",
-  bgmEnabled: true,
-  sfxEnabled: true,
-};
+const BASE_SETTINGS: StartSettingsSelection = { ...START_SETTINGS_DEFAULT };
 
 const BASE_OVERLAY: OverlayViewModel = {
   scene: "start",

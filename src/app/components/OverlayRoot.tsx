@@ -1,9 +1,9 @@
 import type { ReactElement } from "react";
 import { getDailyChallenge } from "../../game/dailyChallenge";
 import type { OverlayViewModel } from "../../game/renderTypes";
+import type { StartSettingsSelection } from "../../game/startSettingsSchema";
 import type { RogueUpgradeType } from "../../game/types";
 import { type AppLocale, getLL } from "../../i18n";
-import type { StartSettingsSelection } from "../store";
 import {
   buildCampaignResultRows,
   buildOverlaySubText,

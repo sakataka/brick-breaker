@@ -1,4 +1,4 @@
-import type { Ball, ItemType, RandomSource } from "./types";
+import type { Ball, DebugItemPreset, ItemType, RandomSource } from "./types";
 
 export interface ItemStackState {
   paddlePlusStacks: number;
@@ -34,6 +34,7 @@ export interface ItemModifierBundle {
 
 export interface ItemDefinition {
   type: ItemType;
+  stackKey: keyof ItemStackState;
   label: string;
   hudLabel: string;
   emoji: string;
@@ -45,6 +46,8 @@ export interface ItemDefinition {
   dropSuppressedWhenActive: boolean;
   hudOrder: number;
   sfxEvent: ItemPickupSfxEvent;
+  respectsNewStackSetting?: boolean;
+  debugPresetStacks?: Partial<Record<Exclude<DebugItemPreset, "none">, number>>;
   applyPickup: (context: ItemEffectContext) => void;
   getLabelStack: (stacks: ItemStackState) => number;
 }

@@ -1,7 +1,16 @@
 import type { ReactElement } from "react";
-import { STAGE_CATALOG } from "../../game/config";
+import {
+  BASIC_SELECT_FIELDS,
+  BASIC_TOGGLE_FIELDS,
+  buildStartSettingsPatch,
+  DEBUG_SELECT_FIELDS,
+  getDefaultCustomStageJson,
+  START_SETTINGS_OPTIONS,
+  type StartSettingsSelectField,
+  type StartSettingsSelection,
+  type StartSettingsToggleField,
+} from "../../game/startSettingsSchema";
 import { type AppLocale, getLL, supportedLocales } from "../../i18n";
-import { START_SETTINGS_OPTIONS, type StartSettingsSelection } from "../store";
 
 export interface StartSettingsFormProps {
   locale: AppLocale;
@@ -17,179 +26,6 @@ export function StartSettingsForm({
   onLocaleChange,
 }: StartSettingsFormProps): ReactElement {
   const LL = getLL(locale);
-  const basicSelectRows: Array<{
-    id: string;
-    label: string;
-    value: string;
-    options: ReadonlyArray<{ value: string | number; label: string }>;
-    patch: (value: string) => Partial<StartSettingsSelection>;
-  }> = [
-    {
-      id: "setting-mode",
-      label: LL.startSettings.fields.mode(),
-      value: settings.gameMode,
-      options: START_SETTINGS_OPTIONS.gameMode.map((option) => ({
-        value: option.value,
-        label: LL.startSettings.values.gameMode[option.value](),
-      })),
-      patch: (value) => ({ gameMode: value as StartSettingsSelection["gameMode"] }),
-    },
-    {
-      id: "setting-difficulty",
-      label: LL.startSettings.fields.difficulty(),
-      value: settings.difficulty,
-      options: START_SETTINGS_OPTIONS.difficulty.map((option) => ({
-        value: option.value,
-        label: LL.startSettings.values.difficulty[option.value](),
-      })),
-      patch: (value) => ({ difficulty: value as StartSettingsSelection["difficulty"] }),
-    },
-    {
-      id: "setting-lives",
-      label: LL.startSettings.fields.initialLives(),
-      value: String(settings.initialLives),
-      options: START_SETTINGS_OPTIONS.initialLives.map((option) => ({
-        value: option.value,
-        label: String(option.value),
-      })),
-      patch: (value) => ({ initialLives: Number.parseInt(value, 10) || 4 }),
-    },
-    {
-      id: "setting-speed",
-      label: LL.startSettings.fields.speed(),
-      value: settings.speedPreset,
-      options: START_SETTINGS_OPTIONS.speedPreset.map((option) => ({
-        value: option.value,
-        label: String(option.value),
-      })),
-      patch: (value) => ({ speedPreset: value as StartSettingsSelection["speedPreset"] }),
-    },
-    {
-      id: "setting-route",
-      label: LL.startSettings.fields.route(),
-      value: settings.routePreference,
-      options: START_SETTINGS_OPTIONS.routePreference.map((option) => ({
-        value: option.value,
-        label: LL.startSettings.values.routePreference[option.value](),
-      })),
-      patch: (value) => ({ routePreference: value as StartSettingsSelection["routePreference"] }),
-    },
-    {
-      id: "setting-multiball-max",
-      label: LL.startSettings.fields.multiballMax(),
-      value: String(settings.multiballMaxBalls),
-      options: START_SETTINGS_OPTIONS.multiballMaxBalls.map((option) => ({
-        value: option.value,
-        label: String(option.value),
-      })),
-      patch: (value) => ({ multiballMaxBalls: Number.parseInt(value, 10) || 4 }),
-    },
-  ];
-
-  const basicToggleRows: Array<{
-    id: string;
-    label: string;
-    checked: boolean;
-    patch: (checked: boolean) => Partial<StartSettingsSelection>;
-  }> = [
-    {
-      id: "setting-challenge-mode",
-      label: LL.startSettings.fields.challengeMode(),
-      checked: settings.challengeMode,
-      patch: (checked) => ({ challengeMode: checked }),
-    },
-    {
-      id: "setting-daily-mode",
-      label: LL.startSettings.fields.dailyMode(),
-      checked: settings.dailyMode,
-      patch: (checked) => ({ dailyMode: checked }),
-    },
-    {
-      id: "setting-risk-mode",
-      label: LL.startSettings.fields.riskMode(),
-      checked: settings.riskMode,
-      patch: (checked) => ({ riskMode: checked }),
-    },
-    {
-      id: "setting-new-item-stacks",
-      label: LL.startSettings.fields.newItemStacks(),
-      checked: settings.enableNewItemStacks,
-      patch: (checked) => ({ enableNewItemStacks: checked }),
-    },
-    {
-      id: "setting-sticky-item-enabled",
-      label: LL.startSettings.fields.stickyItem(),
-      checked: settings.stickyItemEnabled,
-      patch: (checked) => ({ stickyItemEnabled: checked }),
-    },
-    {
-      id: "setting-ghost-replay-enabled",
-      label: LL.startSettings.fields.ghostReplay(),
-      checked: settings.ghostReplayEnabled,
-      patch: (checked) => ({ ghostReplayEnabled: checked }),
-    },
-    {
-      id: "setting-bgm-enabled",
-      label: LL.startSettings.fields.bgm(),
-      checked: settings.bgmEnabled,
-      patch: (checked) => ({ bgmEnabled: checked }),
-    },
-    {
-      id: "setting-sfx-enabled",
-      label: LL.startSettings.fields.sfx(),
-      checked: settings.sfxEnabled,
-      patch: (checked) => ({ sfxEnabled: checked }),
-    },
-  ];
-
-  const debugSelectRows: Array<{
-    id: string;
-    label: string;
-    value: string;
-    options: ReadonlyArray<{ value: string | number; label: string }>;
-    patch: (value: string) => Partial<StartSettingsSelection>;
-  }> = [
-    {
-      id: "setting-debug-start-stage",
-      label: LL.startSettings.fields.debugStartStage(),
-      value: String(settings.debugStartStage),
-      options: START_SETTINGS_OPTIONS.debugStartStage.map((option) => ({
-        value: option.value,
-        label: String(option.value),
-      })),
-      patch: (value) => ({ debugStartStage: Number.parseInt(value, 10) || 1 }),
-    },
-    {
-      id: "setting-debug-scenario",
-      label: LL.startSettings.fields.debugScenario(),
-      value: settings.debugScenario,
-      options: START_SETTINGS_OPTIONS.debugScenario.map((option) => ({
-        value: option.value,
-        label: LL.startSettings.values.debugScenario[option.value](),
-      })),
-      patch: (value) => ({ debugScenario: value as StartSettingsSelection["debugScenario"] }),
-    },
-    {
-      id: "setting-debug-item-preset",
-      label: LL.startSettings.fields.debugItemPreset(),
-      value: settings.debugItemPreset,
-      options: START_SETTINGS_OPTIONS.debugItemPreset.map((option) => ({
-        value: option.value,
-        label: LL.startSettings.values.debugItemPreset[option.value](),
-      })),
-      patch: (value) => ({ debugItemPreset: value as StartSettingsSelection["debugItemPreset"] }),
-    },
-    {
-      id: "setting-debug-record-results",
-      label: LL.startSettings.fields.debugRecordResults(),
-      value: settings.debugRecordResults ? "true" : "false",
-      options: START_SETTINGS_OPTIONS.debugRecordResults.map((option) => ({
-        value: option.value,
-        label: LL.startSettings.values.debugRecordResults[option.value](),
-      })),
-      patch: (value) => ({ debugRecordResults: value === "true" }),
-    },
-  ];
 
   return (
     <div id="start-settings" className="start-settings">
@@ -214,19 +50,19 @@ export function StartSettingsForm({
         </label>
 
         <div className="settings-grid">
-          {basicSelectRows.map((row) => (
-            <label key={row.id} htmlFor={row.id}>
-              <span>{row.label}</span>
+          {BASIC_SELECT_FIELDS.map((field) => (
+            <label key={field.id} htmlFor={field.id}>
+              <span>{getSelectFieldLabel(LL, field)}</span>
               <select
-                id={row.id}
-                value={row.value}
+                id={field.id}
+                value={getSelectFieldValue(settings, field)}
                 onChange={(event) => {
-                  onChange(row.patch(event.target.value));
+                  onChange(buildStartSettingsPatch(field.field, event.target.value));
                 }}
               >
-                {row.options.map((option) => (
+                {START_SETTINGS_OPTIONS[field.optionsKey].map((option) => (
                   <option key={String(option.value)} value={option.value}>
-                    {option.label}
+                    {getSelectOptionLabel(LL, field, option.value)}
                   </option>
                 ))}
               </select>
@@ -242,21 +78,21 @@ export function StartSettingsForm({
             value={settings.challengeSeedCode}
             placeholder={LL.startSettings.placeholders.seedCode()}
             onChange={(event) => {
-              onChange({ challengeSeedCode: event.target.value.trim() });
+              onChange(buildStartSettingsPatch("challengeSeedCode", event.target.value));
             }}
           />
         </label>
 
         <div className="settings-toggle-list">
-          {basicToggleRows.map((row) => (
-            <label key={row.id} className="toggle-row" htmlFor={row.id}>
-              <span>{row.label}</span>
+          {BASIC_TOGGLE_FIELDS.map((field) => (
+            <label key={field.id} className="toggle-row" htmlFor={field.id}>
+              <span>{getToggleFieldLabel(LL, field)}</span>
               <input
-                id={row.id}
+                id={field.id}
                 type="checkbox"
-                checked={row.checked}
+                checked={Boolean(settings[field.field])}
                 onChange={(event) => {
-                  onChange(row.patch(event.target.checked));
+                  onChange(buildStartSettingsPatch(field.field, event.target.checked));
                 }}
               />
             </label>
@@ -276,7 +112,7 @@ export function StartSettingsForm({
               type="checkbox"
               checked={settings.debugModeEnabled}
               onChange={(event) => {
-                onChange({ debugModeEnabled: event.target.checked });
+                onChange(buildStartSettingsPatch("debugModeEnabled", event.target.checked));
               }}
             />
           </label>
@@ -285,19 +121,19 @@ export function StartSettingsForm({
         {settings.debugModeEnabled ? (
           <>
             <div className="settings-grid">
-              {debugSelectRows.map((row) => (
-                <label key={row.id} htmlFor={row.id}>
-                  <span>{row.label}</span>
+              {DEBUG_SELECT_FIELDS.map((field) => (
+                <label key={field.id} htmlFor={field.id}>
+                  <span>{getSelectFieldLabel(LL, field)}</span>
                   <select
-                    id={row.id}
-                    value={row.value}
+                    id={field.id}
+                    value={getSelectFieldValue(settings, field)}
                     onChange={(event) => {
-                      onChange(row.patch(event.target.value));
+                      onChange(buildStartSettingsPatch(field.field, event.target.value));
                     }}
                   >
-                    {row.options.map((option) => (
+                    {START_SETTINGS_OPTIONS[field.optionsKey].map((option) => (
                       <option key={String(option.value)} value={option.value}>
-                        {option.label}
+                        {getSelectOptionLabel(LL, field, option.value)}
                       </option>
                     ))}
                   </select>
@@ -311,7 +147,7 @@ export function StartSettingsForm({
                 type="checkbox"
                 checked={settings.customStageJsonEnabled}
                 onChange={(event) => {
-                  onChange({ customStageJsonEnabled: event.target.checked });
+                  onChange(buildStartSettingsPatch("customStageJsonEnabled", event.target.checked));
                 }}
               />
             </label>
@@ -324,7 +160,7 @@ export function StartSettingsForm({
                     value={settings.customStageJson}
                     placeholder={LL.startSettings.placeholders.customStageJson()}
                     onChange={(event) => {
-                      onChange({ customStageJson: event.target.value });
+                      onChange(buildStartSettingsPatch("customStageJson", event.target.value));
                     }}
                   />
                 </label>
@@ -334,7 +170,7 @@ export function StartSettingsForm({
                   onClick={() => {
                     onChange({
                       customStageJsonEnabled: true,
-                      customStageJson: JSON.stringify(STAGE_CATALOG, null, 2),
+                      customStageJson: getDefaultCustomStageJson(),
                     });
                   }}
                 >
@@ -349,4 +185,84 @@ export function StartSettingsForm({
       </section>
     </div>
   );
+}
+
+function getSelectFieldValue(settings: StartSettingsSelection, field: StartSettingsSelectField): string {
+  if (field.field === "debugRecordResults") {
+    return settings.debugRecordResults ? "true" : "false";
+  }
+  return String(settings[field.field]);
+}
+
+function getSelectFieldLabel(LL: ReturnType<typeof getLL>, field: StartSettingsSelectField): string {
+  switch (field.field) {
+    case "gameMode":
+      return LL.startSettings.fields.mode();
+    case "difficulty":
+      return LL.startSettings.fields.difficulty();
+    case "initialLives":
+      return LL.startSettings.fields.initialLives();
+    case "speedPreset":
+      return LL.startSettings.fields.speed();
+    case "routePreference":
+      return LL.startSettings.fields.route();
+    case "multiballMaxBalls":
+      return LL.startSettings.fields.multiballMax();
+    case "debugStartStage":
+      return LL.startSettings.fields.debugStartStage();
+    case "debugScenario":
+      return LL.startSettings.fields.debugScenario();
+    case "debugItemPreset":
+      return LL.startSettings.fields.debugItemPreset();
+    case "debugRecordResults":
+      return LL.startSettings.fields.debugRecordResults();
+  }
+}
+
+function getSelectOptionLabel(
+  LL: ReturnType<typeof getLL>,
+  field: StartSettingsSelectField,
+  value: string | number,
+): string {
+  switch (field.field) {
+    case "gameMode":
+      return LL.startSettings.values.gameMode[value as StartSettingsSelection["gameMode"]]();
+    case "difficulty":
+      return LL.startSettings.values.difficulty[value as StartSettingsSelection["difficulty"]]();
+    case "routePreference":
+      return LL.startSettings.values.routePreference[value as StartSettingsSelection["routePreference"]]();
+    case "debugScenario":
+      return LL.startSettings.values.debugScenario[value as StartSettingsSelection["debugScenario"]]();
+    case "debugItemPreset":
+      return LL.startSettings.values.debugItemPreset[value as StartSettingsSelection["debugItemPreset"]]();
+    case "debugRecordResults":
+      return LL.startSettings.values.debugRecordResults[value as "false" | "true"]();
+    default:
+      return String(value);
+  }
+}
+
+function getToggleFieldLabel(LL: ReturnType<typeof getLL>, field: StartSettingsToggleField): string {
+  switch (field.field) {
+    case "challengeMode":
+      return LL.startSettings.fields.challengeMode();
+    case "dailyMode":
+      return LL.startSettings.fields.dailyMode();
+    case "riskMode":
+      return LL.startSettings.fields.riskMode();
+    case "enableNewItemStacks":
+      return LL.startSettings.fields.newItemStacks();
+    case "stickyItemEnabled":
+      return LL.startSettings.fields.stickyItem();
+    case "ghostReplayEnabled":
+      return LL.startSettings.fields.ghostReplay();
+    case "bgmEnabled":
+      return LL.startSettings.fields.bgm();
+    case "sfxEnabled":
+      return LL.startSettings.fields.sfx();
+    case "debugModeEnabled":
+      return LL.startSettings.fields.debugEnabled();
+    case "customStageJsonEnabled":
+      return LL.startSettings.fields.customStageJsonEnabled();
+  }
 }

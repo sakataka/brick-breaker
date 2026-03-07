@@ -1,19 +1,14 @@
-import { getStageModifier, getStageStory, getThemeBandByStageIndex, ROGUE_CONFIG } from "./config";
+import { getStageStory, ROGUE_CONFIG } from "./config";
 import { getGhostPlaybackSample } from "./ghostSystem";
 import { getActiveItemEntries } from "./itemSystem";
 import type { HudViewModel, OverlayViewModel, RenderViewState } from "./renderTypes";
-import { getModeEffectiveStageIndex, getStageClearTimeSec } from "./roundSystem";
+import { getStageClearTimeSec } from "./roundSystem";
+import { resolveStageMetadataFromState } from "./stageContext";
 import type { GameState } from "./types";
 
 export function buildRenderViewState(state: GameState): RenderViewState {
-  const effectiveStageIndex = getModeEffectiveStageIndex(
-    state.campaign.stageIndex,
-    state.options.gameMode,
-    state.options.customStageCatalog?.length,
-  );
+  const stageContext = resolveStageMetadataFromState(state);
   const progressRatio = computeProgressRatio(state);
-  const themeBand = getThemeBandByStageIndex(effectiveStageIndex);
-  const stageModifier = getStageModifier(effectiveStageIndex + 1);
   const ghostSample =
     state.options.ghostReplayEnabled && state.ghost.playbackEnabled
       ? getGhostPlaybackSample(state.ghost.playback, state.elapsedSec)
@@ -44,7 +39,7 @@ export function buildRenderViewState(state: GameState): RenderViewState {
     },
     fallingItems: state.items.falling,
     progressRatio,
-    themeBandId: themeBand.id,
+    themeBandId: stageContext.themeBand.id,
     slowBallActive: state.items.active.slowBallStacks > 0,
     multiballActive: state.items.active.multiballStacks > 0,
     shieldCharges: state.items.active.shieldCharges,
@@ -55,9 +50,9 @@ export function buildRenderViewState(state: GameState): RenderViewState {
       x: shot.x,
       y: shot.y,
     })),
-    fluxFieldActive: stageModifier?.fluxField ?? false,
-    stageModifierKey: stageModifier?.key,
-    warpZones: stageModifier?.warpZones,
+    fluxFieldActive: stageContext.stageModifier?.fluxField ?? false,
+    stageModifierKey: stageContext.stageModifier?.key,
+    warpZones: stageContext.stageModifier?.warpZones,
     ghostPlayback: ghostSample
       ? {
           paddleX: ghostSample.paddleX,
@@ -69,18 +64,12 @@ export function buildRenderViewState(state: GameState): RenderViewState {
 }
 
 export function buildHudViewModel(state: GameState): HudViewModel {
-  const effectiveStageIndex = getModeEffectiveStageIndex(
-    state.campaign.stageIndex,
-    state.options.gameMode,
-    state.options.customStageCatalog?.length,
-  );
+  const stageContext = resolveStageMetadataFromState(state);
   const progressRatio = computeProgressRatio(state);
   const activeItems = getActiveItemEntries(state.items);
-  const themeBand = getThemeBandByStageIndex(effectiveStageIndex);
   const comboVisible = state.combo.streak > 1;
   const hazardBoostActive = state.elapsedSec < state.hazard.speedBoostUntilSec;
   const pierceSlowSynergy = state.items.active.pierceStacks > 0 && state.items.active.slowBallStacks > 0;
-  const stageModifier = getStageModifier(effectiveStageIndex + 1);
   const boss = buildBossHud(state);
   return {
     score: state.score,
@@ -92,7 +81,7 @@ export function buildHudViewModel(state: GameState): HudViewModel {
       current: state.campaign.stageIndex + 1,
       total: state.campaign.totalStages,
       route: state.campaign.resolvedRoute,
-      modifierKey: stageModifier?.key,
+      modifierKey: stageContext.stageModifier?.key,
       boss,
       debugModeEnabled: state.options.debugModeEnabled,
       debugRecordResults: state.options.debugRecordResults,
@@ -105,10 +94,10 @@ export function buildHudViewModel(state: GameState): HudViewModel {
       rogueUpgradesTaken: state.rogue.upgradesTaken,
       rogueUpgradeCap: ROGUE_CONFIG.maxUpgrades,
       magicCooldownSec: state.magic.cooldownSec,
-      warpLegendVisible: Boolean(stageModifier?.warpZones?.length),
+      warpLegendVisible: Boolean(stageContext.stageModifier?.warpZones?.length),
     },
     progressRatio,
-    accentColor: comboVisible ? COMBO_ACTIVE_COLOR : themeBand.hudAccent,
+    accentColor: comboVisible ? COMBO_ACTIVE_COLOR : stageContext.themeBand.hudAccent,
   };
 }
 

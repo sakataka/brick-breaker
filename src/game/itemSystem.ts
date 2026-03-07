@@ -1,6 +1,8 @@
 import { DROP_CONFIG } from "./config";
 import {
+  applyDebugPresetFromRegistry,
   applyItemPickupFromRegistry,
+  cloneItemStacks,
   createItemModifiers,
   createItemStacks,
   getActiveItemEntriesFromRegistry,
@@ -20,7 +22,6 @@ import type {
 } from "./types";
 
 const ITEM_SIZE = 16;
-const NEW_STACK_ITEM_TYPES = new Set<ItemType>(["laser", "sticky", "homing", "rail"]);
 
 export interface ItemPickupOptions {
   enableNewItemStacks?: boolean;
@@ -43,18 +44,7 @@ export function clearActiveItemEffects(items: ItemState): void {
 }
 
 export function cloneActiveItemState(active: ItemState["active"]): ItemState["active"] {
-  return {
-    paddlePlusStacks: active.paddlePlusStacks,
-    slowBallStacks: active.slowBallStacks,
-    multiballStacks: active.multiballStacks,
-    shieldCharges: active.shieldCharges,
-    pierceStacks: active.pierceStacks,
-    bombStacks: active.bombStacks,
-    laserStacks: active.laserStacks,
-    stickyStacks: active.stickyStacks,
-    homingStacks: active.homingStacks,
-    railStacks: active.railStacks,
-  };
+  return cloneItemStacks(active);
 }
 
 export function getPaddleScale(items: ItemState): number {
@@ -112,25 +102,7 @@ export function applyItemPickup(
   balls: Ball[],
   options: ItemPickupOptions = {},
 ): void {
-  if (options.enableNewItemStacks === false && NEW_STACK_ITEM_TYPES.has(type)) {
-    if (type === "laser") {
-      items.active.laserStacks = 1;
-      return;
-    }
-    if (type === "sticky") {
-      items.active.stickyStacks = 1;
-      return;
-    }
-    if (type === "homing") {
-      items.active.homingStacks = 1;
-      return;
-    }
-    if (type === "rail") {
-      items.active.railStacks = 1;
-      return;
-    }
-  }
-  applyItemPickupFromRegistry(items, type, balls);
+  applyItemPickupFromRegistry(items, type, balls, options);
 }
 
 export function applyDebugItemPreset(
@@ -139,25 +111,10 @@ export function applyDebugItemPreset(
   enableNewItemStacks: boolean,
   stickyItemEnabled = true,
 ): void {
-  items.active = createItemStacks();
-  if (preset === "none") {
-    return;
-  }
-  if (preset === "combat_check") {
-    items.active.paddlePlusStacks = 1;
-    items.active.slowBallStacks = 1;
-    items.active.multiballStacks = 1;
-    items.active.shieldCharges = 1;
-    return;
-  }
-
-  items.active.shieldCharges = 2;
-  items.active.pierceStacks = 1;
-  items.active.bombStacks = 1;
-  items.active.laserStacks = enableNewItemStacks ? 2 : 1;
-  items.active.stickyStacks = stickyItemEnabled ? 1 : 0;
-  items.active.homingStacks = enableNewItemStacks ? 2 : 1;
-  items.active.railStacks = enableNewItemStacks ? 2 : 1;
+  applyDebugPresetFromRegistry(items, preset, {
+    enableNewItemStacks,
+    stickyItemEnabled,
+  });
 }
 
 export function spawnDropsFromBrickEvents(

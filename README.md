@@ -184,11 +184,12 @@ GitHub Pages 公開手順:
 ## 実装メモ
 
 - 実行エントリは `src/game/GameSession.ts`（オーケストレータ）で、`src/core/engine.ts`（進行ロジック）を駆動します。
-- `GameSession` の開始設定適用/ショップ操作/UI同期は `src/game/session/*` に分割し、クラス本体は配線中心にしています。
+- `GameSession` は app/store との composition root とし、実際の進行は `src/game/session/SessionController.ts` と `src/game/session/*` に分割しています。
 - フレーム進行は `src/game/gamePipeline.ts` が受け持ち、敵/レーザー/魔法/シールドは `src/game/pipeline/*` の個別フェーズで処理します。
 - ブロックHP/破壊判定は `src/game/brickDamage.ts` に集約し、`physicsCore` と `gamePipeline` で共通利用します。
 - 描画は `src/phaser/scenes/RuntimeScene.ts` + `src/phaser/render/PhaserRenderPort.ts` 経由で実行し、`src/phaser/render/layers/*` でレイヤー別に管理します。
-- UI は `src/app/AppUi.tsx` と `src/app/components/*` で宣言的に構成し、`src/app/store.ts` の `START_SETTINGS_OPTIONS` を開始設定UIの単一定義として使います。
+- UI は `src/app/AppUi.tsx` と `src/app/components/*` で宣言的に構成し、開始設定の単一定義は `src/game/startSettingsSchema.ts` に集約しています。
+- ステージ解決は `src/game/stageContext.ts` に集約し、round/pipeline/render で共通利用します。
 - 多言語基盤は `typesafe-i18n` を使用し、`src/i18n/*` の辞書を単一の翻訳ソースとして扱います。
 - UI 文言は React / Phaser の両方で現在ロケールから解決し、Core 側には表示文字列ではなくキーや数値を保持します。
 - 音制御は `src/audio/audioDirector.ts`（facade） -> `src/audio/toneDirector.ts` の経路で管理します。

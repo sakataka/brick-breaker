@@ -1,9 +1,8 @@
-import type { StartSettingsSelection } from "../../app/store";
-import { validateStageCatalog } from "../configSchema";
 import { getDailyChallenge } from "../dailyChallenge";
 import { applyDebugItemPreset, ensureMultiballCount } from "../itemSystem";
 import { createSeededRandomSource } from "../random";
-import type { GameAudioSettings, GameConfig, GameState, RandomSource, StageDefinition } from "../types";
+import { parseCustomStageCatalog, type StartSettingsSelection } from "../startSettingsSchema";
+import type { GameAudioSettings, GameConfig, GameState, RandomSource } from "../types";
 
 const CHALLENGE_MODE_SEED = 0x2f6e2b1d;
 
@@ -101,20 +100,4 @@ function hashSeedText(seedText: string): number {
     hash = Math.imul(hash, 16777619);
   }
   return hash >>> 0;
-}
-
-function parseCustomStageCatalog(selected: StartSettingsSelection): StageDefinition[] | null {
-  if (!selected.customStageJsonEnabled) {
-    return null;
-  }
-  const raw = selected.customStageJson.trim();
-  if (raw.length <= 0) {
-    return null;
-  }
-  try {
-    const parsed = JSON.parse(raw) as StageDefinition[];
-    return validateStageCatalog(parsed);
-  } catch {
-    return null;
-  }
 }

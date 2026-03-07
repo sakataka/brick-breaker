@@ -1,33 +1,11 @@
 import { beforeEach, describe, expect, test } from "bun:test";
+import { START_SETTINGS_DEFAULT } from "../game/startSettingsSchema";
 import { appStore, useAppStore } from "./store";
 
 describe("app store", () => {
   beforeEach(() => {
     useAppStore.setState({
-      startSettings: {
-        gameMode: "campaign",
-        difficulty: "standard",
-        initialLives: 4,
-        speedPreset: "1.00",
-        routePreference: "auto",
-        multiballMaxBalls: 4,
-        riskMode: false,
-        enableNewItemStacks: false,
-        stickyItemEnabled: false,
-        ghostReplayEnabled: false,
-        debugModeEnabled: false,
-        debugStartStage: 1,
-        debugScenario: "normal",
-        debugItemPreset: "none",
-        debugRecordResults: false,
-        challengeMode: false,
-        dailyMode: false,
-        challengeSeedCode: "",
-        customStageJsonEnabled: false,
-        customStageJson: "",
-        bgmEnabled: true,
-        sfxEnabled: true,
-      },
+      startSettings: { ...START_SETTINGS_DEFAULT },
       rogueSelection: "score_core",
       handlers: {
         primaryAction: () => {},

@@ -27,6 +27,7 @@
 
 - `src/game/Game.ts`
 - `src/game/GameSession.ts`
+- `src/game/session/SessionController.ts`
 - `src/game/sceneSync.ts`
 - `src/game/audioSync.ts`
 - `src/game/session/startSettings.ts`
@@ -68,7 +69,7 @@
 責務:
 - 表示は宣言的に実装。
 - ゲーム本体との接続点は store のみ。
-- `StartSettingsForm` は `src/app/store.ts` の `START_SETTINGS_OPTIONS` を参照し、設定UIを定義駆動で生成する。
+- `StartSettingsForm` は `src/game/startSettingsSchema.ts` の schema を参照し、設定UIを定義駆動で生成する。
 - ロケール状態は store が保持し、開始画面の言語 selector から更新する。選択ロケールは `localStorage` に保存する。
 - Stickyアイテムの有効/無効は開始設定で切替え、無効時はドロップ/ショップ/デバッグ付与の抽選対象から除外する。
 - `OverlayRoot` は開始画面のみ「ヘッダー / 設定スクロール / 固定CTAフッター」を適用し、設定増加時も開始操作を維持する。
@@ -108,6 +109,7 @@
 ## ドキュメント運用ルール
 
 - 設定値: `src/game/config/*`
+- 開始設定 schema: `src/game/startSettingsSchema.ts`
 - ショップ価格計算: `src/game/config/gameplay.ts` (`getShopPurchaseCost`)
 - ブロックHP/破壊判定: `src/game/brickDamage.ts`
 - アイテム仕様: `src/game/itemRegistry.ts`
@@ -116,6 +118,7 @@
 - ショップ候補生成とSticky除外連携: `src/game/gamePipeline.ts` (`generateShopOffer`)
 - UI状態: `src/app/store.ts`
 - 開始設定の反映: `src/game/session/startSettings.ts`
+- ステージ解決: `src/game/stageContext.ts`
 - ショップ操作処理: `src/game/session/shopActions.ts`
 - View同期: `src/game/session/viewSync.ts`
 - デバッグ開始ロジック: `src/game/session/startSettings.ts` + `src/game/roundSystem.ts`

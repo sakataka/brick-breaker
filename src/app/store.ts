@@ -1,62 +1,8 @@
 import { create } from "zustand";
-import { GAME_CONFIG, type SpeedPreset } from "../game/config";
 import type { HudViewModel, OverlayViewModel } from "../game/renderTypes";
-import type {
-  DebugItemPreset,
-  DebugScenario,
-  Difficulty,
-  GameMode,
-  RogueUpgradeType,
-  RoutePreference,
-} from "../game/types";
+import { START_SETTINGS_DEFAULT, type StartSettingsSelection } from "../game/startSettingsSchema";
+import type { RogueUpgradeType } from "../game/types";
 import { type AppLocale, initializeLocale, setCurrentLocale } from "../i18n";
-
-export interface GameSettings {
-  gameMode: GameMode;
-  difficulty: Difficulty;
-  initialLives: number;
-  speedPreset: SpeedPreset;
-  routePreference: RoutePreference;
-  multiballMaxBalls: number;
-  riskMode: boolean;
-  enableNewItemStacks: boolean;
-  stickyItemEnabled: boolean;
-  ghostReplayEnabled: boolean;
-  debugModeEnabled: boolean;
-  debugStartStage: number;
-  debugScenario: DebugScenario;
-  debugItemPreset: DebugItemPreset;
-  debugRecordResults: boolean;
-  challengeMode: boolean;
-  dailyMode: boolean;
-  challengeSeedCode: string;
-  customStageJsonEnabled: boolean;
-  customStageJson: string;
-}
-
-export interface AudioSettings {
-  bgmEnabled: boolean;
-  sfxEnabled: boolean;
-}
-
-export interface StartSettingsSelection extends GameSettings, AudioSettings {}
-
-export interface SelectOption<T extends string | number> {
-  value: T;
-}
-
-export interface StartSettingsOptionCatalog {
-  gameMode: readonly SelectOption<GameMode>[];
-  difficulty: readonly SelectOption<Difficulty>[];
-  initialLives: readonly SelectOption<number>[];
-  speedPreset: readonly SelectOption<SpeedPreset>[];
-  routePreference: readonly SelectOption<RoutePreference>[];
-  multiballMaxBalls: readonly SelectOption<number>[];
-  debugStartStage: readonly SelectOption<number>[];
-  debugScenario: readonly SelectOption<DebugScenario>[];
-  debugItemPreset: readonly SelectOption<DebugItemPreset>[];
-  debugRecordResults: readonly SelectOption<"false" | "true">[];
-}
 
 export interface UiOverlayState {
   model: OverlayViewModel;
@@ -148,44 +94,6 @@ const DEFAULT_SHOP: ShopViewState = {
   optionBType: null,
   optionADisabled: true,
   optionBDisabled: true,
-};
-
-export const START_SETTINGS_OPTIONS: StartSettingsOptionCatalog = {
-  gameMode: [{ value: "campaign" }, { value: "endless" }, { value: "boss_rush" }] as const,
-  difficulty: [{ value: "casual" }, { value: "standard" }, { value: "hard" }] as const,
-  initialLives: [1, 2, 3, 4, 5, 6].map((value) => ({ value })),
-  speedPreset: [{ value: "0.75" }, { value: "1.00" }, { value: "1.25" }] as const,
-  routePreference: [{ value: "auto" }, { value: "A" }, { value: "B" }] as const,
-  multiballMaxBalls: [2, 3, 4, 5, 6].map((value) => ({ value })),
-  debugStartStage: Array.from({ length: 12 }, (_, index) => index + 1).map((value) => ({ value })),
-  debugScenario: [{ value: "normal" }, { value: "enemy_check" }, { value: "boss_check" }] as const,
-  debugItemPreset: [{ value: "none" }, { value: "combat_check" }, { value: "boss_check" }] as const,
-  debugRecordResults: [{ value: "false" }, { value: "true" }] as const,
-};
-
-const START_SETTINGS_DEFAULT: StartSettingsSelection = {
-  gameMode: "campaign",
-  difficulty: "standard",
-  initialLives: GAME_CONFIG.initialLives,
-  speedPreset: "1.00",
-  routePreference: "auto",
-  multiballMaxBalls: GAME_CONFIG.multiballMaxBalls,
-  riskMode: false,
-  enableNewItemStacks: false,
-  stickyItemEnabled: false,
-  ghostReplayEnabled: false,
-  debugModeEnabled: false,
-  debugStartStage: 1,
-  debugScenario: "normal",
-  debugItemPreset: "none",
-  debugRecordResults: false,
-  challengeMode: false,
-  dailyMode: false,
-  challengeSeedCode: "",
-  customStageJsonEnabled: false,
-  customStageJson: "",
-  bgmEnabled: true,
-  sfxEnabled: true,
 };
 
 export const useAppStore = create<AppStoreState>((set, get) => ({

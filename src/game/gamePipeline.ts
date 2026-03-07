@@ -2,13 +2,7 @@ import type { SfxManager } from "../audio/sfx";
 import { applyAssistToPaddle, getCurrentMaxBallSpeed } from "./assistSystem";
 import { playCollisionSounds } from "./collisionEffects";
 import { applyComboHits, normalizeCombo, resetCombo } from "./comboSystem";
-import {
-  getGameplayBalance,
-  getStageModifier,
-  HAZARD_CONFIG,
-  ITEM_BALANCE,
-  RISK_MODE_CONFIG,
-} from "./config";
+import { getGameplayBalance, HAZARD_CONFIG, ITEM_BALANCE, RISK_MODE_CONFIG } from "./config";
 import {
   applyItemPickup,
   clearActiveItemEffects,
@@ -34,7 +28,7 @@ import { syncHeldBallsSnapshot, updateAutoLaserSpawner, updateLaserProjectiles }
 import { castMagicStrike } from "./pipeline/magicPhase";
 import { processShieldBurst } from "./pipeline/shieldPhase";
 import { ensureShopOffer } from "./pipeline/shopPhase";
-import { getModeEffectiveStageIndex, getStageInitialBallSpeed, getStageMaxBallSpeed } from "./roundSystem";
+import { resolveStageContextFromState } from "./stageContext";
 import type { Ball, GameConfig, GameState, ItemType, RandomSource } from "./types";
 import { applyCollisionEvents, spawnItemPickupFeedback } from "./vfxSystem";
 
@@ -56,16 +50,19 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   const { config, random } = deps;
   const balance = getGameplayBalance(config.difficulty);
   const hadAliveBricksBeforeTick = state.bricks.some((brick) => brick.alive);
-  const effectiveStageIndex = getModeEffectiveStageIndex(
-    state.campaign.stageIndex,
-    state.options.gameMode,
-    state.options.customStageCatalog?.length,
-  );
-  const stageModifier = getStageModifier(effectiveStageIndex + 1);
-  ensureShopOffer(state, random, state.options.stickyItemEnabled, effectiveStageIndex);
+  const stageContext = resolveStageContextFromState(state, config);
+  ensureShopOffer(state, random, state.options.stickyItemEnabled, stageContext.effectiveStageIndex);
   const pipelineDeltaSec = config.fixedDeltaSec;
   updateEnemies(state, config, pipelineDeltaSec);
-  if (updateEnemyWaveEvent(state, config, random, pipelineDeltaSec, stageModifier?.spawnEnemy ?? false)) {
+  if (
+    updateEnemyWaveEvent(
+      state,
+      config,
+      random,
+      pipelineDeltaSec,
+      stageContext.stageModifier?.spawnEnemy ?? false,
+    )
+  ) {
     state.vfx.floatingTexts.push({
       key: "reinforce",
       pos: { x: config.width / 2, y: 114 },
@@ -78,24 +75,12 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   state.elapsedSec += config.fixedDeltaSec;
   const bossPhaseSpeedScale = updateBossPhase(state, config, random, deps.sfx, pipelineDeltaSec);
 
-  const stageInitialSpeed = getStageInitialBallSpeed(
-    config,
-    state.campaign.stageIndex,
-    state.options.gameMode,
-    state.options.customStageCatalog,
-  );
-  const stageMaxSpeed = getStageMaxBallSpeed(
-    config,
-    state.campaign.stageIndex,
-    state.options.gameMode,
-    state.options.customStageCatalog,
-  );
-  const maxWithAssist = getCurrentMaxBallSpeed(stageMaxSpeed, state.assist, state.elapsedSec);
+  const maxWithAssist = getCurrentMaxBallSpeed(stageContext.maxBallSpeed, state.assist, state.elapsedSec);
   const hazardSpeedScale =
     state.elapsedSec < state.hazard.speedBoostUntilSec ? HAZARD_CONFIG.maxSpeedScale : 1;
   const riskSpeedScale = state.options.riskMode ? RISK_MODE_CONFIG.maxSpeedScale : 1;
   const rogueSpeedScale = 1 + state.rogue.maxSpeedScaleBonus;
-  const modifierSpeedScale = stageModifier?.maxSpeedScale ?? 1;
+  const modifierSpeedScale = stageContext.stageModifier?.maxSpeedScale ?? 1;
   const effectiveMaxSpeed =
     maxWithAssist *
     getSlowBallMaxSpeedScale(state.items) *
@@ -121,7 +106,7 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
 
   const physics = runPhysicsForBalls(state.balls, state.paddle, state.bricks, config, pipelineDeltaSec, {
     maxBallSpeed: effectiveMaxSpeed,
-    initialBallSpeed: stageInitialSpeed,
+    initialBallSpeed: stageContext.initialBallSpeed,
     pierceDepth,
     bombRadiusTiles,
     explodeOnHit: bombRadiusTiles > 0,
@@ -129,8 +114,8 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
     stickyHoldSec: ITEM_BALANCE.stickyHoldSec,
     stickyRecaptureCooldownSec: ITEM_BALANCE.stickyRecaptureCooldownSec,
     homingStrength,
-    fluxField: stageModifier?.fluxField,
-    warpZones: stageModifier?.warpZones,
+    fluxField: stageContext.stageModifier?.fluxField,
+    warpZones: stageContext.stageModifier?.warpZones,
     onMiss: (target) => deps.tryShieldRescue(target, effectiveMaxSpeed),
   });
   if (projectileEvents.length > 0) {
