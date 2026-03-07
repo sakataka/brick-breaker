@@ -1,5 +1,4 @@
 import type { ReactElement } from "react";
-import { getDailyChallenge } from "../../game/dailyChallenge";
 import type { OverlayViewModel } from "../../game/renderTypes";
 import type { StartSettingsSelection } from "../../game/startSettingsSchema";
 import type { RogueUpgradeType } from "../../game/types";
@@ -19,6 +18,7 @@ export interface OverlayRootProps {
   locale: AppLocale;
   overlay: OverlayViewModel;
   startSettings: StartSettingsSelection;
+  exUnlocked: boolean;
   rogueSelection: RogueUpgradeType;
   onStartSettingsChange: (patch: Partial<StartSettingsSelection>) => void;
   onLocaleChange: (locale: AppLocale) => void;
@@ -30,6 +30,7 @@ export function OverlayRoot({
   locale,
   overlay,
   startSettings,
+  exUnlocked,
   rogueSelection,
   onStartSettingsChange,
   onLocaleChange,
@@ -37,7 +38,6 @@ export function OverlayRoot({
   onPrimaryAction,
 }: OverlayRootProps): ReactElement {
   const LL = getLL(locale);
-  const dailyChallenge = getDailyChallenge();
   const overlayMessage = getOverlayMessage(LL, overlay.scene);
   const overlaySubText = buildOverlaySubText(locale, LL, overlay);
   const campaignRows = buildCampaignResultRows(LL, overlay.campaignResults ?? []);
@@ -68,21 +68,14 @@ export function OverlayRoot({
             <StartSettingsForm
               locale={locale}
               settings={startSettings}
+              exUnlocked={exUnlocked}
               onChange={onStartSettingsChange}
               onLocaleChange={onLocaleChange}
             />
-            <p id="daily-challenge-label" className="subtle">
-              {LL.overlay.dailySummary({
-                label: LL.overlay.dailyLabel(),
-                key: dailyChallenge.key,
-                objective: LL.daily.objectives[dailyChallenge.objectiveKey](),
-              })}
-            </p>
           </div>
         ) : (
           <>
             <div id="start-settings" className="start-settings panel-hidden" />
-            <p id="daily-challenge-label" className="subtle panel-hidden" />
 
             <StageResultPanel
               title={LL.overlay.stageResultsTitle()}

@@ -80,7 +80,7 @@ describe("AudioDirector", () => {
     const sfx = new FakeSfx();
     const scheduler = new FakeScheduler();
     const director = new AudioDirector(sfx as never, { sequencer, scheduler });
-    director.notifyStageChanged(0);
+    director.notifyStageChanged({ id: "chapter1", variant: 1 });
 
     director.syncScene("start", "start");
     director.syncScene("playing", "start");
@@ -88,7 +88,7 @@ describe("AudioDirector", () => {
     expect(sequencer.actions).toContain("stop");
 
     scheduler.flushAll();
-    expect(sequencer.actions).toContain("play:stage-1");
+    expect(sequencer.actions).toContain("play:chapter1-1");
   });
 
   test("playing -> stageclear stops bgm and plays stage clear jingle", () => {
@@ -96,7 +96,7 @@ describe("AudioDirector", () => {
     const sfx = new FakeSfx();
     const director = new AudioDirector(sfx as never, { sequencer });
 
-    director.notifyStageChanged(2);
+    director.notifyStageChanged({ id: "chapter1", variant: 3 });
     director.syncScene("playing", "start");
     director.syncScene("stageclear", "playing");
 
@@ -109,7 +109,7 @@ describe("AudioDirector", () => {
     const sfx = new FakeSfx();
     const director = new AudioDirector(sfx as never, { sequencer });
 
-    director.notifyStageChanged(11);
+    director.notifyStageChanged({ id: "finalboss", variant: 1 });
     director.syncScene("playing", "stageclear");
     director.syncScene("clear", "playing");
 
@@ -122,7 +122,7 @@ describe("AudioDirector", () => {
     const sfx = new FakeSfx();
     const director = new AudioDirector(sfx as never, { sequencer });
 
-    director.notifyStageChanged(4);
+    director.notifyStageChanged({ id: "chapter2", variant: 1 });
     director.syncScene("playing", "stageclear");
     director.syncScene("paused", "playing");
     director.syncScene("playing", "paused");

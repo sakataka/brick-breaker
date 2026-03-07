@@ -6,6 +6,7 @@ export type {
   GameAudioSettings,
   GameConfig,
   ItemType,
+  MusicCue,
   Paddle,
   RandomSource,
   Scene,

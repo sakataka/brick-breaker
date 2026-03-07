@@ -7,6 +7,7 @@ describe("stageContext", () => {
     const stage = resolveStageMetadata({
       stageIndex: 5,
       gameMode: "campaign",
+      campaignCourse: "normal",
       route: null,
       customStageCatalog: null,
     });
@@ -15,13 +16,15 @@ describe("stageContext", () => {
     expect(stage.totalStages).toBe(STAGE_CATALOG.length);
     expect(stage.stage.id).toBe(6);
     expect(stage.stageModifier?.key).toBe("warp_zone");
-    expect(stage.themeBand.id).toBe("mid");
+    expect(stage.themeBand.id).toBe("chapter2");
+    expect(stage.musicCue.id).toBe("chapter2");
   });
 
   test("resolves endless stage index modulo the active catalog", () => {
     const stage = resolveStageMetadata({
       stageIndex: 14,
       gameMode: "endless",
+      campaignCourse: "normal",
       route: null,
       customStageCatalog: null,
     });
@@ -36,6 +39,7 @@ describe("stageContext", () => {
       {
         stageIndex: 3,
         gameMode: "boss_rush",
+        campaignCourse: "normal",
         route: null,
         customStageCatalog: null,
       },
@@ -45,6 +49,7 @@ describe("stageContext", () => {
     expect(stage.effectiveStageIndex).toBe(STAGE_CATALOG.length - 1);
     expect(stage.totalStages).toBe(MODE_CONFIG.bossRushRounds);
     expect(stage.stage.id).toBe(12);
+    expect(stage.musicCue.id).toBe("finalboss");
     expect(stage.initialBallSpeed).toBeGreaterThan(GAME_CONFIG.initialBallSpeed * stage.stage.speedScale);
     expect(stage.maxBallSpeed).toBeGreaterThan(GAME_CONFIG.maxBallSpeed * stage.stage.speedScale);
   });
@@ -54,6 +59,7 @@ describe("stageContext", () => {
       {
         stageIndex: 4,
         gameMode: "campaign",
+        campaignCourse: "normal",
         route: "B",
         customStageCatalog: [
           {

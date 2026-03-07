@@ -8,10 +8,12 @@ import { syncAudioScene } from "../audioSync";
 import { GAME_CONFIG } from "../config";
 import { LifecycleController } from "../lifecycle";
 import { clamp } from "../math";
+import type { MetaProgress } from "../metaProgress";
 import { defaultRandomSource } from "../random";
 import type { HudViewModel, OverlayViewModel, RenderViewState } from "../renderTypes";
 import { type SceneEvent, SceneMachine } from "../sceneMachine";
 import { applySceneTransition, type SceneTransitionResult } from "../sceneSync";
+import { resolveStageMetadataFromState } from "../stageContext";
 import type { StartSettingsSelection } from "../startSettingsSchema";
 import { createInitialGameState } from "../stateFactory";
 import type {
@@ -46,6 +48,7 @@ export interface SessionControllerDeps {
   getStartSettings: () => StartSettingsSelection;
   getRogueSelection: () => RogueUpgradeType;
   setUiHandlers: (handlers: { primaryAction: () => void; shopOption: (index: 0 | 1) => void }) => void;
+  setMetaProgress: (metaProgress: MetaProgress) => void;
 }
 
 export class SessionController {
@@ -151,7 +154,7 @@ export class SessionController {
   debugForceScene(scene: Scene): void {
     const previous = this.state.scene;
     this.state.scene = scene;
-    syncAudioScene(this.audioPort, previous, this.state.scene, this.state.campaign.stageIndex);
+    syncAudioScene(this.audioPort, previous, this.state.scene, this.state);
     this.syncViewPorts();
   }
 
@@ -161,7 +164,7 @@ export class SessionController {
     this.state.score = 0;
     this.state.lives = Math.max(0, Math.round(lives));
     this.state.scene = "gameover";
-    syncAudioScene(this.audioPort, previous, this.state.scene, this.state.campaign.stageIndex);
+    syncAudioScene(this.audioPort, previous, this.state.scene, this.state);
     this.syncViewPorts();
   }
 
@@ -197,7 +200,7 @@ export class SessionController {
       }
     });
     this.audioPort.setSettings(this.audioSettings);
-    this.audioPort.notifyStageChanged(this.state.campaign.stageIndex);
+    this.audioPort.notifyStageChanged(resolveStageMetadataFromState(this.state).musicCue);
     this.audioPort.syncScene(this.state.scene, this.state.scene);
     this.syncViewPorts();
   }
@@ -219,6 +222,7 @@ export class SessionController {
       syncAudioForTransition: (result) => this.syncAudioForTransition(result),
       syncViewPorts: () => this.syncViewPorts(),
       getRogueSelection: () => this.deps.getRogueSelection(),
+      setMetaProgress: (metaProgress) => this.deps.setMetaProgress(metaProgress),
     });
   }
 
@@ -275,6 +279,7 @@ export class SessionController {
       transition: (event) => this.transition(event),
       syncAudioForTransition: (result) => this.syncAudioForTransition(result),
       syncViewPorts: () => this.syncViewPorts(),
+      setMetaProgress: (metaProgress) => this.deps.setMetaProgress(metaProgress),
     });
   }
 
@@ -290,6 +295,7 @@ export class SessionController {
       transition: (event) => this.transition(event),
       syncAudioForTransition: (result) => this.syncAudioForTransition(result),
       syncViewPorts: () => this.syncViewPorts(),
+      setMetaProgress: (metaProgress) => this.deps.setMetaProgress(metaProgress),
     });
   }
 
@@ -378,7 +384,7 @@ export class SessionController {
   }
 
   private syncAudioForTransition(result: SceneTransitionResult): void {
-    syncAudioScene(this.audioPort, result.previous, result.next, this.state.campaign.stageIndex);
+    syncAudioScene(this.audioPort, result.previous, result.next, this.state);
   }
 
   private bindA11yListeners(): void {

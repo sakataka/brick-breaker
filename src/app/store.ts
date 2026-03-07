@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { type MetaProgress, readMetaProgress } from "../game/metaProgress";
 import type { HudViewModel, OverlayViewModel } from "../game/renderTypes";
 import { START_SETTINGS_DEFAULT, type StartSettingsSelection } from "../game/startSettingsSchema";
 import type { RogueUpgradeType } from "../game/types";
@@ -30,6 +31,7 @@ interface AppStoreState {
   shop: ShopViewState;
   startSettings: StartSettingsSelection;
   locale: AppLocale;
+  metaProgress: MetaProgress;
   rogueSelection: RogueUpgradeType;
   handlers: UiHandlers;
   setHud: (hud: HudViewModel) => void;
@@ -37,6 +39,7 @@ interface AppStoreState {
   setShop: (shop: ShopViewState) => void;
   setStartSettings: (patch: Partial<StartSettingsSelection>) => void;
   setLocale: (locale: AppLocale) => void;
+  setMetaProgress: (metaProgress: MetaProgress) => void;
   setRogueSelection: (selection: RogueUpgradeType) => void;
   setHandlers: (handlers: Partial<UiHandlers>) => void;
   triggerPrimaryAction: () => void;
@@ -44,6 +47,8 @@ interface AppStoreState {
 }
 
 const initialLocale = typeof window === "undefined" ? "ja" : initializeLocale(window);
+const initialMetaProgress =
+  typeof window === "undefined" ? { exUnlocked: false } : readMetaProgress(window.localStorage);
 
 const DEFAULT_HUD: HudViewModel = {
   score: 0,
@@ -59,6 +64,8 @@ const DEFAULT_HUD: HudViewModel = {
     debugRecordResults: false,
   },
   activeItems: [],
+  visualThemeId: "chapter1",
+  missionProgress: [],
   flags: {
     hazardBoostActive: false,
     pierceSlowSynergy: false,
@@ -69,9 +76,18 @@ const DEFAULT_HUD: HudViewModel = {
     warpLegendVisible: false,
     steelLegendVisible: false,
     generatorLegendVisible: false,
+    gateLegendVisible: false,
+    turretLegendVisible: false,
+    overdriveActive: false,
   },
   progressRatio: 0,
   accentColor: "#29d3ff",
+  dangerColor: "#ff6a6a",
+  riskChain: {
+    value: 0,
+    max: 100,
+    progress: 0,
+  },
 };
 
 const DEFAULT_OVERLAY: OverlayViewModel = {
@@ -104,6 +120,7 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
   shop: DEFAULT_SHOP,
   startSettings: START_SETTINGS_DEFAULT,
   locale: initialLocale,
+  metaProgress: initialMetaProgress,
   rogueSelection: "score_core",
   handlers: {
     primaryAction: () => {},
@@ -127,6 +144,7 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
     }
     set({ locale });
   },
+  setMetaProgress: (metaProgress) => set({ metaProgress }),
   setRogueSelection: (selection) => set({ rogueSelection: selection }),
   setHandlers: (handlers) =>
     set((state) => ({

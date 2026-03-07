@@ -6,18 +6,21 @@ describe("audioSync", () => {
   test("syncAudioScene propagates stage and scene changes when scene changes", () => {
     const events: Array<{ kind: "stage" | "scene"; payload: unknown }> = [];
     const audio = {
-      notifyStageChanged: (stageIndex: number) => {
-        events.push({ kind: "stage", payload: stageIndex });
+      notifyStageChanged: (cue: unknown) => {
+        events.push({ kind: "stage", payload: cue });
       },
       syncScene: (scene: Scene, previousScene: Scene) => {
         events.push({ kind: "scene", payload: { scene, previousScene } });
       },
     };
 
-    syncAudioScene(audio, "start", "playing", 3);
+    syncAudioScene(audio, "start", "playing", {
+      campaign: { stageIndex: 3, resolvedRoute: null },
+      options: { gameMode: "campaign", campaignCourse: "normal", customStageCatalog: null },
+    } as never);
 
     expect(events).toEqual([
-      { kind: "stage", payload: 3 },
+      { kind: "stage", payload: { id: "midboss", variant: 1 } },
       { kind: "scene", payload: { scene: "playing", previousScene: "start" } },
     ]);
   });
@@ -29,7 +32,10 @@ describe("audioSync", () => {
       syncScene: () => events.push("scene"),
     };
 
-    syncAudioScene(audio, "playing", "playing", 5);
+    syncAudioScene(audio, "playing", "playing", {
+      campaign: { stageIndex: 5, resolvedRoute: null },
+      options: { gameMode: "campaign", campaignCourse: "normal", customStageCatalog: null },
+    } as never);
 
     expect(events).toEqual([]);
   });

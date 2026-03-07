@@ -1,17 +1,20 @@
+import { MODE_CONFIG } from "./config/gameplay";
+import type { StageModifier } from "./config/stages";
 import {
+  EX_STAGE_CATALOG,
+  getExStageByIndex,
   getStageForCampaign,
   getStageModifier,
-  getThemeBandByStageIndex,
-  MODE_CONFIG,
   STAGE_CATALOG,
-} from "./config";
-import type { StageModifier } from "./config/stages";
-import type { ThemeBandDefinition } from "./config/themes";
-import type { GameConfig, GameMode, GameState, StageDefinition, StageRoute } from "./types";
+} from "./config/stages";
+import type { StageVisualProfile } from "./config/themes";
+import { getVisualProfile } from "./config/themes";
+import type { GameConfig, GameMode, GameState, MusicCue, StageDefinition, StageRoute } from "./types";
 
 export interface StageContextInput {
   stageIndex: number;
   gameMode: GameMode;
+  campaignCourse: GameState["options"]["campaignCourse"];
   route: StageRoute | null;
   customStageCatalog: GameState["options"]["customStageCatalog"];
 }
@@ -26,7 +29,9 @@ export interface StageMetadata {
   stageTags: StageDefinition["tags"];
   stageEvents: StageDefinition["events"];
   stageModifier?: StageModifier;
-  themeBand: ThemeBandDefinition;
+  themeBand: StageVisualProfile;
+  visualProfile: StageVisualProfile;
+  musicCue: MusicCue;
 }
 
 export interface StageContext extends StageMetadata {
@@ -35,7 +40,7 @@ export interface StageContext extends StageMetadata {
 }
 
 export function resolveStageMetadata(input: StageContextInput): StageMetadata {
-  const activeCatalog = getActiveStageCatalog(input.customStageCatalog);
+  const activeCatalog = getActiveStageCatalog(input.customStageCatalog, input.campaignCourse);
   const effectiveStageIndex = getModeEffectiveStageIndex(
     input.stageIndex,
     input.gameMode,
@@ -52,7 +57,9 @@ export function resolveStageMetadata(input: StageContextInput): StageMetadata {
     stageTags: stage.tags ?? [],
     stageEvents: stage.events ?? [],
     stageModifier: getStageModifier(effectiveStageIndex + 1),
-    themeBand: getThemeBandByStageIndex(effectiveStageIndex),
+    themeBand: resolveVisualProfile(stage),
+    visualProfile: resolveVisualProfile(stage),
+    musicCue: resolveMusicCue(stage, effectiveStageIndex),
   };
 }
 
@@ -72,6 +79,7 @@ export function resolveStageMetadataFromState(state: Pick<GameState, "campaign" 
   return resolveStageMetadata({
     stageIndex: state.campaign.stageIndex,
     gameMode: state.options.gameMode,
+    campaignCourse: state.options.campaignCourse,
     route: state.campaign.resolvedRoute,
     customStageCatalog: state.options.customStageCatalog,
   });
@@ -85,6 +93,7 @@ export function resolveStageContextFromState(
     {
       stageIndex: state.campaign.stageIndex,
       gameMode: state.options.gameMode,
+      campaignCourse: state.options.campaignCourse,
       route: state.campaign.resolvedRoute,
       customStageCatalog: state.options.customStageCatalog,
     },
@@ -99,7 +108,7 @@ export function getStageInitialBallSpeed(
   return getModeScaledBallSpeed(
     config.initialBallSpeed,
     input,
-    getActiveStageCatalog(input.customStageCatalog).length,
+    getActiveStageCatalog(input.customStageCatalog, input.campaignCourse).length,
   );
 }
 
@@ -110,7 +119,7 @@ export function getStageMaxBallSpeed(
   return getModeScaledBallSpeed(
     config.maxBallSpeed,
     input,
-    getActiveStageCatalog(input.customStageCatalog).length,
+    getActiveStageCatalog(input.customStageCatalog, input.campaignCourse).length,
   );
 }
 
@@ -142,11 +151,12 @@ export function getModeEffectiveStageIndex(
 
 function getActiveStageCatalog(
   customStageCatalog: GameState["options"]["customStageCatalog"],
+  campaignCourse: GameState["options"]["campaignCourse"],
 ): readonly StageDefinition[] {
   if (customStageCatalog && customStageCatalog.length > 0) {
     return customStageCatalog;
   }
-  return STAGE_CATALOG;
+  return campaignCourse === "ex" ? EX_STAGE_CATALOG : STAGE_CATALOG;
 }
 
 function getStageDefinition(
@@ -157,6 +167,9 @@ function getStageDefinition(
   if (input.customStageCatalog && activeCatalog.length > 0) {
     return activeCatalog[effectiveStageIndex] ?? activeCatalog[activeCatalog.length - 1] ?? STAGE_CATALOG[0];
   }
+  if (input.campaignCourse === "ex") {
+    return getExStageByIndex(effectiveStageIndex);
+  }
   return getStageForCampaign(effectiveStageIndex, input.gameMode === "campaign" ? input.route : null);
 }
 
@@ -164,7 +177,7 @@ function getModeScaledBallSpeed(baseSpeed: number, input: StageContextInput, sta
   const effectiveStageIndex = getModeEffectiveStageIndex(input.stageIndex, input.gameMode, stageCount);
   const stage = getStageDefinition(
     input,
-    getActiveStageCatalog(input.customStageCatalog),
+    getActiveStageCatalog(input.customStageCatalog, input.campaignCourse),
     effectiveStageIndex,
   );
   const baseScale = stage.speedScale;
@@ -189,4 +202,54 @@ function inferChapter(stageIndex: number): number {
     return 2;
   }
   return 1;
+}
+
+function resolveVisualProfile(stage: StageDefinition): StageVisualProfile {
+  if (stage.course === "ex") {
+    return getVisualProfile("ex");
+  }
+  if (stage.encounter?.kind === "boss") {
+    return getVisualProfile("finalboss");
+  }
+  if (stage.encounter?.kind === "ex_boss") {
+    return getVisualProfile("ex");
+  }
+  if (stage.encounter?.kind === "midboss") {
+    return getVisualProfile("midboss");
+  }
+  switch (stage.chapter) {
+    case 2:
+      return getVisualProfile("chapter2");
+    case 3:
+      return getVisualProfile("chapter3");
+    case 4:
+      return getVisualProfile("chapter3");
+    default:
+      return getVisualProfile("chapter1");
+  }
+}
+
+function resolveMusicCue(stage: StageDefinition, effectiveStageIndex: number): MusicCue {
+  if (stage.course === "ex") {
+    return {
+      id: "ex",
+      variant: (effectiveStageIndex % 4) + 1,
+    };
+  }
+  if (stage.encounter?.kind === "boss") {
+    return { id: "finalboss", variant: 1 };
+  }
+  if (stage.encounter?.kind === "midboss") {
+    return { id: "midboss", variant: stage.id >= 8 ? 2 : 1 };
+  }
+  switch (stage.chapter) {
+    case 2:
+      return { id: "chapter2", variant: Math.min(3, Math.max(1, stage.id - 3)) };
+    case 3:
+      return { id: "chapter3", variant: Math.min(3, Math.max(1, stage.id - 6)) };
+    case 4:
+      return { id: "chapter3", variant: Math.min(3, Math.max(1, stage.id - 9)) };
+    default:
+      return { id: "chapter1", variant: Math.min(3, Math.max(1, effectiveStageIndex + 1)) };
+  }
 }

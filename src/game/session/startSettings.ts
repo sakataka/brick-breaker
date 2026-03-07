@@ -1,4 +1,3 @@
-import { getDailyChallenge } from "../dailyChallenge";
 import { applyDebugItemPreset, ensureMultiballCount } from "../itemSystem";
 import { createSeededRandomSource } from "../random";
 import { parseCustomStageCatalog, type StartSettingsSelection } from "../startSettingsSchema";
@@ -31,9 +30,10 @@ export function resolveStartStageIndex(selected: StartSettingsSelection): number
 
 export function applyStartSettingsToState(state: GameState, selected: StartSettingsSelection): void {
   state.options.gameMode = selected.gameMode;
+  state.options.campaignCourse = selected.campaignCourse;
   state.options.riskMode = selected.riskMode;
   state.options.enableNewItemStacks = selected.enableNewItemStacks;
-  state.options.stickyItemEnabled = selected.stickyItemEnabled;
+  state.options.enabledItems = [...selected.enabledItems];
   state.options.ghostReplayEnabled = selected.ghostReplayEnabled;
   state.options.customStageCatalog = parseCustomStageCatalog(selected);
   state.options.debugModeEnabled = selected.debugModeEnabled;
@@ -74,7 +74,7 @@ export function applyDebugPresetOnRoundStart(
     state.items,
     state.options.debugItemPreset,
     state.options.enableNewItemStacks,
-    state.options.stickyItemEnabled,
+    state.options.enabledItems,
   );
   state.balls = ensureMultiballCount(state.items, state.balls, random, multiballMaxBalls);
 }
@@ -83,9 +83,6 @@ function resolveRandomSource(baseRandom: RandomSource, selected: StartSettingsSe
   const customSeed = selected.challengeSeedCode.trim();
   if (customSeed.length > 0) {
     return createSeededRandomSource(hashSeedText(customSeed));
-  }
-  if (selected.dailyMode) {
-    return createSeededRandomSource(getDailyChallenge().seed);
   }
   if (selected.challengeMode) {
     return createSeededRandomSource(CHALLENGE_MODE_SEED);

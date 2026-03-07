@@ -25,7 +25,7 @@ describe("app store", () => {
     expect(state.startSettings.speedPreset).toBe("1.25");
     expect(state.startSettings.difficulty).toBe("hard");
     expect(state.startSettings.bgmEnabled).toBe(true);
-    expect(state.startSettings.stickyItemEnabled).toBe(false);
+    expect(state.startSettings.enabledItems.length).toBeGreaterThan(0);
     expect(state.startSettings.debugModeEnabled).toBe(false);
     expect(state.startSettings.debugStartStage).toBe(1);
     expect(state.startSettings.debugRecordResults).toBe(false);

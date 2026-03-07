@@ -27,6 +27,7 @@ export class GameSession {
       getStartSettings: () => appStore.getState().startSettings,
       getRogueSelection: () => appStore.getState().rogueSelection,
       setUiHandlers: (handlers) => appStore.getState().setHandlers(handlers),
+      setMetaProgress: (metaProgress) => appStore.getState().setMetaProgress(metaProgress),
     });
   }
 

@@ -110,51 +110,6 @@ describe("physicsCore advanced", () => {
     expect(bricks[0]?.hp).toBe(11);
   });
 
-  test("sticky capture holds the ball and auto-releases upward", () => {
-    const ball: Ball = {
-      pos: { x: 120, y: 154 },
-      vel: { x: 0, y: 180 },
-      radius: 6,
-      speed: 320,
-    };
-    const paddle = basePaddle();
-
-    stepPhysicsCore({
-      ball,
-      paddle,
-      bricks: [],
-      config: baseConfig,
-      deltaSec: 1 / 60,
-      stepConfig: {
-        stickyEnabled: true,
-        stickyHoldSec: 0.55,
-        stickyRecaptureCooldownSec: 1.2,
-      },
-    });
-
-    expect((ball.stickTimerSec ?? 0) > 0).toBe(true);
-    expect(ball.vel.x).toBe(0);
-    expect(ball.vel.y).toBe(0);
-    expect(ball.pos.y).toBeCloseTo(paddle.y - ball.radius, 4);
-
-    stepPhysicsCore({
-      ball,
-      paddle,
-      bricks: [],
-      config: baseConfig,
-      deltaSec: 0.6,
-      stepConfig: {
-        stickyEnabled: true,
-        stickyHoldSec: 0.55,
-        stickyRecaptureCooldownSec: 1.2,
-      },
-    });
-
-    expect((ball.stickTimerSec ?? 0) <= 0).toBe(true);
-    expect(ball.vel.y).toBeLessThan(0);
-    expect((ball.stickCooldownSec ?? 0) > 0).toBe(true);
-  });
-
   test("homing assist bends ball velocity toward nearest brick", () => {
     const ball: Ball = {
       pos: { x: 40, y: 130 },

@@ -13,11 +13,15 @@ describe("renderPresenter", () => {
     const state = createInitialGameState(GAME_CONFIG, false, "playing");
 
     state.campaign.stageIndex = 0;
-    expect(buildRenderViewState(state).themeBandId).toBe("early");
-    state.campaign.stageIndex = 6;
-    expect(buildRenderViewState(state).themeBandId).toBe("mid");
+    expect(buildRenderViewState(state).themeBandId).toBe("chapter1");
+    state.campaign.stageIndex = 3;
+    expect(buildRenderViewState(state).themeBandId).toBe("midboss");
+    state.campaign.stageIndex = 4;
+    expect(buildRenderViewState(state).themeBandId).toBe("chapter2");
     state.campaign.stageIndex = 10;
-    expect(buildRenderViewState(state).themeBandId).toBe("late");
+    expect(buildRenderViewState(state).themeBandId).toBe("chapter3");
+    state.campaign.stageIndex = 11;
+    expect(buildRenderViewState(state).themeBandId).toBe("finalboss");
   });
 
   test("builds stage result view for stageclear and clear scenes", () => {

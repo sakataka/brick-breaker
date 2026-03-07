@@ -1,4 +1,4 @@
-import type { GameplayBalance } from "./config";
+import type { GameplayBalance } from "./config/gameplay";
 import type { WarpZone } from "./config/stages";
 import type { Ball, Brick, CollisionEvent, GameConfig, Paddle } from "./types";
 
@@ -10,9 +10,6 @@ export interface PhysicsConfig {
   pierceDepth?: number;
   bombRadiusTiles?: number;
   explodeOnHit?: boolean;
-  stickyEnabled?: boolean;
-  stickyHoldSec?: number;
-  stickyRecaptureCooldownSec?: number;
   homingStrength?: number;
   fluxField?: boolean;
   warpZones?: WarpZone[];

@@ -10,6 +10,7 @@ export function AppUi(): ReactElement {
   const overlay = useAppStore((state) => state.overlay.model);
   const shop = useAppStore((state) => state.shop);
   const startSettings = useAppStore((state) => state.startSettings);
+  const metaProgress = useAppStore((state) => state.metaProgress);
   const rogueSelection = useAppStore((state) => state.rogueSelection);
   const setStartSettings = useAppStore((state) => state.setStartSettings);
   const setLocale = useAppStore((state) => state.setLocale);
@@ -52,10 +53,14 @@ export function AppUi(): ReactElement {
       return;
     }
     stageWrap.classList.toggle("layout-play", playLayoutActive);
+    stageWrap.setAttribute("data-theme", hud.visualThemeId);
+    stageWrap.setAttribute("data-warning", hud.bossBanner?.warningLevel ?? "calm");
     return () => {
       stageWrap.classList.remove("layout-play");
+      stageWrap.removeAttribute("data-theme");
+      stageWrap.removeAttribute("data-warning");
     };
-  }, [playLayoutActive]);
+  }, [hud.bossBanner?.warningLevel, hud.visualThemeId, playLayoutActive]);
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -77,6 +82,7 @@ export function AppUi(): ReactElement {
         locale={locale}
         overlay={overlay}
         startSettings={startSettings}
+        exUnlocked={metaProgress.exUnlocked}
         rogueSelection={rogueSelection}
         onStartSettingsChange={setStartSettings}
         onLocaleChange={setLocale}

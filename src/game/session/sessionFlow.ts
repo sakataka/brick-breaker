@@ -1,6 +1,7 @@
 import type { CoreEngine } from "../../core/engine";
 import type { AudioPort } from "../../core/ports";
 import { buildStartConfig } from "../config";
+import { type MetaProgress, readMetaProgress, shouldUnlockEx, writeMetaProgress } from "../metaProgress";
 import { advanceStage, applyRogueUpgradeSelection, prepareStageStory, resetRoundState } from "../roundSystem";
 import type { SceneEvent } from "../sceneMachine";
 import type {
@@ -39,6 +40,7 @@ interface SessionFlowBase {
   transition: (event: SceneEvent) => SessionTransitionResult;
   syncAudioForTransition: (result: SessionTransitionResult) => void;
   syncViewPorts: () => void;
+  setMetaProgress: (metaProgress: MetaProgress) => void;
 }
 
 export interface StartOrResumeParams extends SessionFlowBase {
@@ -122,6 +124,14 @@ export function handleStageClearSession(
   });
   if (reachedClear) {
     saveGhostRecording(params.state, params.windowRef.localStorage, params.ghostStorageKey);
+    if (shouldUnlockEx(params.state)) {
+      const nextMeta = {
+        ...readMetaProgress(params.windowRef.localStorage),
+        exUnlocked: true,
+      };
+      writeMetaProgress(params.windowRef.localStorage, nextMeta);
+      params.setMetaProgress(nextMeta);
+    }
   }
   if (transitionResult) {
     params.syncAudioForTransition(transitionResult);

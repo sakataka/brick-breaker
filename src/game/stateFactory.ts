@@ -1,6 +1,7 @@
 import { createAssistState } from "./assistSystem";
-import { createBossAttackState } from "./bossState";
+import { createEncounterState, createOverdriveState, createRiskChainState } from "./bossState";
 import { getGameplayBalance, getStageByIndex, getStageTimeTargetSec, STAGE_CATALOG } from "./config";
+import { ITEM_ORDER } from "./itemRegistryData";
 import { createItemState } from "./itemSystem";
 import { buildBricksFromStage } from "./level";
 import { clamp } from "./math";
@@ -65,6 +66,7 @@ export function createInitialGameState(
   const stageSpeed = config.initialBallSpeed * stage.speedScale;
   const paddle = createBasePaddle(config);
   const ball = createRestingBall(config, paddle, stageSpeed);
+  const encounterState = createEncounterState();
 
   return {
     scene,
@@ -87,9 +89,10 @@ export function createInitialGameState(
     },
     options: {
       gameMode: "campaign",
+      campaignCourse: "normal",
       riskMode: false,
       enableNewItemStacks: false,
-      stickyItemEnabled: false,
+      enabledItems: [...ITEM_ORDER],
       ghostReplayEnabled: false,
       customStageCatalog: null,
       debugModeEnabled: false,
@@ -109,7 +112,10 @@ export function createInitialGameState(
       bossPhase: 0,
       bossPhaseSummonCooldownSec: 0,
       enemyWaveCooldownSec: 0,
-      bossAttackState: createBossAttackState(),
+      bossAttackState: encounterState,
+      encounterState,
+      riskChain: createRiskChainState(),
+      overdrive: createOverdriveState(),
       forcedBallLoss: false,
     },
     enemies: [],

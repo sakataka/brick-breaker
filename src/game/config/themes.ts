@@ -2,17 +2,19 @@ export interface BrickTheme {
   palette: readonly string[];
 }
 
-export type ThemeBandId = "early" | "mid" | "late";
+export type ThemeBandId = "chapter1" | "chapter2" | "chapter3" | "midboss" | "finalboss" | "ex";
 
-export interface ThemeBandDefinition {
+export interface StageVisualProfile {
   id: ThemeBandId;
-  startStage: number;
-  endStage: number;
+  label: string;
   backdropStart: string;
   backdropEnd: string;
   backdropStroke: string;
   progressBar: string;
   hudAccent: string;
+  dangerAccent: string;
+  panelGlow: string;
+  patternColor: string;
   brickPalette: BrickTheme["palette"];
 }
 
@@ -43,39 +45,84 @@ const LATE_BRICK_PALETTE: BrickTheme["palette"] = [
   "rgba(255, 112, 190, 0.5)",
 ] as const;
 
-export const THEME_BANDS: ThemeBandDefinition[] = [
+export const THEME_BANDS: StageVisualProfile[] = [
   {
-    id: "early",
-    startStage: 1,
-    endStage: 4,
-    backdropStart: "rgba(255, 255, 255, 0.25)",
-    backdropEnd: "rgba(255, 255, 255, 0.04)",
-    backdropStroke: "rgba(255, 255, 255, 0.2)",
-    progressBar: "rgba(41, 211, 255, 0.9)",
-    hudAccent: "#29d3ff",
+    id: "chapter1",
+    label: "Chapter 1",
+    backdropStart: "rgba(64, 244, 255, 0.32)",
+    backdropEnd: "rgba(64, 174, 255, 0.06)",
+    backdropStroke: "rgba(166, 247, 255, 0.44)",
+    progressBar: "rgba(64, 244, 255, 0.96)",
+    hudAccent: "#40f4ff",
+    dangerAccent: "#ff7e67",
+    panelGlow: "rgba(64, 244, 255, 0.34)",
+    patternColor: "rgba(145, 250, 255, 0.18)",
     brickPalette: BRICK_PALETTE,
   },
   {
-    id: "mid",
-    startStage: 5,
-    endStage: 8,
-    backdropStart: "rgba(255, 210, 168, 0.24)",
-    backdropEnd: "rgba(255, 192, 112, 0.06)",
-    backdropStroke: "rgba(255, 220, 160, 0.34)",
-    progressBar: "rgba(255, 169, 84, 0.9)",
-    hudAccent: "#ffad61",
+    id: "chapter2",
+    label: "Chapter 2",
+    backdropStart: "rgba(255, 170, 86, 0.32)",
+    backdropEnd: "rgba(255, 112, 56, 0.07)",
+    backdropStroke: "rgba(255, 228, 178, 0.4)",
+    progressBar: "rgba(255, 165, 78, 0.96)",
+    hudAccent: "#ffb15c",
+    dangerAccent: "#ff5740",
+    panelGlow: "rgba(255, 165, 78, 0.28)",
+    patternColor: "rgba(255, 218, 156, 0.18)",
     brickPalette: MID_BRICK_PALETTE,
   },
   {
-    id: "late",
-    startStage: 9,
-    endStage: 12,
-    backdropStart: "rgba(255, 122, 168, 0.22)",
-    backdropEnd: "rgba(126, 86, 232, 0.08)",
-    backdropStroke: "rgba(255, 162, 224, 0.36)",
-    progressBar: "rgba(255, 106, 174, 0.92)",
-    hudAccent: "#ff7fb8",
+    id: "chapter3",
+    label: "Chapter 3",
+    backdropStart: "rgba(255, 106, 205, 0.28)",
+    backdropEnd: "rgba(160, 86, 255, 0.08)",
+    backdropStroke: "rgba(255, 162, 224, 0.42)",
+    progressBar: "rgba(255, 96, 196, 0.98)",
+    hudAccent: "#ff72c8",
+    dangerAccent: "#ff7060",
+    panelGlow: "rgba(255, 114, 200, 0.32)",
+    patternColor: "rgba(249, 180, 255, 0.16)",
     brickPalette: LATE_BRICK_PALETTE,
+  },
+  {
+    id: "midboss",
+    label: "Midboss",
+    backdropStart: "rgba(255, 122, 84, 0.3)",
+    backdropEnd: "rgba(255, 57, 98, 0.1)",
+    backdropStroke: "rgba(255, 220, 188, 0.48)",
+    progressBar: "rgba(255, 122, 84, 0.98)",
+    hudAccent: "#ff9d70",
+    dangerAccent: "#ff4f72",
+    panelGlow: "rgba(255, 122, 84, 0.32)",
+    patternColor: "rgba(255, 188, 164, 0.18)",
+    brickPalette: MID_BRICK_PALETTE,
+  },
+  {
+    id: "finalboss",
+    label: "Final Boss",
+    backdropStart: "rgba(255, 76, 126, 0.28)",
+    backdropEnd: "rgba(119, 44, 255, 0.12)",
+    backdropStroke: "rgba(255, 181, 226, 0.52)",
+    progressBar: "rgba(255, 96, 176, 0.98)",
+    hudAccent: "#ff74d1",
+    dangerAccent: "#ff5d78",
+    panelGlow: "rgba(255, 116, 209, 0.36)",
+    patternColor: "rgba(255, 174, 229, 0.18)",
+    brickPalette: LATE_BRICK_PALETTE,
+  },
+  {
+    id: "ex",
+    label: "EX",
+    backdropStart: "rgba(134, 245, 132, 0.28)",
+    backdropEnd: "rgba(33, 231, 208, 0.1)",
+    backdropStroke: "rgba(191, 255, 214, 0.48)",
+    progressBar: "rgba(84, 245, 182, 0.98)",
+    hudAccent: "#54f5b6",
+    dangerAccent: "#ff8a5b",
+    panelGlow: "rgba(84, 245, 182, 0.34)",
+    patternColor: "rgba(166, 255, 210, 0.16)",
+    brickPalette: MID_BRICK_PALETTE,
   },
 ] as const;
 
@@ -83,15 +130,18 @@ export function getBrickPaletteColor(row: number, palette: BrickTheme["palette"]
   return palette[row % palette.length];
 }
 
-function getThemeBandByStage(stageNumber: number): ThemeBandDefinition {
-  const maxStage = THEME_BANDS[THEME_BANDS.length - 1]?.endStage ?? 12;
-  const normalized = Math.max(1, Math.min(maxStage, stageNumber));
-  const found = THEME_BANDS.find((band) => normalized >= band.startStage && normalized <= band.endStage);
-  return found ?? THEME_BANDS[0];
+export function getVisualProfile(themeBandId: ThemeBandId): StageVisualProfile {
+  return THEME_BANDS.find((band) => band.id === themeBandId) ?? THEME_BANDS[0];
 }
 
-export function getThemeBandByStageIndex(stageIndex: number): ThemeBandDefinition {
-  return getThemeBandByStage(stageIndex + 1);
+export function getThemeBandByStageIndex(stageIndex: number): StageVisualProfile {
+  if (stageIndex >= 8) {
+    return getVisualProfile("chapter3");
+  }
+  if (stageIndex >= 4) {
+    return getVisualProfile("chapter2");
+  }
+  return getVisualProfile("chapter1");
 }
 
 export function getBrickPaletteForStage(stageIndex: number): BrickTheme["palette"] {

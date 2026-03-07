@@ -5,7 +5,7 @@ import type { ItemType, StageDefinition } from "./types";
 const stageSpecialSchema = z.object({
   row: z.number().int().min(0),
   col: z.number().int().min(0),
-  kind: z.union([z.literal("steel"), z.literal("generator")]),
+  kind: z.union([z.literal("steel"), z.literal("generator"), z.literal("gate"), z.literal("turret")]),
 });
 
 const stageDefinitionSchema = z.object({
@@ -15,6 +15,7 @@ const stageDefinitionSchema = z.object({
     .array(z.array(z.union([z.literal(0), z.literal(1)])))
     .min(1)
     .refine((rows) => rows.every((row) => row.length > 0), "layout must include columns"),
+  course: z.union([z.literal("normal"), z.literal("ex")]).optional(),
   chapter: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
   archetype: z
     .union([
@@ -24,17 +25,62 @@ const stageDefinitionSchema = z.object({
       z.literal("control"),
       z.literal("split_lane"),
       z.literal("boss_arena"),
+      z.literal("ex_arena"),
     ])
     .optional(),
   tags: z
     .array(
-      z.union([z.literal("steel"), z.literal("generator"), z.literal("enemy_pressure"), z.literal("boss")]),
+      z.union([
+        z.literal("steel"),
+        z.literal("generator"),
+        z.literal("gate"),
+        z.literal("turret"),
+        z.literal("enemy_pressure"),
+        z.literal("boss"),
+        z.literal("midboss"),
+      ]),
     )
     .optional(),
   events: z
-    .array(z.union([z.literal("generator_respawn"), z.literal("enemy_pressure"), z.literal("boss_duel")]))
+    .array(
+      z.union([
+        z.literal("generator_respawn"),
+        z.literal("enemy_pressure"),
+        z.literal("boss_duel"),
+        z.literal("gate_cycle"),
+        z.literal("turret_fire"),
+        z.literal("midboss_duel"),
+      ]),
+    )
     .optional(),
   specials: z.array(stageSpecialSchema).optional(),
+  missions: z
+    .array(
+      z.union([
+        z.literal("time_limit"),
+        z.literal("no_shop"),
+        z.literal("no_miss_stage"),
+        z.literal("combo_x2"),
+        z.literal("destroy_turret_first"),
+        z.literal("shutdown_generator"),
+        z.literal("risk_chain_threshold"),
+      ]),
+    )
+    .min(2)
+    .max(2)
+    .optional(),
+  encounter: z
+    .object({
+      kind: z.union([z.literal("none"), z.literal("midboss"), z.literal("boss"), z.literal("ex_boss")]),
+      profile: z.union([
+        z.literal("none"),
+        z.literal("warden"),
+        z.literal("artillery"),
+        z.literal("final_core"),
+        z.literal("ex_overlord"),
+      ]),
+    })
+    .optional(),
   elite: z
     .array(
       z.object({
@@ -102,7 +148,7 @@ export function validateStageCatalog(catalog: StageDefinition[]): StageDefinitio
 
 export function validateItemConfig(config: Record<ItemType, ItemRule>): Record<ItemType, ItemRule> {
   const entries = Object.values(config);
-  const parsed = z.array(itemRuleSchema).length(11).safeParse(entries);
+  const parsed = z.array(itemRuleSchema).length(12).safeParse(entries);
   if (!parsed.success) {
     throw new Error(`Invalid ITEM_CONFIG: ${parsed.error.issues.map((issue) => issue.message).join(", ")}`);
   }

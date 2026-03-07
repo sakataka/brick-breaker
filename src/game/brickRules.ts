@@ -4,11 +4,14 @@ export function getInitialBrickHp(kind: BrickKind): number {
   switch (kind) {
     case "boss":
       return 18;
+    case "turret":
+      return 2;
     case "durable":
     case "armored":
     case "regen":
     case "generator":
       return 2;
+    case "gate":
     case "steel":
       return Number.POSITIVE_INFINITY;
     default:
@@ -17,11 +20,12 @@ export function getInitialBrickHp(kind: BrickKind): number {
 }
 
 export function isIndestructibleBrick(brick: Pick<Brick, "kind">): boolean {
-  return (brick.kind ?? "normal") === "steel";
+  return (brick.kind ?? "normal") === "steel" || (brick.kind ?? "normal") === "gate";
 }
 
 export function countsTowardStageClear(brick: Pick<Brick, "kind">): boolean {
-  return (brick.kind ?? "normal") !== "steel";
+  const kind = brick.kind ?? "normal";
+  return kind !== "steel" && kind !== "gate";
 }
 
 export function countAliveObjectiveBricks(bricks: readonly Pick<Brick, "alive" | "kind">[]): number {

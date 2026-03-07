@@ -1,9 +1,10 @@
 import type { SfxManager } from "../audio/sfx";
 import { applyAssistToPaddle, getCurrentMaxBallSpeed } from "./assistSystem";
+import { applyDirectBrickDamage } from "./brickDamage";
 import { countAliveObjectiveBricks } from "./brickRules";
 import { playCollisionSounds } from "./collisionEffects";
 import { applyComboHits, normalizeCombo, resetCombo } from "./comboSystem";
-import { getGameplayBalance, HAZARD_CONFIG, ITEM_BALANCE, RISK_MODE_CONFIG } from "./config";
+import { getGameplayBalance, HAZARD_CONFIG, RISK_MODE_CONFIG } from "./config";
 import {
   applyItemPickup,
   clearActiveItemEffects,
@@ -15,14 +16,13 @@ import {
   getPierceDepth,
   getRailLevel,
   getSlowBallMaxSpeedScale,
-  isStickyEnabled,
   spawnDropsFromBrickEvents,
   spawnGuaranteedDrop,
   syncMultiballStacksWithBallCount,
   updateFallingItems,
 } from "./itemSystem";
 import { runPhysicsForBalls } from "./physicsApply";
-import { updateBossPhase } from "./pipeline/bossPhase";
+import { awardRiskChain, updateBossPhase } from "./pipeline/bossPhase";
 import { processEliteBrickEvents } from "./pipeline/elitePhase";
 import { resolveEnemyHits, updateEnemies, updateEnemyWaveEvent } from "./pipeline/enemyPhase";
 import { syncHeldBallsSnapshot, updateAutoLaserSpawner, updateLaserProjectiles } from "./pipeline/laserPhase";
@@ -53,11 +53,15 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   const balance = getGameplayBalance(config.difficulty);
   const hadAliveBricksBeforeTick = countAliveObjectiveBricks(state.bricks) > 0;
   const stageContext = resolveStageContextFromState(state, config);
-  ensureShopOffer(state, random, state.options.stickyItemEnabled, stageContext.effectiveStageIndex);
+  ensureShopOffer(state, random, state.options.enabledItems, stageContext.effectiveStageIndex);
   const pipelineDeltaSec = config.fixedDeltaSec;
   updateStageControlBricks(
     state,
-    stageContext.stageEvents?.includes("generator_respawn") === true,
+    {
+      generatorActive: stageContext.stageEvents?.includes("generator_respawn") === true,
+      gateActive: stageContext.stageEvents?.includes("gate_cycle") === true,
+      turretActive: stageContext.stageEvents?.includes("turret_fire") === true,
+    },
     pipelineDeltaSec,
   );
   updateEnemies(state, config, pipelineDeltaSec);
@@ -102,9 +106,10 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   const homingStrength = getHomingStrength(state.items);
   const railLevel = getRailLevel(state.items);
   const scoreScale =
-    (state.options.riskMode ? RISK_MODE_CONFIG.scoreScale : 1) * (1 + state.rogue.scoreScaleBonus);
+    (state.options.riskMode ? RISK_MODE_CONFIG.scoreScale : 1) *
+    (1 + state.rogue.scoreScaleBonus) *
+    (state.combat.overdrive.active ? state.combat.overdrive.scoreScale : 1);
   const laserLevel = getLaserLevel(state.items);
-  const stickyEnabled = isStickyEnabled(state.items);
 
   const projectileEvents = updateLaserProjectiles(state, pipelineDeltaSec, railLevel);
 
@@ -118,9 +123,6 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
     pierceDepth,
     bombRadiusTiles,
     explodeOnHit: bombRadiusTiles > 0,
-    stickyEnabled,
-    stickyHoldSec: ITEM_BALANCE.stickyHoldSec,
-    stickyRecaptureCooldownSec: ITEM_BALANCE.stickyRecaptureCooldownSec,
     homingStrength,
     fluxField: stageContext.stageModifier?.fluxField,
     warpZones: stageContext.stageModifier?.warpZones,
@@ -128,6 +130,12 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   });
   if (projectileEvents.length > 0) {
     physics.events.push(...projectileEvents);
+  }
+  if (state.items.active.pulseStacks > 0) {
+    const pulseEvents = applyPulseStrike(state, physics.events, balance.scorePerBrick);
+    if (pulseEvents.length > 0) {
+      physics.events.push(...pulseEvents);
+    }
   }
   const enemyHits = resolveEnemyHits(state, physics.survivors, scoreScale);
   if (enemyHits.events.length > 0) {
@@ -141,6 +149,13 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   state.score += enemyHits.scoreGain;
 
   const destroyedBricks = physics.events.filter((event) => event.kind === "brick").length;
+  const bossHitEvents = physics.events.filter(
+    (event) => event.kind === "brick" && event.brickKind === "boss",
+  );
+  const firstDestroyed = physics.events.find((event) => event.kind === "brick");
+  if (!state.stageStats.firstDestroyedKind && firstDestroyed?.kind === "brick") {
+    state.stageStats.firstDestroyedKind = firstDestroyed.brickKind;
+  }
   const triggeredHazard = physics.events.some(
     (event) => event.kind === "brick" && event.brickKind === "hazard",
   );
@@ -148,6 +163,14 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   const comboFillBefore = state.combo.fillTriggered;
   const baseScoreGain = applyComboHits(state.combo, state.elapsedSec, destroyedBricks, balance.scorePerBrick);
   state.score += Math.round(baseScoreGain * scoreScale);
+  if (bossHitEvents.length > 0 && isDangerWindowActive(state)) {
+    for (const event of bossHitEvents) {
+      awardRiskChain(state, 24, { x: event.x, y: event.y });
+    }
+  }
+  if (state.combat.overdrive.active && bossHitEvents.length > 0) {
+    applyOverdriveBossDamage(state, bossHitEvents);
+  }
   if (eliteEffects.scorePenalty > 0) {
     state.score = Math.max(0, state.score - eliteEffects.scorePenalty);
   }
@@ -161,14 +184,14 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   playCollisionSounds(deps.sfx, physics.events);
   applyCollisionEvents(state.vfx, physics.events, random);
   spawnDropsFromBrickEvents(state.items, physics.events, random, {
-    stickyItemEnabled: state.options.stickyItemEnabled,
+    enabledItems: state.options.enabledItems,
   });
   if (comboRewardTriggered) {
     const rewardOrigin = physics.survivors[0] ?? state.balls[0];
     const rewardX = rewardOrigin?.pos.x ?? state.paddle.x + state.paddle.width / 2;
     const rewardY = rewardOrigin?.pos.y ?? state.paddle.y - 28;
     spawnGuaranteedDrop(state.items, random, rewardX, rewardY, {
-      stickyItemEnabled: state.options.stickyItemEnabled,
+      enabledItems: state.options.enabledItems,
     });
   }
 
@@ -215,6 +238,9 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
       ball.speed = target;
     }
   }
+  if (!state.bricks.some((brick) => brick.alive && brick.kind === "generator")) {
+    state.stageStats.generatorShutdown = true;
+  }
 
   if (lostAllBalls) {
     clearActiveItemEffects(state.items);
@@ -256,4 +282,66 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
     return "ballloss";
   }
   return "continue";
+}
+
+function isDangerWindowActive(state: GameState): boolean {
+  return Boolean(state.combat.encounterState.telegraph || state.combat.encounterState.sweep);
+}
+
+function applyOverdriveBossDamage(state: GameState, bossHitEvents: CollisionEvent[]): void {
+  const boss = state.bricks.find((brick) => brick.alive && brick.kind === "boss");
+  if (!boss) {
+    return;
+  }
+  const bonusHits = Math.max(1, Math.floor(state.combat.overdrive.damageScale));
+  for (let index = 0; index < Math.min(bonusHits, bossHitEvents.length); index += 1) {
+    applyDirectBrickDamage(boss);
+  }
+}
+
+function applyPulseStrike(
+  state: GameState,
+  events: CollisionEvent[],
+  scorePerBrick: number,
+): CollisionEvent[] {
+  const paddleHits = events.filter((event) => event.kind === "paddle");
+  if (paddleHits.length <= 0) {
+    return [];
+  }
+  const centerX = state.paddle.x + state.paddle.width / 2;
+  const centerY = state.paddle.y - 18;
+  const collisionEvents: CollisionEvent[] = [];
+  for (const brick of state.bricks) {
+    if (!brick.alive || (brick.kind ?? "normal") === "steel" || (brick.kind ?? "normal") === "gate") {
+      continue;
+    }
+    const dx = brick.x + brick.width / 2 - centerX;
+    const dy = brick.y + brick.height / 2 - centerY;
+    if (dx * dx + dy * dy > 84 * 84) {
+      continue;
+    }
+    if (!applyDirectBrickDamage(brick)) {
+      continue;
+    }
+    collisionEvents.push({
+      kind: "brick",
+      x: brick.x + brick.width / 2,
+      y: brick.y + brick.height / 2,
+      color: brick.color,
+      brickKind: brick.kind ?? "normal",
+      brickId: brick.id,
+    });
+    state.score += scorePerBrick;
+  }
+  if (collisionEvents.length > 0) {
+    state.vfx.impactRings.push({
+      pos: { x: centerX, y: centerY },
+      radiusStart: 8,
+      radiusEnd: 64,
+      lifeMs: 220,
+      maxLifeMs: 220,
+      color: "rgba(168, 228, 255, 0.8)",
+    });
+  }
+  return collisionEvents;
 }

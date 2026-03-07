@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { GAME_CONFIG } from "../config";
+import { ITEM_ORDER } from "../itemRegistryData";
 import { createInitialGameState } from "../stateFactory";
 import type { RandomSource } from "../types";
 import {
@@ -62,7 +63,6 @@ describe("session/startSettings", () => {
       speedPreset: "1.25",
       multiballMaxBalls: 4,
       challengeMode: true,
-      dailyMode: false,
       challengeSeedCode: "",
       bgmEnabled: false,
       sfxEnabled: true,
@@ -85,9 +85,10 @@ describe("session/startSettings", () => {
     const state = createInitialGameState(GAME_CONFIG, true, "start");
     applyStartSettingsToState(state, {
       gameMode: "boss_rush",
+      campaignCourse: "normal",
       riskMode: true,
       enableNewItemStacks: true,
-      stickyItemEnabled: true,
+      enabledItems: ITEM_ORDER.slice(0, -1),
       ghostReplayEnabled: true,
       debugModeEnabled: true,
       debugRecordResults: true,
@@ -98,9 +99,10 @@ describe("session/startSettings", () => {
       customStageJson: "",
     } as never);
     expect(state.options.gameMode).toBe("boss_rush");
+    expect(state.options.campaignCourse).toBe("normal");
     expect(state.options.riskMode).toBe(true);
     expect(state.options.enableNewItemStacks).toBe(true);
-    expect(state.options.stickyItemEnabled).toBe(true);
+    expect(state.options.enabledItems).toEqual(ITEM_ORDER.slice(0, -1));
     expect(state.options.ghostReplayEnabled).toBe(true);
     expect(state.options.debugModeEnabled).toBe(true);
     expect(state.options.debugRecordResults).toBe(true);
@@ -113,9 +115,10 @@ describe("session/startSettings", () => {
     const state = createInitialGameState(GAME_CONFIG, true, "start");
     applyStartSettingsToState(state, {
       gameMode: "campaign",
+      campaignCourse: "normal",
       riskMode: false,
       enableNewItemStacks: false,
-      stickyItemEnabled: false,
+      enabledItems: [...ITEM_ORDER],
       ghostReplayEnabled: false,
       debugModeEnabled: false,
       debugRecordResults: false,

@@ -1,4 +1,4 @@
-import type { GameAudioSettings, ItemType, Scene } from "../game/types";
+import type { GameAudioSettings, ItemType, MusicCue, Scene } from "../game/types";
 import type { BgmController } from "./bgmSequencer";
 import type { SfxManager } from "./sfx";
 import { ToneBgm } from "./toneBgm";
@@ -25,7 +25,7 @@ export class ToneDirector {
     sfxEnabled: true,
   };
   private scene: Scene = "start";
-  private stageIndex = 0;
+  private cue: MusicCue = { id: "chapter1", variant: 1 };
   private delayedStageStartId: ReturnType<typeof setTimeout> | null = null;
 
   constructor(sfx: SfxManager, deps: ToneDirectorDeps = {}) {
@@ -79,8 +79,8 @@ export class ToneDirector {
     this.applySceneAudio(scene, previousScene);
   }
 
-  notifyStageChanged(stageIndex: number): void {
-    this.stageIndex = Math.max(0, Math.round(stageIndex));
+  notifyStageChanged(cue: MusicCue): void {
+    this.cue = cue;
     if (this.scene === "playing" && this.settings.bgmEnabled && !this.delayedStageStartId) {
       this.playCurrentStageBgm();
     }
@@ -159,7 +159,7 @@ export class ToneDirector {
   }
 
   private playCurrentStageBgm(fadeMs = 220): void {
-    this.bgm.playStage(this.stageIndex + 1, fadeMs);
+    this.bgm.playCue(this.cue, fadeMs);
   }
 
   private clearDelayedStageStart(): void {

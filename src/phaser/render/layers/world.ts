@@ -57,6 +57,7 @@ export function drawWorldLayer(
   drawFluxField(graphics, view, offsetX, offsetY);
   drawShield(graphics, view.shieldCharges, width, height, offsetX, offsetY);
   drawBossTelegraph(graphics, view, width, height, offsetX, offsetY);
+  drawDangerLanes(graphics, view, width, height, offsetX, offsetY);
   drawTrail(graphics, view, offsetX, offsetY, theme.trail);
   drawBalls(graphics, view, offsetX, offsetY, lineWidth, theme.ballCore, theme.ballStroke);
   drawLaserProjectiles(graphics, view, offsetX, offsetY);
@@ -424,6 +425,10 @@ function getBrickMarkerColor(kind: NonNullable<RenderViewState["bricks"][number]
       return "#d7ebff";
     case "generator":
       return "#9dffca";
+    case "gate":
+      return "#ffd88c";
+    case "turret":
+      return "#ffb27a";
     case "durable":
       return "#ffd06e";
     case "armored":
@@ -454,10 +459,27 @@ function resolveBrickBodyColor(
       return "rgba(170, 196, 222, 0.58)";
     case "generator":
       return "rgba(126, 255, 196, 0.52)";
+    case "gate":
+      return "rgba(255, 214, 126, 0.48)";
+    case "turret":
+      return "rgba(255, 160, 118, 0.56)";
     case "boss":
       return "rgba(255, 122, 190, 0.58)";
     default:
       return fallbackColor;
+  }
+}
+
+function drawDangerLanes(
+  graphics: Phaser.GameObjects.Graphics,
+  view: RenderViewState,
+  width: number,
+  height: number,
+  offsetX: number,
+  offsetY: number,
+): void {
+  for (const lane of view.dangerLanes ?? []) {
+    drawSweepLane(graphics, lane, width, height, offsetX, offsetY, 0.65, false);
   }
 }
 

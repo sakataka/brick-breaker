@@ -1,15 +1,16 @@
 import type { AudioPort } from "../core/ports";
-import type { Scene } from "./types";
+import { resolveStageMetadataFromState } from "./stageContext";
+import type { GameState, Scene } from "./types";
 
 export function syncAudioScene(
   audioDirector: Pick<AudioPort, "notifyStageChanged" | "syncScene">,
   previousScene: Scene,
   nextScene: Scene,
-  stageIndex: number,
+  state: Pick<GameState, "campaign" | "options">,
 ): void {
   if (previousScene === nextScene) {
     return;
   }
-  audioDirector.notifyStageChanged(stageIndex);
+  audioDirector.notifyStageChanged(resolveStageMetadataFromState(state).musicCue);
   audioDirector.syncScene(nextScene, previousScene);
 }

@@ -43,6 +43,21 @@ export interface RenderViewState {
   fallingItems: FallingItem[];
   progressRatio: number;
   themeBandId: ThemeBandId;
+  visualTheme: {
+    accent: string;
+    danger: string;
+    glow: string;
+    pattern: string;
+  };
+  stageIntro?: {
+    kind: "stage" | "midboss" | "boss" | "ex";
+    progress: number;
+  };
+  bossBanner?: {
+    phase: 1 | 2 | 3;
+    warningLevel: "calm" | "elevated" | "critical";
+  };
+  warningLevel: "calm" | "elevated" | "critical";
   slowBallActive: boolean;
   multiballActive: boolean;
   shieldCharges: number;
@@ -76,6 +91,11 @@ export interface RenderViewState {
     lane: BossLane;
     progress: number;
   };
+  dangerLanes?: BossLane[];
+  encounterCast?: {
+    kind: BossAttackKind;
+    progress: number;
+  };
   fluxFieldActive: boolean;
   stageModifierKey?: StageModifierKey;
   warpZones?: Array<{
@@ -98,7 +118,6 @@ export interface RenderViewState {
 export interface HudActiveItemView {
   type: ItemType;
   count: number;
-  emoji: string;
 }
 
 export interface HudViewModel {
@@ -117,11 +136,23 @@ export interface HudViewModel {
       maxHp: number;
       phase: 1 | 2 | 3;
       intent?: BossAttackKind;
+      castProgress?: number;
+      weakWindowProgress?: number;
     };
     debugModeEnabled: boolean;
     debugRecordResults: boolean;
   };
+  missionProgress: StageMissionStatus[];
   activeItems: HudActiveItemView[];
+  visualThemeId: ThemeBandId;
+  stageIntro?: {
+    kind: "stage" | "midboss" | "boss" | "ex";
+    progress: number;
+  };
+  bossBanner?: {
+    phase: 1 | 2 | 3;
+    warningLevel: "calm" | "elevated" | "critical";
+  };
   flags: {
     hazardBoostActive: boolean;
     pierceSlowSynergy: boolean;
@@ -132,9 +163,21 @@ export interface HudViewModel {
     warpLegendVisible: boolean;
     steelLegendVisible: boolean;
     generatorLegendVisible: boolean;
+    gateLegendVisible: boolean;
+    turretLegendVisible: boolean;
+    overdriveActive: boolean;
   };
   progressRatio: number;
   accentColor: string;
+  dangerColor: string;
+  riskChain: {
+    value: number;
+    max: number;
+    progress: number;
+  };
+  overdrive?: {
+    progress: number;
+  };
   pickupToast?: {
     type: ItemType;
     color: string;

@@ -10,6 +10,8 @@ import type { GameState } from "./types";
 export function buildRenderViewState(state: GameState): RenderViewState {
   const stageContext = resolveStageMetadataFromState(state);
   const progressRatio = computeProgressRatio(state);
+  const warningLevel = resolveWarningLevel(state);
+  const stageIntro = buildStageIntro(state, stageContext);
   const ghostSample =
     state.options.ghostReplayEnabled && state.ghost.playbackEnabled
       ? getGhostPlaybackSample(state.ghost.playback, state.elapsedSec)
@@ -42,6 +44,18 @@ export function buildRenderViewState(state: GameState): RenderViewState {
     fallingItems: state.items.falling,
     progressRatio,
     themeBandId: stageContext.themeBand.id,
+    visualTheme: {
+      accent: stageContext.visualProfile.hudAccent,
+      danger: stageContext.visualProfile.dangerAccent,
+      glow: stageContext.visualProfile.panelGlow,
+      pattern: stageContext.visualProfile.patternColor,
+    },
+    stageIntro,
+    bossBanner:
+      state.combat.bossPhase > 0
+        ? { phase: Math.max(1, state.combat.bossPhase) as 1 | 2 | 3, warningLevel }
+        : undefined,
+    warningLevel,
     slowBallActive: state.items.active.slowBallStacks > 0,
     multiballActive: state.items.active.multiballStacks > 0,
     shieldCharges: state.items.active.shieldCharges,
@@ -58,6 +72,19 @@ export function buildRenderViewState(state: GameState): RenderViewState {
       y: shot.y,
       radius: shot.radius,
     })),
+    dangerLanes:
+      state.combat.bossAttackState.telegraph?.lane !== undefined
+        ? [state.combat.bossAttackState.telegraph.lane]
+        : [],
+    encounterCast: state.combat.bossAttackState.telegraph
+      ? {
+          kind: state.combat.bossAttackState.telegraph.kind,
+          progress:
+            1 -
+            state.combat.bossAttackState.telegraph.remainingSec /
+              Math.max(0.001, state.combat.bossAttackState.telegraph.maxSec),
+        }
+      : undefined,
     bossTelegraph: state.combat.bossAttackState.telegraph
       ? {
           kind: state.combat.bossAttackState.telegraph.kind,
@@ -99,6 +126,7 @@ export function buildHudViewModel(state: GameState): HudViewModel {
   const progressRatio = computeProgressRatio(state);
   const activeItems = getActiveItemEntries(state.items);
   const comboVisible = state.combo.streak > 1;
+  const warningLevel = resolveWarningLevel(state);
   const hazardBoostActive = state.elapsedSec < state.hazard.speedBoostUntilSec;
   const pierceSlowSynergy = state.items.active.pierceStacks > 0 && state.items.active.slowBallStacks > 0;
   const boss = buildBossHud(state);
@@ -118,6 +146,10 @@ export function buildHudViewModel(state: GameState): HudViewModel {
       debugRecordResults: state.options.debugRecordResults,
     },
     activeItems,
+    visualThemeId: stageContext.visualProfile.id,
+    stageIntro: buildStageIntro(state, stageContext),
+    bossBanner: boss ? { phase: boss.phase, warningLevel } : undefined,
+    missionProgress: state.stageStats.missionResults ?? [],
     flags: {
       hazardBoostActive,
       pierceSlowSynergy,
@@ -128,9 +160,23 @@ export function buildHudViewModel(state: GameState): HudViewModel {
       warpLegendVisible: Boolean(stageContext.stageModifier?.warpZones?.length),
       steelLegendVisible: stageContext.stageTags?.includes("steel") ?? false,
       generatorLegendVisible: stageContext.stageTags?.includes("generator") ?? false,
+      gateLegendVisible: stageContext.stageTags?.includes("gate") ?? false,
+      turretLegendVisible: stageContext.stageTags?.includes("turret") ?? false,
+      overdriveActive: state.combat.overdrive.active,
     },
     progressRatio,
     accentColor: comboVisible ? COMBO_ACTIVE_COLOR : stageContext.themeBand.hudAccent,
+    dangerColor: stageContext.visualProfile.dangerAccent,
+    riskChain: {
+      value: state.combat.riskChain.value,
+      max: state.combat.riskChain.max,
+      progress: state.combat.riskChain.value / Math.max(1, state.combat.riskChain.max),
+    },
+    overdrive: state.combat.overdrive.active
+      ? {
+          progress: state.combat.overdrive.remainingSec / Math.max(1, state.combat.overdrive.maxSec),
+        }
+      : undefined,
     pickupToast: state.vfx.pickupToast
       ? {
           type: state.vfx.pickupToast.itemType,
@@ -155,7 +201,50 @@ function buildBossHud(state: GameState): HudViewModel["stage"]["boss"] | undefin
     intent:
       state.combat.bossAttackState.telegraph?.kind ??
       (state.combat.bossAttackState.sweep ? "sweep" : undefined),
+    castProgress: state.combat.bossAttackState.telegraph
+      ? 1 -
+        state.combat.bossAttackState.telegraph.remainingSec /
+          Math.max(0.001, state.combat.bossAttackState.telegraph.maxSec)
+      : undefined,
+    weakWindowProgress:
+      state.combat.encounterState.vulnerabilitySec > 0
+        ? state.combat.encounterState.vulnerabilitySec /
+          Math.max(0.001, state.combat.encounterState.vulnerabilityMaxSec)
+        : undefined,
   };
+}
+
+function buildStageIntro(
+  state: GameState,
+  stageContext: ReturnType<typeof resolveStageMetadataFromState>,
+): HudViewModel["stageIntro"] {
+  if (state.scene !== "playing") {
+    return undefined;
+  }
+  const sinceStart = state.elapsedSec - state.stageStats.startedAtSec;
+  if (sinceStart < 0 || sinceStart > 1.15) {
+    return undefined;
+  }
+  if (stageContext.stage.course === "ex") {
+    return { kind: "ex", progress: sinceStart / 1.15 };
+  }
+  if (stageContext.stage.encounter?.kind === "boss") {
+    return { kind: "boss", progress: sinceStart / 1.15 };
+  }
+  if (stageContext.stage.encounter?.kind === "midboss") {
+    return { kind: "midboss", progress: sinceStart / 1.15 };
+  }
+  return { kind: "stage", progress: sinceStart / 1.15 };
+}
+
+function resolveWarningLevel(state: GameState): "calm" | "elevated" | "critical" {
+  if (state.combat.bossAttackState.sweep || state.combat.bossAttackState.telegraph?.kind === "gate_sweep") {
+    return "critical";
+  }
+  if (state.combat.bossAttackState.telegraph || state.combat.encounterState.vulnerabilitySec > 0) {
+    return "elevated";
+  }
+  return "calm";
 }
 
 export function buildOverlayViewModel(state: GameState): OverlayViewModel {

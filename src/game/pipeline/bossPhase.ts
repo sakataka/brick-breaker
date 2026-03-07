@@ -1,7 +1,8 @@
 import type { SfxManager } from "../../audio/sfx";
-import { createBossAttackState } from "../bossState";
-import { BOSS_PHASE_CONFIG } from "../config";
+import { createEncounterState } from "../bossState";
+import { BOSS_PHASE_CONFIG, ENCOUNTER_CONFIG } from "../config";
 import { consumeShield } from "../itemSystem";
+import { resolveStageMetadataFromState } from "../stageContext";
 import type { BossLane, GameConfig, GameState, RandomSource } from "../types";
 
 export function updateBossPhase(
@@ -11,11 +12,21 @@ export function updateBossPhase(
   sfx: SfxManager,
   deltaSec: number,
 ): number {
+  const metadata = resolveStageMetadataFromState(state);
+  const encounter = state.combat.encounterState;
+  syncOverdrive(state, deltaSec);
+  decayRiskChain(state, deltaSec);
   const boss = state.bricks.find((brick) => brick.alive && brick.kind === "boss");
   if (!boss) {
     state.combat.bossPhase = 0;
     state.combat.bossPhaseSummonCooldownSec = 0;
-    state.combat.bossAttackState = createBossAttackState();
+    state.combat.bossAttackState = encounter;
+    if (encounter.projectiles.length <= 0) {
+      state.combat.encounterState = createEncounterState();
+      state.combat.bossAttackState = state.combat.encounterState;
+    } else {
+      updateBossProjectiles(state, config, deltaSec);
+    }
     state.combat.forcedBallLoss = false;
     return 1;
   }
@@ -23,28 +34,37 @@ export function updateBossPhase(
   const hp = Math.max(0, boss.hp ?? 0);
   const maxHp = Math.max(hp, boss.maxHp ?? 18);
   const phase = resolveBossPhase(hp, maxHp);
+  const profile =
+    metadata.stage.encounter?.profile ?? (state.campaign.stageIndex >= 11 ? "final_core" : "warden");
+  encounter.kind = metadata.stage.encounter?.kind ?? "boss";
+  encounter.profile = profile;
+  encounter.phase = phase;
+  state.combat.bossAttackState = encounter;
   if (state.combat.bossPhase !== phase) {
     state.combat.bossPhase = phase;
     if (phase >= 2) {
       applyPhaseTransitionFeedback(state, boss, phase as 2 | 3, sfx);
     }
-    state.combat.bossAttackState.actionCooldownSec = BOSS_PHASE_CONFIG.actionCooldownSecByPhase[phase - 1];
+    encounter.actionCooldownSec = BOSS_PHASE_CONFIG.actionCooldownSecByPhase[phase - 1];
   }
 
   updateBossProjectiles(state, config, deltaSec);
   updateBossSweep(state, config, deltaSec);
+  encounter.vulnerabilitySec = Math.max(0, encounter.vulnerabilitySec - deltaSec);
 
-  if (phase <= 2) {
+  if (phase <= 2 && profile !== "artillery") {
     state.combat.bossPhaseSummonCooldownSec = Math.max(0, state.combat.bossPhaseSummonCooldownSec - deltaSec);
+    encounter.summonCooldownSec = state.combat.bossPhaseSummonCooldownSec;
     if (state.combat.bossPhaseSummonCooldownSec <= 0) {
       spawnBossAdd(state, config, random);
       state.combat.bossPhaseSummonCooldownSec = BOSS_PHASE_CONFIG.summonIntervalSec;
     }
   } else {
     state.combat.bossPhaseSummonCooldownSec = 0;
+    encounter.summonCooldownSec = 0;
   }
 
-  updateTelegraph(state, boss, config, random, deltaSec);
+  updateTelegraph(state, boss, config, random, deltaSec, profile);
 
   return BOSS_PHASE_CONFIG.speedScaleByPhase[phase - 1];
 }
@@ -85,14 +105,17 @@ function updateTelegraph(
   config: GameConfig,
   random: RandomSource,
   deltaSec: number,
+  profile: NonNullable<GameState["combat"]["encounterState"]["profile"]>,
 ): void {
-  const attack = state.combat.bossAttackState;
+  const attack = state.combat.encounterState;
   if (attack.telegraph) {
     attack.telegraph.remainingSec = Math.max(0, attack.telegraph.remainingSec - deltaSec);
     if (attack.telegraph.remainingSec <= 0) {
       resolveTelegraphedAttack(state, boss, config, attack.telegraph);
       attack.telegraph = null;
       attack.actionCooldownSec = BOSS_PHASE_CONFIG.actionCooldownSecByPhase[state.combat.bossPhase - 1];
+      attack.vulnerabilityMaxSec = profile === "ex_overlord" ? 1.1 : 1.8;
+      attack.vulnerabilitySec = attack.vulnerabilityMaxSec;
     }
     return;
   }
@@ -104,7 +127,22 @@ function updateTelegraph(
     return;
   }
 
-  if (state.combat.bossPhase === 2) {
+  if (profile === "warden") {
+    attack.telegraph = {
+      kind: "gate_sweep",
+      remainingSec: BOSS_PHASE_CONFIG.telegraphSecByPhase[Math.max(0, state.combat.bossPhase - 1)],
+      maxSec: BOSS_PHASE_CONFIG.telegraphSecByPhase[Math.max(0, state.combat.bossPhase - 1)],
+      lane: pickLane(state.paddle.x + state.paddle.width / 2, config.width),
+    };
+  } else if (profile === "artillery") {
+    attack.telegraph = {
+      kind: "burst",
+      remainingSec: BOSS_PHASE_CONFIG.telegraphSecByPhase[Math.max(0, state.combat.bossPhase - 1)],
+      maxSec: BOSS_PHASE_CONFIG.telegraphSecByPhase[Math.max(0, state.combat.bossPhase - 1)],
+      targetX: state.paddle.x + state.paddle.width / 2,
+      spread: BOSS_PHASE_CONFIG.volleySpreadX * 1.2,
+    };
+  } else if (state.combat.bossPhase === 2) {
     attack.telegraph = {
       kind: "volley",
       remainingSec: BOSS_PHASE_CONFIG.telegraphSecByPhase[1],
@@ -145,11 +183,11 @@ function resolveTelegraphedAttack(
   config: GameConfig,
   telegraph: NonNullable<GameState["combat"]["bossAttackState"]["telegraph"]>,
 ): void {
-  if (telegraph.kind === "volley") {
+  if (telegraph.kind === "volley" || telegraph.kind === "burst") {
     spawnBossVolley(state, boss, config, telegraph.targetX ?? config.width / 2, telegraph.spread ?? 0);
     return;
   }
-  if (telegraph.kind === "sweep" && telegraph.lane) {
+  if ((telegraph.kind === "sweep" || telegraph.kind === "gate_sweep") && telegraph.lane) {
     state.combat.bossAttackState.sweep = {
       lane: telegraph.lane,
       remainingSec: BOSS_PHASE_CONFIG.sweepDurationSec,
@@ -224,6 +262,12 @@ function updateBossSweep(state: GameState, config: GameConfig, deltaSec: number)
 }
 
 function applyBossHit(state: GameState): void {
+  if (state.items.active.decoyStacks > 0) {
+    state.items.active.decoyStacks = 0;
+    state.vfx.flashMs = Math.max(state.vfx.flashMs, 64);
+    state.vfx.flashColor = "rgba(255, 216, 144, 0.86)";
+    return;
+  }
   if (consumeShield(state.items)) {
     state.combat.shieldBurstQueued = true;
     state.vfx.flashMs = Math.max(state.vfx.flashMs, 72);
@@ -235,6 +279,47 @@ function applyBossHit(state: GameState): void {
   state.vfx.flashColor = "rgba(255, 108, 108, 0.92)";
   state.vfx.shakeMs = Math.max(state.vfx.shakeMs, 90);
   state.vfx.shakePx = Math.max(state.vfx.shakePx, 4);
+}
+
+function decayRiskChain(state: GameState, deltaSec: number): void {
+  state.combat.riskChain.value = Math.max(
+    0,
+    state.combat.riskChain.value - state.combat.riskChain.decayPerSec * deltaSec,
+  );
+}
+
+function syncOverdrive(state: GameState, deltaSec: number): void {
+  if (!state.combat.overdrive.active) {
+    return;
+  }
+  state.combat.overdrive.remainingSec = Math.max(0, state.combat.overdrive.remainingSec - deltaSec);
+  if (state.combat.overdrive.remainingSec <= 0) {
+    state.combat.overdrive.active = false;
+  }
+}
+
+export function awardRiskChain(state: GameState, amount: number, position: { x: number; y: number }): void {
+  state.combat.riskChain.value = Math.min(state.combat.riskChain.max, state.combat.riskChain.value + amount);
+  state.stageStats.peakRiskChain = Math.max(
+    state.stageStats.peakRiskChain ?? 0,
+    state.combat.riskChain.value,
+  );
+  if (state.combat.riskChain.value < state.combat.riskChain.threshold || state.combat.overdrive.active) {
+    return;
+  }
+  state.combat.riskChain.value = 0;
+  state.combat.overdrive.active = true;
+  state.combat.overdrive.remainingSec = ENCOUNTER_CONFIG.overdriveDurationSec;
+  state.combat.overdrive.maxSec = ENCOUNTER_CONFIG.overdriveDurationSec;
+  state.vfx.flashMs = Math.max(state.vfx.flashMs, 120);
+  state.vfx.flashColor = "rgba(255, 166, 84, 0.94)";
+  state.vfx.floatingTexts.push({
+    key: "overdrive",
+    pos: position,
+    lifeMs: 540,
+    maxLifeMs: 540,
+    color: "rgba(255, 214, 122, 0.96)",
+  });
 }
 
 function spawnBossAdd(state: GameState, config: GameConfig, random: RandomSource): void {

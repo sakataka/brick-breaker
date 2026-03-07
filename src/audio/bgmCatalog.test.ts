@@ -1,14 +1,14 @@
 import { describe, expect, test } from "bun:test";
 
-import { getAllStageBgmTracks, getStageBgmTrack, getTitleBgmTrack } from "./bgmCatalog";
+import { getAllStageBgmTracks, getCueBgmTrack, getStageBgmTrack, getTitleBgmTrack } from "./bgmCatalog";
 
 describe("bgmCatalog", () => {
-  test("provides title and 12 unique stage tracks", () => {
+  test("provides title and 12 unique campaign tracks", () => {
     const title = getTitleBgmTrack();
     const stages = getAllStageBgmTracks();
 
     expect(title.id).toBe("title");
-    expect(title.tempo).toBe(108);
+    expect(title.tempo).toBe(118);
     expect(stages).toHaveLength(12);
 
     const ids = new Set(stages.map((track) => track.id));
@@ -25,7 +25,7 @@ describe("bgmCatalog", () => {
     expect(stageOutHigh.id).toBe(getStageBgmTrack(12).id);
   });
 
-  test("switches BGM themes every 3 stages with distinct timbre", () => {
+  test("switches cue families across campaign milestones with distinct timbre", () => {
     const stage1 = getStageBgmTrack(1);
     const stage4 = getStageBgmTrack(4);
     const stage7 = getStageBgmTrack(7);
@@ -37,10 +37,10 @@ describe("bgmCatalog", () => {
     expect(`${stage1.leadWave}/${stage1.bassWave}`).not.toBe(`${stage10.leadWave}/${stage10.bassWave}`);
   });
 
-  test("includes polyphonic harmony notes for richer chord feel", () => {
-    const stage1 = getStageBgmTrack(1);
+  test("includes triad or seventh harmony steps for richer chord feel", () => {
+    const stage1 = getCueBgmTrack({ id: "chapter1", variant: 1 });
     const harmonySteps = stage1.steps.filter((step) => (step.harmonyMidis?.length ?? 0) > 0);
-    const triadSteps = stage1.steps.filter((step) => (step.harmonyMidis?.length ?? 0) >= 2);
+    const triadSteps = stage1.steps.filter((step) => (step.harmonyMidis?.length ?? 0) >= 3);
 
     expect(stage1.harmonyWave).toBeDefined();
     expect(harmonySteps.length).toBeGreaterThan(0);
@@ -48,7 +48,7 @@ describe("bgmCatalog", () => {
   });
 
   test("adds counter melody and pad steps for layered accompaniment", () => {
-    const stage2 = getStageBgmTrack(2);
+    const stage2 = getCueBgmTrack({ id: "chapter2", variant: 2 });
     const counterSteps = stage2.steps.filter((step) => typeof step.counterMidi === "number");
     const padSteps = stage2.steps.filter((step) => (step.padMidis?.length ?? 0) > 0);
 
@@ -56,24 +56,12 @@ describe("bgmCatalog", () => {
     expect(padSteps.length).toBeGreaterThan(0);
   });
 
-  test("increases accompaniment density across stage 1/2/3 in the same theme", () => {
-    const stage1 = getStageBgmTrack(1);
-    const stage2 = getStageBgmTrack(2);
-    const stage3 = getStageBgmTrack(3);
+  test("boss cues are faster than early chapter cues", () => {
+    const stage1 = getCueBgmTrack({ id: "chapter1", variant: 1 });
+    const midboss = getCueBgmTrack({ id: "midboss", variant: 1 });
+    const finalBoss = getCueBgmTrack({ id: "finalboss", variant: 1 });
 
-    const scoreTrackDensity = (track: ReturnType<typeof getStageBgmTrack>): number =>
-      track.steps.reduce((score, step) => {
-        const harmony = step.harmonyMidis?.length ?? 0;
-        const counter = typeof step.counterMidi === "number" ? 1 : 0;
-        const pad = step.padMidis?.length ?? 0;
-        return score + harmony + counter + pad;
-      }, 0);
-
-    const d1 = scoreTrackDensity(stage1);
-    const d2 = scoreTrackDensity(stage2);
-    const d3 = scoreTrackDensity(stage3);
-
-    expect(d1).toBeLessThan(d2);
-    expect(d2).toBeLessThan(d3);
+    expect(midboss.tempo).toBeGreaterThan(stage1.tempo);
+    expect(finalBoss.tempo).toBeGreaterThan(midboss.tempo);
   });
 });

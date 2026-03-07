@@ -1,4 +1,4 @@
-import type { GameAudioSettings, ItemType, Scene } from "../game/types";
+import type { GameAudioSettings, ItemType, MusicCue, Scene } from "../game/types";
 import type { SfxManager } from "./sfx";
 import { ToneDirector, type ToneDirectorDeps } from "./toneDirector";
 
@@ -6,7 +6,7 @@ interface AudioRuntime {
   unlock(): Promise<void>;
   setSettings(settings: GameAudioSettings): void;
   syncScene(scene: Scene, previousScene: Scene): void;
-  notifyStageChanged(stageIndex: number): void;
+  notifyStageChanged(cue: MusicCue): void;
   playItemSfx(itemType: ItemType): void;
   playComboFill(): void;
   playMagicCast(): void;
@@ -36,8 +36,8 @@ export class AudioDirector {
     this.runtime.syncScene(scene, previousScene);
   }
 
-  notifyStageChanged(stageIndex: number): void {
-    this.runtime.notifyStageChanged(stageIndex);
+  notifyStageChanged(cue: MusicCue): void {
+    this.runtime.notifyStageChanged(cue);
   }
 
   playItemPickup(itemType: ItemType): void {

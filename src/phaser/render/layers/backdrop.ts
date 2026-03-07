@@ -7,25 +7,9 @@ interface BackdropTheme {
   base: string;
   top: string;
   frame: string;
+  pattern: string;
+  danger: string;
 }
-
-const BACKDROP_BY_BAND: Record<RenderViewState["themeBandId"], BackdropTheme> = {
-  early: {
-    base: "#0a1a35",
-    top: "#133468",
-    frame: "#2d9fff",
-  },
-  mid: {
-    base: "#1a1734",
-    top: "#3a2a58",
-    frame: "#ffab5e",
-  },
-  late: {
-    base: "#1c1230",
-    top: "#47205f",
-    frame: "#ff80ba",
-  },
-};
 
 export function drawBackdropLayer(
   graphics: Phaser.GameObjects.Graphics,
@@ -43,6 +27,7 @@ export function drawBackdropLayer(
 
   const header = parseColor(backdropTheme.top, { value: 0x161d30, alpha: 1 });
   drawTopVignette(graphics, header, width);
+  drawPattern(graphics, view, width, height, snapStep);
 
   const frame = parseColor(backdropTheme.frame, { value: 0x29d3ff, alpha: 1 });
   graphics.lineStyle(lineWidth, frame.value, 0.24);
@@ -57,6 +42,13 @@ export function drawBackdropLayer(
   graphics.moveTo(snapByStep(1, snapStep), snapByStep(1, snapStep));
   graphics.lineTo(snapByStep(width - 1, snapStep), snapByStep(1, snapStep));
   graphics.strokePath();
+  if (view.warningLevel !== "calm") {
+    const warning = parseColor(backdropTheme.danger, { value: 0xff6a6a, alpha: 0.18 });
+    const alpha = view.warningLevel === "critical" ? 0.16 : 0.08;
+    graphics.fillStyle(warning.value, alpha);
+    graphics.fillRect(0, 0, width, 18);
+    graphics.fillRect(0, height - 18, width, 18);
+  }
 
   drawWarpZones(graphics, view.warpZones, lineWidth, snapStep);
 }
@@ -118,9 +110,100 @@ function resolveBackdropTheme(
       base: "#000000",
       top: "#111111",
       frame: "#f5e76a",
+      pattern: "rgba(255, 255, 255, 0.18)",
+      danger: "rgba(255, 112, 112, 0.5)",
     };
   }
-  return BACKDROP_BY_BAND[themeBandId] ?? BACKDROP_BY_BAND.early;
+  switch (themeBandId) {
+    case "chapter2":
+      return {
+        base: "#23101b",
+        top: "#5c2d18",
+        frame: "#ffb05b",
+        pattern: "rgba(255, 214, 164, 0.14)",
+        danger: "rgba(255, 106, 68, 0.5)",
+      };
+    case "chapter3":
+      return {
+        base: "#190f31",
+        top: "#4a2065",
+        frame: "#ff74d1",
+        pattern: "rgba(255, 184, 247, 0.14)",
+        danger: "rgba(255, 104, 124, 0.52)",
+      };
+    case "midboss":
+      return {
+        base: "#230d20",
+        top: "#6e1f36",
+        frame: "#ff9d70",
+        pattern: "rgba(255, 188, 164, 0.18)",
+        danger: "rgba(255, 85, 110, 0.58)",
+      };
+    case "finalboss":
+      return {
+        base: "#170724",
+        top: "#5a1646",
+        frame: "#ff74d1",
+        pattern: "rgba(255, 179, 231, 0.18)",
+        danger: "rgba(255, 77, 118, 0.62)",
+      };
+    case "ex":
+      return {
+        base: "#081f1d",
+        top: "#16504b",
+        frame: "#56f7ba",
+        pattern: "rgba(180, 255, 219, 0.16)",
+        danger: "rgba(255, 136, 88, 0.52)",
+      };
+    default:
+      return {
+        base: "#081b35",
+        top: "#154269",
+        frame: "#42f3ff",
+        pattern: "rgba(179, 247, 255, 0.14)",
+        danger: "rgba(255, 122, 100, 0.46)",
+      };
+  }
+}
+
+function drawPattern(
+  graphics: Phaser.GameObjects.Graphics,
+  view: RenderViewState,
+  width: number,
+  height: number,
+  snapStep: number,
+): void {
+  const color = parseColor(view.visualTheme.pattern, { value: 0xffffff, alpha: 0.14 });
+  graphics.lineStyle(1, color.value, color.alpha);
+  if (view.themeBandId === "chapter1") {
+    for (let y = 24; y < height; y += 28) {
+      graphics.beginPath();
+      graphics.moveTo(0, snapByStep(y, snapStep));
+      graphics.lineTo(width, snapByStep(y - 10, snapStep));
+      graphics.strokePath();
+    }
+    return;
+  }
+  if (view.themeBandId === "chapter2") {
+    for (let x = 20; x < width; x += 64) {
+      graphics.strokeRect(snapByStep(x, snapStep), 24, 24, height - 48);
+    }
+    return;
+  }
+  if (view.themeBandId === "chapter3") {
+    for (let x = 0; x < width; x += 48) {
+      graphics.beginPath();
+      graphics.moveTo(snapByStep(x, snapStep), 20);
+      graphics.lineTo(snapByStep(x, snapStep), height - 20);
+      graphics.strokePath();
+    }
+    return;
+  }
+  for (let index = 0; index < 12; index += 1) {
+    const x = ((index + 1) * width) / 13;
+    const radius = view.warningLevel === "critical" ? 22 : 16;
+    graphics.strokeCircle(snapByStep(x, snapStep), height * 0.28, radius);
+  }
 }
 
 function drawGuideSegments(

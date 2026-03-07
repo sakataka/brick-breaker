@@ -112,6 +112,10 @@ export interface BossPhaseConfig {
 export interface StageControlConfig {
   generatorRespawnIntervalSec: number;
   generatorRespawnRange: number;
+  gateCycleSec: number;
+  turretFireIntervalSec: number;
+  turretProjectileSpeed: number;
+  turretProjectileRadius: number;
 }
 
 export interface MissionConfig {
@@ -123,6 +127,16 @@ export interface ModeConfig {
   bossRushRounds: number;
   bossRushSpeedScaleStep: number;
   bossRushBossHpStep: number;
+}
+
+export interface EncounterConfig {
+  overdriveDurationSec: number;
+  overdriveDamageScale: number;
+  overdriveScoreScale: number;
+  riskThreshold: number;
+  riskGainOnBossHit: number;
+  riskGainOnDangerHit: number;
+  riskDecayPerSec: number;
 }
 
 export const DEFAULT_MULTIBALL_MAX_BALLS = 4;
@@ -297,6 +311,10 @@ export const BOSS_PHASE_CONFIG: BossPhaseConfig = {
 export const STAGE_CONTROL_CONFIG: StageControlConfig = {
   generatorRespawnIntervalSec: 4.2,
   generatorRespawnRange: 1,
+  gateCycleSec: 2.2,
+  turretFireIntervalSec: 2.8,
+  turretProjectileSpeed: 210,
+  turretProjectileRadius: 8,
 } as const;
 
 export const MISSION_CONFIG: MissionConfig = {
@@ -308,6 +326,16 @@ export const MODE_CONFIG: ModeConfig = {
   bossRushRounds: 5,
   bossRushSpeedScaleStep: 0.04,
   bossRushBossHpStep: 2,
+} as const;
+
+export const ENCOUNTER_CONFIG: EncounterConfig = {
+  overdriveDurationSec: 5.5,
+  overdriveDamageScale: 1.35,
+  overdriveScoreScale: 1.5,
+  riskThreshold: 100,
+  riskGainOnBossHit: 24,
+  riskGainOnDangerHit: 12,
+  riskDecayPerSec: 18,
 } as const;
 
 export function getGameplayBalance(difficulty: Difficulty): GameplayBalance {

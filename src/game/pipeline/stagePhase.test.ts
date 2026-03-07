@@ -36,7 +36,7 @@ describe("stagePhase", () => {
       },
     ];
 
-    updateStageControlBricks(state, true, 0.2);
+    updateStageControlBricks(state, { generatorActive: true, gateActive: false, turretActive: false }, 0.2);
 
     expect(state.bricks[1]?.alive).toBe(true);
     expect(state.vfx.floatingTexts.some((text) => text.key === "generator")).toBe(true);

@@ -1,4 +1,5 @@
-import { getStageBgmTrack, getTitleBgmTrack } from "./bgmCatalog";
+import type { MusicCue } from "../game/types";
+import { getCueBgmTrack, getTitleBgmTrack } from "./bgmCatalog";
 import type { BgmController } from "./bgmSequencer";
 import { BgmSequencer } from "./bgmSequencer";
 
@@ -25,8 +26,8 @@ export class ToneBgm {
     this.sequencer.play(getTitleBgmTrack(), { fadeMs });
   }
 
-  playStage(stageNumber: number, fadeMs = 220): void {
-    this.sequencer.play(getStageBgmTrack(stageNumber), { fadeMs });
+  playCue(cue: MusicCue, fadeMs = 220): void {
+    this.sequencer.play(getCueBgmTrack(cue), { fadeMs });
   }
 
   pause(): void {

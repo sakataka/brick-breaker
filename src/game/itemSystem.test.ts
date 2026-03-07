@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { ITEM_ORDER } from "./itemRegistryData";
 
 import {
   applyDebugItemPreset,
@@ -16,7 +17,6 @@ import {
   getPierceDepth,
   getSlowBallMaxSpeedScale,
   getTargetBallCount,
-  isStickyEnabled,
   spawnDropsFromBrickEvents,
   spawnGuaranteedDrop,
   updateFallingItems,
@@ -45,6 +45,7 @@ function createBall(): Ball {
 }
 
 describe("itemSystem", () => {
+  const allEnabled = ITEM_ORDER as unknown as readonly import("./types").ItemType[];
   test("stacking increases power without overwrite", () => {
     const items = createItemState();
 
@@ -128,9 +129,8 @@ describe("itemSystem", () => {
     spawnGuaranteedDrop(items, random, 110, 90);
     spawnGuaranteedDrop(items, random, 120, 90);
 
-    expect(items.falling.length).toBeGreaterThan(0);
-    expect(items.falling.some((drop) => drop.type === "shockwave")).toBe(true);
-    expect(items.falling.some((drop) => drop.type === "homing" || drop.type === "rail")).toBe(true);
+    expect(items.falling).toHaveLength(2);
+    expect(items.falling.map((drop) => drop.type)).toEqual(["pulse", "laser"]);
   });
 
   test("spawnGuaranteedDrop always enqueues one drop when space is available", () => {
@@ -206,7 +206,7 @@ describe("itemSystem", () => {
     applyItemPickup(items, "rail", [createBall()]);
 
     const labels = getActiveItemEntries(items);
-    expect(labels).toHaveLength(11);
+    expect(labels).toHaveLength(12);
     expect(labels.find((label) => label.type === "multiball")?.count).toBe(1);
     expect(labels.find((label) => label.type === "pierce")?.count).toBe(1);
     expect(labels.find((label) => label.type === "bomb")?.count).toBe(0);
@@ -253,18 +253,14 @@ describe("itemSystem", () => {
     expect(bricks[1]?.alive).toBe(true);
   });
 
-  test("laser and sticky stacks respect their caps", () => {
+  test("laser stacks respect their caps", () => {
     const items = createItemState();
     applyItemPickup(items, "laser", [createBall()]);
     applyItemPickup(items, "laser", [createBall()]);
     applyItemPickup(items, "laser", [createBall()]);
-    applyItemPickup(items, "sticky", [createBall()]);
-    applyItemPickup(items, "sticky", [createBall()]);
 
     expect(items.active.laserStacks).toBe(2);
-    expect(items.active.stickyStacks).toBe(1);
     expect(getLaserLevel(items)).toBe(2);
-    expect(isStickyEnabled(items)).toBe(true);
   });
 
   test("new item stacking can be disabled per pickup option", () => {
@@ -279,30 +275,29 @@ describe("itemSystem", () => {
   test("debug presets apply expected stacks", () => {
     const items = createItemState();
 
-    applyDebugItemPreset(items, "combat_check", false, true);
+    applyDebugItemPreset(items, "combat_check", false, allEnabled);
     expect(items.active.paddlePlusStacks).toBe(1);
     expect(items.active.slowBallStacks).toBe(1);
     expect(items.active.multiballStacks).toBe(1);
     expect(items.active.shieldCharges).toBe(1);
 
-    applyDebugItemPreset(items, "boss_check", false, true);
+    applyDebugItemPreset(items, "boss_check", false, allEnabled);
     expect(items.active.shieldCharges).toBe(2);
     expect(items.active.pierceStacks).toBe(1);
     expect(items.active.bombStacks).toBe(1);
     expect(items.active.laserStacks).toBe(1);
-    expect(items.active.stickyStacks).toBe(1);
 
-    applyDebugItemPreset(items, "boss_check", true, true);
+    applyDebugItemPreset(items, "boss_check", true, allEnabled);
     expect(items.active.laserStacks).toBe(2);
 
-    applyDebugItemPreset(items, "none", true, true);
+    applyDebugItemPreset(items, "none", true, allEnabled);
     expect(items.active.multiballStacks).toBe(0);
     expect(items.active.shieldCharges).toBe(0);
   });
 
   test("combat debug preset can expand balls via multiball target", () => {
     const items = createItemState();
-    applyDebugItemPreset(items, "combat_check", true, true);
+    applyDebugItemPreset(items, "combat_check", true, allEnabled);
     const balls = ensureMultiballCount(items, [createBall()], sequenceRandom([0.5, 0.2, 0.7]), 4);
     expect(balls).toHaveLength(2);
   });
@@ -333,20 +328,21 @@ describe("itemSystem", () => {
     expect(items.active.shieldCharges).toBe(1);
   });
 
-  test("sticky can be excluded from drops and debug preset", () => {
+  test("disabled item pools exclude removed items from drops and debug preset", () => {
     const items = createItemState();
     const events: CollisionEvent[] = Array.from({ length: 20 }, () => ({
       kind: "brick",
       x: 120,
       y: 90,
     }));
+    const enabled = ITEM_ORDER.filter((type) => type !== "decoy");
 
     spawnDropsFromBrickEvents(items, events, sequenceRandom(Array(40).fill(0.99)), {
-      stickyItemEnabled: false,
+      enabledItems: enabled,
     });
-    expect(items.falling.every((drop) => drop.type !== "sticky")).toBe(true);
+    expect(items.falling.every((drop) => drop.type !== "decoy")).toBe(true);
 
-    applyDebugItemPreset(items, "boss_check", true, false);
-    expect(items.active.stickyStacks).toBe(0);
+    applyDebugItemPreset(items, "boss_check", true, enabled);
+    expect(items.active.decoyStacks).toBe(0);
   });
 });

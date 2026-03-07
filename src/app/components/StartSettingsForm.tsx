@@ -1,4 +1,5 @@
-import type { ReactElement } from "react";
+import type { CSSProperties, ReactElement } from "react";
+import { getStartSettingsItemEntries } from "../../game/itemRegistry";
 import {
   BASIC_SELECT_FIELDS,
   BASIC_TOGGLE_FIELDS,
@@ -9,12 +10,15 @@ import {
   type StartSettingsSelectField,
   type StartSettingsSelection,
   type StartSettingsToggleField,
+  toggleEnabledItem,
 } from "../../game/startSettingsSchema";
-import { type AppLocale, getLL, supportedLocales } from "../../i18n";
+import { type AppLocale, getItemTranslation, getLL, supportedLocales } from "../../i18n";
+import { GameIcon } from "./GameIcon";
 
 export interface StartSettingsFormProps {
   locale: AppLocale;
   settings: StartSettingsSelection;
+  exUnlocked: boolean;
   onChange: (patch: Partial<StartSettingsSelection>) => void;
   onLocaleChange: (locale: AppLocale) => void;
 }
@@ -22,6 +26,7 @@ export interface StartSettingsFormProps {
 export function StartSettingsForm({
   locale,
   settings,
+  exUnlocked,
   onChange,
   onLocaleChange,
 }: StartSettingsFormProps): ReactElement {
@@ -50,7 +55,9 @@ export function StartSettingsForm({
         </label>
 
         <div className="settings-grid">
-          {BASIC_SELECT_FIELDS.map((field) => (
+          {BASIC_SELECT_FIELDS.filter(
+            (field) => field.field !== "campaignCourse" || (settings.gameMode === "campaign" && exUnlocked),
+          ).map((field) => (
             <label key={field.id} htmlFor={field.id}>
               <span>{getSelectFieldLabel(LL, field)}</span>
               <select
@@ -97,6 +104,43 @@ export function StartSettingsForm({
               />
             </label>
           ))}
+        </div>
+
+        <div className="settings-item-pool" id="setting-item-pool">
+          <div className="settings-section-title-row">
+            <p className="settings-section-title">{LL.startSettings.sections.itemPool()}</p>
+            <p className="settings-section-note">{LL.startSettings.itemPoolHint()}</p>
+          </div>
+          <div className="item-pool-grid">
+            {getStartSettingsItemEntries().map((entry) => {
+              const translation = getItemTranslation(LL, entry.type);
+              const checked = settings.enabledItems.includes(entry.type);
+              return (
+                <label
+                  key={entry.type}
+                  className={`item-pool-card${checked ? " item-pool-card-active" : ""}`}
+                  htmlFor={`setting-item-${entry.type}`}
+                  style={{ "--item-accent": entry.color } as CSSProperties}
+                >
+                  <input
+                    id={`setting-item-${entry.type}`}
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(event) => {
+                      onChange(toggleEnabledItem(settings, entry.type, event.target.checked));
+                    }}
+                  />
+                  <span className="item-pool-icon">
+                    <GameIcon name={entry.type} />
+                  </span>
+                  <span className="item-pool-copy">
+                    <strong>{translation.name()}</strong>
+                    <small>{translation.description()}</small>
+                  </span>
+                </label>
+              );
+            })}
+          </div>
         </div>
       </section>
 
@@ -198,6 +242,8 @@ function getSelectFieldLabel(LL: ReturnType<typeof getLL>, field: StartSettingsS
   switch (field.field) {
     case "gameMode":
       return LL.startSettings.fields.mode();
+    case "campaignCourse":
+      return LL.startSettings.fields.campaignCourse();
     case "difficulty":
       return LL.startSettings.fields.difficulty();
     case "initialLives":
@@ -227,6 +273,8 @@ function getSelectOptionLabel(
   switch (field.field) {
     case "gameMode":
       return LL.startSettings.values.gameMode[value as StartSettingsSelection["gameMode"]]();
+    case "campaignCourse":
+      return LL.startSettings.values.campaignCourse[value as StartSettingsSelection["campaignCourse"]]();
     case "difficulty":
       return LL.startSettings.values.difficulty[value as StartSettingsSelection["difficulty"]]();
     case "routePreference":
@@ -246,14 +294,10 @@ function getToggleFieldLabel(LL: ReturnType<typeof getLL>, field: StartSettingsT
   switch (field.field) {
     case "challengeMode":
       return LL.startSettings.fields.challengeMode();
-    case "dailyMode":
-      return LL.startSettings.fields.dailyMode();
     case "riskMode":
       return LL.startSettings.fields.riskMode();
     case "enableNewItemStacks":
       return LL.startSettings.fields.newItemStacks();
-    case "stickyItemEnabled":
-      return LL.startSettings.fields.stickyItem();
     case "ghostReplayEnabled":
       return LL.startSettings.fields.ghostReplay();
     case "bgmEnabled":

@@ -2,10 +2,13 @@ import type {
   Ball,
   Brick,
   BrickKind,
+  EncounterKind,
+  EncounterProfile,
   ItemType,
   Paddle,
   Scene,
   StageDefinition,
+  StageMissionKey,
   Vector2,
 } from "./domainTypes";
 
@@ -117,10 +120,11 @@ export interface ActiveItemState {
   pierceStacks: number;
   bombStacks: number;
   laserStacks: number;
-  stickyStacks: number;
   homingStacks: number;
   railStacks: number;
   shockwaveStacks: number;
+  pulseStacks: number;
+  decoyStacks: number;
 }
 
 export interface ItemState {
@@ -182,24 +186,28 @@ export interface StageStats {
   missionTargetSec: number;
   missionAchieved?: boolean;
   missionResults?: StageMissionStatus[];
+  generatorShutdown?: boolean;
+  firstDestroyedKind?: import("./domainTypes").BrickKind;
+  peakRiskChain?: number;
   clearedAtSec?: number;
   starRating?: 1 | 2 | 3;
   ratingScore?: number;
 }
 
-export type StageMissionKey = "time_limit" | "no_shop";
 export type FloatingTextKey =
   | "item_pickup"
   | "reinforce"
   | "generator"
+  | "gate"
+  | "turret"
   | "split"
   | "summon"
   | "thorns"
   | "spell"
   | "boss_phase_2"
   | "boss_phase_3"
-  | "boss_warning";
-export type DailyObjectiveKey = "no_miss_stage_clear" | "combo_x2" | "collect_three_items";
+  | "boss_warning"
+  | "overdrive";
 export type RuntimeErrorKey = "initialization" | "gameStart" | "startAction" | "shopPurchase" | "runtime";
 
 export interface StageMissionStatus {
@@ -219,9 +227,10 @@ export interface HazardState {
 
 export interface RunOptions {
   gameMode: GameMode;
+  campaignCourse: import("./domainTypes").CampaignCourse;
   riskMode: boolean;
   enableNewItemStacks: boolean;
-  stickyItemEnabled: boolean;
+  enabledItems: ItemType[];
   ghostReplayEnabled: boolean;
   customStageCatalog: StageDefinition[] | null;
   debugModeEnabled: boolean;
@@ -306,14 +315,17 @@ export interface CombatState {
   laserProjectiles: LaserProjectile[];
   heldBalls: HeldBallState[];
   shieldBurstQueued: boolean;
+  enemyWaveCooldownSec: number;
   bossPhase: 0 | 1 | 2 | 3;
   bossPhaseSummonCooldownSec: number;
-  enemyWaveCooldownSec: number;
   bossAttackState: BossAttackState;
+  encounterState: EncounterState;
+  riskChain: RiskChainState;
+  overdrive: OverdriveState;
   forcedBallLoss: boolean;
 }
 
-export type BossAttackKind = "summon" | "volley" | "sweep";
+export type BossAttackKind = "summon" | "volley" | "sweep" | "burst" | "gate_sweep";
 export type BossLane = "left" | "center" | "right";
 
 export interface BossProjectile {
@@ -323,6 +335,7 @@ export interface BossProjectile {
   vx: number;
   vy: number;
   radius: number;
+  source?: "boss" | "turret";
 }
 
 export interface BossTelegraph {
@@ -346,4 +359,28 @@ export interface BossAttackState {
   telegraph: BossTelegraph | null;
   projectiles: BossProjectile[];
   sweep: BossSweepState | null;
+}
+
+export interface EncounterState extends BossAttackState {
+  kind: EncounterKind;
+  profile: EncounterProfile;
+  phase: 0 | 1 | 2 | 3;
+  summonCooldownSec: number;
+  vulnerabilitySec: number;
+  vulnerabilityMaxSec: number;
+}
+
+export interface RiskChainState {
+  value: number;
+  max: number;
+  threshold: number;
+  decayPerSec: number;
+}
+
+export interface OverdriveState {
+  active: boolean;
+  remainingSec: number;
+  maxSec: number;
+  damageScale: number;
+  scoreScale: number;
 }

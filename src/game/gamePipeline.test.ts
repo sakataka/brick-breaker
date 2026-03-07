@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { GAME_CONFIG } from "./config";
 import { generateShopOffer, stepPlayingPipeline } from "./gamePipeline";
+import { ITEM_ORDER } from "./itemRegistryData";
 import { createInitialGameState } from "./stateFactory";
 import type { Ball, RandomSource } from "./types";
 
@@ -15,9 +16,9 @@ function overrideSingleBall(state: ReturnType<typeof createInitialGameState>, ba
 }
 
 describe("gamePipeline", () => {
-  test("generateShopOffer excludes sticky when sticky item is disabled", () => {
-    const offer = generateShopOffer({ next: () => 0.99 }, false);
-    expect(offer.includes("sticky")).toBe(false);
+  test("generateShopOffer excludes disabled items", () => {
+    const offer = generateShopOffer({ next: () => 0.99 }, ITEM_ORDER.slice(0, 4));
+    expect(offer.every((type) => ITEM_ORDER.slice(0, 4).includes(type))).toBe(true);
   });
 
   test("returns stageclear when final brick is destroyed", () => {
@@ -54,7 +55,6 @@ describe("gamePipeline", () => {
     state.items.active.multiballStacks = 2;
     state.items.active.pierceStacks = 1;
     state.items.active.laserStacks = 2;
-    state.items.active.stickyStacks = 1;
     overrideSingleBall(state, {
       pos: { x: 130, y: 190 },
       vel: { x: 0, y: 260 },
@@ -77,7 +77,6 @@ describe("gamePipeline", () => {
     expect(state.items.active.multiballStacks).toBe(0);
     expect(state.items.active.pierceStacks).toBe(0);
     expect(state.items.active.laserStacks).toBe(0);
-    expect(state.items.active.stickyStacks).toBe(0);
     expect(state.combat.laserProjectiles).toHaveLength(0);
   });
 

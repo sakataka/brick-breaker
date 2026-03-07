@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
-import { getItemEmoji } from "../../game/itemRegistry";
 import { type AppLocale, formatPoints, getItemTranslation, getLL } from "../../i18n";
 import type { ShopViewState } from "../store";
+import { GameIcon } from "./GameIcon";
 
 export interface ShopPanelProps {
   locale: AppLocale;
@@ -19,13 +19,10 @@ export function ShopPanel({ locale, shop, onSelect }: ShopPanelProps): ReactElem
         ? LL.shop.status.oneTime()
         : LL.shop.title();
   const optionALabel =
-    shop.optionAType === null
-      ? LL.shop.choiceA()
-      : `${getItemEmoji(shop.optionAType)} ${getItemTranslation(LL, shop.optionAType).name()}`;
+    shop.optionAType === null ? LL.shop.choiceA() : getItemTranslation(LL, shop.optionAType).name();
   const optionBLabel =
-    shop.optionBType === null
-      ? LL.shop.choiceB()
-      : `${getItemEmoji(shop.optionBType)} ${getItemTranslation(LL, shop.optionBType).name()}`;
+    shop.optionBType === null ? LL.shop.choiceB() : getItemTranslation(LL, shop.optionBType).name();
+  const priceBand = shop.cost >= 2200 ? "HIGH" : shop.cost >= 1600 ? "MID" : "LOW";
 
   return (
     <div id="shop-panel" className={className}>
@@ -33,7 +30,7 @@ export function ShopPanel({ locale, shop, onSelect }: ShopPanelProps): ReactElem
       <p id="shop-cost">
         {LL.shop.price()}: {formatPoints(locale, shop.cost)}
       </p>
-      {shop.priceBandVisible ? <p id="shop-price-band">-</p> : null}
+      {shop.priceBandVisible ? <p id="shop-price-band">{priceBand}</p> : null}
       <div className="shop-buttons">
         <button
           id="shop-option-a"
@@ -43,6 +40,7 @@ export function ShopPanel({ locale, shop, onSelect }: ShopPanelProps): ReactElem
             onSelect(0);
           }}
         >
+          {shop.optionAType ? <GameIcon name={shop.optionAType} className="shop-option-icon" /> : null}
           {optionALabel}
         </button>
         <button
@@ -53,6 +51,7 @@ export function ShopPanel({ locale, shop, onSelect }: ShopPanelProps): ReactElem
             onSelect(1);
           }}
         >
+          {shop.optionBType ? <GameIcon name={shop.optionBType} className="shop-option-icon" /> : null}
           {optionBLabel}
         </button>
       </div>

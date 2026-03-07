@@ -7,6 +7,7 @@ import {
   createItemStacks,
   getActiveItemEntriesFromRegistry,
   getDropSuppressedTypes,
+  ITEM_REGISTRY,
   pickWeightedItemType,
 } from "./itemRegistry";
 import type { ItemPickupImpact } from "./itemTypes";
@@ -32,7 +33,7 @@ export interface ItemPickupOptions {
 }
 
 export interface DropOptions {
-  stickyItemEnabled?: boolean;
+  enabledItems?: readonly ItemType[];
 }
 
 export function createItemState(): ItemState {
@@ -75,10 +76,6 @@ export function getLaserLevel(items: ItemState): number {
   return createItemModifiers(items.active).laserLevel;
 }
 
-export function isStickyEnabled(items: ItemState): boolean {
-  return createItemModifiers(items.active).stickyEnabled;
-}
-
 export function getHomingStrength(items: ItemState): number {
   return createItemModifiers(items.active).homingStrength;
 }
@@ -113,11 +110,11 @@ export function applyDebugItemPreset(
   items: ItemState,
   preset: DebugItemPreset,
   enableNewItemStacks: boolean,
-  stickyItemEnabled = true,
+  enabledItems: readonly ItemType[],
 ): void {
   applyDebugPresetFromRegistry(items, preset, {
     enableNewItemStacks,
-    stickyItemEnabled,
+    enabledItems,
   });
 }
 
@@ -128,8 +125,11 @@ export function spawnDropsFromBrickEvents(
   options: DropOptions = {},
 ): void {
   const excludedTypes: ItemType[] = getDropSuppressedTypes(items.active);
-  if (options.stickyItemEnabled === false) {
-    excludedTypes.push("sticky");
+  const enabledItems = options.enabledItems ?? [];
+  for (const type of Object.keys(ITEM_REGISTRY) as ItemType[]) {
+    if (enabledItems.length > 0 && !enabledItems.includes(type)) {
+      excludedTypes.push(type);
+    }
   }
   let dropsThisTick = 0;
   for (const event of events) {
@@ -171,8 +171,11 @@ export function spawnGuaranteedDrop(
     return false;
   }
   const excludedTypes: ItemType[] = getDropSuppressedTypes(items.active);
-  if (options.stickyItemEnabled === false) {
-    excludedTypes.push("sticky");
+  const enabledItems = options.enabledItems ?? [];
+  for (const type of Object.keys(ITEM_REGISTRY) as ItemType[]) {
+    if (enabledItems.length > 0 && !enabledItems.includes(type)) {
+      excludedTypes.push(type);
+    }
   }
   items.falling.push({
     id: items.nextId,

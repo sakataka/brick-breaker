@@ -8,14 +8,17 @@ export type ItemType =
   | "pierce"
   | "bomb"
   | "laser"
-  | "sticky"
   | "homing"
   | "rail"
-  | "shockwave";
+  | "shockwave"
+  | "pulse"
+  | "decoy";
 export type BrickKind =
   | "normal"
   | "steel"
   | "generator"
+  | "gate"
+  | "turret"
   | "durable"
   | "armored"
   | "regen"
@@ -41,9 +44,6 @@ export interface Ball {
   speed: number;
   lastDamageBrickId?: number;
   warpCooldownSec?: number;
-  stickTimerSec?: number;
-  stickCooldownSec?: number;
-  stickOffsetRatio?: number;
 }
 
 export interface Paddle {
@@ -93,13 +93,18 @@ export interface StageDefinition {
   id: number;
   speedScale: number;
   layout: number[][];
+  course?: CampaignCourse;
   chapter?: 1 | 2 | 3 | 4;
   archetype?: StageArchetype;
   tags?: StageTag[];
   events?: StageEventKey[];
   specials?: StageSpecialPlacement[];
   elite?: StageElitePlacement[];
+  missions?: readonly StageMissionKey[];
+  encounter?: StageEncounterDefinition;
 }
+
+export type CampaignCourse = "normal" | "ex";
 
 export type StageArchetype =
   | "wide_open"
@@ -107,11 +112,18 @@ export type StageArchetype =
   | "chokepoint"
   | "control"
   | "split_lane"
-  | "boss_arena";
+  | "boss_arena"
+  | "ex_arena";
 
-export type StageTag = "steel" | "generator" | "enemy_pressure" | "boss";
+export type StageTag = "steel" | "generator" | "gate" | "turret" | "enemy_pressure" | "boss" | "midboss";
 
-export type StageEventKey = "generator_respawn" | "enemy_pressure" | "boss_duel";
+export type StageEventKey =
+  | "generator_respawn"
+  | "enemy_pressure"
+  | "boss_duel"
+  | "gate_cycle"
+  | "turret_fire"
+  | "midboss_duel";
 
 export interface StageElitePlacement {
   row: number;
@@ -125,5 +137,29 @@ export interface StageElitePlacement {
 export interface StageSpecialPlacement {
   row: number;
   col: number;
-  kind: Extract<BrickKind, "steel" | "generator">;
+  kind: Extract<BrickKind, "steel" | "generator" | "gate" | "turret">;
+}
+
+export type StageMissionKey =
+  | "time_limit"
+  | "no_shop"
+  | "no_miss_stage"
+  | "combo_x2"
+  | "destroy_turret_first"
+  | "shutdown_generator"
+  | "risk_chain_threshold";
+
+export type EncounterKind = "none" | "midboss" | "boss" | "ex_boss";
+export type EncounterProfile = "none" | "warden" | "artillery" | "final_core" | "ex_overlord";
+
+export interface StageEncounterDefinition {
+  kind: EncounterKind;
+  profile: EncounterProfile;
+}
+
+export type MusicCueId = "title" | "chapter1" | "chapter2" | "chapter3" | "midboss" | "finalboss" | "ex";
+
+export interface MusicCue {
+  id: MusicCueId;
+  variant: number;
 }

@@ -91,10 +91,5 @@ export function updateAutoLaserSpawner(state: GameState, deltaSec: number, laser
 }
 
 export function syncHeldBallsSnapshot(state: GameState): void {
-  state.combat.heldBalls = state.balls
-    .filter((ball) => (ball.stickTimerSec ?? 0) > 0)
-    .map((ball) => ({
-      xOffsetRatio: ball.stickOffsetRatio ?? 0,
-      remainingSec: ball.stickTimerSec ?? 0,
-    }));
+  state.combat.heldBalls = [];
 }

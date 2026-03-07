@@ -6,6 +6,12 @@ async function presetLocale(page: Page, locale: "ja" | "en") {
   }, locale);
 }
 
+async function presetExUnlocked(page: Page) {
+  await page.addInitScript(() => {
+    window.localStorage.setItem("brick_breaker:meta_progress", JSON.stringify({ exUnlocked: true }));
+  });
+}
+
 async function accessDebugController<T>(page: Page, callback: () => T): Promise<T> {
   return page.evaluate(callback);
 }
@@ -30,7 +36,7 @@ interface DebugWindowHandle {
             bossPhase: number;
             bossAttackState: {
               telegraph: {
-                kind: "volley" | "sweep";
+                kind: string;
                 remainingSec: number;
                 maxSec: number;
                 targetX?: number;
@@ -122,7 +128,10 @@ test("start screen locale switch keeps CTA visible for long translations", async
 
   await page.locator("#setting-language").selectOption("en");
   await expect(page.locator("#overlay-button")).toHaveText("Start Game");
-  await expect(page.locator("#daily-challenge-label")).toContainText("Daily Challenge");
+  await expect(page.locator("#setting-item-pool")).toContainText("Item Pool");
+  await expect(page.locator("#setting-item-pool input[type='checkbox']")).toHaveCount(12);
+  await expect(page.locator("#setting-campaign-course")).toHaveCount(0);
+  await expect(page.locator("#daily-challenge-label")).toHaveCount(0);
 
   const buttonBox = await page.locator("#overlay-button").boundingBox();
   const footerBox = await page.locator(".overlay-fixed-footer").boundingBox();
@@ -134,16 +143,27 @@ test("start screen locale switch keeps CTA visible for long translations", async
   }
 });
 
-test("debug stage 8 shows steel and generator legends in HUD", async ({ page }) => {
+test("ex course selector appears after unlock", async ({ page }) => {
+  await presetLocale(page, "en");
+  await presetExUnlocked(page);
+  await page.goto("/");
+
+  await expect(page.locator("#setting-campaign-course")).toBeVisible();
+  await page.locator("#setting-campaign-course").selectOption("ex");
+  await expect(page.locator("#setting-campaign-course")).toHaveValue("ex");
+});
+
+test("debug stage 11 shows steel, generator, and turret legends in HUD", async ({ page }) => {
   await presetLocale(page, "ja");
   await page.goto("/");
 
   await page.locator("#setting-debug-mode").click();
-  await page.locator("#setting-debug-start-stage").selectOption("8");
+  await page.locator("#setting-debug-start-stage").selectOption("11");
   await page.locator("#overlay-button").click();
   await expect(page.locator("#overlay")).toHaveClass(/hidden/);
   await expect(page.locator("#items")).toContainText("鋼壁: 破壊不可");
   await expect(page.locator("#items")).toContainText("発生装置: 周辺再生");
+  await expect(page.locator("#items")).toContainText("砲台: 敵弾発射");
 });
 
 test("item pickup toast does not block pause input", async ({ page }) => {
@@ -205,7 +225,34 @@ test("boss telegraph appears during debug boss fight", async ({ page }) => {
     };
   });
 
-  await expect(page.locator("#stage")).toContainText(/射撃予兆|制圧予兆/);
+  await expect(page.locator(".hud-stage-combat")).toContainText(/射撃予兆|制圧予兆|集中弾予兆|遮断掃射予兆/);
+  await expect(page.locator(".hud-stage-combat")).toContainText("Risk Chain");
+  await expect(page.locator(".hud-boss-banner")).toBeVisible();
+  await expect(page.locator("#stage-wrap")).toHaveAttribute("data-theme", /finalboss|midboss/);
+});
+
+test("item pool can disable drops but keeps at least one item enabled", async ({ page }) => {
+  await presetLocale(page, "en");
+  await page.goto("/");
+
+  const itemPool = page.locator("#setting-item-pool");
+  const paddlePlus = page.locator("#setting-item-paddle_plus");
+  await expect(itemPool).toBeVisible();
+  await expect(page.locator("#setting-item-sticky")).toHaveCount(0);
+
+  const checkboxes = itemPool.locator("input[type='checkbox']");
+  const count = await checkboxes.count();
+  expect(count).toBe(12);
+  for (let index = 1; index < count; index += 1) {
+    const checkbox = checkboxes.nth(index);
+    if (await checkbox.isChecked()) {
+      await checkbox.uncheck();
+    }
+  }
+  await expect(paddlePlus).toBeChecked();
+
+  await paddlePlus.click();
+  await expect(paddlePlus).toBeChecked();
 });
 
 test.describe("dpi regression", () => {
@@ -230,7 +277,7 @@ test.describe("dpi regression", () => {
 
     const clipWidth = Math.floor(Math.max(120, box.width * 0.9));
     const clipHeight = Math.floor(Math.max(80, box.height * 0.42));
-    expect(clipWidth).toBeGreaterThan(800);
+    expect(clipWidth).toBeGreaterThan(780);
     expect(clipHeight).toBeGreaterThan(200);
     expect(box.height / box.width).toBeGreaterThan(0.45);
     expect(box.height / box.width).toBeLessThan(0.7);

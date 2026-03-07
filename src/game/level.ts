@@ -45,7 +45,7 @@ export function buildBricksFromStage(
         hp: hasFiniteHp ? hp : undefined,
         maxHp: hasFiniteHp ? hp : undefined,
         regenCharges: kind === "regen" ? 1 : 0,
-        cooldownSec: kind === "generator" ? 0 : undefined,
+        cooldownSec: kind === "generator" || kind === "gate" || kind === "turret" ? 0 : undefined,
         row,
         col,
         color: getBrickPaletteColor(row, palette),

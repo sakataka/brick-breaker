@@ -1,5 +1,5 @@
 import { activateAssist, applyAssistToPaddle, createAssistState } from "./assistSystem";
-import { createBossAttackState } from "./bossState";
+import { createEncounterState, createOverdriveState, createRiskChainState } from "./bossState";
 import { getGameplayBalance, getStageStory, getStageTimeTargetSec, MODE_CONFIG } from "./config";
 import { cloneActiveItemState, createItemState, ensureMultiballCount } from "./itemSystem";
 import { buildBricksFromStage } from "./level";
@@ -106,6 +106,7 @@ export function applyLifeLoss(
       getStageInitialBallSpeed(config, {
         stageIndex: state.campaign.stageIndex,
         gameMode: state.options.gameMode,
+        campaignCourse: state.options.campaignCourse,
         route: state.campaign.resolvedRoute,
         customStageCatalog: state.options.customStageCatalog,
       }),
@@ -205,6 +206,7 @@ function resetStageUiState(state: GameState): void {
 }
 
 function resetCombatState(state: GameState, spawnEnemy: boolean): void {
+  const encounterState = createEncounterState();
   state.combat.laserCooldownSec = 0;
   state.combat.nextLaserId = 1;
   state.combat.laserProjectiles = [];
@@ -213,7 +215,10 @@ function resetCombatState(state: GameState, spawnEnemy: boolean): void {
   state.combat.bossPhase = 0;
   state.combat.bossPhaseSummonCooldownSec = 0;
   state.combat.enemyWaveCooldownSec = spawnEnemy ? 6 : 0;
-  state.combat.bossAttackState = createBossAttackState();
+  state.combat.bossAttackState = encounterState;
+  state.combat.encounterState = encounterState;
+  state.combat.riskChain = createRiskChainState();
+  state.combat.overdrive = createOverdriveState();
   state.combat.forcedBallLoss = false;
 }
 
@@ -230,6 +235,8 @@ function resetStageStats(state: GameState): void {
     startedAtSec: state.elapsedSec,
     missionTargetSec: getStageTimeTargetSec(state.campaign.stageIndex),
     missionResults: [],
+    generatorShutdown: false,
+    peakRiskChain: 0,
   };
 }
 

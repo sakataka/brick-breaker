@@ -23,7 +23,7 @@ describe("shopUi", () => {
 
     expect(view.visible).toBe(true);
     expect(view.cost).toBe(2200);
-    expect(view.priceBandVisible).toBe(false);
+    expect(view.priceBandVisible).toBe(true);
     expect(view.optionAType).toBe("shield");
     expect(view.optionBType).toBe("laser");
     expect(view.optionADisabled).toBe(false);

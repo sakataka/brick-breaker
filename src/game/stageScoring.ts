@@ -1,5 +1,6 @@
 import { getStageTimeTargetSec, MISSION_CONFIG, RATING_CONFIG } from "./config";
 import { prepareRogueUpgradeOffer } from "./rogueProgression";
+import { resolveStageMetadataFromState } from "./stageContext";
 import type { GameState } from "./types";
 
 export function finalizeStageStats(state: GameState, persistResult = true): void {
@@ -102,17 +103,30 @@ function buildStageMissionResults(
   clearTimeSec: number,
   missionTargetSec: number,
 ): NonNullable<GameState["stageStats"]["missionResults"]> {
-  const timeAchieved = clearTimeSec <= missionTargetSec;
-  const noShopAchieved = !state.shop.usedThisStage;
-  return [
-    {
-      key: "time_limit",
-      targetSec: Math.round(missionTargetSec),
-      achieved: timeAchieved,
-    },
-    {
-      key: "no_shop",
-      achieved: noShopAchieved,
-    },
-  ];
+  const stage = resolveStageMetadataFromState(state).stage;
+  const missions = stage.missions ?? ["time_limit", "no_shop"];
+  return missions.map((mission) => {
+    switch (mission) {
+      case "time_limit":
+        return {
+          key: mission,
+          targetSec: Math.round(missionTargetSec),
+          achieved: clearTimeSec <= missionTargetSec,
+        };
+      case "no_shop":
+        return { key: mission, achieved: !state.shop.usedThisStage };
+      case "no_miss_stage":
+        return { key: mission, achieved: state.stageStats.hitsTaken <= 0 };
+      case "combo_x2":
+        return { key: mission, achieved: state.combo.rewardGranted || state.combo.multiplier >= 2 };
+      case "destroy_turret_first":
+        return { key: mission, achieved: state.stageStats.firstDestroyedKind === "turret" };
+      case "shutdown_generator":
+        return { key: mission, achieved: (state.stageStats.generatorShutdown ?? false) === true };
+      case "risk_chain_threshold":
+        return { key: mission, achieved: (state.stageStats.peakRiskChain ?? 0) >= 100 };
+      default:
+        return { key: mission, achieved: false };
+    }
+  });
 }

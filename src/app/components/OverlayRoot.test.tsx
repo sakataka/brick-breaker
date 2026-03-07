@@ -25,6 +25,7 @@ function render(settings: StartSettingsSelection, overlay: OverlayViewModel): st
       locale="ja"
       overlay={overlay}
       startSettings={settings}
+      exUnlocked={false}
       rogueSelection="score_core"
       onStartSettingsChange={() => {}}
       onLocaleChange={() => {}}
@@ -41,7 +42,7 @@ describe("OverlayRoot", () => {
     expect(markup).toContain("overlay-settings-scroll");
     expect(markup).toContain("overlay-fixed-footer");
     expect(markup).not.toContain('value="pseudo"');
-    expect(markup).toContain('id="setting-sticky-item-enabled"');
+    expect(markup).toContain('id="setting-item-pool"');
     expect(markup).not.toContain('id="app-summary-pdf-link"');
   });
 

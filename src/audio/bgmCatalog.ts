@@ -1,3 +1,5 @@
+import type { MusicCue, MusicCueId } from "../game/types";
+
 export interface BgmStep {
   leadMidi?: number;
   harmonyMidis?: readonly number[];
@@ -21,409 +23,219 @@ export interface BgmTrack {
   steps: readonly BgmStep[];
 }
 
-type MidiNote = number | null;
-
-interface ThemeDefinition {
-  id: "bach_dance" | "mozart_light" | "bach_counter" | "beethoven_drive";
+interface CueDefinition {
+  id: Exclude<MusicCueId, "title">;
   title: string;
-  source: string;
   leadWave: OscillatorType;
   harmonyWave: OscillatorType;
   bassWave: OscillatorType;
-  tempoRange: { min: number; max: number };
-  leadMotif: readonly MidiNote[];
-  bassMotif: readonly MidiNote[];
-  harmonyIntervals: readonly [number, number];
+  tempoBase: number;
+  tempoStep: number;
+  leadPattern: readonly (number | null)[];
+  chordRoots: readonly number[];
+  chordIntervals: readonly number[];
   counterOffsets: readonly number[];
-  padIntervals: readonly [number, number];
-  arrangement: {
-    harmonyDensity: readonly [number, number, number];
-    counterDensity: readonly [number, number, number];
-    padEverySteps: readonly [number, number, number];
-  };
-  transposeByVariant: readonly number[];
+  padIntervals: readonly number[];
+  bassOffsets: readonly number[];
 }
 
-const STAGE_COUNT = 12;
-const BARS = 8;
-const STEPS_PER_BAR = 4;
-const STEP_COUNT = BARS * STEPS_PER_BAR;
-const STAGE_INTENSITY_COUNT = 3;
+const STEPS_PER_TRACK = 32;
 
-const THEMES: readonly ThemeDefinition[] = [
-  {
-    id: "bach_dance",
-    title: "Bach Dance",
-    source: "Bach Minuet in G major (BWV Anh. 114) motif",
+const CUES: Record<CueDefinition["id"], CueDefinition> = {
+  chapter1: {
+    id: "chapter1",
+    title: "Neon Pop Rise",
     leadWave: "triangle",
-    harmonyWave: "square",
+    harmonyWave: "triangle",
     bassWave: "sine",
-    tempoRange: { min: 114, max: 120 },
-    leadMotif: [74, 79, 81, 83, 84, 83, 81, 79, 78, 79, 81, 83, 81, 79, 78, 79],
-    bassMotif: [55, null, 59, null, 62, null, 59, null],
-    harmonyIntervals: [-4, -7],
-    counterOffsets: [7, 4, 7, 2],
-    padIntervals: [-5, -9],
-    arrangement: {
-      harmonyDensity: [0.38, 0.62, 0.84],
-      counterDensity: [0.18, 0.34, 0.56],
-      padEverySteps: [16, 8, 4],
-    },
-    transposeByVariant: [0, 2, 4],
+    tempoBase: 122,
+    tempoStep: 4,
+    leadPattern: [0, 2, 4, 7, 9, 7, 4, 2, 0, 2, 4, 7, 11, 9, 7, 4],
+    chordRoots: [60, 65, 69, 67],
+    chordIntervals: [0, 4, 7, 11],
+    counterOffsets: [12, 9, 7, 4],
+    padIntervals: [0, 7, 11],
+    bassOffsets: [-24, -17, -24, -19],
   },
-  {
-    id: "mozart_light",
-    title: "Mozart Light",
-    source: "Mozart Sonata K.545 motif",
+  chapter2: {
+    id: "chapter2",
+    title: "Factory Pop Rush",
     leadWave: "square",
     harmonyWave: "triangle",
-    bassWave: "triangle",
-    tempoRange: { min: 122, max: 130 },
-    leadMotif: [76, 74, 72, 74, 76, 79, 77, 76, 74, 72, 74, 76, 77, 79, 81, 79],
-    bassMotif: [48, null, 55, null, 52, null, 55, null],
-    harmonyIntervals: [-4, -7],
-    counterOffsets: [4, 7, 9, 7],
-    padIntervals: [-4, -7],
-    arrangement: {
-      harmonyDensity: [0.34, 0.58, 0.8],
-      counterDensity: [0.14, 0.3, 0.52],
-      padEverySteps: [16, 8, 4],
-    },
-    transposeByVariant: [0, 2, 4],
+    bassWave: "square",
+    tempoBase: 132,
+    tempoStep: 5,
+    leadPattern: [0, 3, 5, 7, 10, 7, 5, 3, 0, 3, 5, 8, 10, 8, 7, 5],
+    chordRoots: [57, 62, 65, 64],
+    chordIntervals: [0, 3, 7, 10],
+    counterOffsets: [7, 10, 12, 10],
+    padIntervals: [0, 5, 10],
+    bassOffsets: [-24, -17, -24, -19],
   },
-  {
-    id: "bach_counter",
-    title: "Bach Counter",
-    source: "Bach Invention No.1 (BWV 772) motif",
+  chapter3: {
+    id: "chapter3",
+    title: "Voltage Arcade",
     leadWave: "sawtooth",
     harmonyWave: "square",
-    bassWave: "square",
-    tempoRange: { min: 132, max: 140 },
-    leadMotif: [74, 76, 77, 79, 81, 79, 77, 76, 74, 72, 71, 72, 74, 76, 77, 79],
-    bassMotif: [50, null, 57, null, 53, null, 57, null],
-    harmonyIntervals: [-3, -7],
-    counterOffsets: [3, 5, 7, 10],
-    padIntervals: [-3, -7],
-    arrangement: {
-      harmonyDensity: [0.44, 0.68, 0.88],
-      counterDensity: [0.24, 0.42, 0.64],
-      padEverySteps: [16, 8, 4],
-    },
-    transposeByVariant: [0, 1, 3],
-  },
-  {
-    id: "beethoven_drive",
-    title: "Beethoven Drive",
-    source: "Beethoven Symphony No.9 (Ode to Joy) motif",
-    leadWave: "triangle",
-    harmonyWave: "square",
     bassWave: "sawtooth",
-    tempoRange: { min: 142, max: 148 },
-    leadMotif: [76, 76, 77, 79, 79, 77, 76, 74, 72, 72, 74, 76, 74, 72, 72, null],
-    bassMotif: [48, null, 55, null, 52, null, 55, null],
-    harmonyIntervals: [-3, -7],
-    counterOffsets: [12, 7, 5, 7],
-    padIntervals: [-5, -8],
-    arrangement: {
-      harmonyDensity: [0.48, 0.7, 0.9],
-      counterDensity: [0.2, 0.38, 0.58],
-      padEverySteps: [8, 4, 4],
-    },
-    transposeByVariant: [0, 1, 2],
+    tempoBase: 142,
+    tempoStep: 6,
+    leadPattern: [0, 2, 3, 7, 10, 7, 3, 2, 0, 2, 3, 7, 12, 10, 7, 3],
+    chordRoots: [55, 60, 62, 64],
+    chordIntervals: [0, 3, 7, 10],
+    counterOffsets: [12, 7, 10, 14],
+    padIntervals: [0, 7, 10],
+    bassOffsets: [-24, -12, -24, -17],
   },
-] as const;
-
-function clampStageNumber(stageNumber: number): number {
-  if (!Number.isFinite(stageNumber)) {
-    return 1;
-  }
-  return Math.max(1, Math.min(STAGE_COUNT, Math.round(stageNumber)));
-}
-
-function getThemeByStage(stageNumber: number): ThemeDefinition {
-  const stage = clampStageNumber(stageNumber);
-  if (stage <= 3) {
-    return THEMES[0];
-  }
-  if (stage <= 6) {
-    return THEMES[1];
-  }
-  if (stage <= 9) {
-    return THEMES[2];
-  }
-  return THEMES[3];
-}
-
-function getThemeTempo(stageNumber: number): number {
-  const stage = clampStageNumber(stageNumber);
-  const theme = getThemeByStage(stage);
-  const localRatio = ((stage - 1) % 3) / 2;
-  return Math.round(theme.tempoRange.min + (theme.tempoRange.max - theme.tempoRange.min) * localRatio);
-}
-
-function buildTitleTrack(): BgmTrack {
-  const lead = repeatToLength([60, 64, 67, 72, 67, 64, 60, 64, 62, 65, 69, 74, 69, 65, 62, 65], STEP_COUNT);
-  const bass = repeatToLength([48, null, 55, null, 52, null, 55, null], STEP_COUNT);
-  return {
-    id: "title",
-    theme: "Classical Prelude",
-    tempo: 108,
+  midboss: {
+    id: "midboss",
+    title: "Pressure Spark",
+    leadWave: "sawtooth",
+    harmonyWave: "triangle",
+    bassWave: "square",
+    tempoBase: 154,
+    tempoStep: 6,
+    leadPattern: [0, 3, 7, 10, 12, 10, 7, 3, 0, 3, 7, 12, 14, 12, 10, 7],
+    chordRoots: [53, 58, 60, 62],
+    chordIntervals: [0, 3, 7, 10],
+    counterOffsets: [15, 12, 10, 7],
+    padIntervals: [0, 7, 10],
+    bassOffsets: [-24, -19, -24, -17],
+  },
+  finalboss: {
+    id: "finalboss",
+    title: "Neon Breaker Core",
     leadWave: "triangle",
-    harmonyWave: "square",
-    bassWave: "sine",
-    steps: buildSteps(lead, bass, {
-      stageNumber: 1,
-      harmonyIntervals: [-5, -9],
-      counterOffsets: [7, 9, 12, 9],
-      padIntervals: [-5, -9],
-      arrangement: {
-        harmonyDensity: [0.5, 0.5, 0.5],
-        counterDensity: [0.24, 0.24, 0.24],
-        padEverySteps: [8, 8, 8],
-      },
-      leadBaseGain: 0.102,
-      harmonyBaseGain: 0.045,
-      bassBaseGain: 0.072,
-    }),
-  };
-}
+    harmonyWave: "sawtooth",
+    bassWave: "sawtooth",
+    tempoBase: 166,
+    tempoStep: 0,
+    leadPattern: [0, 4, 7, 11, 12, 11, 7, 4, 0, 4, 7, 12, 14, 12, 11, 7],
+    chordRoots: [48, 55, 53, 58],
+    chordIntervals: [0, 4, 7, 10],
+    counterOffsets: [12, 16, 14, 11],
+    padIntervals: [0, 7, 10],
+    bassOffsets: [-24, -12, -17, -12],
+  },
+  ex: {
+    id: "ex",
+    title: "EX Hyper Pop",
+    leadWave: "square",
+    harmonyWave: "triangle",
+    bassWave: "square",
+    tempoBase: 172,
+    tempoStep: 5,
+    leadPattern: [0, 4, 7, 9, 12, 9, 7, 4, 0, 4, 7, 11, 14, 11, 9, 7],
+    chordRoots: [61, 66, 68, 70],
+    chordIntervals: [0, 4, 7, 11],
+    counterOffsets: [14, 11, 9, 7],
+    padIntervals: [0, 7, 11],
+    bassOffsets: [-24, -17, -12, -19],
+  },
+};
 
-function buildStageTrack(stageNumber: number): BgmTrack {
-  const stage = clampStageNumber(stageNumber);
-  const theme = getThemeByStage(stage);
-  const variant = (stage - 1) % 3;
-  const transpose = theme.transposeByVariant[variant] ?? 0;
-  const leadRotation = variant * 2;
-  const bassRotation = variant;
-  const lead = transposeSequence(
-    rotateSequence(repeatToLength(theme.leadMotif, STEP_COUNT), leadRotation),
-    transpose,
-  );
-  const bass = transposeSequence(
-    rotateSequence(repeatToLength(theme.bassMotif, STEP_COUNT), bassRotation),
-    transpose,
-  );
-
-  return {
-    id: `stage-${stage}`,
-    theme: `${theme.title} S${stage} (${theme.source})`,
-    tempo: getThemeTempo(stage),
-    leadWave: theme.leadWave,
-    harmonyWave: theme.harmonyWave,
-    bassWave: theme.bassWave,
-    steps: buildSteps(lead, bass, {
-      stageNumber: stage,
-      harmonyIntervals: theme.harmonyIntervals,
-      counterOffsets: theme.counterOffsets,
-      padIntervals: theme.padIntervals,
-      arrangement: theme.arrangement,
-      leadBaseGain: 0.114,
-      harmonyBaseGain: 0.051,
-      bassBaseGain: 0.082,
-    }),
-  };
-}
-
-interface BuildStepOptions {
-  stageNumber: number;
-  harmonyIntervals: readonly [number, number];
-  counterOffsets: readonly number[];
-  padIntervals: readonly [number, number];
-  arrangement: ThemeDefinition["arrangement"];
-  leadBaseGain: number;
-  harmonyBaseGain: number;
-  bassBaseGain: number;
-}
-
-function buildSteps(
-  leadNotes: readonly MidiNote[],
-  bassNotes: readonly MidiNote[],
-  options: BuildStepOptions,
-): BgmStep[] {
-  const intensity = getStageLocalIntensity(options.stageNumber);
-  const harmonyDensity = options.arrangement.harmonyDensity[intensity];
-  const counterDensity = options.arrangement.counterDensity[intensity];
-  const padEverySteps = options.arrangement.padEverySteps[intensity];
-  const steps: BgmStep[] = [];
-  for (let index = 0; index < STEP_COUNT; index += 1) {
-    const leadMidi = leadNotes[index] ?? undefined;
-    const bassMidi = bassNotes[index] ?? undefined;
-    const accent = index % 8 === 0;
-    const semiAccent = index % 8 === 4;
-    const harmonyMidis = buildHarmonyMidis(
-      leadMidi,
-      bassMidi,
-      index,
-      accent || semiAccent,
-      options.harmonyIntervals,
-      harmonyDensity,
-    );
-    const counterMidi = buildCounterMidi(leadMidi, bassMidi, index, options.counterOffsets, counterDensity);
-    const padMidis = buildPadMidis(leadMidi, bassMidi, index, padEverySteps, options.padIntervals);
-    steps.push({
-      leadMidi,
-      harmonyMidis,
-      counterMidi,
-      padMidis,
-      bassMidi,
-      leadGain: leadMidi
-        ? accent
-          ? options.leadBaseGain + 0.02
-          : semiAccent
-            ? options.leadBaseGain + 0.01
-            : options.leadBaseGain
-        : undefined,
-      harmonyGain:
-        harmonyMidis.length > 0
-          ? accent
-            ? options.harmonyBaseGain + 0.01
-            : options.harmonyBaseGain
-          : undefined,
-      counterGain: typeof counterMidi === "number" ? (semiAccent ? 0.048 : 0.042) : undefined,
-      padGain: padMidis.length > 0 ? (accent ? 0.03 : 0.026) : undefined,
-      bassGain: bassMidi ? (accent ? options.bassBaseGain + 0.008 : options.bassBaseGain) : undefined,
-    });
-  }
-  return steps;
-}
-
-function buildHarmonyMidis(
-  leadMidi: number | undefined,
-  bassMidi: number | undefined,
-  index: number,
-  emphasize: boolean,
-  harmonyIntervals: readonly [number, number],
-  density: number,
-): number[] {
-  if (typeof leadMidi !== "number") {
-    return [];
-  }
-  if (!matchesDensity(index, density, 11)) {
-    return [];
-  }
-  const primary = leadMidi + harmonyIntervals[0];
-  const secondary = leadMidi + harmonyIntervals[1];
-  const candidates = [primary, secondary].filter((midi) => midi >= 40);
-  const filtered = removeBassClashes(candidates, bassMidi);
-  if (emphasize) {
-    return filtered;
-  }
-  if (index % 2 === 0 && filtered.length > 0) {
-    return [filtered[0]];
-  }
-  return [];
-}
-
-function buildCounterMidi(
-  leadMidi: number | undefined,
-  bassMidi: number | undefined,
-  index: number,
-  counterOffsets: readonly number[],
-  density: number,
-): number | undefined {
-  if (typeof leadMidi !== "number" || !matchesDensity(index, density, 29)) {
-    return undefined;
-  }
-  if (index % 2 === 0) {
-    return undefined;
-  }
-  const offset = counterOffsets[index % counterOffsets.length] ?? 7;
-  const candidate = leadMidi + offset;
-  if (candidate < 48) {
-    return undefined;
-  }
-  if (typeof bassMidi === "number" && Math.abs(candidate - bassMidi) < 7) {
-    return candidate + 12;
-  }
-  return candidate;
-}
-
-function buildPadMidis(
-  leadMidi: number | undefined,
-  bassMidi: number | undefined,
-  index: number,
-  everySteps: number,
-  padIntervals: readonly [number, number],
-): number[] {
-  if (typeof leadMidi !== "number" || everySteps <= 0 || index % everySteps !== 0) {
-    return [];
-  }
-  const first = leadMidi + padIntervals[0];
-  const second = leadMidi + padIntervals[1];
-  const candidates = [first, second].filter((midi) => midi >= 40);
-  return removeBassClashes(candidates, bassMidi);
-}
-
-function removeBassClashes(notes: readonly number[], bassMidi: number | undefined): number[] {
-  if (typeof bassMidi !== "number") {
-    return [...notes];
-  }
-  return notes.filter((midi) => Math.abs(midi - bassMidi) >= 5);
-}
-
-function matchesDensity(index: number, density: number, salt: number): boolean {
-  if (density >= 1) {
-    return true;
-  }
-  if (density <= 0) {
-    return false;
-  }
-  const normalized = ((index * 37 + salt * 13) % 100) / 100;
-  return normalized < density;
-}
-
-function getStageLocalIntensity(stageNumber: number): 0 | 1 | 2 {
-  const stage = clampStageNumber(stageNumber);
-  const local = (stage - 1) % STAGE_INTENSITY_COUNT;
-  if (local === 0) {
-    return 0;
-  }
-  if (local === 1) {
-    return 1;
-  }
-  return 2;
-}
-
-function repeatToLength<T>(source: readonly T[], length: number): T[] {
-  if (source.length === 0) {
-    return [];
-  }
-  const result: T[] = [];
-  for (let index = 0; index < length; index += 1) {
-    result.push(source[index % source.length]);
-  }
-  return result;
-}
-
-function rotateSequence(sequence: readonly MidiNote[], offset: number): MidiNote[] {
-  if (sequence.length === 0) {
-    return [];
-  }
-  const normalized = ((offset % sequence.length) + sequence.length) % sequence.length;
-  if (normalized === 0) {
-    return [...sequence];
-  }
-  return [...sequence.slice(normalized), ...sequence.slice(0, normalized)];
-}
-
-function transposeSequence(sequence: readonly MidiNote[], semitone: number): MidiNote[] {
-  if (semitone === 0) {
-    return [...sequence];
-  }
-  return sequence.map((note) => (typeof note === "number" ? note + semitone : null));
-}
-
-const TITLE_TRACK = buildTitleTrack();
-const STAGE_TRACKS = Array.from({ length: STAGE_COUNT }, (_, index) => buildStageTrack(index + 1));
+const TITLE_TRACK: BgmTrack = {
+  id: "title",
+  theme: "Neon Pop Overture",
+  tempo: 118,
+  leadWave: "triangle",
+  harmonyWave: "triangle",
+  bassWave: "sine",
+  steps: buildTrackSteps({
+    leadPattern: [0, 4, 7, 11, 7, 4, 0, 4, 2, 5, 9, 12, 9, 5, 2, 5],
+    chordRoots: [60, 65, 67, 69],
+    chordIntervals: [0, 4, 7, 11],
+    counterOffsets: [7, 11, 9, 12],
+    padIntervals: [0, 7, 11],
+    bassOffsets: [-24, -17, -24, -12],
+    variant: 1,
+  }),
+};
 
 export function getTitleBgmTrack(): BgmTrack {
   return TITLE_TRACK;
 }
 
-export function getStageBgmTrack(stageNumber: number): BgmTrack {
-  return STAGE_TRACKS[clampStageNumber(stageNumber) - 1];
+export function getCueBgmTrack(cue: MusicCue): BgmTrack {
+  if (cue.id === "title") {
+    return TITLE_TRACK;
+  }
+  const definition = CUES[cue.id];
+  const variant = Math.max(1, cue.variant);
+  return {
+    id: `${definition.id}-${variant}`,
+    theme: `${definition.title} v${variant}`,
+    tempo: definition.tempoBase + definition.tempoStep * (variant - 1),
+    leadWave: definition.leadWave,
+    harmonyWave: definition.harmonyWave,
+    bassWave: definition.bassWave,
+    steps: buildTrackSteps({
+      leadPattern: definition.leadPattern,
+      chordRoots: definition.chordRoots,
+      chordIntervals: definition.chordIntervals,
+      counterOffsets: definition.counterOffsets,
+      padIntervals: definition.padIntervals,
+      bassOffsets: definition.bassOffsets,
+      variant,
+    }),
+  };
 }
 
-export function getAllStageBgmTracks(): readonly BgmTrack[] {
-  return STAGE_TRACKS;
+export function getStageBgmTrack(stageNumber: number): BgmTrack {
+  const stage = Math.max(1, Math.min(12, Math.round(stageNumber)));
+  if (stage <= 3) {
+    return getCueBgmTrack({ id: "chapter1", variant: stage });
+  }
+  if (stage === 4) {
+    return getCueBgmTrack({ id: "midboss", variant: 1 });
+  }
+  if (stage <= 7) {
+    return getCueBgmTrack({ id: "chapter2", variant: stage - 4 });
+  }
+  if (stage === 8) {
+    return getCueBgmTrack({ id: "midboss", variant: 2 });
+  }
+  if (stage <= 11) {
+    return getCueBgmTrack({ id: "chapter3", variant: stage - 8 });
+  }
+  return getCueBgmTrack({ id: "finalboss", variant: 1 });
+}
+
+export function getAllStageBgmTracks(): BgmTrack[] {
+  return Array.from({ length: 12 }, (_, index) => getStageBgmTrack(index + 1));
+}
+
+interface StepBuilderInput {
+  leadPattern: readonly (number | null)[];
+  chordRoots: readonly number[];
+  chordIntervals: readonly number[];
+  counterOffsets: readonly number[];
+  padIntervals: readonly number[];
+  bassOffsets: readonly number[];
+  variant: number;
+}
+
+function buildTrackSteps(input: StepBuilderInput): readonly BgmStep[] {
+  return Array.from({ length: STEPS_PER_TRACK }, (_, index) => {
+    const chordIndex = Math.floor(index / 4) % input.chordRoots.length;
+    const root = input.chordRoots[chordIndex] + (input.variant - 1);
+    const leadOffset = input.leadPattern[index % input.leadPattern.length];
+    const strongBeat = index % 4 === 0;
+    const offBeat = index % 4 === 2;
+    return {
+      leadMidi: typeof leadOffset === "number" ? root + leadOffset : undefined,
+      harmonyMidis: strongBeat ? input.chordIntervals.map((interval) => root + interval) : undefined,
+      counterMidi: !strongBeat ? root + input.counterOffsets[index % input.counterOffsets.length] : undefined,
+      padMidis:
+        index % 8 === 0 || (input.variant >= 3 && offBeat)
+          ? input.padIntervals.map((interval) => root + interval - 12)
+          : undefined,
+      bassMidi: index % 2 === 0 ? root + input.bassOffsets[chordIndex % input.bassOffsets.length] : undefined,
+      leadGain: strongBeat ? 0.11 : 0.09,
+      harmonyGain: strongBeat ? 0.072 : 0.056,
+      counterGain: 0.044,
+      padGain: 0.04,
+      bassGain: strongBeat ? 0.094 : 0.078,
+    };
+  });
 }

@@ -38,7 +38,7 @@ export function buildShopUiView(state: GameState): ShopUiView {
     visible: true,
     status,
     cost: purchaseCost,
-    priceBandVisible: false,
+    priceBandVisible: true,
     optionAType: offer[0],
     optionBType: offer[1],
     optionADisabled: !canBuy,

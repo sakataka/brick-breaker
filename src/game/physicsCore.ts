@@ -10,7 +10,6 @@ import {
   shouldLimitPierceRepeatHit,
 } from "./physics/brickCollision";
 import { applyFluxField } from "./physics/fluxField";
-import { updateStickyHold } from "./physics/stickyHold";
 import { normalizeVelocity } from "./physics/velocity";
 import { applyWarpZones } from "./physics/warpZones";
 import type { PhysicsFrameResult, PhysicsInput } from "./physicsTypes";
@@ -34,9 +33,6 @@ export function stepPhysicsCore({
   const pierceDepth = Math.max(0, stepConfig?.pierceDepth ?? 0);
   const bombRadiusTiles = Math.max(0, stepConfig?.bombRadiusTiles ?? 0);
   const explodeOnHit = stepConfig?.explodeOnHit ?? false;
-  const stickyEnabled = stepConfig?.stickyEnabled ?? false;
-  const stickyHoldSec = stepConfig?.stickyHoldSec ?? 0.55;
-  const stickyRecaptureCooldownSec = stepConfig?.stickyRecaptureCooldownSec ?? 1.2;
   const homingStrength = Math.max(0, stepConfig?.homingStrength ?? 0);
   const fluxField = stepConfig?.fluxField ?? false;
   const warpZones = stepConfig?.warpZones ?? [];
@@ -61,20 +57,6 @@ export function stepPhysicsCore({
 
   for (let i = 0; i < iterations; i += 1) {
     ball.warpCooldownSec = Math.max(0, (ball.warpCooldownSec ?? 0) - subDt);
-    ball.stickCooldownSec = Math.max(0, (ball.stickCooldownSec ?? 0) - subDt);
-    if ((ball.stickTimerSec ?? 0) > 0) {
-      updateStickyHold(
-        ball,
-        paddle.x,
-        paddle.y,
-        paddle.width,
-        subDt,
-        initialBallSpeed,
-        balance,
-        maxBallSpeed,
-      );
-      continue;
-    }
     if (homingStrength > 0) {
       applyHomingAssist(ball, bricks, subDt, homingStrength, maxBallSpeed, ITEM_BALANCE.homingAcceleration);
     }
@@ -97,24 +79,6 @@ export function stepPhysicsCore({
     }
 
     if (resolvePaddleCollision(ball, paddle.x, paddle.y, paddle.width, paddle.height)) {
-      if (stickyEnabled && (ball.stickCooldownSec ?? 0) <= 0) {
-        const relativeX = (ball.pos.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2);
-        const impact = Math.max(-1, Math.min(1, relativeX));
-        ball.stickOffsetRatio = impact;
-        ball.stickTimerSec = stickyHoldSec;
-        ball.stickCooldownSec = stickyRecaptureCooldownSec;
-        ball.pos.x = paddle.x + paddle.width / 2 + impact * (paddle.width / 2);
-        ball.pos.y = paddle.y - ball.radius;
-        ball.vel.x = 0;
-        ball.vel.y = 0;
-        result.collision.paddle = true;
-        result.events.push({
-          kind: "paddle",
-          x: ball.pos.x,
-          y: paddle.y,
-        });
-        continue;
-      }
       applyPaddleCollision(ball, paddle.x, paddle.y, paddle.width, initialBallSpeed, balance, maxBallSpeed);
       result.collision.paddle = true;
       result.events.push({

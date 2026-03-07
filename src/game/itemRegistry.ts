@@ -1,4 +1,4 @@
-import { ITEM_BALANCE } from "./config";
+import { ITEM_BALANCE } from "./config/items";
 import { ITEM_ORDER, ITEM_REGISTRY } from "./itemRegistryData";
 import type {
   ItemDefinition,
@@ -16,7 +16,12 @@ export { ITEM_REGISTRY } from "./itemRegistryData";
 export interface ActiveItemEntry {
   type: ItemType;
   count: number;
-  emoji: string;
+}
+
+export interface StartSettingsItemEntry {
+  type: ItemType;
+  icon: string;
+  color: string;
 }
 
 export interface ItemPickupPolicyOptions {
@@ -27,7 +32,7 @@ export interface ItemPickupPolicyOptions {
 
 export interface DebugPresetOptions {
   enableNewItemStacks: boolean;
-  stickyItemEnabled: boolean;
+  enabledItems: readonly ItemType[];
 }
 
 const EMPTY_ITEM_STACKS: ItemStackState = {
@@ -38,10 +43,11 @@ const EMPTY_ITEM_STACKS: ItemStackState = {
   pierceStacks: 0,
   bombStacks: 0,
   laserStacks: 0,
-  stickyStacks: 0,
   homingStacks: 0,
   railStacks: 0,
   shockwaveStacks: 0,
+  pulseStacks: 0,
+  decoyStacks: 0,
 };
 
 export function createItemStacks(): ItemStackState {
@@ -88,11 +94,12 @@ export function applyDebugPresetFromRegistry(
   options: DebugPresetOptions,
 ): void {
   items.active = createItemStacks();
+  const enabled = new Set(options.enabledItems);
   if (preset === "none") {
     return;
   }
   for (const type of ITEM_ORDER) {
-    if (type === "sticky" && !options.stickyItemEnabled) {
+    if (!enabled.has(type)) {
       continue;
     }
     const definition = ITEM_REGISTRY[type];
@@ -131,7 +138,6 @@ export function createItemModifiers(
     explodeOnHit: stacks.bombStacks > 0,
     shieldCharges: stacks.shieldCharges,
     laserLevel: Math.min(2, stacks.laserStacks),
-    stickyEnabled: stacks.stickyStacks > 0,
     homingStrength: (ITEM_BALANCE.homingMaxStrength * homingLevel) / 2,
     railLevel,
   };
@@ -141,12 +147,15 @@ export function getActiveItemEntriesFromRegistry(stacks: ItemStackState): Active
   return getRegistryByHudOrder().map((definition) => ({
     type: definition.type,
     count: getItemStackCount(stacks, definition.type),
-    emoji: definition.emoji,
   }));
 }
 
 export function getItemEmoji(type: ItemType): string {
   return ITEM_REGISTRY[type].emoji;
+}
+
+export function getItemIcon(type: ItemType): string {
+  return ITEM_REGISTRY[type].icon;
 }
 
 export function getItemColor(type: ItemType): string {
@@ -189,6 +198,16 @@ export function pickWeightedItemType(random: RandomSource, excludedTypes: ItemTy
   }
 
   return selectable[selectable.length - 1];
+}
+
+export function getStartSettingsItemEntries(): StartSettingsItemEntry[] {
+  return ITEM_ORDER.map((type) => ITEM_REGISTRY[type])
+    .sort((a, b) => a.startSettingsVisibleOrder - b.startSettingsVisibleOrder)
+    .map((definition) => ({
+      type: definition.type,
+      icon: definition.icon,
+      color: definition.color,
+    }));
 }
 
 export function validateItemRegistry(registry: ItemRegistry = ITEM_REGISTRY): {

@@ -1,4 +1,4 @@
-import type { ItemType, Scene } from "./model";
+import type { ItemType, MusicCue, Scene } from "./model";
 
 export interface RenderPort<TViewState = unknown> {
   render(viewState: TViewState): void;
@@ -14,7 +14,7 @@ export interface AudioPort {
   unlock(): Promise<void>;
   setSettings(input: { bgmEnabled: boolean; sfxEnabled: boolean }): void;
   syncScene(scene: Scene, previousScene: Scene): void;
-  notifyStageChanged(stageIndex: number): void;
+  notifyStageChanged(cue: MusicCue): void;
   playItemPickup(itemType: ItemType): void;
   playComboFill(): void;
   playMagicCast(): void;

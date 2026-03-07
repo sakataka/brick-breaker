@@ -11,10 +11,11 @@ export type EventName =
   | "item_pierce"
   | "item_bomb"
   | "item_laser"
-  | "item_sticky"
   | "item_homing"
   | "item_rail"
   | "item_shockwave"
+  | "item_pulse"
+  | "item_decoy"
   | "shield_burst"
   | "magic_cast"
   | "combo_fill"
@@ -130,10 +131,6 @@ export class SfxManager {
         { freq: 920, type: "square", durationMs: 70, gain: 0.07 },
         { freq: 1260, type: "square", durationMs: 90, gain: 0.07 },
       ],
-      item_sticky: [
-        { freq: 430, type: "triangle", durationMs: 80, gain: 0.065 },
-        { freq: 520, type: "triangle", durationMs: 120, gain: 0.065 },
-      ],
       item_homing: [
         { freq: 740, type: "triangle", durationMs: 90, gain: 0.07 },
         { freq: 880, type: "triangle", durationMs: 110, gain: 0.068 },
@@ -143,6 +140,14 @@ export class SfxManager {
         { freq: 260, type: "sawtooth", durationMs: 120, gain: 0.085 },
         { freq: 520, type: "triangle", durationMs: 120, gain: 0.075 },
         { freq: 840, type: "triangle", durationMs: 140, gain: 0.07 },
+      ],
+      item_pulse: [
+        { freq: 540, type: "triangle", durationMs: 90, gain: 0.075 },
+        { freq: 920, type: "triangle", durationMs: 110, gain: 0.07 },
+      ],
+      item_decoy: [
+        { freq: 420, type: "triangle", durationMs: 120, gain: 0.07 },
+        { freq: 760, type: "sine", durationMs: 140, gain: 0.065 },
       ],
       shield_burst: [
         { freq: 300, type: "sawtooth", durationMs: 100, gain: 0.07 },

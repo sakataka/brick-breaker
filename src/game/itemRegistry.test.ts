@@ -15,7 +15,7 @@ describe("itemRegistry", () => {
   test("includes all item definitions with valid weights", () => {
     const result = validateItemRegistry();
     expect(result.valid).toBe(true);
-    expect(Object.keys(ITEM_REGISTRY)).toHaveLength(11);
+    expect(Object.keys(ITEM_REGISTRY)).toHaveLength(12);
   });
 
   test("detects invalid definition shape", () => {
@@ -40,7 +40,6 @@ describe("itemRegistry", () => {
     stacks.pierceStacks = 2;
     stacks.bombStacks = 1;
     stacks.laserStacks = 3;
-    stacks.stickyStacks = 1;
     stacks.homingStacks = 2;
     stacks.railStacks = 2;
 
@@ -53,7 +52,6 @@ describe("itemRegistry", () => {
     expect(modifiers.bombRadiusTiles).toBe(1);
     expect(modifiers.explodeOnHit).toBe(true);
     expect(modifiers.laserLevel).toBe(2);
-    expect(modifiers.stickyEnabled).toBe(true);
     expect(modifiers.homingStrength).toBeGreaterThan(0);
     expect(modifiers.railLevel).toBe(2);
   });

@@ -1,16 +1,21 @@
-import { GAME_CONFIG, type SpeedPreset, STAGE_CATALOG } from "./config";
+import { GAME_CONFIG, type SpeedPreset } from "./config/gameplay";
+import { STAGE_CATALOG } from "./config/stages";
 import { validateStageCatalog } from "./configSchema";
+import { ITEM_ORDER } from "./itemRegistryData";
 import type {
+  CampaignCourse,
   DebugItemPreset,
   DebugScenario,
   Difficulty,
   GameMode,
+  ItemType,
   RoutePreference,
   StageDefinition,
 } from "./types";
 
 export interface GameSettings {
   gameMode: GameMode;
+  campaignCourse: CampaignCourse;
   difficulty: Difficulty;
   initialLives: number;
   speedPreset: SpeedPreset;
@@ -18,7 +23,7 @@ export interface GameSettings {
   multiballMaxBalls: number;
   riskMode: boolean;
   enableNewItemStacks: boolean;
-  stickyItemEnabled: boolean;
+  enabledItems: ItemType[];
   ghostReplayEnabled: boolean;
   debugModeEnabled: boolean;
   debugStartStage: number;
@@ -26,7 +31,6 @@ export interface GameSettings {
   debugItemPreset: DebugItemPreset;
   debugRecordResults: boolean;
   challengeMode: boolean;
-  dailyMode: boolean;
   challengeSeedCode: string;
   customStageJsonEnabled: boolean;
   customStageJson: string;
@@ -45,6 +49,7 @@ export interface SelectOption<T extends string | number> {
 
 export interface StartSettingsOptionCatalog {
   gameMode: readonly SelectOption<GameMode>[];
+  campaignCourse: readonly SelectOption<CampaignCourse>[];
   difficulty: readonly SelectOption<Difficulty>[];
   initialLives: readonly SelectOption<number>[];
   speedPreset: readonly SelectOption<SpeedPreset>[];
@@ -58,6 +63,7 @@ export interface StartSettingsOptionCatalog {
 
 type SelectFieldKey =
   | "gameMode"
+  | "campaignCourse"
   | "difficulty"
   | "initialLives"
   | "speedPreset"
@@ -70,10 +76,8 @@ type SelectFieldKey =
 
 type ToggleFieldKey =
   | "challengeMode"
-  | "dailyMode"
   | "riskMode"
   | "enableNewItemStacks"
-  | "stickyItemEnabled"
   | "ghostReplayEnabled"
   | "bgmEnabled"
   | "sfxEnabled"
@@ -93,6 +97,7 @@ export interface StartSettingsToggleField<K extends ToggleFieldKey = ToggleField
 
 export const START_SETTINGS_OPTIONS: StartSettingsOptionCatalog = {
   gameMode: [{ value: "campaign" }, { value: "endless" }, { value: "boss_rush" }] as const,
+  campaignCourse: [{ value: "normal" }, { value: "ex" }] as const,
   difficulty: [{ value: "casual" }, { value: "standard" }, { value: "hard" }] as const,
   initialLives: [1, 2, 3, 4, 5, 6].map((value) => ({ value })),
   speedPreset: [{ value: "0.75" }, { value: "1.00" }, { value: "1.25" }] as const,
@@ -106,6 +111,7 @@ export const START_SETTINGS_OPTIONS: StartSettingsOptionCatalog = {
 
 export const START_SETTINGS_DEFAULT: StartSettingsSelection = {
   gameMode: "campaign",
+  campaignCourse: "normal",
   difficulty: "standard",
   initialLives: GAME_CONFIG.initialLives,
   speedPreset: "1.00",
@@ -113,7 +119,7 @@ export const START_SETTINGS_DEFAULT: StartSettingsSelection = {
   multiballMaxBalls: GAME_CONFIG.multiballMaxBalls,
   riskMode: false,
   enableNewItemStacks: false,
-  stickyItemEnabled: false,
+  enabledItems: [...ITEM_ORDER],
   ghostReplayEnabled: false,
   debugModeEnabled: false,
   debugStartStage: 1,
@@ -121,7 +127,6 @@ export const START_SETTINGS_DEFAULT: StartSettingsSelection = {
   debugItemPreset: "none",
   debugRecordResults: false,
   challengeMode: false,
-  dailyMode: false,
   challengeSeedCode: "",
   customStageJsonEnabled: false,
   customStageJson: "",
@@ -131,6 +136,7 @@ export const START_SETTINGS_DEFAULT: StartSettingsSelection = {
 
 export const BASIC_SELECT_FIELDS: readonly StartSettingsSelectField[] = [
   { id: "setting-mode", field: "gameMode", optionsKey: "gameMode" },
+  { id: "setting-campaign-course", field: "campaignCourse", optionsKey: "campaignCourse" },
   { id: "setting-difficulty", field: "difficulty", optionsKey: "difficulty" },
   { id: "setting-lives", field: "initialLives", optionsKey: "initialLives" },
   { id: "setting-speed", field: "speedPreset", optionsKey: "speedPreset" },
@@ -140,10 +146,8 @@ export const BASIC_SELECT_FIELDS: readonly StartSettingsSelectField[] = [
 
 export const BASIC_TOGGLE_FIELDS: readonly StartSettingsToggleField[] = [
   { id: "setting-challenge-mode", field: "challengeMode" },
-  { id: "setting-daily-mode", field: "dailyMode" },
   { id: "setting-risk-mode", field: "riskMode" },
   { id: "setting-new-item-stacks", field: "enableNewItemStacks" },
-  { id: "setting-sticky-item-enabled", field: "stickyItemEnabled" },
   { id: "setting-ghost-replay-enabled", field: "ghostReplayEnabled" },
   { id: "setting-bgm-enabled", field: "bgmEnabled" },
   { id: "setting-sfx-enabled", field: "sfxEnabled" },
@@ -163,6 +167,23 @@ export function buildStartSettingsPatch<K extends keyof StartSettingsSelection>(
   return {
     [field]: coerceStartSettingsValue(field, value),
   } as Partial<StartSettingsSelection>;
+}
+
+export function toggleEnabledItem(
+  selected: Pick<StartSettingsSelection, "enabledItems">,
+  itemType: ItemType,
+  checked: boolean,
+): Partial<StartSettingsSelection> {
+  const current = normalizeEnabledItems(selected.enabledItems);
+  if (checked) {
+    return {
+      enabledItems: current.includes(itemType) ? current : [...current, itemType],
+    };
+  }
+  const next = current.filter((type) => type !== itemType);
+  return {
+    enabledItems: next.length > 0 ? next : current,
+  };
 }
 
 export function getDefaultCustomStageJson(): string {
@@ -204,10 +225,8 @@ function coerceStartSettingsValue<K extends keyof StartSettingsSelection>(
     case "debugRecordResults":
       return (value === true || value === "true") as StartSettingsSelection[K];
     case "challengeMode":
-    case "dailyMode":
     case "riskMode":
     case "enableNewItemStacks":
-    case "stickyItemEnabled":
     case "ghostReplayEnabled":
     case "bgmEnabled":
     case "sfxEnabled":
@@ -216,6 +235,8 @@ function coerceStartSettingsValue<K extends keyof StartSettingsSelection>(
       return Boolean(value) as StartSettingsSelection[K];
     case "challengeSeedCode":
       return String(value).trim() as StartSettingsSelection[K];
+    case "enabledItems":
+      return normalizeEnabledItems(Array.isArray(value) ? value : []) as StartSettingsSelection[K];
     case "customStageJson":
       return String(value) as StartSettingsSelection[K];
     default:
@@ -226,4 +247,9 @@ function coerceStartSettingsValue<K extends keyof StartSettingsSelection>(
 function parseIntegerSetting(value: string | boolean, fallback: number): number {
   const parsed = Number.parseInt(String(value), 10);
   return Number.isNaN(parsed) ? fallback : parsed;
+}
+
+function normalizeEnabledItems(value: readonly ItemType[]): ItemType[] {
+  const filtered = ITEM_ORDER.filter((type) => value.includes(type));
+  return filtered.length > 0 ? filtered : [...ITEM_ORDER];
 }

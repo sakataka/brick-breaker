@@ -8,10 +8,11 @@ export interface ItemStackState {
   pierceStacks: number;
   bombStacks: number;
   laserStacks: number;
-  stickyStacks: number;
   homingStacks: number;
   railStacks: number;
   shockwaveStacks: number;
+  pulseStacks: number;
+  decoyStacks: number;
 }
 
 export interface ItemEffectContext {
@@ -35,7 +36,6 @@ export interface ItemModifierBundle {
   explodeOnHit: boolean;
   shieldCharges: number;
   laserLevel: number;
-  stickyEnabled: boolean;
   homingStrength: number;
   railLevel: number;
 }
@@ -45,6 +45,7 @@ export interface ItemDefinition {
   stackKey: keyof ItemStackState;
   label: string;
   hudLabel: string;
+  icon: string;
   emoji: string;
   description: string;
   shortLabel: string;
@@ -53,6 +54,9 @@ export interface ItemDefinition {
   maxStacks: number;
   dropSuppressedWhenActive: boolean;
   hudOrder: number;
+  startSettingsVisibleOrder: number;
+  roleTag: "attack" | "defense" | "control";
+  encounterBias?: "midboss" | "boss" | "any";
   sfxEvent: ItemPickupSfxEvent;
   presentation: ItemPickupPresentation;
   respectsNewStackSetting?: boolean;
@@ -81,10 +85,11 @@ export type ItemPickupSfxEvent =
   | "item_pierce"
   | "item_bomb"
   | "item_laser"
-  | "item_sticky"
   | "item_homing"
   | "item_rail"
-  | "item_shockwave";
+  | "item_shockwave"
+  | "item_pulse"
+  | "item_decoy";
 
 export interface ItemPickupPresentation {
   flashMs: number;
