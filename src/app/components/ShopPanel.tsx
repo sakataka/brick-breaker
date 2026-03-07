@@ -1,18 +1,39 @@
 import type { ReactElement } from "react";
+import { getItemEmoji } from "../../game/itemRegistry";
+import { type AppLocale, formatPoints, getItemTranslation, getLL } from "../../i18n";
 import type { ShopViewState } from "../store";
 
 export interface ShopPanelProps {
+  locale: AppLocale;
   shop: ShopViewState;
   onSelect: (index: 0 | 1) => void;
 }
 
-export function ShopPanel({ shop, onSelect }: ShopPanelProps): ReactElement {
+export function ShopPanel({ locale, shop, onSelect }: ShopPanelProps): ReactElement {
+  const LL = getLL(locale);
   const className = shop.visible ? "shop-panel" : "shop-panel shop-panel-hidden";
+  const statusText =
+    shop.status === "purchased"
+      ? LL.shop.status.purchased()
+      : shop.status === "one_time"
+        ? LL.shop.status.oneTime()
+        : LL.shop.title();
+  const optionALabel =
+    shop.optionAType === null
+      ? LL.shop.choiceA()
+      : `${getItemEmoji(shop.optionAType)} ${getItemTranslation(LL, shop.optionAType).name()}`;
+  const optionBLabel =
+    shop.optionBType === null
+      ? LL.shop.choiceB()
+      : `${getItemEmoji(shop.optionBType)} ${getItemTranslation(LL, shop.optionBType).name()}`;
+
   return (
     <div id="shop-panel" className={className}>
-      <p id="shop-status">{shop.status}</p>
-      <p id="shop-cost">価格: {shop.currentCostText}</p>
-      {shop.priceBandText ? <p id="shop-price-band">{shop.priceBandText}</p> : null}
+      <p id="shop-status">{statusText}</p>
+      <p id="shop-cost">
+        {LL.shop.price()}: {formatPoints(locale, shop.cost)}
+      </p>
+      {shop.priceBandVisible ? <p id="shop-price-band">-</p> : null}
       <div className="shop-buttons">
         <button
           id="shop-option-a"
@@ -22,7 +43,7 @@ export function ShopPanel({ shop, onSelect }: ShopPanelProps): ReactElement {
             onSelect(0);
           }}
         >
-          {shop.optionALabel}
+          {optionALabel}
         </button>
         <button
           id="shop-option-b"
@@ -32,7 +53,7 @@ export function ShopPanel({ shop, onSelect }: ShopPanelProps): ReactElement {
             onSelect(1);
           }}
         >
-          {shop.optionBLabel}
+          {optionBLabel}
         </button>
       </div>
     </div>

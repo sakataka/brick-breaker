@@ -69,7 +69,8 @@ describe("new feedback effects", () => {
     spawnItemPickupFeedback(vfx, "shield", 90, 160);
 
     expect(vfx.floatingTexts).toHaveLength(1);
-    expect(vfx.floatingTexts[0]?.text).toContain("シールド");
+    expect(vfx.floatingTexts[0]?.key).toBe("item_pickup");
+    expect(vfx.floatingTexts[0]?.itemType).toBe("shield");
     expect(vfx.impactRings).toHaveLength(1);
   });
 

@@ -24,7 +24,7 @@ import {
 } from "./session/startSettings";
 import { syncViewPorts } from "./session/viewSync";
 import { createInitialGameState } from "./stateFactory";
-import type { GameAudioSettings, GameConfig, GameState, RandomSource, Scene } from "./types";
+import type { GameAudioSettings, GameConfig, GameState, RandomSource, RuntimeErrorKey, Scene } from "./types";
 
 export interface GameSessionDeps {
   config?: Partial<GameConfig>;
@@ -127,7 +127,7 @@ export class GameSession {
       this.audioPort.notifyStageChanged(this.state.campaign.stageIndex);
       this.audioPort.syncScene(this.state.scene, this.state.scene);
       this.syncViewPorts();
-    }, "初期化中に問題が発生しました。");
+    }, "initialization");
   }
 
   start(): void {
@@ -137,7 +137,7 @@ export class GameSession {
     this.runSafely(() => {
       this.isRunning = true;
       this.syncViewPorts();
-    }, "ゲーム開始時に問題が発生しました。");
+    }, "gameStart");
   }
 
   destroy(): void {
@@ -167,10 +167,10 @@ export class GameSession {
           return;
         }
         void this.audioPort.unlock().catch(() => {});
-        this.runSafely(() => this.startOrResume(), "開始処理に失敗しました。");
+        this.runSafely(() => this.startOrResume(), "startAction");
       },
       shopOption: (index) => {
-        this.runSafely(() => this.purchaseShopOption(index), "ショップ購入に失敗しました。");
+        this.runSafely(() => this.purchaseShopOption(index), "shopPurchase");
       },
     });
   }
@@ -267,11 +267,7 @@ export class GameSession {
       );
       this.syncViewPorts();
     } catch (error) {
-      this.setRuntimeError(
-        error instanceof Error && error.message
-          ? `実行中にエラーが発生しました。 (${error.message})`
-          : "実行中にエラーが発生しました。",
-      );
+      this.setRuntimeError("runtime", error instanceof Error && error.message ? error.message : undefined);
     }
   };
 
@@ -355,19 +351,23 @@ export class GameSession {
     this.adjustCanvasScale();
   }
 
-  private runSafely(action: () => void, fallbackMessage: string): void {
+  private runSafely(action: () => void, fallbackMessage: RuntimeErrorKey): void {
     try {
       action();
     } catch (error) {
       this.setRuntimeError(
-        error instanceof Error && error.message ? `${fallbackMessage} (${error.message})` : fallbackMessage,
+        fallbackMessage,
+        error instanceof Error && error.message ? error.message : undefined,
       );
     }
   }
 
-  private setRuntimeError(message: string): void {
+  private setRuntimeError(key: RuntimeErrorKey, detail?: string): void {
     this.isRunning = false;
-    this.state.errorMessage = message;
+    this.state.error = {
+      key,
+      detail,
+    };
     const result = this.transition({ type: "RUNTIME_ERROR" });
     this.syncAudioForTransition(result);
     try {

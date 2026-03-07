@@ -9,6 +9,12 @@ import type {
 } from "./itemTypes";
 import type { Ball, ItemState, ItemType, RandomSource } from "./types";
 
+export interface ActiveItemEntry {
+  type: ItemType;
+  count: number;
+  emoji: string;
+}
+
 const ITEM_TYPE_ORDER = [
   "paddle_plus",
   "slow_ball",
@@ -265,17 +271,17 @@ export function createItemModifiers(
   };
 }
 
-export function getActiveItemLabelsFromRegistry(stacks: ItemStackState): string[] {
-  const labels: string[] = [];
+export function getActiveItemEntriesFromRegistry(stacks: ItemStackState): ActiveItemEntry[] {
+  const labels: ActiveItemEntry[] = [];
   for (const definition of getRegistryByHudOrder()) {
     const count = getStackCount(stacks, definition.type);
-    labels.push(`${definition.hudLabel}×${count}`);
+    labels.push({
+      type: definition.type,
+      count,
+      emoji: definition.emoji,
+    });
   }
   return labels;
-}
-
-export function getItemShortLabel(type: ItemType): string {
-  return ITEM_REGISTRY[type].shortLabel;
 }
 
 export function getItemEmoji(type: ItemType): string {

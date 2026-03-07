@@ -33,16 +33,24 @@ const BASE_OVERLAY: OverlayViewModel = {
   scene: "start",
   score: 0,
   lives: 4,
-  stageLabel: "ステージ 1 / 12",
+  stage: {
+    mode: "campaign",
+    current: 1,
+    total: 12,
+    debugModeEnabled: false,
+    debugRecordResults: false,
+  },
 };
 
 function render(settings: StartSettingsSelection, overlay: OverlayViewModel): string {
   return renderToStaticMarkup(
     <OverlayRoot
+      locale="ja"
       overlay={overlay}
       startSettings={settings}
       rogueSelection="score_core"
       onStartSettingsChange={() => {}}
+      onLocaleChange={() => {}}
       onRogueSelectionChange={() => {}}
       onPrimaryAction={() => {}}
     />,
@@ -55,9 +63,9 @@ describe("OverlayRoot", () => {
     expect(markup).toContain("overlay-card-layout");
     expect(markup).toContain("overlay-settings-scroll");
     expect(markup).toContain("overlay-fixed-footer");
+    expect(markup).not.toContain('value="pseudo"');
     expect(markup).toContain('id="setting-sticky-item-enabled"');
-    expect(markup).toContain('id="app-summary-pdf-link"');
-    expect(markup).toContain('href="/docs/brick-breaker-app-summary.pdf"');
+    expect(markup).not.toContain('id="app-summary-pdf-link"');
   });
 
   test("debug options remain collapsed when debug mode is OFF", () => {

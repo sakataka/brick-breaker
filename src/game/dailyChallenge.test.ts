@@ -10,7 +10,7 @@ describe("dailyChallenge", () => {
 
     expect(a.key).toBe("2026-02-14");
     expect(a.seed).toBe(b.seed);
-    expect(a.objective).toBe(b.objective);
+    expect(a.objectiveKey).toBe(b.objectiveKey);
   });
 
   test("changes seed by date", () => {

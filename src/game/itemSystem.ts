@@ -3,7 +3,7 @@ import {
   applyItemPickupFromRegistry,
   createItemModifiers,
   createItemStacks,
-  getActiveItemLabelsFromRegistry,
+  getActiveItemEntriesFromRegistry,
   getDropSuppressedTypes,
   pickWeightedItemType,
 } from "./itemRegistry";
@@ -290,8 +290,8 @@ export function ensureMultiballCount(
   return next;
 }
 
-export function getActiveItemLabels(items: ItemState): string[] {
-  return getActiveItemLabelsFromRegistry(items.active);
+export function getActiveItemEntries(items: ItemState) {
+  return getActiveItemEntriesFromRegistry(items.active);
 }
 
 export function syncMultiballStacksWithBallCount(items: ItemState, balls: Ball[]): void {

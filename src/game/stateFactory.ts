@@ -157,6 +157,6 @@ export function createInitialGameState(
       reducedMotion,
       highContrast,
     },
-    errorMessage: null,
+    error: null,
   };
 }

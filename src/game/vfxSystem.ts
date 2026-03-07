@@ -87,7 +87,8 @@ export function spawnItemPickupFeedback(vfx: VfxState, type: ItemType, x: number
 
   const lifeMs = vfx.reducedMotion ? 420 : 760;
   const text: FloatingText = {
-    text: item.label,
+    key: "item_pickup",
+    itemType: type,
     pos: { x, y: y - 8 },
     lifeMs,
     maxLifeMs: lifeMs,

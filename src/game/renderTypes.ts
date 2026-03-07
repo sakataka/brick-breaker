@@ -1,6 +1,18 @@
-import type { ThemeBandId } from "./config";
+import type { StageModifierKey, ThemeBandId } from "./config";
 import type { StageMissionStatus } from "./runtimeTypes";
-import type { Ball, Brick, FallingItem, FloatingText, ImpactRing, Particle, Scene, Vector2 } from "./types";
+import type {
+  Ball,
+  Brick,
+  FallingItem,
+  FloatingText,
+  ImpactRing,
+  ItemType,
+  Particle,
+  RuntimeErrorKey,
+  Scene,
+  StageRoute,
+  Vector2,
+} from "./types";
 
 export interface RenderViewState {
   scene: Scene;
@@ -45,7 +57,7 @@ export interface RenderViewState {
     y: number;
   }>;
   fluxFieldActive: boolean;
-  stageModifierLabel?: string;
+  stageModifierKey?: StageModifierKey;
   warpZones?: Array<{
     inXMin: number;
     inXMax: number;
@@ -61,38 +73,76 @@ export interface RenderViewState {
   };
 }
 
+export interface HudActiveItemView {
+  type: ItemType;
+  count: number;
+  emoji: string;
+}
+
 export interface HudViewModel {
-  scoreText: string;
-  livesText: string;
-  timeText: string;
-  stageText: string;
-  comboText: string;
+  score: number;
+  lives: number;
+  elapsedSec: number;
+  comboMultiplier: number;
+  stage: {
+    mode: "campaign" | "endless" | "boss_rush";
+    current: number;
+    total: number;
+    route: StageRoute | null;
+    modifierKey?: StageModifierKey;
+    boss?: {
+      hp: number;
+      maxHp: number;
+      phase: 1 | 2;
+    };
+    debugModeEnabled: boolean;
+    debugRecordResults: boolean;
+  };
+  activeItems: HudActiveItemView[];
+  flags: {
+    hazardBoostActive: boolean;
+    pierceSlowSynergy: boolean;
+    riskMode: boolean;
+    rogueUpgradesTaken: number;
+    rogueUpgradeCap: number;
+    magicCooldownSec: number;
+    warpLegendVisible: boolean;
+  };
   progressRatio: number;
-  itemsText: string;
   accentColor: string;
+}
+
+export interface OverlayStageView {
+  mode: "campaign" | "endless" | "boss_rush";
+  current: number;
+  total: number;
+  debugModeEnabled: boolean;
+  debugRecordResults: boolean;
 }
 
 export interface OverlayViewModel {
   scene: Scene;
   score: number;
   lives: number;
-  clearTime?: string;
-  errorMessage?: string;
-  debugBadge?: string;
-  stageLabel: string;
+  stage: OverlayStageView;
+  clearElapsedSec?: number;
+  error?: {
+    key: RuntimeErrorKey;
+    detail?: string;
+  };
   stageResult?: StageResultView;
   campaignResults?: StageResultSummaryView[];
   rogueOffer?: RogueOfferView;
-  storyText?: string;
+  storyStageNumber?: number;
 }
 
 export interface StageResultView {
   stars: 1 | 2 | 3;
   ratingScore: number;
-  clearTime: string;
+  clearTimeSec: number;
   hitsTaken: number;
   livesLeft: number;
-  missionTargetTime: string;
+  missionTargetSec: number;
   missionAchieved: boolean;
   missionResults: StageMissionStatus[];
 }
@@ -101,9 +151,9 @@ export interface StageResultSummaryView {
   stageNumber: number;
   stars: 1 | 2 | 3;
   ratingScore: number;
-  clearTime: string;
+  clearTimeSec: number;
   livesLeft: number;
-  missionTargetTime: string;
+  missionTargetSec: number;
   missionAchieved: boolean;
   missionResults: StageMissionStatus[];
 }

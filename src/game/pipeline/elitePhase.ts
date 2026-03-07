@@ -73,7 +73,7 @@ function spawnSplitChildren(
     return;
   }
   state.vfx.floatingTexts.push({
-    text: "SPLIT!",
+    key: "split",
     pos: { x: centerX, y: childY + childHeight / 2 },
     lifeMs: 420,
     maxLifeMs: 420,
@@ -125,7 +125,7 @@ function spawnSummonedEnemy(state: GameState, event: CollisionEvent, random: Ran
     alive: true,
   });
   state.vfx.floatingTexts.push({
-    text: "SUMMON",
+    key: "summon",
     pos: { x: event.x, y: event.y + 20 },
     lifeMs: 360,
     maxLifeMs: 360,
@@ -142,7 +142,7 @@ function applyThornsRetaliation(state: GameState): void {
   state.vfx.shakeMs = Math.max(state.vfx.shakeMs, 55);
   state.vfx.shakePx = Math.max(state.vfx.shakePx, 2);
   state.vfx.floatingTexts.push({
-    text: "THORNS!",
+    key: "thorns",
     pos: { x: state.paddle.x + state.paddle.width / 2, y: state.paddle.y - 16 },
     lifeMs: 320,
     maxLifeMs: 320,

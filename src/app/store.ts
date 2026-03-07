@@ -9,6 +9,7 @@ import type {
   RogueUpgradeType,
   RoutePreference,
 } from "../game/types";
+import { type AppLocale, initializeLocale, setCurrentLocale } from "../i18n";
 
 export interface GameSettings {
   gameMode: GameMode;
@@ -42,7 +43,6 @@ export interface StartSettingsSelection extends GameSettings, AudioSettings {}
 
 export interface SelectOption<T extends string | number> {
   value: T;
-  label: string;
 }
 
 export interface StartSettingsOptionCatalog {
@@ -64,11 +64,11 @@ export interface UiOverlayState {
 
 export interface ShopViewState {
   visible: boolean;
-  status: string;
-  currentCostText: string;
-  priceBandText: string;
-  optionALabel: string;
-  optionBLabel: string;
+  status: "hidden" | "one_time" | "purchased";
+  cost: number;
+  priceBandVisible: boolean;
+  optionAType: import("../game/types").ItemType | null;
+  optionBType: import("../game/types").ItemType | null;
   optionADisabled: boolean;
   optionBDisabled: boolean;
 }
@@ -83,26 +83,46 @@ interface AppStoreState {
   overlay: UiOverlayState;
   shop: ShopViewState;
   startSettings: StartSettingsSelection;
+  locale: AppLocale;
   rogueSelection: RogueUpgradeType;
   handlers: UiHandlers;
   setHud: (hud: HudViewModel) => void;
   setOverlayModel: (model: OverlayViewModel) => void;
   setShop: (shop: ShopViewState) => void;
   setStartSettings: (patch: Partial<StartSettingsSelection>) => void;
+  setLocale: (locale: AppLocale) => void;
   setRogueSelection: (selection: RogueUpgradeType) => void;
   setHandlers: (handlers: Partial<UiHandlers>) => void;
   triggerPrimaryAction: () => void;
   triggerShopOption: (index: 0 | 1) => void;
 }
 
+const initialLocale = typeof window === "undefined" ? "ja" : initializeLocale(window);
+
 const DEFAULT_HUD: HudViewModel = {
-  scoreText: "スコア: 0",
-  livesText: "残機: 4",
-  timeText: "時間: 00:00",
-  stageText: "ステージ: 1/12",
-  comboText: "コンボ x1.00",
+  score: 0,
+  lives: 4,
+  elapsedSec: 0,
+  comboMultiplier: 1,
+  stage: {
+    mode: "campaign",
+    current: 1,
+    total: 12,
+    route: null,
+    debugModeEnabled: false,
+    debugRecordResults: false,
+  },
+  activeItems: [],
+  flags: {
+    hazardBoostActive: false,
+    pierceSlowSynergy: false,
+    riskMode: false,
+    rogueUpgradesTaken: 0,
+    rogueUpgradeCap: 3,
+    magicCooldownSec: 0,
+    warpLegendVisible: false,
+  },
   progressRatio: 0,
-  itemsText: "アイテム: -",
   accentColor: "#29d3ff",
 };
 
@@ -110,61 +130,37 @@ const DEFAULT_OVERLAY: OverlayViewModel = {
   scene: "start",
   score: 0,
   lives: 4,
-  stageLabel: "ステージ 1 / 12",
+  stage: {
+    mode: "campaign",
+    current: 1,
+    total: 12,
+    debugModeEnabled: false,
+    debugRecordResults: false,
+  },
 };
 
 const DEFAULT_SHOP: ShopViewState = {
   visible: false,
-  status: "ショップ",
-  currentCostText: "0点",
-  priceBandText: "",
-  optionALabel: "選択肢A",
-  optionBLabel: "選択肢B",
+  status: "hidden",
+  cost: 0,
+  priceBandVisible: false,
+  optionAType: null,
+  optionBType: null,
   optionADisabled: true,
   optionBDisabled: true,
 };
 
 export const START_SETTINGS_OPTIONS: StartSettingsOptionCatalog = {
-  gameMode: [
-    { value: "campaign", label: "キャンペーン" },
-    { value: "endless", label: "エンドレス" },
-    { value: "boss_rush", label: "ボスラッシュ" },
-  ] as const,
-  difficulty: [
-    { value: "casual", label: "カジュアル" },
-    { value: "standard", label: "スタンダード" },
-    { value: "hard", label: "ハード" },
-  ] as const,
-  initialLives: [1, 2, 3, 4, 5, 6].map((value) => ({ value, label: String(value) })),
-  speedPreset: [
-    { value: "0.75", label: "75%" },
-    { value: "1.00", label: "100%" },
-    { value: "1.25", label: "125%" },
-  ] as const,
-  routePreference: [
-    { value: "auto", label: "自動" },
-    { value: "A", label: "Aルート" },
-    { value: "B", label: "Bルート" },
-  ] as const,
-  multiballMaxBalls: [2, 3, 4, 5, 6].map((value) => ({ value, label: String(value) })),
-  debugStartStage: Array.from({ length: 12 }, (_, index) => index + 1).map((value) => ({
-    value,
-    label: String(value),
-  })),
-  debugScenario: [
-    { value: "normal", label: "通常" },
-    { value: "enemy_check", label: "敵確認（9面）" },
-    { value: "boss_check", label: "ボス確認（12面）" },
-  ] as const,
-  debugItemPreset: [
-    { value: "none", label: "なし" },
-    { value: "combat_check", label: "戦闘確認" },
-    { value: "boss_check", label: "ボス確認" },
-  ] as const,
-  debugRecordResults: [
-    { value: "false", label: "記録しない" },
-    { value: "true", label: "記録する" },
-  ] as const,
+  gameMode: [{ value: "campaign" }, { value: "endless" }, { value: "boss_rush" }] as const,
+  difficulty: [{ value: "casual" }, { value: "standard" }, { value: "hard" }] as const,
+  initialLives: [1, 2, 3, 4, 5, 6].map((value) => ({ value })),
+  speedPreset: [{ value: "0.75" }, { value: "1.00" }, { value: "1.25" }] as const,
+  routePreference: [{ value: "auto" }, { value: "A" }, { value: "B" }] as const,
+  multiballMaxBalls: [2, 3, 4, 5, 6].map((value) => ({ value })),
+  debugStartStage: Array.from({ length: 12 }, (_, index) => index + 1).map((value) => ({ value })),
+  debugScenario: [{ value: "normal" }, { value: "enemy_check" }, { value: "boss_check" }] as const,
+  debugItemPreset: [{ value: "none" }, { value: "combat_check" }, { value: "boss_check" }] as const,
+  debugRecordResults: [{ value: "false" }, { value: "true" }] as const,
 };
 
 const START_SETTINGS_DEFAULT: StartSettingsSelection = {
@@ -197,6 +193,7 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
   overlay: { model: DEFAULT_OVERLAY },
   shop: DEFAULT_SHOP,
   startSettings: START_SETTINGS_DEFAULT,
+  locale: initialLocale,
   rogueSelection: "score_core",
   handlers: {
     primaryAction: () => {},
@@ -212,6 +209,14 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
         ...patch,
       },
     })),
+  setLocale: (locale) => {
+    if (typeof window !== "undefined") {
+      setCurrentLocale(locale, window.localStorage);
+    } else {
+      setCurrentLocale(locale);
+    }
+    set({ locale });
+  },
   setRogueSelection: (selection) => set({ rogueSelection: selection }),
   setHandlers: (handlers) =>
     set((state) => ({

@@ -12,7 +12,7 @@ describe("shopUi", () => {
     expect(view.visible).toBe(false);
   });
 
-  test("shows emoji + label and current dynamic price", () => {
+  test("shows offer types and current dynamic price", () => {
     const state = createInitialGameState(GAME_CONFIG, true, "playing");
     state.scene = "playing";
     state.shop.lastOffer = ["shield", "laser"];
@@ -22,12 +22,10 @@ describe("shopUi", () => {
     const view = buildShopUiView(state);
 
     expect(view.visible).toBe(true);
-    expect(view.currentCostText).toBe("2200点");
-    expect(view.priceBandText).toBe("");
-    expect(view.optionALabel).toContain("🛡");
-    expect(view.optionALabel).toContain("シールド");
-    expect(view.optionBLabel).toContain("🔫");
-    expect(view.optionBLabel).toContain("レーザー");
+    expect(view.cost).toBe(2200);
+    expect(view.priceBandVisible).toBe(false);
+    expect(view.optionAType).toBe("shield");
+    expect(view.optionBType).toBe("laser");
     expect(view.optionADisabled).toBe(false);
   });
 });

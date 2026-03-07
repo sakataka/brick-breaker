@@ -1,9 +1,10 @@
 import type Phaser from "phaser";
 import { THEME_BANDS } from "../../game/config";
-import { getItemEmoji, getItemShortLabel } from "../../game/itemRegistry";
+import { getItemEmoji } from "../../game/itemRegistry";
 import { DEFAULT_RENDER_THEME, resolveRenderTheme } from "../../game/renderer/theme";
 import type { RenderViewState } from "../../game/renderTypes";
 import type { GameConfig } from "../../game/types";
+import { getCurrentLocale, getItemTranslation, getLL } from "../../i18n";
 import { readDevicePixelRatio, snapPixel } from "./color";
 import { resolveDpiRenderProfile } from "./dpiProfile";
 import { drawBackdropLayer } from "./layers/backdrop";
@@ -91,6 +92,7 @@ export class PhaserRenderPort {
     offsetX: number,
     offsetY: number,
   ): void {
+    const LL = getLL(getCurrentLocale());
     for (const item of view.fallingItems) {
       let nodes = this.itemLabels.get(item.id);
       if (!nodes) {
@@ -104,7 +106,7 @@ export class PhaserRenderPort {
             .setDepth(9)
             .setOrigin(0.5, 0.65),
           short: this.scene.add
-            .text(0, 0, getItemShortLabel(item.type), {
+            .text(0, 0, getItemTranslation(LL, item.type).short(), {
               fontFamily: '"Avenir Next", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif',
               fontSize: "8px",
               color: "#f7fcff",
@@ -116,6 +118,7 @@ export class PhaserRenderPort {
         };
         this.itemLabels.set(item.id, nodes);
       }
+      nodes.short.setText(getItemTranslation(LL, item.type).short());
 
       nodes.emoji.setPosition(snapPixel(item.pos.x + offsetX), snapPixel(item.pos.y + offsetY));
       nodes.short.setPosition(snapPixel(item.pos.x + offsetX), snapPixel(item.pos.y + offsetY));

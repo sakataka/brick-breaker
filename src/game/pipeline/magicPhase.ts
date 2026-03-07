@@ -28,7 +28,7 @@ export function castMagicStrike(
   state.vfx.shakeMs = Math.max(state.vfx.shakeMs, 80);
   state.vfx.shakePx = Math.max(state.vfx.shakePx, 3);
   state.vfx.floatingTexts.push({
-    text: "SPELL",
+    key: "spell",
     pos: { x: target.x + target.width / 2, y: target.y + target.height / 2 },
     lifeMs: 420,
     maxLifeMs: 420,

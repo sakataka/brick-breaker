@@ -1,9 +1,8 @@
 import { getStageModifier, getStageStory, getThemeBandByStageIndex, ROGUE_CONFIG } from "./config";
 import { getGhostPlaybackSample } from "./ghostSystem";
-import { getActiveItemLabels } from "./itemSystem";
+import { getActiveItemEntries } from "./itemSystem";
 import type { HudViewModel, OverlayViewModel, RenderViewState } from "./renderTypes";
 import { getModeEffectiveStageIndex, getStageClearTimeSec } from "./roundSystem";
-import { formatTime } from "./time";
 import type { GameState } from "./types";
 
 export function buildRenderViewState(state: GameState): RenderViewState {
@@ -57,7 +56,7 @@ export function buildRenderViewState(state: GameState): RenderViewState {
       y: shot.y,
     })),
     fluxFieldActive: stageModifier?.fluxField ?? false,
-    stageModifierLabel: stageModifier?.label,
+    stageModifierKey: stageModifier?.key,
     warpZones: stageModifier?.warpZones,
     ghostPlayback: ghostSample
       ? {
@@ -76,78 +75,59 @@ export function buildHudViewModel(state: GameState): HudViewModel {
     state.options.customStageCatalog?.length,
   );
   const progressRatio = computeProgressRatio(state);
-  const activeItems = getActiveItemLabels(state.items);
+  const activeItems = getActiveItemEntries(state.items);
   const themeBand = getThemeBandByStageIndex(effectiveStageIndex);
   const comboVisible = state.combo.streak > 1;
   const hazardBoostActive = state.elapsedSec < state.hazard.speedBoostUntilSec;
   const pierceSlowSynergy = state.items.active.pierceStacks > 0 && state.items.active.slowBallStacks > 0;
-  const bossStageText = buildBossHudText(state);
   const stageModifier = getStageModifier(effectiveStageIndex + 1);
-  const routeLabel = state.campaign.resolvedRoute ? ` / ルート${state.campaign.resolvedRoute}` : "";
-  const modifierLabel = stageModifier?.label;
-  const modifierText = modifierLabel ? ` / 修飾:${modifierLabel}` : "";
-  const warpLegend = stageModifier?.warpZones?.length ? " / ワープ: 青=入口 / 黄=出口" : "";
-  const riskText = state.options.riskMode ? " / 🔥リスクx1.35" : "";
-  const debugText = state.options.debugModeEnabled
-    ? state.options.debugRecordResults
-      ? " / 🧪DEBUG"
-      : " / 🧪DEBUG(記録OFF)"
-    : "";
-  const rogueText =
-    state.rogue.upgradesTaken > 0 ? ` / 強化:${state.rogue.upgradesTaken}/${ROGUE_CONFIG.maxUpgrades}` : "";
-  const magicText =
-    state.magic.cooldownSec <= 0 ? " / ✨魔法:準備OK" : ` / ✨魔法:${state.magic.cooldownSec.toFixed(1)}s`;
-  const stagePrefix =
-    state.options.gameMode === "boss_rush"
-      ? "ボスラッシュ"
-      : state.options.gameMode === "endless"
-        ? "エンドレス"
-        : "ステージ";
-  const stageCounter =
-    state.options.gameMode === "endless"
-      ? `${state.campaign.stageIndex + 1} (∞)`
-      : `${state.campaign.stageIndex + 1}/${state.campaign.totalStages}`;
+  const boss = buildBossHud(state);
   return {
-    scoreText: `スコア: ${state.score}`,
-    livesText: `残機: ${state.lives}`,
-    timeText: `時間: ${formatTime(state.elapsedSec)}`,
-    stageText: `${stagePrefix}: ${stageCounter}${routeLabel}${modifierText}${bossStageText}${debugText}`,
-    comboText: comboVisible ? `コンボ x${state.combo.multiplier.toFixed(2)}` : "コンボ x1.00",
+    score: state.score,
+    lives: state.lives,
+    elapsedSec: state.elapsedSec,
+    comboMultiplier: state.combo.streak > 1 ? state.combo.multiplier : 1,
+    stage: {
+      mode: state.options.gameMode,
+      current: state.campaign.stageIndex + 1,
+      total: state.campaign.totalStages,
+      route: state.campaign.resolvedRoute,
+      modifierKey: stageModifier?.key,
+      boss,
+      debugModeEnabled: state.options.debugModeEnabled,
+      debugRecordResults: state.options.debugRecordResults,
+    },
+    activeItems,
+    flags: {
+      hazardBoostActive,
+      pierceSlowSynergy,
+      riskMode: state.options.riskMode,
+      rogueUpgradesTaken: state.rogue.upgradesTaken,
+      rogueUpgradeCap: ROGUE_CONFIG.maxUpgrades,
+      magicCooldownSec: state.magic.cooldownSec,
+      warpLegendVisible: Boolean(stageModifier?.warpZones?.length),
+    },
     progressRatio,
-    itemsText: `アイテム: ${activeItems.join(" / ")}${hazardBoostActive ? " / ⚠危険加速中" : ""}${pierceSlowSynergy ? " / ✨貫通+1" : ""}${riskText}${rogueText}${magicText}${warpLegend}`,
     accentColor: comboVisible ? COMBO_ACTIVE_COLOR : themeBand.hudAccent,
   };
 }
 
-function buildBossHudText(state: GameState): string {
+function buildBossHud(state: GameState): HudViewModel["stage"]["boss"] | undefined {
   const boss = state.bricks.find((brick) => brick.alive && brick.kind === "boss");
   if (!boss) {
-    return "";
+    return undefined;
   }
   const hp = Math.max(0, boss.hp ?? 0);
   const maxHp = Math.max(hp, boss.maxHp ?? 12);
-  const phaseText = state.combat.bossPhase >= 2 ? " P2" : " P1";
-  return ` / ボスHP: ${hp}/${maxHp}${phaseText}`;
+  return {
+    hp,
+    maxHp,
+    phase: state.combat.bossPhase >= 2 ? 2 : 1,
+  };
 }
 
 export function buildOverlayViewModel(state: GameState): OverlayViewModel {
   const clearSec = getStageClearTimeSec(state);
-  const debugBadge = state.options.debugModeEnabled
-    ? state.options.debugRecordResults
-      ? "DEBUG"
-      : "DEBUG 記録OFF"
-    : undefined;
-  const stageLabelPrefix = debugBadge ? `[${debugBadge}] ` : "";
-  const stageLabelPrefixText =
-    state.options.gameMode === "boss_rush"
-      ? "ボスラッシュ"
-      : state.options.gameMode === "endless"
-        ? "エンドレス"
-        : "ステージ";
-  const stageLabelSuffix =
-    state.options.gameMode === "endless"
-      ? `${state.campaign.stageIndex + 1} / ∞`
-      : `${state.campaign.stageIndex + 1} / ${state.campaign.totalStages}`;
   const overlayScore =
     state.scene === "gameover" && typeof state.lastGameOverScore === "number"
       ? state.lastGameOverScore
@@ -156,10 +136,15 @@ export function buildOverlayViewModel(state: GameState): OverlayViewModel {
     scene: state.scene,
     score: overlayScore,
     lives: state.lives,
-    clearTime: state.scene === "clear" ? formatTime(state.elapsedSec) : undefined,
-    errorMessage: state.errorMessage ?? undefined,
-    debugBadge,
-    stageLabel: `${stageLabelPrefix}${stageLabelPrefixText} ${stageLabelSuffix}`,
+    stage: {
+      mode: state.options.gameMode,
+      current: state.campaign.stageIndex + 1,
+      total: state.campaign.totalStages,
+      debugModeEnabled: state.options.debugModeEnabled,
+      debugRecordResults: state.options.debugRecordResults,
+    },
+    clearElapsedSec: state.scene === "clear" ? state.elapsedSec : undefined,
+    error: state.error ?? undefined,
     stageResult:
       typeof state.stageStats.starRating === "number" &&
       typeof state.stageStats.ratingScore === "number" &&
@@ -167,10 +152,10 @@ export function buildOverlayViewModel(state: GameState): OverlayViewModel {
         ? {
             stars: state.stageStats.starRating,
             ratingScore: state.stageStats.ratingScore,
-            clearTime: formatTime(clearSec),
+            clearTimeSec: clearSec,
             hitsTaken: state.stageStats.hitsTaken,
             livesLeft: state.lives,
-            missionTargetTime: formatTime(state.stageStats.missionTargetSec),
+            missionTargetSec: state.stageStats.missionTargetSec,
             missionAchieved: state.stageStats.missionAchieved ?? false,
             missionResults: state.stageStats.missionResults ?? [],
           }
@@ -181,9 +166,9 @@ export function buildOverlayViewModel(state: GameState): OverlayViewModel {
             stageNumber: result.stageNumber,
             stars: result.stars,
             ratingScore: result.ratingScore,
-            clearTime: formatTime(result.clearTimeSec),
+            clearTimeSec: result.clearTimeSec,
             livesLeft: result.livesAtClear,
-            missionTargetTime: formatTime(result.missionTargetSec),
+            missionTargetSec: result.missionTargetSec,
             missionAchieved: result.missionAchieved,
             missionResults: result.missionResults,
           }))
@@ -195,7 +180,7 @@ export function buildOverlayViewModel(state: GameState): OverlayViewModel {
             remaining: Math.max(0, ROGUE_CONFIG.maxUpgrades - state.rogue.upgradesTaken),
           }
         : undefined,
-    storyText:
+    storyStageNumber:
       state.scene === "story" && typeof state.story.activeStageNumber === "number"
         ? (getStageStory(state.story.activeStageNumber) ?? undefined)
         : undefined,

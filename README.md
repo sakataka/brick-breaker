@@ -18,6 +18,9 @@ bun run dev
 # 型 + lint + deadcode + build
 bun run check
 
+# 翻訳辞書の型検証 / 生成
+bun run typesafe-i18n --no-watch
+
 # 反復開発向け（buildを省いた高速ゲート）
 bun run check:fast
 
@@ -75,6 +78,7 @@ bunx playwright install chromium
 - プレイ中UIは「上段情報バー（HUD+ショップ） / 下段ゲーム枠」の2分割で表示されます。
 
 - 難易度: `カジュアル / スタンダード / ハード`（デフォルト `スタンダード`）
+- 言語: `日本語 / English / Pseudo`（選択はローカル保存）
 - モード: `キャンペーン / エンドレス / ボスラッシュ`
 - 初期残機: `1..6`
 - 速度: `75% / 100% / 125%`（初速/最高速のみに反映）
@@ -185,6 +189,8 @@ GitHub Pages 公開手順:
 - ブロックHP/破壊判定は `src/game/brickDamage.ts` に集約し、`physicsCore` と `gamePipeline` で共通利用します。
 - 描画は `src/phaser/scenes/RuntimeScene.ts` + `src/phaser/render/PhaserRenderPort.ts` 経由で実行し、`src/phaser/render/layers/*` でレイヤー別に管理します。
 - UI は `src/app/AppUi.tsx` と `src/app/components/*` で宣言的に構成し、`src/app/store.ts` の `START_SETTINGS_OPTIONS` を開始設定UIの単一定義として使います。
+- 多言語基盤は `typesafe-i18n` を使用し、`src/i18n/*` の辞書を単一の翻訳ソースとして扱います。
+- UI 文言は React / Phaser の両方で現在ロケールから解決し、Core 側には表示文字列ではなくキーや数値を保持します。
 - 音制御は `src/audio/audioDirector.ts`（facade） -> `src/audio/toneDirector.ts` の経路で管理します。
 
 未完了タスク管理は `docs/architecture.md` の `Open Backlog` に統一しています。

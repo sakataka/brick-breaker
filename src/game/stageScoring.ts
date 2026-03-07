@@ -107,13 +107,11 @@ function buildStageMissionResults(
   return [
     {
       key: "time_limit",
-      label: "制限時間",
-      targetText: `${Math.round(missionTargetSec)}秒以内`,
+      targetSec: Math.round(missionTargetSec),
       achieved: timeAchieved,
     },
     {
       key: "no_shop",
-      label: "ショップ未使用",
       achieved: noShopAchieved,
     },
   ];

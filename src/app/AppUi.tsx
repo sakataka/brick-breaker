@@ -5,12 +5,14 @@ import { ShopPanel } from "./components/ShopPanel";
 import { useAppStore } from "./store";
 
 export function AppUi(): ReactElement {
+  const locale = useAppStore((state) => state.locale);
   const hud = useAppStore((state) => state.hud);
   const overlay = useAppStore((state) => state.overlay.model);
   const shop = useAppStore((state) => state.shop);
   const startSettings = useAppStore((state) => state.startSettings);
   const rogueSelection = useAppStore((state) => state.rogueSelection);
   const setStartSettings = useAppStore((state) => state.setStartSettings);
+  const setLocale = useAppStore((state) => state.setLocale);
   const setRogueSelection = useAppStore((state) => state.setRogueSelection);
   const triggerPrimaryAction = useAppStore((state) => state.triggerPrimaryAction);
   const triggerShopOption = useAppStore((state) => state.triggerShopOption);
@@ -55,11 +57,16 @@ export function AppUi(): ReactElement {
     };
   }, [playLayoutActive]);
 
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
+
   return (
     <>
       <div id="play-topbar" className={playLayoutActive ? "play-topbar active" : "play-topbar"}>
-        <HudPanel hud={hud} scoreRef={scoreRef} />
+        <HudPanel locale={locale} hud={hud} scoreRef={scoreRef} />
         <ShopPanel
+          locale={locale}
           shop={shop}
           onSelect={(index) => {
             triggerShopOption(index);
@@ -67,10 +74,12 @@ export function AppUi(): ReactElement {
         />
       </div>
       <OverlayRoot
+        locale={locale}
         overlay={overlay}
         startSettings={startSettings}
         rogueSelection={rogueSelection}
         onStartSettingsChange={setStartSettings}
+        onLocaleChange={setLocale}
         onRogueSelectionChange={setRogueSelection}
         onPrimaryAction={triggerPrimaryAction}
       />

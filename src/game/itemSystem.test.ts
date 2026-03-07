@@ -9,7 +9,7 @@ import {
   consumeShield,
   createItemState,
   ensureMultiballCount,
-  getActiveItemLabels,
+  getActiveItemEntries,
   getBombRadiusTiles,
   getLaserLevel,
   getPaddleScale,
@@ -195,7 +195,7 @@ describe("itemSystem", () => {
     expect(items.falling).toHaveLength(0);
   });
 
-  test("active labels are always listed with stack counts", () => {
+  test("active item entries are always listed with stack counts", () => {
     const items = createItemState();
     applyItemPickup(items, "multiball", [createBall()]);
     applyItemPickup(items, "pierce", [createBall()]);
@@ -204,14 +204,14 @@ describe("itemSystem", () => {
     applyItemPickup(items, "homing", [createBall()]);
     applyItemPickup(items, "rail", [createBall()]);
 
-    const labels = getActiveItemLabels(items);
+    const labels = getActiveItemEntries(items);
     expect(labels).toHaveLength(10);
-    expect(labels.some((label) => label.includes("🎱マルチ×1"))).toBe(true);
-    expect(labels.some((label) => label.includes("🗡貫通×1"))).toBe(true);
-    expect(labels.some((label) => label.includes("💣ボム×0"))).toBe(true);
-    expect(labels.some((label) => label.includes("🔫レーザー×1"))).toBe(true);
-    expect(labels.some((label) => label.includes("🛰ホーミング×1"))).toBe(true);
-    expect(labels.some((label) => label.includes("⚡レール×1"))).toBe(true);
+    expect(labels.find((label) => label.type === "multiball")?.count).toBe(1);
+    expect(labels.find((label) => label.type === "pierce")?.count).toBe(1);
+    expect(labels.find((label) => label.type === "bomb")?.count).toBe(0);
+    expect(labels.find((label) => label.type === "laser")?.count).toBe(1);
+    expect(labels.find((label) => label.type === "homing")?.count).toBe(1);
+    expect(labels.find((label) => label.type === "rail")?.count).toBe(1);
   });
 
   test("laser and sticky stacks respect their caps", () => {

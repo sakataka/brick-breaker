@@ -26,7 +26,7 @@ export function updateBossPhase(
       state.vfx.shakeMs = Math.max(state.vfx.shakeMs, 90);
       state.vfx.shakePx = Math.max(state.vfx.shakePx, 4);
       state.vfx.floatingTexts.push({
-        text: "BOSS PHASE 2",
+        key: "boss_phase_2",
         pos: { x: boss.x + boss.width / 2, y: boss.y + boss.height / 2 },
         lifeMs: 600,
         maxLifeMs: 600,

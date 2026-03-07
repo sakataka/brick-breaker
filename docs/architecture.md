@@ -69,10 +69,18 @@
 - 表示は宣言的に実装。
 - ゲーム本体との接続点は store のみ。
 - `StartSettingsForm` は `src/app/store.ts` の `START_SETTINGS_OPTIONS` を参照し、設定UIを定義駆動で生成する。
+- ロケール状態は store が保持し、開始画面の言語 selector から更新する。選択ロケールは `localStorage` に保存する。
 - Stickyアイテムの有効/無効は開始設定で切替え、無効時はドロップ/ショップ/デバッグ付与の抽選対象から除外する。
 - `OverlayRoot` は開始画面のみ「ヘッダー / 設定スクロール / 固定CTAフッター」を適用し、設定増加時も開始操作を維持する。
 - `AppUi` はプレイ中のみ「上段情報バー（HUD+ショップ） / 下段ゲーム枠」の2分割レイアウトを有効化する。
 - ショップは「2択購入のみ（無料交換なし）」を基本ルールとし、表示モデルは `src/game/shopUi.ts` で一元生成する。
+- HUD / Overlay / Shop は構造化 ViewModel を受け取り、最終文言組み立ては UI 層で行う。
+
+### 4.5 i18n / Copy
+
+- `src/i18n/translations.ts` を翻訳辞書の基準とする。`ja` を canonical source とし、`en` は同一キー構造を必須とする。
+- `src/i18n/index.ts` はロケール解決（保存済み > ブラウザ言語 > `ja`）、永続化、React/非 React 共通の翻訳取得を提供する。
+- Phaser 側の落下アイテム短縮ラベルも i18n 経由で解決する。
 
 ### 5. Audio
 
@@ -103,13 +111,15 @@
 - ショップ価格計算: `src/game/config/gameplay.ts` (`getShopPurchaseCost`)
 - ブロックHP/破壊判定: `src/game/brickDamage.ts`
 - アイテム仕様: `src/game/itemRegistry.ts`
-- アイテム表示情報（色/絵文字/短縮文字）: `src/game/itemRegistry.ts`
+- アイテム表示情報（色/絵文字）: `src/game/itemRegistry.ts`
+- アイテム表示名/説明/短縮文字: `src/i18n/translations.ts`
 - ショップ候補生成とSticky除外連携: `src/game/gamePipeline.ts` (`generateShopOffer`)
 - UI状態: `src/app/store.ts`
 - 開始設定の反映: `src/game/session/startSettings.ts`
 - ショップ操作処理: `src/game/session/shopActions.ts`
 - View同期: `src/game/session/viewSync.ts`
 - デバッグ開始ロジック: `src/game/session/startSettings.ts` + `src/game/roundSystem.ts`
+- ロケール解決/保存: `src/i18n/index.ts`
 - 未完了タスク: この文書末尾の `Open Backlog` のみ
 
 ## 追加時の手順

@@ -23,12 +23,14 @@ export interface WarpZone {
 }
 
 export interface StageModifier {
-  label?: string;
+  key?: StageModifierKey;
   maxSpeedScale?: number;
   warpZones?: WarpZone[];
   spawnEnemy?: boolean;
   fluxField?: boolean;
 }
+
+export type StageModifierKey = "warp_zone" | "speed_ball" | "enemy_flux" | "flux";
 
 export const BRICK_LAYOUT: BrickLayout = {
   cols: 10,
@@ -117,7 +119,7 @@ const routeBCache = new Map<number, StageDefinition>();
 
 const STAGE_MODIFIERS: Partial<Record<number, StageModifier>> = {
   6: {
-    label: "ワープゾーン",
+    key: "warp_zone",
     warpZones: [
       {
         inXMin: 100,
@@ -138,28 +140,22 @@ const STAGE_MODIFIERS: Partial<Record<number, StageModifier>> = {
     ],
   },
   8: {
-    label: "高速球",
+    key: "speed_ball",
     maxSpeedScale: 1.12,
   },
   9: {
-    label: "浮遊敵+フラックス",
+    key: "enemy_flux",
     spawnEnemy: true,
     fluxField: true,
   },
   10: {
-    label: "フラックス",
+    key: "flux",
     fluxField: true,
   },
   11: {
-    label: "フラックス",
+    key: "flux",
     fluxField: true,
   },
-};
-
-const STAGE_STORY: Partial<Record<number, string>> = {
-  4: "第4ステージ: 深層ゲートに到達。ここから先は分岐ルートで攻略が変化します。",
-  8: "第8ステージ: 重力レンズ地帯に突入。球速と軌道が大きく変わる危険域です。",
-  12: "最終ステージ: コア・ガーディアン起動。すべての強化を使って突破してください。",
 };
 
 export function getStageByIndex(stageIndex: number): StageDefinition {
@@ -188,8 +184,11 @@ export function getStageModifier(stageNumber: number): StageModifier | undefined
   return STAGE_MODIFIERS[stageNumber];
 }
 
-export function getStageStory(stageNumber: number): string | null {
-  return STAGE_STORY[stageNumber] ?? null;
+export function getStageStory(stageNumber: number): number | null {
+  if (stageNumber === 4 || stageNumber === 8 || stageNumber === 12) {
+    return stageNumber;
+  }
+  return null;
 }
 
 export function getStageTimeTargetSec(stageIndex: number): number {

@@ -2,61 +2,81 @@ import type { ReactElement } from "react";
 import { getDailyChallenge } from "../../game/dailyChallenge";
 import type { OverlayViewModel } from "../../game/renderTypes";
 import type { RogueUpgradeType } from "../../game/types";
+import { type AppLocale, getLL } from "../../i18n";
 import type { StartSettingsSelection } from "../store";
-import { OVERLAY_COPY } from "../viewmodels/overlayCopy";
 import {
   buildCampaignResultRows,
   buildOverlaySubText,
+  buildStageLabel,
   formatRogueUpgradeLabel,
+  getOverlayButton,
+  getOverlayMessage,
 } from "../viewmodels/overlayText";
 import { StageResultPanel } from "./StageResultPanel";
 import { StartSettingsForm } from "./StartSettingsForm";
 
 export interface OverlayRootProps {
+  locale: AppLocale;
   overlay: OverlayViewModel;
   startSettings: StartSettingsSelection;
   rogueSelection: RogueUpgradeType;
   onStartSettingsChange: (patch: Partial<StartSettingsSelection>) => void;
+  onLocaleChange: (locale: AppLocale) => void;
   onRogueSelectionChange: (value: RogueUpgradeType) => void;
   onPrimaryAction: () => void;
 }
 
 export function OverlayRoot({
+  locale,
   overlay,
   startSettings,
   rogueSelection,
   onStartSettingsChange,
+  onLocaleChange,
   onRogueSelectionChange,
   onPrimaryAction,
 }: OverlayRootProps): ReactElement {
-  const baseUrl = import.meta.env?.BASE_URL ?? "/";
-  const appSummaryPdfHref = `${baseUrl}docs/brick-breaker-app-summary.pdf`;
-  const copy = OVERLAY_COPY[overlay.scene];
+  const LL = getLL(locale);
   const dailyChallenge = getDailyChallenge();
-  const overlaySubText = buildOverlaySubText(copy.sub, overlay);
-  const campaignRows = buildCampaignResultRows(overlay.campaignResults ?? []);
+  const overlayMessage = getOverlayMessage(LL, overlay.scene);
+  const overlaySubText = buildOverlaySubText(locale, LL, overlay);
+  const campaignRows = buildCampaignResultRows(LL, overlay.campaignResults ?? []);
   const showOverlay = overlay.scene !== "playing";
   const isStartScene = overlay.scene === "start";
   const showResults = overlay.scene === "clear";
   const showRogue = overlay.scene === "stageclear" && Boolean(overlay.rogueOffer);
+  const debugBadge = overlay.stage.debugModeEnabled
+    ? overlay.stage.debugRecordResults
+      ? LL.hud.debug.badgeOn()
+      : LL.hud.debug.badgeOff()
+    : "";
 
   return (
     <div id="overlay" data-scene={overlay.scene} className={showOverlay ? "overlay" : "overlay hidden"}>
       <div className={isStartScene ? "card overlay-card-layout" : "card"}>
         <div className={isStartScene ? "overlay-card-header" : undefined}>
-          <h1>Brick Breaker</h1>
-          <p id="overlay-message">{copy.message}</p>
+          <h1>{LL.app.title()}</h1>
+          <p id="overlay-message">{overlayMessage}</p>
           <p id="overlay-sub" className="subtle">
             {overlaySubText}
           </p>
-          {overlay.debugBadge ? <p className="subtle">{overlay.debugBadge}</p> : null}
+          {debugBadge ? <p className="subtle">{debugBadge}</p> : null}
         </div>
 
         {isStartScene ? (
           <div className="overlay-settings-scroll">
-            <StartSettingsForm settings={startSettings} onChange={onStartSettingsChange} />
+            <StartSettingsForm
+              locale={locale}
+              settings={startSettings}
+              onChange={onStartSettingsChange}
+              onLocaleChange={onLocaleChange}
+            />
             <p id="daily-challenge-label" className="subtle">
-              今日のデイリー({dailyChallenge.key}): {dailyChallenge.objective}
+              {LL.overlay.dailySummary({
+                label: LL.overlay.dailyLabel(),
+                key: dailyChallenge.key,
+                objective: LL.daily.objectives[dailyChallenge.objectiveKey](),
+              })}
             </p>
           </div>
         ) : (
@@ -65,7 +85,7 @@ export function OverlayRoot({
             <p id="daily-challenge-label" className="subtle panel-hidden" />
 
             <StageResultPanel
-              title="ステージ別結果"
+              title={LL.overlay.stageResultsTitle()}
               rows={campaignRows}
               sectionId="overlay-results-section"
               listId="overlay-results"
@@ -73,7 +93,7 @@ export function OverlayRoot({
             />
 
             <StageResultPanel
-              title="ラン強化（3回まで）"
+              title={LL.overlay.rogueTitle()}
               rows={[]}
               sectionId="overlay-rogue-section"
               hidden={!showRogue}
@@ -87,30 +107,24 @@ export function OverlayRoot({
               >
                 {(overlay.rogueOffer?.options ?? ["score_core", "speed_core"]).map((option) => (
                   <option key={option} value={option}>
-                    {formatRogueUpgradeLabel(option)}（残り{overlay.rogueOffer?.remaining ?? 0}回）
+                    {formatRogueUpgradeLabel(LL, option)}{" "}
+                    {LL.overlay.rogueRemaining({ count: overlay.rogueOffer?.remaining ?? 0 })}
                   </option>
                 ))}
               </select>
             </StageResultPanel>
+
+            {overlay.scene !== "story" && overlay.scene !== "error" ? (
+              <p className="subtle overlay-stage-label">{buildStageLabel(LL, overlay)}</p>
+            ) : null}
           </>
         )}
 
         <div className={isStartScene ? "overlay-fixed-footer" : undefined}>
-          {isStartScene ? (
-            <a
-              id="app-summary-pdf-link"
-              className="overlay-doc-link subtle"
-              href={appSummaryPdfHref}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              アプリ概要PDFを開く
-            </a>
-          ) : null}
           <button id="overlay-button" type="button" onClick={onPrimaryAction}>
-            {copy.button}
+            {getOverlayButton(LL, overlay.scene)}
           </button>
-          <p className="subtle">Pキーで一時停止</p>
+          <p className="subtle">{LL.app.pauseHint()}</p>
         </div>
       </div>
     </div>

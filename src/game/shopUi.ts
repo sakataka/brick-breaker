@@ -1,25 +1,24 @@
 import { getShopPurchaseCost } from "./config";
-import { ITEM_REGISTRY } from "./itemRegistry";
-import type { GameState } from "./types";
+import type { GameState, ItemType } from "./types";
 
 export interface ShopUiView {
   visible: boolean;
-  status: string;
-  currentCostText: string;
-  priceBandText: string;
-  optionALabel: string;
-  optionBLabel: string;
+  status: "hidden" | "one_time" | "purchased";
+  cost: number;
+  priceBandVisible: boolean;
+  optionAType: ItemType | null;
+  optionBType: ItemType | null;
   optionADisabled: boolean;
   optionBDisabled: boolean;
 }
 
 const HIDDEN_VIEW: ShopUiView = {
   visible: false,
-  status: "ショップ",
-  currentCostText: "0点",
-  priceBandText: "",
-  optionALabel: "選択肢A",
-  optionBLabel: "選択肢B",
+  status: "hidden",
+  cost: 0,
+  priceBandVisible: false,
+  optionAType: null,
+  optionBType: null,
   optionADisabled: true,
   optionBDisabled: true,
 };
@@ -34,16 +33,14 @@ export function buildShopUiView(state: GameState): ShopUiView {
   }
   const purchaseCost = getShopPurchaseCost(state.shop.purchaseCount);
   const canBuy = !state.shop.usedThisStage && state.score >= purchaseCost;
-  const optionA = ITEM_REGISTRY[offer[0]];
-  const optionB = ITEM_REGISTRY[offer[1]];
-  const status = state.shop.usedThisStage ? "ショップ: このステージは購入済み" : "ショップ: 1回限定";
+  const status = state.shop.usedThisStage ? "purchased" : "one_time";
   return {
     visible: true,
     status,
-    currentCostText: `${purchaseCost}点`,
-    priceBandText: "",
-    optionALabel: `${optionA.emoji} ${optionA.label}`,
-    optionBLabel: `${optionB.emoji} ${optionB.label}`,
+    cost: purchaseCost,
+    priceBandVisible: false,
+    optionAType: offer[0],
+    optionBType: offer[1],
     optionADisabled: !canBuy,
     optionBDisabled: !canBuy,
   };

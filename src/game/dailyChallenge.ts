@@ -1,14 +1,12 @@
+import type { DailyObjectiveKey } from "./types";
+
 export interface DailyChallenge {
   key: string;
   seed: number;
-  objective: string;
+  objectiveKey: DailyObjectiveKey;
 }
 
-const DAILY_OBJECTIVES = [
-  "ノーミスで1ステージクリア",
-  "コンボ x2.0 を達成",
-  "アイテムを3個以上取得",
-] as const;
+const DAILY_OBJECTIVES = ["no_miss_stage_clear", "combo_x2", "collect_three_items"] as const;
 
 export function getDailyChallenge(date = new Date()): DailyChallenge {
   const year = date.getFullYear();
@@ -16,12 +14,12 @@ export function getDailyChallenge(date = new Date()): DailyChallenge {
   const day = `${date.getDate()}`.padStart(2, "0");
   const key = `${year}-${month}-${day}`;
   const seed = hashStringToSeed(key);
-  const objective = DAILY_OBJECTIVES[seed % DAILY_OBJECTIVES.length] ?? DAILY_OBJECTIVES[0];
+  const objectiveKey = DAILY_OBJECTIVES[seed % DAILY_OBJECTIVES.length] ?? DAILY_OBJECTIVES[0];
 
   return {
     key,
     seed,
-    objective,
+    objectiveKey,
   };
 }
 

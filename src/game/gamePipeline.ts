@@ -67,7 +67,7 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   updateEnemies(state, config, pipelineDeltaSec);
   if (updateEnemyWaveEvent(state, config, random, pipelineDeltaSec, stageModifier?.spawnEnemy ?? false)) {
     state.vfx.floatingTexts.push({
-      text: "REINFORCE",
+      key: "reinforce",
       pos: { x: config.width / 2, y: 114 },
       lifeMs: 440,
       maxLifeMs: 440,

@@ -34,7 +34,8 @@ export interface ImpactRing {
 }
 
 export interface FloatingText {
-  text: string;
+  key: FloatingTextKey;
+  itemType?: ItemType;
   pos: Vector2;
   lifeMs: number;
   maxLifeMs: number;
@@ -151,7 +152,10 @@ export type GameState = GameSceneState & ProgressState & RuntimeState;
 
 interface GameSceneState {
   scene: Scene;
-  errorMessage: string | null;
+  error: {
+    key: RuntimeErrorKey;
+    detail?: string;
+  } | null;
 }
 
 export interface ComboState {
@@ -174,11 +178,20 @@ export interface StageStats {
 }
 
 export type StageMissionKey = "time_limit" | "no_shop";
+export type FloatingTextKey =
+  | "item_pickup"
+  | "reinforce"
+  | "split"
+  | "summon"
+  | "thorns"
+  | "spell"
+  | "boss_phase_2";
+export type DailyObjectiveKey = "no_miss_stage_clear" | "combo_x2" | "collect_three_items";
+export type RuntimeErrorKey = "initialization" | "gameStart" | "startAction" | "shopPurchase" | "runtime";
 
 export interface StageMissionStatus {
   key: StageMissionKey;
-  label: string;
-  targetText?: string;
+  targetSec?: number;
   achieved: boolean;
 }
 

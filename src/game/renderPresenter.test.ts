@@ -33,21 +33,21 @@ describe("renderPresenter", () => {
     const stageClearView = buildOverlayViewModel(state);
     expect(stageClearView.stageResult?.stars).toBe(3);
     expect(stageClearView.stageResult?.missionAchieved).toBe(true);
-    expect(stageClearView.stageResult?.missionTargetTime).toBe("01:32");
+    expect(stageClearView.stageResult?.missionTargetSec).toBe(92);
     expect(stageClearView.stageResult?.missionResults).toHaveLength(2);
     state.scene = "clear";
-    expect(buildOverlayViewModel(state).stageResult?.clearTime).toBe("00:52");
+    expect(buildOverlayViewModel(state).stageResult?.clearTimeSec).toBe(52);
   });
 
   test("shows combo text only when streak is active", () => {
     const state = createInitialGameState(GAME_CONFIG, false, "playing");
     const idle = buildHudViewModel(state);
-    expect(idle.comboText).toBe("コンボ x1.00");
+    expect(idle.comboMultiplier).toBe(1);
 
     state.combo.streak = 3;
     state.combo.multiplier = 1.5;
     const active = buildHudViewModel(state);
-    expect(active.comboText).toBe("コンボ x1.50");
+    expect(active.comboMultiplier).toBe(1.5);
   });
 
   test("includes reduced motion and high contrast status in ViewState", () => {
@@ -97,7 +97,7 @@ describe("renderPresenter", () => {
 
     const view = buildOverlayViewModel(state);
 
-    expect(view.storyText).toContain("第4ステージ");
+    expect(view.storyStageNumber).toBe(4);
   });
 
   test("shows debug badges in HUD and overlay when debug recording is off", () => {
@@ -108,9 +108,10 @@ describe("renderPresenter", () => {
     const hud = buildHudViewModel(state);
     const overlay = buildOverlayViewModel(state);
 
-    expect(hud.stageText).toContain("🧪DEBUG(記録OFF)");
-    expect(overlay.debugBadge).toBe("DEBUG 記録OFF");
-    expect(overlay.stageLabel).toContain("[DEBUG 記録OFF]");
+    expect(hud.stage.debugModeEnabled).toBe(true);
+    expect(hud.stage.debugRecordResults).toBe(false);
+    expect(overlay.stage.debugModeEnabled).toBe(true);
+    expect(overlay.stage.debugRecordResults).toBe(false);
   });
 
   test("uses preserved final score on gameover overlay", () => {
