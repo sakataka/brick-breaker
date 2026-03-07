@@ -9,11 +9,13 @@ import {
   getDropSuppressedTypes,
   pickWeightedItemType,
 } from "./itemRegistry";
+import type { ItemPickupImpact } from "./itemTypes";
 import type {
   Ball,
   CollisionEvent,
   DebugItemPreset,
   FallingItem,
+  GameState,
   ItemState,
   ItemType,
   Paddle,
@@ -25,6 +27,8 @@ const ITEM_SIZE = 16;
 
 export interface ItemPickupOptions {
   enableNewItemStacks?: boolean;
+  gameState?: Pick<GameState, "bricks" | "vfx">;
+  scorePerBrick?: number;
 }
 
 export interface DropOptions {
@@ -101,8 +105,8 @@ export function applyItemPickup(
   type: ItemType,
   balls: Ball[],
   options: ItemPickupOptions = {},
-): void {
-  applyItemPickupFromRegistry(items, type, balls, options);
+): ItemPickupImpact {
+  return applyItemPickupFromRegistry(items, type, balls, options);
 }
 
 export function applyDebugItemPreset(
@@ -127,12 +131,16 @@ export function spawnDropsFromBrickEvents(
   if (options.stickyItemEnabled === false) {
     excludedTypes.push("sticky");
   }
+  let dropsThisTick = 0;
   for (const event of events) {
     if (event.kind !== "brick") {
       continue;
     }
 
     if (items.falling.length >= DROP_CONFIG.maxFalling) {
+      return;
+    }
+    if (dropsThisTick >= DROP_CONFIG.maxDropsPerTick) {
       return;
     }
 
@@ -148,6 +156,7 @@ export function spawnDropsFromBrickEvents(
       size: ITEM_SIZE,
     });
     items.nextId += 1;
+    dropsThisTick += 1;
   }
 }
 

@@ -22,6 +22,7 @@ import {
   updateFallingItems,
 } from "./itemSystem";
 import type { Ball, CollisionEvent, Paddle, RandomSource } from "./types";
+import { createVfxState } from "./vfxSystem";
 
 function sequenceRandom(values: number[]): RandomSource {
   let index = 0;
@@ -122,13 +123,13 @@ describe("itemSystem", () => {
 
   test("spawnGuaranteedDrop can pick extended attack item types", () => {
     const items = createItemState();
-    const random = sequenceRandom([0.85, 0.95, 0.99]);
+    const random = sequenceRandom([0.65, 0.82, 0.9]);
     spawnGuaranteedDrop(items, random, 100, 90);
     spawnGuaranteedDrop(items, random, 110, 90);
     spawnGuaranteedDrop(items, random, 120, 90);
 
     expect(items.falling.length).toBeGreaterThan(0);
-    expect(items.falling.some((drop) => drop.type === "rail")).toBe(true);
+    expect(items.falling.some((drop) => drop.type === "shockwave")).toBe(true);
     expect(items.falling.some((drop) => drop.type === "homing" || drop.type === "rail")).toBe(true);
   });
 
@@ -205,13 +206,51 @@ describe("itemSystem", () => {
     applyItemPickup(items, "rail", [createBall()]);
 
     const labels = getActiveItemEntries(items);
-    expect(labels).toHaveLength(10);
+    expect(labels).toHaveLength(11);
     expect(labels.find((label) => label.type === "multiball")?.count).toBe(1);
     expect(labels.find((label) => label.type === "pierce")?.count).toBe(1);
     expect(labels.find((label) => label.type === "bomb")?.count).toBe(0);
     expect(labels.find((label) => label.type === "laser")?.count).toBe(1);
     expect(labels.find((label) => label.type === "homing")?.count).toBe(1);
     expect(labels.find((label) => label.type === "rail")?.count).toBe(1);
+  });
+
+  test("normal brick drops are capped to one per tick while guaranteed drops stay available", () => {
+    const items = createItemState();
+    const events: CollisionEvent[] = Array.from({ length: 4 }, () => ({
+      kind: "brick",
+      x: 110,
+      y: 90,
+    }));
+
+    spawnDropsFromBrickEvents(items, events, sequenceRandom(Array(12).fill(0.01)));
+    expect(items.falling).toHaveLength(1);
+
+    const guaranteed = spawnGuaranteedDrop(items, sequenceRandom([0.99]), 140, 90);
+    expect(guaranteed).toBe(true);
+    expect(items.falling).toHaveLength(2);
+  });
+
+  test("shockwave pickup damages nearby normal bricks when gameplay state is provided", () => {
+    const items = createItemState();
+    const balls = [createBall()];
+    const bricks = [
+      { id: 1, x: 90, y: 90, width: 24, height: 12, alive: true, kind: "normal" as const, hp: 1, maxHp: 1 },
+      { id: 2, x: 210, y: 90, width: 24, height: 12, alive: true, kind: "normal" as const, hp: 1, maxHp: 1 },
+    ];
+
+    const impact = applyItemPickup(items, "shockwave", balls, {
+      gameState: {
+        bricks,
+        vfx: createVfxState(true),
+      },
+      scorePerBrick: 100,
+    });
+
+    expect(impact.collisionEvents?.length).toBe(1);
+    expect(impact.scoreGain).toBe(100);
+    expect(bricks[0]?.alive).toBe(false);
+    expect(bricks[1]?.alive).toBe(true);
   });
 
   test("laser and sticky stacks respect their caps", () => {

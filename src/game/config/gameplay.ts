@@ -97,8 +97,21 @@ export interface CombatConfig {
 
 export interface BossPhaseConfig {
   phase2Ratio: number;
-  phase2SpeedScale: number;
+  phase3Ratio: number;
+  speedScaleByPhase: readonly [number, number, number];
   summonIntervalSec: number;
+  phaseChangeFlashMs: number;
+  telegraphSecByPhase: readonly [number, number, number];
+  actionCooldownSecByPhase: readonly [number, number, number];
+  projectileSpeed: number;
+  projectileRadius: number;
+  volleySpreadX: number;
+  sweepDurationSec: number;
+}
+
+export interface StageControlConfig {
+  generatorRespawnIntervalSec: number;
+  generatorRespawnRange: number;
 }
 
 export interface MissionConfig {
@@ -268,9 +281,22 @@ export const COMBAT_CONFIG: CombatConfig = {
 } as const;
 
 export const BOSS_PHASE_CONFIG: BossPhaseConfig = {
-  phase2Ratio: 0.5,
-  phase2SpeedScale: 1.08,
+  phase2Ratio: 0.66,
+  phase3Ratio: 0.33,
+  speedScaleByPhase: [1, 1.08, 1.14],
   summonIntervalSec: 5.5,
+  phaseChangeFlashMs: 140,
+  telegraphSecByPhase: [0.85, 0.75, 0.65],
+  actionCooldownSecByPhase: [4.8, 3.8, 3.1],
+  projectileSpeed: 250,
+  projectileRadius: 9,
+  volleySpreadX: 92,
+  sweepDurationSec: 0.7,
+} as const;
+
+export const STAGE_CONTROL_CONFIG: StageControlConfig = {
+  generatorRespawnIntervalSec: 4.2,
+  generatorRespawnRange: 1,
 } as const;
 
 export const MISSION_CONFIG: MissionConfig = {

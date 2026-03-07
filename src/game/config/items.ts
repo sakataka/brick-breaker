@@ -6,6 +6,7 @@ import type { ItemRule } from "./types";
 export interface DropConfig {
   chance: number;
   maxFalling: number;
+  maxDropsPerTick: number;
   fallSpeed: number;
 }
 
@@ -29,42 +30,42 @@ export interface ItemBalance {
 export const ITEM_CONFIG: Record<ItemType, ItemRule> = {
   paddle_plus: {
     type: "paddle_plus",
-    weight: 0.12,
+    weight: 0.11,
     label: "パドル+",
   },
   slow_ball: {
     type: "slow_ball",
-    weight: 0.12,
+    weight: 0.11,
     label: "スロー",
   },
   shield: {
     type: "shield",
-    weight: 0.11,
+    weight: 0.1,
     label: "シールド",
   },
   multiball: {
     type: "multiball",
-    weight: 0.12,
+    weight: 0.11,
     label: "マルチ",
   },
   pierce: {
     type: "pierce",
-    weight: 0.1,
+    weight: 0.09,
     label: "貫通",
   },
   bomb: {
     type: "bomb",
-    weight: 0.09,
+    weight: 0.08,
     label: "ボム",
   },
   laser: {
     type: "laser",
-    weight: 0.1,
+    weight: 0.09,
     label: "レーザー",
   },
   sticky: {
     type: "sticky",
-    weight: 0.08,
+    weight: 0.07,
     label: "スティッキー",
   },
   homing: {
@@ -76,6 +77,11 @@ export const ITEM_CONFIG: Record<ItemType, ItemRule> = {
     type: "rail",
     weight: 0.08,
     label: "レール",
+  },
+  shockwave: {
+    type: "shockwave",
+    weight: 0.08,
+    label: "衝撃波",
   },
 };
 
@@ -97,8 +103,9 @@ export const ITEM_BALANCE: ItemBalance = {
 };
 
 export const DROP_CONFIG: DropConfig = {
-  chance: 0.18,
-  maxFalling: 3,
+  chance: 0.12,
+  maxFalling: 2,
+  maxDropsPerTick: 1,
   fallSpeed: 160,
 };
 

@@ -11,7 +11,7 @@ export function drawOverlayLayer(
   theme: RenderTheme,
 ): void {
   if (view.flashMs > 0) {
-    const flash = parseColor(theme.flash, { value: 0xff6464, alpha: 1 });
+    const flash = parseColor(view.flashColor || theme.flash, { value: 0xff6464, alpha: 1 });
     const intensity = Math.min(1, view.flashMs / 180);
     graphics.fillStyle(flash.value, flash.alpha * intensity * 0.45);
     graphics.fillRect(0, 0, width, height);

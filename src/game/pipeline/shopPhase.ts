@@ -31,7 +31,7 @@ export function ensureShopOffer(
 function generateShopOfferByContext(random: RandomSource, context: ShopOfferContext): [ItemType, ItemType] {
   const excluded: ItemType[] = context.stickyItemEnabled ? [] : ["sticky"];
   const earlyPool: ItemType[] = ["paddle_plus", "slow_ball", "shield", "multiball", "sticky"];
-  const latePool: ItemType[] = ["laser", "pierce", "bomb", "homing", "rail", "multiball"];
+  const latePool: ItemType[] = ["laser", "pierce", "bomb", "shockwave", "homing", "rail", "multiball"];
   const firstPool = context.stageIndex >= 7 ? latePool : earlyPool;
   const secondPool = context.stageIndex >= 7 ? earlyPool : latePool;
   const first = pickFromPool(random, firstPool, excluded);

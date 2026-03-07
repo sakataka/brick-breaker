@@ -1,4 +1,5 @@
 import { createAssistState } from "./assistSystem";
+import { createBossAttackState } from "./bossState";
 import { getGameplayBalance, getStageByIndex, getStageTimeTargetSec, STAGE_CATALOG } from "./config";
 import { createItemState } from "./itemSystem";
 import { buildBricksFromStage } from "./level";
@@ -108,6 +109,8 @@ export function createInitialGameState(
       bossPhase: 0,
       bossPhaseSummonCooldownSec: 0,
       enemyWaveCooldownSec: 0,
+      bossAttackState: createBossAttackState(),
+      forcedBallLoss: false,
     },
     enemies: [],
     magic: {

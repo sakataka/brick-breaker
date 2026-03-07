@@ -6,6 +6,44 @@ async function presetLocale(page: Page, locale: "ja" | "en") {
   }, locale);
 }
 
+async function accessDebugController<T>(page: Page, callback: () => T): Promise<T> {
+  return page.evaluate(callback);
+}
+
+interface DebugWindowHandle {
+  __brickBreaker?: {
+    session?: {
+      controller?: {
+        state: {
+          paddle: { x: number; y: number; width: number };
+          items: {
+            falling: Array<{
+              id: number;
+              type: string;
+              pos: { x: number; y: number };
+              speed: number;
+              size: number;
+            }>;
+          };
+          bricks: Array<{ kind?: string; hp?: number; maxHp?: number }>;
+          combat: {
+            bossPhase: number;
+            bossAttackState: {
+              telegraph: {
+                kind: "volley" | "sweep";
+                remainingSec: number;
+                maxSec: number;
+                targetX?: number;
+                spread?: number;
+              } | null;
+            };
+          };
+        };
+      };
+    };
+  };
+}
+
 test("start -> playing -> paused -> playing", async ({ page }) => {
   await presetLocale(page, "ja");
   await page.goto("/");
@@ -94,6 +132,80 @@ test("start screen locale switch keeps CTA visible for long translations", async
     expect(buttonBox.y).toBeGreaterThanOrEqual(footerBox.y);
     expect(buttonBox.y + buttonBox.height).toBeLessThanOrEqual(footerBox.y + footerBox.height + 1);
   }
+});
+
+test("debug stage 8 shows steel and generator legends in HUD", async ({ page }) => {
+  await presetLocale(page, "ja");
+  await page.goto("/");
+
+  await page.locator("#setting-debug-mode").click();
+  await page.locator("#setting-debug-start-stage").selectOption("8");
+  await page.locator("#overlay-button").click();
+  await expect(page.locator("#overlay")).toHaveClass(/hidden/);
+  await expect(page.locator("#items")).toContainText("鋼壁: 破壊不可");
+  await expect(page.locator("#items")).toContainText("発生装置: 周辺再生");
+});
+
+test("item pickup toast does not block pause input", async ({ page }) => {
+  await presetLocale(page, "ja");
+  await page.goto("/");
+  await page.locator("#overlay-button").click();
+  await expect(page.locator("#overlay")).toHaveClass(/hidden/);
+
+  await accessDebugController(page, () => {
+    const game = (window as Window & DebugWindowHandle).__brickBreaker;
+    const controller = game?.session?.controller;
+    if (!controller) {
+      throw new Error("debug controller unavailable");
+    }
+    const state = controller.state;
+    state.items.falling.push({
+      id: 999,
+      type: "shockwave",
+      pos: { x: state.paddle.x + state.paddle.width / 2, y: state.paddle.y - 6 },
+      speed: 0,
+      size: 16,
+    });
+  });
+
+  await expect(page.locator(".hud-pickup-toast")).toBeVisible();
+  await page.keyboard.press("KeyP");
+  await expect(page.locator("#overlay")).toHaveAttribute("data-scene", "paused");
+});
+
+test("boss telegraph appears during debug boss fight", async ({ page }) => {
+  await presetLocale(page, "ja");
+  await page.goto("/");
+
+  await page.locator("#setting-debug-mode").click();
+  await page.locator("#setting-debug-scenario").selectOption("boss_check");
+  await page.locator("#overlay-button").click();
+  await expect(page.locator("#overlay")).toHaveClass(/hidden/);
+
+  await accessDebugController(page, () => {
+    const game = (window as Window & DebugWindowHandle).__brickBreaker;
+    const controller = game?.session?.controller;
+    if (!controller) {
+      throw new Error("debug controller unavailable");
+    }
+    const state = controller.state;
+    const boss = state.bricks.find((brick: { kind?: string }) => brick.kind === "boss");
+    if (!boss) {
+      throw new Error("boss unavailable");
+    }
+    boss.hp = 5;
+    boss.maxHp = 18;
+    state.combat.bossPhase = 3;
+    state.combat.bossAttackState.telegraph = {
+      kind: "volley",
+      remainingSec: 1,
+      maxSec: 1,
+      targetX: state.paddle.x + state.paddle.width / 2,
+      spread: 92,
+    };
+  });
+
+  await expect(page.locator("#stage")).toContainText(/射撃予兆|制圧予兆/);
 });
 
 test.describe("dpi regression", () => {

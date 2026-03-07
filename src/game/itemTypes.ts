@@ -1,4 +1,4 @@
-import type { Ball, DebugItemPreset, ItemType, RandomSource } from "./types";
+import type { Ball, CollisionEvent, DebugItemPreset, GameState, ItemType, RandomSource } from "./types";
 
 export interface ItemStackState {
   paddlePlusStacks: number;
@@ -11,11 +11,19 @@ export interface ItemStackState {
   stickyStacks: number;
   homingStacks: number;
   railStacks: number;
+  shockwaveStacks: number;
 }
 
 export interface ItemEffectContext {
   stacks: ItemStackState;
   balls: Ball[];
+  state?: Pick<GameState, "bricks" | "vfx">;
+  scorePerBrick?: number;
+}
+
+export interface ItemPickupImpact {
+  scoreGain?: number;
+  collisionEvents?: CollisionEvent[];
 }
 
 export interface ItemModifierBundle {
@@ -46,9 +54,10 @@ export interface ItemDefinition {
   dropSuppressedWhenActive: boolean;
   hudOrder: number;
   sfxEvent: ItemPickupSfxEvent;
+  presentation: ItemPickupPresentation;
   respectsNewStackSetting?: boolean;
   debugPresetStacks?: Partial<Record<Exclude<DebugItemPreset, "none">, number>>;
-  applyPickup: (context: ItemEffectContext) => void;
+  applyPickup: (context: ItemEffectContext) => ItemPickupImpact | undefined;
   getLabelStack: (stacks: ItemStackState) => number;
 }
 
@@ -74,4 +83,14 @@ export type ItemPickupSfxEvent =
   | "item_laser"
   | "item_sticky"
   | "item_homing"
-  | "item_rail";
+  | "item_rail"
+  | "item_shockwave";
+
+export interface ItemPickupPresentation {
+  flashMs: number;
+  hitFreezeMs: number;
+  shakeMs: number;
+  shakePx: number;
+  auraMs: number;
+  toastMs: number;
+}

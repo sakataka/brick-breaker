@@ -129,6 +129,8 @@ export const en: TranslationSchema = {
       route: "Route",
       modifier: "Modifier",
       warpLegend: "Warp: blue=in / yellow=out",
+      steelLegend: "Steel: unbreakable",
+      generatorLegend: "Generator: respawns nearby",
     },
     stageMode: {
       campaign: "Stage",
@@ -156,6 +158,11 @@ export const en: TranslationSchema = {
     bossValue: "{hp:number}/{maxHp:number} {phase}",
     phase: "P{phase:number}",
     rogueProgress: "{taken:number}/{max:number}",
+    bossIntent: {
+      summon: "Summon wind-up",
+      volley: "Volley telegraph",
+      sweep: "Sweep telegraph",
+    },
   },
   shop: {
     title: "Shop",
@@ -228,6 +235,12 @@ export const en: TranslationSchema = {
       short: "RIL",
       hud: "⚡ Rail",
       description: "Let lasers pierce multiple bricks",
+    },
+    shockwave: {
+      name: "Shockwave",
+      short: "WAV",
+      hud: "🌊 Shockwave",
+      description: "Pulse nearby normal bricks on pickup",
     },
     stack: "{label}×{count:number}",
   },

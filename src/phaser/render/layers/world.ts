@@ -56,9 +56,11 @@ export function drawWorldLayer(
   drawPaddle(graphics, view, offsetX, offsetY, lineWidth, heavyLineWidth);
   drawFluxField(graphics, view, offsetX, offsetY);
   drawShield(graphics, view.shieldCharges, width, height, offsetX, offsetY);
+  drawBossTelegraph(graphics, view, width, height, offsetX, offsetY);
   drawTrail(graphics, view, offsetX, offsetY, theme.trail);
   drawBalls(graphics, view, offsetX, offsetY, lineWidth, theme.ballCore, theme.ballStroke);
   drawLaserProjectiles(graphics, view, offsetX, offsetY);
+  drawBossProjectiles(graphics, view, offsetX, offsetY);
   drawEnemies(graphics, view, offsetX, offsetY);
   return drawFallingItems(graphics, view, offsetX, offsetY, lineWidth);
 }
@@ -107,7 +109,10 @@ function drawBricks(
       continue;
     }
     const fallbackColor = fallbackBrickPalette[(brick.row ?? 0) % fallbackBrickPalette.length] ?? "#ffffff";
-    const body = parseColor(brick.color ?? fallbackColor, { value: 0xa0c8ff, alpha: 0.55 });
+    const body = parseColor(resolveBrickBodyColor(brick.kind, brick.color ?? fallbackColor), {
+      value: 0xa0c8ff,
+      alpha: 0.55,
+    });
     const brickX = snapByStep(brick.x + offsetX, snapStep);
     const brickY = snapByStep(brick.y + offsetY, snapStep);
     graphics.fillStyle(body.value, Math.max(body.alpha, brickFillAlphaMin));
@@ -174,6 +179,12 @@ function drawPaddle(
   graphics.fillRoundedRect(paddleX, paddleY, view.paddle.width, view.paddle.height, 6);
   graphics.lineStyle(Math.max(lineWidth, heavyLineWidth), paddleStroke.value, 0.94);
   graphics.strokeRoundedRect(paddleX, paddleY, view.paddle.width, view.paddle.height, 6);
+
+  if (view.paddleAuraColor) {
+    const aura = parseColor(view.paddleAuraColor, { value: 0x78dcff, alpha: 0.22 });
+    graphics.fillStyle(aura.value, aura.alpha * 0.28);
+    graphics.fillRoundedRect(paddleX - 8, paddleY - 5, view.paddle.width + 16, view.paddle.height + 10, 10);
+  }
 
   if (!view.paddle.glowActive) {
     return;
@@ -244,12 +255,38 @@ function drawBalls(
   const ballFill = parseColor(ballCoreColor, { value: 0x4da5ff, alpha: 0.9 });
   const ballStroke = parseColor(ballStrokeColor, { value: 0xffffff, alpha: 0.9 });
   for (const ball of view.balls) {
+    if (view.ballAuraColor) {
+      const aura = parseColor(view.ballAuraColor, { value: 0x78dcff, alpha: 0.22 });
+      graphics.fillStyle(aura.value, aura.alpha * 0.24);
+      graphics.fillCircle(ball.pos.x + offsetX, ball.pos.y + offsetY, ball.radius + 4);
+    }
     graphics.fillStyle(ballFill.value, ballFill.alpha);
     const ballX = snapPixel(ball.pos.x + offsetX);
     const ballY = snapPixel(ball.pos.y + offsetY);
     graphics.fillCircle(ballX, ballY, ball.radius);
     graphics.lineStyle(lineWidth, ballStroke.value, ballStroke.alpha);
     graphics.strokeCircle(ballX, ballY, ball.radius);
+  }
+}
+
+function drawBossProjectiles(
+  graphics: Phaser.GameObjects.Graphics,
+  view: RenderViewState,
+  offsetX: number,
+  offsetY: number,
+): void {
+  if (view.bossProjectiles.length <= 0) {
+    return;
+  }
+  const fill = parseColor("rgba(255, 118, 118, 0.88)", { value: 0xff7676, alpha: 0.88 });
+  const stroke = parseColor("rgba(255, 240, 220, 0.82)", { value: 0xfff0dc, alpha: 0.82 });
+  for (const shot of view.bossProjectiles) {
+    const x = shot.x + offsetX;
+    const y = shot.y + offsetY;
+    graphics.fillStyle(fill.value, fill.alpha);
+    graphics.fillCircle(x, y, shot.radius);
+    graphics.lineStyle(1.2, stroke.value, stroke.alpha);
+    graphics.strokeCircle(x, y, shot.radius);
   }
 }
 
@@ -296,6 +333,69 @@ function drawEnemies(
   }
 }
 
+function drawBossTelegraph(
+  graphics: Phaser.GameObjects.Graphics,
+  view: RenderViewState,
+  width: number,
+  height: number,
+  offsetX: number,
+  offsetY: number,
+): void {
+  if (view.bossSweep) {
+    drawSweepLane(
+      graphics,
+      view.bossSweep.lane,
+      width,
+      height,
+      offsetX,
+      offsetY,
+      view.bossSweep.progress,
+      true,
+    );
+  }
+  if (!view.bossTelegraph) {
+    return;
+  }
+  if (view.bossTelegraph.kind === "sweep" && view.bossTelegraph.lane) {
+    drawSweepLane(
+      graphics,
+      view.bossTelegraph.lane,
+      width,
+      height,
+      offsetX,
+      offsetY,
+      view.bossTelegraph.progress,
+      false,
+    );
+    return;
+  }
+  if (view.bossTelegraph.kind === "volley" && typeof view.bossTelegraph.targetX === "number") {
+    const telegraph = parseColor("rgba(255, 196, 124, 0.55)", { value: 0xffc47c, alpha: 0.55 });
+    graphics.lineStyle(2, telegraph.value, telegraph.alpha);
+    const sources = view.bricks.filter((brick) => brick.alive && brick.kind === "boss");
+    const boss = sources[0];
+    if (!boss) {
+      return;
+    }
+    const centerX = boss.x + boss.width / 2 + offsetX;
+    const originY = boss.y + boss.height + 12 + offsetY;
+    const targetXs =
+      typeof view.bossTelegraph.spread === "number" && view.bossTelegraph.spread > 0
+        ? [
+            view.bossTelegraph.targetX - view.bossTelegraph.spread,
+            view.bossTelegraph.targetX,
+            view.bossTelegraph.targetX + view.bossTelegraph.spread,
+          ]
+        : [view.bossTelegraph.targetX];
+    for (const targetX of targetXs) {
+      graphics.beginPath();
+      graphics.moveTo(centerX, originY);
+      graphics.lineTo(targetX + offsetX, height - 120 + offsetY);
+      graphics.strokePath();
+    }
+  }
+}
+
 function drawFallingItems(
   graphics: Phaser.GameObjects.Graphics,
   view: RenderViewState,
@@ -320,6 +420,10 @@ function drawFallingItems(
 
 function getBrickMarkerColor(kind: NonNullable<RenderViewState["bricks"][number]["kind"]>): string {
   switch (kind) {
+    case "steel":
+      return "#d7ebff";
+    case "generator":
+      return "#9dffca";
     case "durable":
       return "#ffd06e";
     case "armored":
@@ -339,4 +443,48 @@ function getBrickMarkerColor(kind: NonNullable<RenderViewState["bricks"][number]
     default:
       return "#ffffff";
   }
+}
+
+function resolveBrickBodyColor(
+  kind: RenderViewState["bricks"][number]["kind"],
+  fallbackColor: string,
+): string {
+  switch (kind) {
+    case "steel":
+      return "rgba(170, 196, 222, 0.58)";
+    case "generator":
+      return "rgba(126, 255, 196, 0.52)";
+    case "boss":
+      return "rgba(255, 122, 190, 0.58)";
+    default:
+      return fallbackColor;
+  }
+}
+
+function drawSweepLane(
+  graphics: Phaser.GameObjects.Graphics,
+  lane: NonNullable<RenderViewState["bossSweep"]>["lane"],
+  width: number,
+  height: number,
+  offsetX: number,
+  offsetY: number,
+  progress: number,
+  active: boolean,
+): void {
+  const laneWidth = width / 3;
+  const laneIndex = lane === "left" ? 0 : lane === "center" ? 1 : 2;
+  const fill = parseColor(active ? "rgba(255, 98, 98, 0.22)" : "rgba(255, 190, 120, 0.14)", {
+    value: active ? 0xff6262 : 0xffbe78,
+    alpha: active ? 0.22 : 0.14,
+  });
+  const stroke = parseColor(active ? "rgba(255, 138, 138, 0.6)" : "rgba(255, 214, 148, 0.55)", {
+    value: active ? 0xff8a8a : 0xffd694,
+    alpha: active ? 0.6 : 0.55,
+  });
+  const x = laneIndex * laneWidth + offsetX;
+  const y = height - 98 + offsetY;
+  graphics.fillStyle(fill.value, fill.alpha + progress * 0.06);
+  graphics.fillRect(x, y, laneWidth, 92);
+  graphics.lineStyle(1.6, stroke.value, stroke.alpha);
+  graphics.strokeRect(x + 1, y + 1, laneWidth - 2, 90);
 }

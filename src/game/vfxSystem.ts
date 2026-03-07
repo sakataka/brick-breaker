@@ -1,4 +1,4 @@
-import { ITEM_REGISTRY } from "./itemRegistry";
+import { getItemPickupPresentation, ITEM_REGISTRY } from "./itemRegistry";
 import type {
   CollisionEvent,
   FloatingText,
@@ -20,6 +20,7 @@ export function createVfxState(reducedMotion: boolean): VfxState {
     impactRings: [],
     floatingTexts: [],
     flashMs: 0,
+    flashColor: "rgba(255, 255, 255, 0.85)",
     shakeMs: 0,
     shakePx: 0,
     hitFreezeMs: 0,
@@ -27,6 +28,9 @@ export function createVfxState(reducedMotion: boolean): VfxState {
     trail: [],
     densityScale: 1,
     reducedMotion,
+    pickupAuraMs: 0,
+    pickupAuraColor: "rgba(255,255,255,0.0)",
+    pickupToast: null,
   };
 }
 
@@ -83,7 +87,20 @@ export function triggerHitFreeze(vfx: VfxState, durationMs: number): void {
 
 export function spawnItemPickupFeedback(vfx: VfxState, type: ItemType, x: number, y: number): void {
   const item = ITEM_REGISTRY[type];
+  const presentation = getItemPickupPresentation(type);
   spawnImpactRing(vfx, x, y, item.color, 8, 46, 240);
+  vfx.flashMs = Math.max(vfx.flashMs, presentation.flashMs);
+  vfx.flashColor = item.color;
+  triggerHitFreeze(vfx, presentation.hitFreezeMs);
+  bumpShake(vfx, presentation.shakePx, presentation.shakeMs);
+  vfx.pickupAuraMs = Math.max(vfx.pickupAuraMs, presentation.auraMs);
+  vfx.pickupAuraColor = item.color;
+  vfx.pickupToast = {
+    itemType: type,
+    color: item.color,
+    lifeMs: presentation.toastMs,
+    maxLifeMs: presentation.toastMs,
+  };
 
   const lifeMs = vfx.reducedMotion ? 420 : 760;
   const text: FloatingText = {
@@ -111,6 +128,15 @@ export function updateVfxState(vfx: VfxState, deltaSec: number, random: RandomSo
   }
 
   vfx.flashMs = Math.max(0, vfx.flashMs - deltaMs);
+  if (vfx.pickupAuraMs > 0) {
+    vfx.pickupAuraMs = Math.max(0, vfx.pickupAuraMs - deltaMs);
+  }
+  if (vfx.pickupToast) {
+    vfx.pickupToast.lifeMs -= deltaMs;
+    if (vfx.pickupToast.lifeMs <= 0) {
+      vfx.pickupToast = null;
+    }
+  }
   vfx.shakeMs = Math.max(0, vfx.shakeMs - deltaMs);
   if (vfx.shakeMs <= 0 || vfx.shakePx <= 0 || vfx.reducedMotion) {
     vfx.shakePx = vfx.shakeMs <= 0 ? 0 : vfx.shakePx;

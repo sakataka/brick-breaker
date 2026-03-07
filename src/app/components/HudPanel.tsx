@@ -34,6 +34,9 @@ export function HudPanel({ locale, hud, scoreRef }: HudPanelProps): ReactElement
         phase: LL.hud.phase({ phase: hud.stage.boss.phase }),
       })}`,
     );
+    if (hud.stage.boss.intent) {
+      stageMeta.push(LL.hud.bossIntent[hud.stage.boss.intent]());
+    }
   }
   if (hud.stage.debugModeEnabled) {
     stageMeta.push(hud.stage.debugRecordResults ? LL.hud.debug.on() : LL.hud.debug.off());
@@ -73,6 +76,12 @@ export function HudPanel({ locale, hud, scoreRef }: HudPanelProps): ReactElement
   if (hud.flags.warpLegendVisible) {
     itemTags.push(LL.hud.labels.warpLegend());
   }
+  if (hud.flags.steelLegendVisible) {
+    itemTags.push(LL.hud.labels.steelLegend());
+  }
+  if (hud.flags.generatorLegendVisible) {
+    itemTags.push(LL.hud.labels.generatorLegend());
+  }
 
   return (
     <div id="hud" aria-live="polite" style={{ "--hud-accent": hud.accentColor } as CSSProperties}>
@@ -106,6 +115,11 @@ export function HudPanel({ locale, hud, scoreRef }: HudPanelProps): ReactElement
           </span>
         ))}
       </div>
+      {hud.pickupToast ? (
+        <div className="hud-pickup-toast" style={{ "--toast-color": hud.pickupToast.color } as CSSProperties}>
+          {getItemTranslation(LL, hud.pickupToast.type).name()}
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -10,9 +10,12 @@ export type ItemType =
   | "laser"
   | "sticky"
   | "homing"
-  | "rail";
+  | "rail"
+  | "shockwave";
 export type BrickKind =
   | "normal"
+  | "steel"
+  | "generator"
   | "durable"
   | "armored"
   | "regen"
@@ -64,6 +67,7 @@ export interface Brick {
   row?: number;
   col?: number;
   color?: string;
+  cooldownSec?: number;
 }
 
 export interface GameConfig {
@@ -89,8 +93,25 @@ export interface StageDefinition {
   id: number;
   speedScale: number;
   layout: number[][];
+  chapter?: 1 | 2 | 3 | 4;
+  archetype?: StageArchetype;
+  tags?: StageTag[];
+  events?: StageEventKey[];
+  specials?: StageSpecialPlacement[];
   elite?: StageElitePlacement[];
 }
+
+export type StageArchetype =
+  | "wide_open"
+  | "corridor"
+  | "chokepoint"
+  | "control"
+  | "split_lane"
+  | "boss_arena";
+
+export type StageTag = "steel" | "generator" | "enemy_pressure" | "boss";
+
+export type StageEventKey = "generator_respawn" | "enemy_pressure" | "boss_duel";
 
 export interface StageElitePlacement {
   row: number;
@@ -99,4 +120,10 @@ export interface StageElitePlacement {
     BrickKind,
     "durable" | "armored" | "regen" | "hazard" | "boss" | "split" | "summon" | "thorns"
   >;
+}
+
+export interface StageSpecialPlacement {
+  row: number;
+  col: number;
+  kind: Extract<BrickKind, "steel" | "generator">;
 }

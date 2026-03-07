@@ -1,4 +1,5 @@
 import { destroyBrickImmediately } from "../brickDamage";
+import { countsTowardStageClear } from "../brickRules";
 import { COMBAT_CONFIG } from "../config";
 import type { GameState, RandomSource } from "../types";
 
@@ -63,7 +64,7 @@ function selectMagicTarget(state: GameState): GameState["bricks"][number] | null
   const originX = state.paddle.x + state.paddle.width / 2;
   const originY = state.paddle.y;
   for (const brick of state.bricks) {
-    if (!brick.alive) {
+    if (!brick.alive || !countsTowardStageClear(brick)) {
       continue;
     }
     const cx = brick.x + brick.width / 2;

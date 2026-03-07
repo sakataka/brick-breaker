@@ -1,5 +1,6 @@
 import type { SfxManager } from "../audio/sfx";
 import { applyAssistToPaddle, getCurrentMaxBallSpeed } from "./assistSystem";
+import { countAliveObjectiveBricks } from "./brickRules";
 import { playCollisionSounds } from "./collisionEffects";
 import { applyComboHits, normalizeCombo, resetCombo } from "./comboSystem";
 import { getGameplayBalance, HAZARD_CONFIG, ITEM_BALANCE, RISK_MODE_CONFIG } from "./config";
@@ -28,8 +29,9 @@ import { syncHeldBallsSnapshot, updateAutoLaserSpawner, updateLaserProjectiles }
 import { castMagicStrike } from "./pipeline/magicPhase";
 import { processShieldBurst } from "./pipeline/shieldPhase";
 import { ensureShopOffer } from "./pipeline/shopPhase";
+import { updateStageControlBricks } from "./pipeline/stagePhase";
 import { resolveStageContextFromState } from "./stageContext";
-import type { Ball, GameConfig, GameState, ItemType, RandomSource } from "./types";
+import type { Ball, CollisionEvent, GameConfig, GameState, ItemType, RandomSource } from "./types";
 import { applyCollisionEvents, spawnItemPickupFeedback } from "./vfxSystem";
 
 export { generateShopOffer } from "./pipeline/shopPhase";
@@ -49,10 +51,15 @@ export interface GamePipelineDeps {
 export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): PipelineOutcome {
   const { config, random } = deps;
   const balance = getGameplayBalance(config.difficulty);
-  const hadAliveBricksBeforeTick = state.bricks.some((brick) => brick.alive);
+  const hadAliveBricksBeforeTick = countAliveObjectiveBricks(state.bricks) > 0;
   const stageContext = resolveStageContextFromState(state, config);
   ensureShopOffer(state, random, state.options.stickyItemEnabled, stageContext.effectiveStageIndex);
   const pipelineDeltaSec = config.fixedDeltaSec;
+  updateStageControlBricks(
+    state,
+    stageContext.stageEvents?.includes("generator_respawn") === true,
+    pipelineDeltaSec,
+  );
   updateEnemies(state, config, pipelineDeltaSec);
   if (
     updateEnemyWaveEvent(
@@ -60,7 +67,8 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
       config,
       random,
       pipelineDeltaSec,
-      stageContext.stageModifier?.spawnEnemy ?? false,
+      (stageContext.stageModifier?.spawnEnemy ?? false) ||
+        stageContext.stageEvents?.includes("enemy_pressure") === true,
     )
   ) {
     state.vfx.floatingTexts.push({
@@ -166,14 +174,26 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
 
   const picks = updateFallingItems(state.items, state.paddle, config.height, pipelineDeltaSec);
   let pickedMultiball = false;
+  const pickupCollisionEvents: CollisionEvent[] = [];
   for (const pick of picks) {
-    applyItemPickup(state.items, pick.type, physics.survivors, {
+    const impact = applyItemPickup(state.items, pick.type, physics.survivors, {
       enableNewItemStacks: state.options.enableNewItemStacks,
+      gameState: state,
+      scorePerBrick: balance.scorePerBrick,
     });
+    if ((impact.scoreGain ?? 0) > 0) {
+      state.score += Math.round((impact.scoreGain ?? 0) * scoreScale);
+    }
+    if (impact.collisionEvents?.length) {
+      pickupCollisionEvents.push(...impact.collisionEvents);
+    }
     if (pick.type === "multiball") {
       pickedMultiball = true;
     }
     spawnItemPickupFeedback(state.vfx, pick.type, pick.pos.x, pick.pos.y);
+  }
+  if (pickupCollisionEvents.length > 0) {
+    applyCollisionEvents(state.vfx, pickupCollisionEvents, random);
   }
   for (const pick of picks.slice(0, 2)) {
     deps.playPickupSfx(pick.type);
@@ -218,7 +238,17 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
     updateAutoLaserSpawner(state, pipelineDeltaSec, laserLevel);
   }
 
-  const clearedAfterMagic = hadAliveBricksBeforeTick && !state.bricks.some((brick) => brick.alive);
+  const forcedBallLoss = state.combat.forcedBallLoss;
+  if (forcedBallLoss) {
+    state.combat.forcedBallLoss = false;
+    clearActiveItemEffects(state.items);
+    state.balls = [];
+    state.combat.laserProjectiles = [];
+    state.combat.laserCooldownSec = 0;
+    return "ballloss";
+  }
+
+  const clearedAfterMagic = hadAliveBricksBeforeTick && countAliveObjectiveBricks(state.bricks) <= 0;
   if (physics.hasClear || clearedAfterMagic) {
     return "stageclear";
   }

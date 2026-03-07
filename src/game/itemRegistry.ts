@@ -3,11 +3,13 @@ import { ITEM_ORDER, ITEM_REGISTRY } from "./itemRegistryData";
 import type {
   ItemDefinition,
   ItemModifierBundle,
+  ItemPickupImpact,
+  ItemPickupPresentation,
   ItemPickupSfxEvent,
   ItemRegistry,
   ItemStackState,
 } from "./itemTypes";
-import type { Ball, DebugItemPreset, ItemState, ItemType, RandomSource } from "./types";
+import type { Ball, DebugItemPreset, GameState, ItemState, ItemType, RandomSource } from "./types";
 
 export { ITEM_REGISTRY } from "./itemRegistryData";
 
@@ -19,6 +21,8 @@ export interface ActiveItemEntry {
 
 export interface ItemPickupPolicyOptions {
   enableNewItemStacks?: boolean;
+  gameState?: Pick<GameState, "bricks" | "vfx">;
+  scorePerBrick?: number;
 }
 
 export interface DebugPresetOptions {
@@ -37,6 +41,7 @@ const EMPTY_ITEM_STACKS: ItemStackState = {
   stickyStacks: 0,
   homingStacks: 0,
   railStacks: 0,
+  shockwaveStacks: 0,
 };
 
 export function createItemStacks(): ItemStackState {
@@ -61,16 +66,20 @@ export function applyItemPickupFromRegistry(
   type: ItemType,
   balls: Ball[],
   options: ItemPickupPolicyOptions = {},
-): void {
+): ItemPickupImpact {
   const definition = ITEM_REGISTRY[type];
   if (options.enableNewItemStacks === false && definition.respectsNewStackSetting) {
     setItemStackCount(state.active, type, Math.min(1, definition.maxStacks));
-    return;
+    return {};
   }
-  definition.applyPickup({
-    stacks: state.active,
-    balls,
-  });
+  return (
+    definition.applyPickup({
+      stacks: state.active,
+      balls,
+      state: options.gameState,
+      scorePerBrick: options.scorePerBrick,
+    }) ?? {}
+  );
 }
 
 export function applyDebugPresetFromRegistry(
@@ -146,6 +155,10 @@ export function getItemColor(type: ItemType): string {
 
 export function getItemPickupSfxEvent(type: ItemType): ItemPickupSfxEvent {
   return ITEM_REGISTRY[type].sfxEvent;
+}
+
+export function getItemPickupPresentation(type: ItemType): ItemPickupPresentation {
+  return ITEM_REGISTRY[type].presentation;
 }
 
 export function getDropSuppressedTypes(stacks: ItemStackState): ItemType[] {

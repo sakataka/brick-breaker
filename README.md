@@ -1,7 +1,7 @@
 # Brick Breaker Local
 
 Bun + Vite + TypeScript を基盤に、`Phaser` をホストにした描画/入力、`React + Zustand` の UI、`Tone/WebAudio` のサウンドで構成したローカル向けブロック崩しです。  
-マウス操作を中心に、12ステージキャンペーン、10種アイテム、複数ゲームモード、コンボ、評価、サウンド、開始前設定を備えています。
+マウス操作を中心に、12ステージキャンペーン、11種アイテム、複数ゲームモード、コンボ、評価、サウンド、開始前設定を備えています。
 
 ## セットアップ
 
@@ -111,10 +111,11 @@ bunx playwright install chromium
 - コンボ `x2.0` 到達時に1回だけ確定アイテムドロップ
 - ステージ評価: ★1〜★3（時間/被弾/残機）+ ミッション補正
 - ステージクリア時にミッション（`制限時間` / `ショップ未使用`）の達成/未達を表示
+- 4面以降は盤面アーキタイプを段階的に変更し、`steel`（破壊不能遮蔽物）と `generator`（近傍再生成）でレーンと優先破壊対象を作る
 - 9〜11面にエリートブロック（`durable` / `armored` / `regen` / `hazard` / `split` / `summon` / `thorns`）
 - ステージ修飾子面では時限増援ウェーブが発生
 - `hazard` 破壊時は `slow_ball` 効果が解除され、3秒間だけ球速上限が上がる
-- 12面は単一ボス戦（HUDにボスHPを表示）
+- 12面は専用アリーナの3フェーズボス戦（召喚 -> 射撃 -> 制圧技、HUDにボスHP/フェーズ/予兆を表示）
 - ステージ修飾子（ワープ / 高速球 / フラックスフィールド）を後半面に適用
   - ワープは「青=入口 / 黄=出口 + ガイド線」で移動先を明示
 - シールド救済成立時に「シールドバースト」が発動（近傍2ブロックへ反撃 + 生存ボール押し戻し）
@@ -127,9 +128,11 @@ bunx playwright install chromium
 
 ## アイテム仕様
 
-- ドロップ率 `18%`、同時落下上限 `3`
-- 種類: `paddle_plus`, `slow_ball`, `multiball`, `shield`, `pierce`, `bomb`, `laser`, `sticky`, `homing`, `rail`
+- 通常ドロップ率 `12%`、同時落下上限 `2`、1 fixed-step あたり通常ドロップ上限 `1`
+- コンボ `x2.0` の確定ドロップは通常ドロップ上限の対象外
+- 種類: `paddle_plus`, `slow_ball`, `multiball`, `shield`, `pierce`, `bomb`, `shockwave`, `laser`, `sticky`, `homing`, `rail`
 - スタック加算型（`pierce` と `bomb` は上限1）
+- `shockwave` は取得時に近くの通常ブロックへ追加ダメージを与え、ボールを少し押し戻す即時効果
 - `laser` は最大2スタック（自動発射間隔が短縮）
 - `sticky` は最大1スタック（パドルで一時保持して自動リリース）
 - `homing` はボール軌道を最近ブロック方向へ補正
@@ -143,6 +146,7 @@ bunx playwright install chromium
 - 全ボール喪失で全効果解除
 - `bomb` / `pierce` 有効中は同種アイテムを再ドロップしない
 - シナジー: `pierce` + `slow_ball` 同時有効で貫通深度 `+1`
+- pickup 時は短いヒットストップ、色フラッシュ、HUDトースト、パドル/ボールの一時オーラを表示
 - 落下アイテム表示は「色付きタイル + 絵文字 + 短縮文字」のハイブリッド（高視認性）
 - 描画は `DPR連動（上限4）` + サブピクセルsnap補正で高解像度表示
 
@@ -185,11 +189,11 @@ GitHub Pages 公開手順:
 
 - 実行エントリは `src/game/GameSession.ts`（オーケストレータ）で、`src/core/engine.ts`（進行ロジック）を駆動します。
 - `GameSession` は app/store との composition root とし、実際の進行は `src/game/session/SessionController.ts` と `src/game/session/*` に分割しています。
-- フレーム進行は `src/game/gamePipeline.ts` が受け持ち、敵/レーザー/魔法/シールドは `src/game/pipeline/*` の個別フェーズで処理します。
+- フレーム進行は `src/game/gamePipeline.ts` が受け持ち、敵/レーザー/魔法/盤面制御/ボス攻撃/シールドは `src/game/pipeline/*` の個別フェーズで処理します。
 - ブロックHP/破壊判定は `src/game/brickDamage.ts` に集約し、`physicsCore` と `gamePipeline` で共通利用します。
 - 描画は `src/phaser/scenes/RuntimeScene.ts` + `src/phaser/render/PhaserRenderPort.ts` 経由で実行し、`src/phaser/render/layers/*` でレイヤー別に管理します。
 - UI は `src/app/AppUi.tsx` と `src/app/components/*` で宣言的に構成し、開始設定の単一定義は `src/game/startSettingsSchema.ts` に集約しています。
-- ステージ解決は `src/game/stageContext.ts` に集約し、round/pipeline/render で共通利用します。
+- ステージ解決は `src/game/stageContext.ts` に集約し、chapter / tags / events / modifier を round/pipeline/render で共通利用します。
 - 多言語基盤は `typesafe-i18n` を使用し、`src/i18n/*` の辞書を単一の翻訳ソースとして扱います。
 - UI 文言は React / Phaser の両方で現在ロケールから解決し、Core 側には表示文字列ではなくキーや数値を保持します。
 - 音制御は `src/audio/audioDirector.ts`（facade） -> `src/audio/toneDirector.ts` の経路で管理します。

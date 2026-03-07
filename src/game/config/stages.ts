@@ -1,5 +1,12 @@
 import { validateStageCatalog } from "../configSchema";
-import type { StageDefinition, StageRoute } from "../types";
+import type {
+  StageArchetype,
+  StageDefinition,
+  StageEventKey,
+  StageRoute,
+  StageSpecialPlacement,
+  StageTag,
+} from "../types";
 import { RATING_CONFIG } from "./gameplay";
 
 export interface BrickLayout {
@@ -43,76 +50,193 @@ export const BRICK_LAYOUT: BrickLayout = {
   brickHeight: 24,
 };
 
-const STAGE_ROW_DEFINITIONS: readonly (readonly string[])[] = [
-  ["0011111100", "0011111100", "0001111000", "0000110000", "0000000000", "0000000000"],
-  ["0111111110", "0011111100", "0010110100", "0001111000", "0000100000", "0000000000"],
-  ["0111111110", "0110110110", "0011111100", "0010011000", "0001111000", "0000000000"],
-  ["0111111110", "0101111010", "0110110110", "0011111100", "0001111000", "0000100000"],
-  ["1111111111", "1011111101", "0111111110", "0011111100", "0010110100", "0001111000"],
-  ["1111111111", "1101111011", "0111111110", "0110110110", "0011111100", "0010011000"],
-  ["1111111111", "1011111101", "1110110111", "0111111110", "0101111010", "0011111100"],
-  ["1111111111", "1110110111", "1101111011", "0111111110", "0110110110", "0011111100"],
-  ["1111111111", "1111111111", "1011111101", "1110110111", "0111111110", "0101111010"],
-  ["1111111111", "1111111111", "1101111011", "1110110111", "0111111110", "0110110110"],
-  ["1111111111", "1111111111", "1111111111", "1011111101", "1110110111", "0111111110"],
-  ["0000000000", "0000000000", "0000100000", "0000000000", "0000000000", "0000000000"],
-];
+interface StageBlueprint {
+  rows: readonly string[];
+  chapter: 1 | 2 | 3 | 4;
+  archetype: StageArchetype;
+  tags?: StageTag[];
+  events?: StageEventKey[];
+  specials?: StageSpecialPlacement[];
+  elite?: StageDefinition["elite"];
+}
 
-const ELITE_STAGE_MAP: Partial<Record<number, NonNullable<StageDefinition["elite"]>>> = {
-  9: [
-    { row: 0, col: 4, kind: "durable" },
-    { row: 1, col: 5, kind: "durable" },
-    { row: 2, col: 2, kind: "armored" },
-    { row: 3, col: 4, kind: "regen" },
-    { row: 4, col: 3, kind: "hazard" },
-    { row: 2, col: 7, kind: "split" },
-  ],
-  10: [
-    { row: 0, col: 3, kind: "durable" },
-    { row: 1, col: 6, kind: "armored" },
-    { row: 2, col: 4, kind: "durable" },
-    { row: 4, col: 4, kind: "regen" },
-    { row: 3, col: 4, kind: "hazard" },
-    { row: 5, col: 2, kind: "summon" },
-  ],
-  11: [
-    { row: 0, col: 2, kind: "armored" },
-    { row: 1, col: 7, kind: "durable" },
-    { row: 3, col: 5, kind: "armored" },
-    { row: 4, col: 4, kind: "regen" },
-    { row: 2, col: 4, kind: "hazard" },
-    { row: 5, col: 7, kind: "thorns" },
-  ],
-  12: [{ row: 2, col: 4, kind: "boss" }],
-};
+const STAGE_BLUEPRINTS: readonly StageBlueprint[] = [
+  {
+    rows: ["0011111100", "0011111100", "0001111000", "0000110000", "0000000000", "0000000000"],
+    chapter: 1,
+    archetype: "wide_open",
+  },
+  {
+    rows: ["0011111100", "0010011000", "0011111100", "0001100000", "0001111000", "0000000000"],
+    chapter: 1,
+    archetype: "corridor",
+  },
+  {
+    rows: ["0111111110", "0001100000", "0011111000", "0001100000", "0011111000", "0000000000"],
+    chapter: 1,
+    archetype: "corridor",
+  },
+  {
+    rows: ["0111111110", "0100110010", "0111111110", "0001111000", "0000100000", "0000000000"],
+    chapter: 2,
+    archetype: "chokepoint",
+    tags: ["steel"],
+    specials: [
+      { row: 1, col: 3, kind: "steel" },
+      { row: 1, col: 6, kind: "steel" },
+      { row: 2, col: 4, kind: "steel" },
+      { row: 2, col: 5, kind: "steel" },
+    ],
+  },
+  {
+    rows: ["1111111111", "1011111101", "0110011000", "0111111110", "0011111100", "0000000000"],
+    chapter: 2,
+    archetype: "chokepoint",
+    tags: ["steel"],
+    specials: [
+      { row: 1, col: 1, kind: "steel" },
+      { row: 1, col: 8, kind: "steel" },
+      { row: 2, col: 4, kind: "steel" },
+      { row: 2, col: 5, kind: "steel" },
+    ],
+  },
+  {
+    rows: ["1111111111", "1001111001", "1110011111", "0001111000", "0011111100", "0000000000"],
+    chapter: 2,
+    archetype: "split_lane",
+    tags: ["steel"],
+    specials: [
+      { row: 1, col: 4, kind: "steel" },
+      { row: 1, col: 5, kind: "steel" },
+      { row: 2, col: 3, kind: "steel" },
+      { row: 2, col: 6, kind: "steel" },
+    ],
+  },
+  {
+    rows: ["1111111111", "1011111101", "1110011111", "0011111000", "0001110000", "0000000000"],
+    chapter: 3,
+    archetype: "control",
+    tags: ["generator"],
+    events: ["generator_respawn"],
+    specials: [
+      { row: 1, col: 2, kind: "generator" },
+      { row: 1, col: 7, kind: "generator" },
+    ],
+  },
+  {
+    rows: ["1111111111", "1100000011", "1111111111", "0011111000", "0001100000", "0000000000"],
+    chapter: 3,
+    archetype: "control",
+    tags: ["steel", "generator"],
+    events: ["generator_respawn"],
+    specials: [
+      { row: 1, col: 4, kind: "steel" },
+      { row: 1, col: 5, kind: "steel" },
+      { row: 2, col: 3, kind: "generator" },
+      { row: 2, col: 6, kind: "generator" },
+    ],
+  },
+  {
+    rows: ["1111111111", "1110111111", "0111111110", "0011111100", "0010011000", "0001110000"],
+    chapter: 3,
+    archetype: "control",
+    tags: ["generator", "enemy_pressure"],
+    events: ["generator_respawn", "enemy_pressure"],
+    specials: [
+      { row: 0, col: 4, kind: "generator" },
+      { row: 1, col: 2, kind: "generator" },
+    ],
+    elite: [
+      { row: 0, col: 7, kind: "durable" },
+      { row: 1, col: 6, kind: "armored" },
+      { row: 2, col: 4, kind: "regen" },
+      { row: 3, col: 5, kind: "hazard" },
+      { row: 4, col: 2, kind: "split" },
+      { row: 5, col: 5, kind: "summon" },
+    ],
+  },
+  {
+    rows: ["1110011111", "1110011111", "0011111100", "1110011111", "1110011111", "0001110000"],
+    chapter: 4,
+    archetype: "split_lane",
+    tags: ["steel", "enemy_pressure"],
+    events: ["enemy_pressure"],
+    specials: [
+      { row: 0, col: 2, kind: "steel" },
+      { row: 0, col: 7, kind: "steel" },
+      { row: 3, col: 2, kind: "steel" },
+      { row: 3, col: 7, kind: "steel" },
+    ],
+    elite: [
+      { row: 1, col: 1, kind: "durable" },
+      { row: 1, col: 8, kind: "armored" },
+      { row: 2, col: 4, kind: "hazard" },
+      { row: 4, col: 1, kind: "regen" },
+      { row: 4, col: 8, kind: "summon" },
+    ],
+  },
+  {
+    rows: ["1111111111", "1001111001", "1111111111", "0011111100", "1110011111", "0001110000"],
+    chapter: 4,
+    archetype: "split_lane",
+    tags: ["steel", "generator", "enemy_pressure"],
+    events: ["generator_respawn", "enemy_pressure"],
+    specials: [
+      { row: 1, col: 1, kind: "steel" },
+      { row: 1, col: 8, kind: "steel" },
+      { row: 2, col: 4, kind: "generator" },
+      { row: 4, col: 4, kind: "steel" },
+    ],
+    elite: [
+      { row: 0, col: 2, kind: "armored" },
+      { row: 0, col: 7, kind: "durable" },
+      { row: 2, col: 6, kind: "thorns" },
+      { row: 3, col: 3, kind: "hazard" },
+      { row: 4, col: 7, kind: "regen" },
+    ],
+  },
+  {
+    rows: ["0000000000", "0010000100", "0000100000", "0000000000", "0000000000", "0000000000"],
+    chapter: 4,
+    archetype: "boss_arena",
+    tags: ["steel", "boss"],
+    events: ["boss_duel"],
+    specials: [
+      { row: 1, col: 2, kind: "steel" },
+      { row: 1, col: 7, kind: "steel" },
+      { row: 2, col: 1, kind: "steel" },
+      { row: 2, col: 8, kind: "steel" },
+      { row: 3, col: 2, kind: "steel" },
+      { row: 3, col: 7, kind: "steel" },
+    ],
+    elite: [{ row: 2, col: 4, kind: "boss" }],
+  },
+] as const;
 
 function parseStageLayout(rows: readonly string[]): number[][] {
-  return rows.map((row) =>
-    row.split("").map((cell) => {
-      if (cell === "1") {
-        return 1;
-      }
-      return 0;
-    }),
-  );
+  return rows.map((row) => row.split("").map((cell) => (cell === "1" ? 1 : 0)));
 }
 
 function computeStageSpeedScale(index: number, total: number): number {
   if (total <= 1) {
     return 1;
   }
-
   const min = 1;
   const max = 1.18;
   const ratio = index / (total - 1);
   return min + (max - min) * ratio;
 }
 
-export const STAGE_CATALOG: StageDefinition[] = STAGE_ROW_DEFINITIONS.map((rows, index, all) => ({
+export const STAGE_CATALOG: StageDefinition[] = STAGE_BLUEPRINTS.map((blueprint, index, all) => ({
   id: index + 1,
   speedScale: Number(computeStageSpeedScale(index, all.length).toFixed(3)),
-  layout: parseStageLayout(rows),
-  elite: ELITE_STAGE_MAP[index + 1],
+  layout: parseStageLayout(blueprint.rows),
+  chapter: blueprint.chapter,
+  archetype: blueprint.archetype,
+  tags: blueprint.tags,
+  events: blueprint.events,
+  specials: blueprint.specials,
+  elite: blueprint.elite,
 }));
 
 const routeBCache = new Map<number, StageDefinition>();
@@ -149,7 +273,8 @@ const STAGE_MODIFIERS: Partial<Record<number, StageModifier>> = {
     fluxField: true,
   },
   10: {
-    key: "flux",
+    key: "enemy_flux",
+    spawnEnemy: true,
     fluxField: true,
   },
   11: {
@@ -197,17 +322,19 @@ export function getStageTimeTargetSec(stageIndex: number): number {
 
 function createMirroredStage(stage: StageDefinition): StageDefinition {
   const maxCol = BRICK_LAYOUT.cols - 1;
-  const mirroredLayout = stage.layout.map((row) => [...row].reverse());
-  const mirroredElite = stage.elite?.map((entry) => ({
-    row: entry.row,
-    col: maxCol - entry.col,
-    kind: entry.kind,
-  }));
   return {
-    id: stage.id,
-    speedScale: stage.speedScale,
-    layout: mirroredLayout,
-    elite: mirroredElite,
+    ...stage,
+    layout: stage.layout.map((row) => [...row].reverse()),
+    specials: stage.specials?.map((entry) => ({
+      row: entry.row,
+      col: maxCol - entry.col,
+      kind: entry.kind,
+    })),
+    elite: stage.elite?.map((entry) => ({
+      row: entry.row,
+      col: maxCol - entry.col,
+      kind: entry.kind,
+    })),
   };
 }
 

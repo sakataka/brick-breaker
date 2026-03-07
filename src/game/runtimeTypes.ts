@@ -47,6 +47,7 @@ export interface VfxState {
   impactRings: ImpactRing[];
   floatingTexts: FloatingText[];
   flashMs: number;
+  flashColor: string;
   shakeMs: number;
   shakePx: number;
   hitFreezeMs: number;
@@ -54,6 +55,14 @@ export interface VfxState {
   trail: Vector2[];
   densityScale: number;
   reducedMotion: boolean;
+  pickupAuraMs: number;
+  pickupAuraColor: string;
+  pickupToast: {
+    itemType: ItemType;
+    color: string;
+    lifeMs: number;
+    maxLifeMs: number;
+  } | null;
 }
 
 export type CollisionEventKind = "wall" | "paddle" | "brick" | "miss";
@@ -111,6 +120,7 @@ export interface ActiveItemState {
   stickyStacks: number;
   homingStacks: number;
   railStacks: number;
+  shockwaveStacks: number;
 }
 
 export interface ItemState {
@@ -181,11 +191,14 @@ export type StageMissionKey = "time_limit" | "no_shop";
 export type FloatingTextKey =
   | "item_pickup"
   | "reinforce"
+  | "generator"
   | "split"
   | "summon"
   | "thorns"
   | "spell"
-  | "boss_phase_2";
+  | "boss_phase_2"
+  | "boss_phase_3"
+  | "boss_warning";
 export type DailyObjectiveKey = "no_miss_stage_clear" | "combo_x2" | "collect_three_items";
 export type RuntimeErrorKey = "initialization" | "gameStart" | "startAction" | "shopPurchase" | "runtime";
 
@@ -293,7 +306,44 @@ export interface CombatState {
   laserProjectiles: LaserProjectile[];
   heldBalls: HeldBallState[];
   shieldBurstQueued: boolean;
-  bossPhase: 0 | 1 | 2;
+  bossPhase: 0 | 1 | 2 | 3;
   bossPhaseSummonCooldownSec: number;
   enemyWaveCooldownSec: number;
+  bossAttackState: BossAttackState;
+  forcedBallLoss: boolean;
+}
+
+export type BossAttackKind = "summon" | "volley" | "sweep";
+export type BossLane = "left" | "center" | "right";
+
+export interface BossProjectile {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  radius: number;
+}
+
+export interface BossTelegraph {
+  kind: BossAttackKind;
+  remainingSec: number;
+  maxSec: number;
+  lane?: BossLane;
+  targetX?: number;
+  spread?: number;
+}
+
+export interface BossSweepState {
+  lane: BossLane;
+  remainingSec: number;
+  maxSec: number;
+}
+
+export interface BossAttackState {
+  actionCooldownSec: number;
+  nextProjectileId: number;
+  telegraph: BossTelegraph | null;
+  projectiles: BossProjectile[];
+  sweep: BossSweepState | null;
 }

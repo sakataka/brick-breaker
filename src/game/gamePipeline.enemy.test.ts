@@ -40,7 +40,7 @@ describe("gamePipeline enemy", () => {
     });
 
     const offer = state.shop.lastOffer ?? ["paddle_plus", "slow_ball"];
-    const attackTypes = new Set(["laser", "pierce", "bomb", "homing", "rail", "multiball"]);
+    const attackTypes = new Set(["laser", "pierce", "bomb", "shockwave", "homing", "rail", "multiball"]);
     expect(offer.some((type) => attackTypes.has(type))).toBe(true);
   });
 

@@ -2,6 +2,8 @@ import type { StageModifierKey, ThemeBandId } from "./config";
 import type { StageMissionStatus } from "./runtimeTypes";
 import type {
   Ball,
+  BossAttackKind,
+  BossLane,
   Brick,
   FallingItem,
   FloatingText,
@@ -31,6 +33,7 @@ export interface RenderViewState {
   impactRings: ImpactRing[];
   floatingTexts: FloatingText[];
   flashMs: number;
+  flashColor: string;
   reducedMotion: boolean;
   highContrast: boolean;
   shake: {
@@ -56,6 +59,23 @@ export interface RenderViewState {
     x: number;
     y: number;
   }>;
+  bossProjectiles: Array<{
+    id: number;
+    x: number;
+    y: number;
+    radius: number;
+  }>;
+  bossTelegraph?: {
+    kind: BossAttackKind;
+    lane?: BossLane;
+    targetX?: number;
+    spread?: number;
+    progress: number;
+  };
+  bossSweep?: {
+    lane: BossLane;
+    progress: number;
+  };
   fluxFieldActive: boolean;
   stageModifierKey?: StageModifierKey;
   warpZones?: Array<{
@@ -71,6 +91,8 @@ export interface RenderViewState {
     ballX: number;
     ballY: number;
   };
+  paddleAuraColor?: string;
+  ballAuraColor?: string;
 }
 
 export interface HudActiveItemView {
@@ -93,7 +115,8 @@ export interface HudViewModel {
     boss?: {
       hp: number;
       maxHp: number;
-      phase: 1 | 2;
+      phase: 1 | 2 | 3;
+      intent?: BossAttackKind;
     };
     debugModeEnabled: boolean;
     debugRecordResults: boolean;
@@ -107,9 +130,16 @@ export interface HudViewModel {
     rogueUpgradeCap: number;
     magicCooldownSec: number;
     warpLegendVisible: boolean;
+    steelLegendVisible: boolean;
+    generatorLegendVisible: boolean;
   };
   progressRatio: number;
   accentColor: string;
+  pickupToast?: {
+    type: ItemType;
+    color: string;
+    progress: number;
+  };
 }
 
 export interface OverlayStageView {

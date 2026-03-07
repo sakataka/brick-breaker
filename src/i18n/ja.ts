@@ -129,6 +129,8 @@ export const ja = {
       route: "ルート",
       modifier: "修飾",
       warpLegend: "ワープ: 青=入口 / 黄=出口",
+      steelLegend: "鋼壁: 破壊不可",
+      generatorLegend: "発生装置: 周辺再生",
     },
     stageMode: {
       campaign: "ステージ",
@@ -156,6 +158,11 @@ export const ja = {
     bossValue: "{hp:number}/{maxHp:number} {phase}",
     phase: "P{phase:number}",
     rogueProgress: "{taken:number}/{max:number}",
+    bossIntent: {
+      summon: "召喚予備動作",
+      volley: "射撃予兆",
+      sweep: "制圧予兆",
+    },
   },
   shop: {
     title: "ショップ",
@@ -228,6 +235,12 @@ export const ja = {
       short: "線",
       hud: "⚡レール",
       description: "レーザーが複数のブロックを貫く",
+    },
+    shockwave: {
+      name: "衝撃波",
+      short: "波",
+      hud: "🌊衝撃波",
+      description: "取得時に近くの通常ブロックへ衝撃波",
     },
     stack: "{label}×{count:number}",
   },

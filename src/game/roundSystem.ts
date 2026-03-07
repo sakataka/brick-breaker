@@ -1,4 +1,5 @@
 import { activateAssist, applyAssistToPaddle, createAssistState } from "./assistSystem";
+import { createBossAttackState } from "./bossState";
 import { getGameplayBalance, getStageStory, getStageTimeTargetSec, MODE_CONFIG } from "./config";
 import { cloneActiveItemState, createItemState, ensureMultiballCount } from "./itemSystem";
 import { buildBricksFromStage } from "./level";
@@ -90,7 +91,12 @@ export function applyLifeLoss(
 
   activateAssist(state.assist, state.elapsedSec, config);
   applyAssistToPaddle(state.paddle, balance.paddleWidth, config.width, state.assist, state.elapsedSec);
-  resetCombatState(state, resolveStageMetadataFromState(state).stageModifier?.spawnEnemy ?? false);
+  const stageMetadata = resolveStageMetadataFromState(state);
+  resetCombatState(
+    state,
+    (stageMetadata.stageModifier?.spawnEnemy ?? false) ||
+      stageMetadata.stageEvents?.includes("enemy_pressure") === true,
+  );
   state.balls = [
     createServeBall(
       config,
@@ -147,7 +153,11 @@ function buildStageRuntime(
   resetStageUiState(state);
   state.vfx = createVfxState(state.vfx.reducedMotion);
   state.paddle = createBasePaddle(config);
-  resetCombatState(state, stageContext.stageModifier?.spawnEnemy ?? false);
+  resetCombatState(
+    state,
+    (stageContext.stageModifier?.spawnEnemy ?? false) ||
+      stageContext.stageEvents?.includes("enemy_pressure") === true,
+  );
   state.balls = ensureMultiballCount(
     state.items,
     [createServeBall(config, state.paddle, balance.ballRadius, random, stageContext.initialBallSpeed)],
@@ -155,7 +165,11 @@ function buildStageRuntime(
     config.multiballMaxBalls,
   );
   resetStageStats(state);
-  state.enemies = createStageEnemies(config, stageContext.stageModifier?.spawnEnemy ?? false);
+  state.enemies = createStageEnemies(
+    config,
+    (stageContext.stageModifier?.spawnEnemy ?? false) ||
+      stageContext.stageEvents?.includes("enemy_pressure") === true,
+  );
   state.magic.requestCast = false;
 }
 
@@ -199,6 +213,8 @@ function resetCombatState(state: GameState, spawnEnemy: boolean): void {
   state.combat.bossPhase = 0;
   state.combat.bossPhaseSummonCooldownSec = 0;
   state.combat.enemyWaveCooldownSec = spawnEnemy ? 6 : 0;
+  state.combat.bossAttackState = createBossAttackState();
+  state.combat.forcedBallLoss = false;
 }
 
 function resetStageStats(state: GameState): void {

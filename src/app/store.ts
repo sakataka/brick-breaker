@@ -67,6 +67,8 @@ const DEFAULT_HUD: HudViewModel = {
     rogueUpgradeCap: 3,
     magicCooldownSec: 0,
     warpLegendVisible: false,
+    steelLegendVisible: false,
+    generatorLegendVisible: false,
   },
   progressRatio: 0,
   accentColor: "#29d3ff",

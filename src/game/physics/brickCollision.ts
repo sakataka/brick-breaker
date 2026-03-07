@@ -1,4 +1,5 @@
 import { applyBrickDamage } from "../brickDamage";
+import { countAliveObjectiveBricks } from "../brickRules";
 import type { GameplayBalance } from "../config";
 import { clamp } from "../math";
 import type { Ball, Brick, CollisionEvent } from "../types";
@@ -58,7 +59,7 @@ export function applyBrickCollision(
     return {
       scoreGain: 0,
       destroyedCount: 0,
-      cleared: !bricks.some((candidate) => candidate.alive),
+      cleared: countAliveObjectiveBricks(bricks) <= 0,
       events: [],
     };
   }
@@ -108,7 +109,7 @@ export function applyBrickCollision(
   return {
     scoreGain,
     destroyedCount: destroyed.length,
-    cleared: !bricks.some((candidate) => candidate.alive),
+    cleared: countAliveObjectiveBricks(bricks) <= 0,
     events,
   };
 }

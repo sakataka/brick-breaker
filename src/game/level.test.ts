@@ -26,7 +26,8 @@ describe("stage catalog", () => {
 
   test("buildBricksFromStage creates bricks from layout cells", () => {
     const stage = STAGE_CATALOG[0];
-    const expectedCount = stage.layout.flat().filter((cell) => cell === 1).length;
+    const expectedCount =
+      stage.layout.flat().filter((cell) => cell === 1).length + (stage.specials?.length ?? 0);
     const bricks = buildBricksFromStage(stage);
 
     expect(bricks).toHaveLength(expectedCount);
@@ -45,10 +46,12 @@ describe("stage catalog", () => {
 
     expect(eliteBricks.length).toBeGreaterThan(0);
     for (const brick of eliteBricks) {
-      if (brick.kind === "hazard") {
+      if (brick.kind === "durable" || brick.kind === "armored" || brick.kind === "regen") {
+        expect(brick.hp).toBe(2);
+      } else if (brick.kind === "hazard" || brick.kind === "split" || brick.kind === "summon") {
         expect(brick.hp).toBe(1);
       } else {
-        expect(brick.hp).toBe(2);
+        expect(brick.hp).toBeGreaterThanOrEqual(1);
       }
     }
     const regenBricks = eliteBricks.filter((brick) => brick.kind === "regen");
@@ -63,13 +66,22 @@ describe("stage catalog", () => {
     }
   });
 
+  test("buildBricksFromStage injects steel and generator specials", () => {
+    const stage = STAGE_CATALOG[7];
+    const bricks = buildBricksFromStage(stage);
+
+    expect(bricks.some((brick) => brick.kind === "steel")).toBe(true);
+    expect(bricks.some((brick) => brick.kind === "generator")).toBe(true);
+  });
+
   test("stage 12 is a single boss target", () => {
     const stage = STAGE_CATALOG[11];
     const bricks = buildBricksFromStage(stage);
 
-    expect(bricks).toHaveLength(1);
-    expect(bricks[0]?.kind).toBe("boss");
-    expect(bricks[0]?.hp).toBe(12);
-    expect(bricks[0]?.maxHp).toBe(12);
+    expect(bricks.filter((brick) => brick.kind === "boss")).toHaveLength(1);
+    expect(bricks.some((brick) => brick.kind === "steel")).toBe(true);
+    const boss = bricks.find((brick) => brick.kind === "boss");
+    expect(boss?.hp).toBe(18);
+    expect(boss?.maxHp).toBe(18);
   });
 });

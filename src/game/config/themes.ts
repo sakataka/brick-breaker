@@ -1,5 +1,3 @@
-import { STAGE_CATALOG } from "./stages";
-
 export interface BrickTheme {
   palette: readonly string[];
 }
@@ -86,7 +84,8 @@ export function getBrickPaletteColor(row: number, palette: BrickTheme["palette"]
 }
 
 function getThemeBandByStage(stageNumber: number): ThemeBandDefinition {
-  const normalized = Math.max(1, Math.min(STAGE_CATALOG.length, stageNumber));
+  const maxStage = THEME_BANDS[THEME_BANDS.length - 1]?.endStage ?? 12;
+  const normalized = Math.max(1, Math.min(maxStage, stageNumber));
   const found = THEME_BANDS.find((band) => normalized >= band.startStage && normalized <= band.endStage);
   return found ?? THEME_BANDS[0];
 }

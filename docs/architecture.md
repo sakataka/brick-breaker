@@ -16,6 +16,8 @@
 - `src/game/physicsCore.ts`
 - `src/game/physics/*`
 - `src/game/brickDamage.ts`
+- `src/game/brickRules.ts`
+- `src/game/bossState.ts`
 - `src/game/itemSystem.ts`
 - `src/game/roundSystem.ts`
 
@@ -112,6 +114,7 @@
 - 開始設定 schema: `src/game/startSettingsSchema.ts`
 - ショップ価格計算: `src/game/config/gameplay.ts` (`getShopPurchaseCost`)
 - ブロックHP/破壊判定: `src/game/brickDamage.ts`
+- ブロック分類/クリア判定ルール: `src/game/brickRules.ts`
 - アイテム仕様: `src/game/itemRegistry.ts`
 - アイテム表示情報（色/絵文字）: `src/game/itemRegistry.ts`
 - アイテム表示名/説明/短縮文字: `src/i18n/translations.ts`
@@ -119,6 +122,7 @@
 - UI状態: `src/app/store.ts`
 - 開始設定の反映: `src/game/session/startSettings.ts`
 - ステージ解決: `src/game/stageContext.ts`
+- ステージ盤面の章/タグ/イベント/特殊セル定義: `src/game/config/stages.ts`
 - ショップ操作処理: `src/game/session/shopActions.ts`
 - View同期: `src/game/session/viewSync.ts`
 - デバッグ開始ロジック: `src/game/session/startSettings.ts` + `src/game/roundSystem.ts`
@@ -132,13 +136,21 @@
 1. `src/game/domainTypes.ts` に `ItemType` を追加。
 2. `src/game/config/items.ts` に定義追加。
 3. `src/game/itemRegistry.ts` に仕様追加。
-4. 必要なら `src/game/physicsCore.ts` と `src/phaser/render/PhaserRenderPort.ts` を更新。
+4. 即時効果が必要なら `src/game/itemRegistryData.ts` の pickup impact を追加する。
+5. 必要なら `src/game/physicsCore.ts` と `src/phaser/render/PhaserRenderPort.ts` を更新。
 
 ### 新しい表示要素
 
 1. `src/game/renderTypes.ts` を拡張。
 2. `src/game/renderPresenter.ts` で ViewModel 生成。
 3. Phaser 側なら `src/phaser/render/layers/*`、React 側なら `src/app/components/*` を更新。
+
+### 新しい盤面要素
+
+1. `src/game/domainTypes.ts` の `BrickKind` / `StageDefinition` を更新。
+2. `src/game/config/stages.ts` に `specials / tags / events` を追加。
+3. `src/game/level.ts` で盤面生成を拡張。
+4. 物理・破壊・クリア判定は `src/game/brickRules.ts` / `src/game/brickDamage.ts` へ寄せる。
 
 ## 品質ゲート
 

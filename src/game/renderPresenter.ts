@@ -1,3 +1,4 @@
+import { countAliveObjectiveBricks } from "./brickRules";
 import { getStageStory, ROGUE_CONFIG } from "./config";
 import { getGhostPlaybackSample } from "./ghostSystem";
 import { getActiveItemEntries } from "./itemSystem";
@@ -31,6 +32,7 @@ export function buildRenderViewState(state: GameState): RenderViewState {
     impactRings: state.vfx.impactRings,
     floatingTexts: state.vfx.floatingTexts,
     flashMs: state.vfx.flashMs,
+    flashColor: state.vfx.flashColor,
     reducedMotion: state.vfx.reducedMotion,
     highContrast: state.a11y.highContrast,
     shake: {
@@ -50,6 +52,33 @@ export function buildRenderViewState(state: GameState): RenderViewState {
       x: shot.x,
       y: shot.y,
     })),
+    bossProjectiles: state.combat.bossAttackState.projectiles.map((shot) => ({
+      id: shot.id,
+      x: shot.x,
+      y: shot.y,
+      radius: shot.radius,
+    })),
+    bossTelegraph: state.combat.bossAttackState.telegraph
+      ? {
+          kind: state.combat.bossAttackState.telegraph.kind,
+          lane: state.combat.bossAttackState.telegraph.lane,
+          targetX: state.combat.bossAttackState.telegraph.targetX,
+          spread: state.combat.bossAttackState.telegraph.spread,
+          progress:
+            1 -
+            state.combat.bossAttackState.telegraph.remainingSec /
+              Math.max(0.001, state.combat.bossAttackState.telegraph.maxSec),
+        }
+      : undefined,
+    bossSweep: state.combat.bossAttackState.sweep
+      ? {
+          lane: state.combat.bossAttackState.sweep.lane,
+          progress:
+            1 -
+            state.combat.bossAttackState.sweep.remainingSec /
+              Math.max(0.001, state.combat.bossAttackState.sweep.maxSec),
+        }
+      : undefined,
     fluxFieldActive: stageContext.stageModifier?.fluxField ?? false,
     stageModifierKey: stageContext.stageModifier?.key,
     warpZones: stageContext.stageModifier?.warpZones,
@@ -60,6 +89,8 @@ export function buildRenderViewState(state: GameState): RenderViewState {
           ballY: ghostSample.ballY,
         }
       : undefined,
+    paddleAuraColor: state.vfx.pickupAuraMs > 0 ? state.vfx.pickupAuraColor : undefined,
+    ballAuraColor: state.vfx.pickupAuraMs > 0 ? state.vfx.pickupAuraColor : undefined,
   };
 }
 
@@ -95,9 +126,18 @@ export function buildHudViewModel(state: GameState): HudViewModel {
       rogueUpgradeCap: ROGUE_CONFIG.maxUpgrades,
       magicCooldownSec: state.magic.cooldownSec,
       warpLegendVisible: Boolean(stageContext.stageModifier?.warpZones?.length),
+      steelLegendVisible: stageContext.stageTags?.includes("steel") ?? false,
+      generatorLegendVisible: stageContext.stageTags?.includes("generator") ?? false,
     },
     progressRatio,
     accentColor: comboVisible ? COMBO_ACTIVE_COLOR : stageContext.themeBand.hudAccent,
+    pickupToast: state.vfx.pickupToast
+      ? {
+          type: state.vfx.pickupToast.itemType,
+          color: state.vfx.pickupToast.color,
+          progress: state.vfx.pickupToast.lifeMs / Math.max(1, state.vfx.pickupToast.maxLifeMs),
+        }
+      : undefined,
   };
 }
 
@@ -111,7 +151,10 @@ function buildBossHud(state: GameState): HudViewModel["stage"]["boss"] | undefin
   return {
     hp,
     maxHp,
-    phase: state.combat.bossPhase >= 2 ? 2 : 1,
+    phase: Math.max(1, state.combat.bossPhase) as 1 | 2 | 3,
+    intent:
+      state.combat.bossAttackState.telegraph?.kind ??
+      (state.combat.bossAttackState.sweep ? "sweep" : undefined),
   };
 }
 
@@ -179,7 +222,7 @@ export function buildOverlayViewModel(state: GameState): OverlayViewModel {
 const COMBO_ACTIVE_COLOR = "#ffd46b";
 
 function computeProgressRatio(state: GameState): number {
-  const total = state.bricks.length;
-  const alive = state.bricks.reduce((count, brick) => count + (brick.alive ? 1 : 0), 0);
+  const total = state.bricks.filter((brick) => (brick.kind ?? "normal") !== "steel").length;
+  const alive = countAliveObjectiveBricks(state.bricks);
   return total <= 0 ? 0 : Math.max(0, Math.min(1, (total - alive) / total));
 }

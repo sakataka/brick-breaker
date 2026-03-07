@@ -1,6 +1,7 @@
+import { applyDirectBrickDamage } from "./brickDamage";
 import { ITEM_BALANCE, ITEM_CONFIG } from "./config";
-import type { ItemRegistry } from "./itemTypes";
-import type { ItemType } from "./types";
+import type { ItemEffectContext, ItemPickupImpact, ItemPickupPresentation, ItemRegistry } from "./itemTypes";
+import type { Ball, Brick, ItemType } from "./types";
 
 export const ITEM_TYPE_ORDER = [
   "paddle_plus",
@@ -9,6 +10,7 @@ export const ITEM_TYPE_ORDER = [
   "multiball",
   "pierce",
   "bomb",
+  "shockwave",
   "laser",
   "homing",
   "rail",
@@ -16,6 +18,110 @@ export const ITEM_TYPE_ORDER = [
 ] as const;
 
 export const ITEM_ORDER: ItemType[] = [...ITEM_TYPE_ORDER];
+
+const BASE_PRESENTATION: ItemPickupPresentation = {
+  flashMs: 84,
+  hitFreezeMs: 22,
+  shakeMs: 52,
+  shakePx: 1.8,
+  auraMs: 520,
+  toastMs: 880,
+};
+
+function createPresentation(overrides: Partial<ItemPickupPresentation>): ItemPickupPresentation {
+  return {
+    ...BASE_PRESENTATION,
+    ...overrides,
+  };
+}
+
+function noImpact(effect: (context: ItemEffectContext) => void): (context: ItemEffectContext) => undefined {
+  return (context) => {
+    effect(context);
+    return undefined;
+  };
+}
+
+function accelerateBall(ball: Ball, factor: number): void {
+  const speed = Math.hypot(ball.vel.x, ball.vel.y) || ball.speed || 1;
+  const nextSpeed = speed * factor;
+  const vx = ball.vel.x / speed;
+  const vy = ball.vel.y / speed;
+  ball.vel.x = vx * nextSpeed;
+  ball.vel.y = vy * nextSpeed;
+  ball.speed = nextSpeed;
+  ball.pos.x += vx * 6;
+  ball.pos.y += vy * 6;
+}
+
+function buildShockwaveImpact(
+  balls: Ball[],
+  bricks: Brick[],
+  scorePerBrick: number,
+): ItemPickupImpact | undefined {
+  if (balls.length <= 0 || bricks.length <= 0) {
+    return undefined;
+  }
+  const destroyed = selectShockwaveTargets(balls, bricks);
+  if (destroyed.length <= 0) {
+    for (const ball of balls) {
+      accelerateBall(ball, 1.05);
+    }
+    return undefined;
+  }
+
+  const events = [];
+  for (const ball of balls) {
+    accelerateBall(ball, 1.08);
+  }
+  for (const brick of destroyed) {
+    if (!applyDirectBrickDamage(brick)) {
+      continue;
+    }
+    events.push({
+      kind: "brick" as const,
+      x: brick.x + brick.width / 2,
+      y: brick.y + brick.height / 2,
+      color: brick.color,
+      brickKind: brick.kind ?? "normal",
+      brickId: brick.id,
+    });
+  }
+  if (events.length <= 0) {
+    return undefined;
+  }
+  return {
+    scoreGain: scorePerBrick * events.length,
+    collisionEvents: events,
+  };
+}
+
+function selectShockwaveTargets(balls: Ball[], bricks: Brick[]): Brick[] {
+  const targets = new Map<number, { brick: Brick; distanceSq: number }>();
+  for (const ball of balls) {
+    for (const brick of bricks) {
+      if (!brick.alive || (brick.kind ?? "normal") !== "normal") {
+        continue;
+      }
+      const cx = brick.x + brick.width / 2;
+      const cy = brick.y + brick.height / 2;
+      const dx = cx - ball.pos.x;
+      const dy = cy - ball.pos.y;
+      const distanceSq = dx * dx + dy * dy;
+      if (distanceSq > 92 * 92) {
+        continue;
+      }
+      const existing = targets.get(brick.id);
+      if (!existing || distanceSq < existing.distanceSq) {
+        targets.set(brick.id, { brick, distanceSq });
+      }
+    }
+  }
+  return [...targets.values()]
+    .sort((a, b) => a.distanceSq - b.distanceSq)
+    .slice(0, 3)
+    .map((entry) => entry.brick);
+}
 
 export const ITEM_REGISTRY: ItemRegistry = {
   paddle_plus: {
@@ -32,10 +138,11 @@ export const ITEM_REGISTRY: ItemRegistry = {
     dropSuppressedWhenActive: false,
     hudOrder: 1,
     sfxEvent: "item_paddle_plus",
+    presentation: createPresentation({ flashMs: 76, auraMs: 620 }),
     debugPresetStacks: { combat_check: 1 },
-    applyPickup: ({ stacks }) => {
+    applyPickup: noImpact(({ stacks }) => {
       stacks.paddlePlusStacks += 1;
-    },
+    }),
     getLabelStack: (stacks) => stacks.paddlePlusStacks,
   },
   slow_ball: {
@@ -52,15 +159,16 @@ export const ITEM_REGISTRY: ItemRegistry = {
     dropSuppressedWhenActive: false,
     hudOrder: 2,
     sfxEvent: "item_slow_ball",
+    presentation: createPresentation({ flashMs: 92, hitFreezeMs: 18 }),
     debugPresetStacks: { combat_check: 1 },
-    applyPickup: ({ stacks, balls }) => {
+    applyPickup: noImpact(({ stacks, balls }) => {
       stacks.slowBallStacks += 1;
       for (const ball of balls) {
         ball.vel.x *= ITEM_BALANCE.slowBallInstantSpeedScale;
         ball.vel.y *= ITEM_BALANCE.slowBallInstantSpeedScale;
         ball.speed *= ITEM_BALANCE.slowBallInstantSpeedScale;
       }
-    },
+    }),
     getLabelStack: (stacks) => stacks.slowBallStacks,
   },
   shield: {
@@ -77,10 +185,11 @@ export const ITEM_REGISTRY: ItemRegistry = {
     dropSuppressedWhenActive: false,
     hudOrder: 3,
     sfxEvent: "item_shield",
+    presentation: createPresentation({ flashMs: 90, shakePx: 1.4, auraMs: 680 }),
     debugPresetStacks: { combat_check: 1, boss_check: 2 },
-    applyPickup: ({ stacks }) => {
+    applyPickup: noImpact(({ stacks }) => {
       stacks.shieldCharges += 1;
-    },
+    }),
     getLabelStack: (stacks) => stacks.shieldCharges,
   },
   multiball: {
@@ -97,10 +206,11 @@ export const ITEM_REGISTRY: ItemRegistry = {
     dropSuppressedWhenActive: false,
     hudOrder: 4,
     sfxEvent: "item_multiball",
+    presentation: createPresentation({ flashMs: 96, auraMs: 720 }),
     debugPresetStacks: { combat_check: 1 },
-    applyPickup: ({ stacks }) => {
+    applyPickup: noImpact(({ stacks }) => {
       stacks.multiballStacks += 1;
-    },
+    }),
     getLabelStack: (stacks) => stacks.multiballStacks,
   },
   pierce: {
@@ -117,10 +227,11 @@ export const ITEM_REGISTRY: ItemRegistry = {
     dropSuppressedWhenActive: true,
     hudOrder: 5,
     sfxEvent: "item_pierce",
+    presentation: createPresentation({ flashMs: 108, hitFreezeMs: 24, shakePx: 2.2 }),
     debugPresetStacks: { boss_check: 1 },
-    applyPickup: ({ stacks }) => {
+    applyPickup: noImpact(({ stacks }) => {
       stacks.pierceStacks = 1;
-    },
+    }),
     getLabelStack: (stacks) => Math.min(1, stacks.pierceStacks),
   },
   bomb: {
@@ -137,11 +248,42 @@ export const ITEM_REGISTRY: ItemRegistry = {
     dropSuppressedWhenActive: true,
     hudOrder: 6,
     sfxEvent: "item_bomb",
+    presentation: createPresentation({ flashMs: 112, hitFreezeMs: 26, shakeMs: 76, shakePx: 2.6 }),
     debugPresetStacks: { boss_check: 1 },
-    applyPickup: ({ stacks }) => {
+    applyPickup: noImpact(({ stacks }) => {
       stacks.bombStacks = 1;
-    },
+    }),
     getLabelStack: (stacks) => stacks.bombStacks,
+  },
+  shockwave: {
+    type: "shockwave",
+    stackKey: "shockwaveStacks",
+    label: ITEM_CONFIG.shockwave.label,
+    hudLabel: "🌊衝撃波",
+    emoji: "🌊",
+    description: "取得時に近くの通常ブロックへ衝撃波",
+    shortLabel: "波",
+    color: "rgba(122, 234, 255, 0.92)",
+    weight: ITEM_CONFIG.shockwave.weight,
+    maxStacks: 1,
+    dropSuppressedWhenActive: false,
+    hudOrder: 7,
+    sfxEvent: "item_shockwave",
+    presentation: createPresentation({
+      flashMs: 128,
+      hitFreezeMs: 30,
+      shakeMs: 84,
+      shakePx: 2.8,
+      auraMs: 760,
+    }),
+    applyPickup: ({ stacks, balls, state, scorePerBrick }) => {
+      stacks.shockwaveStacks = 0;
+      if (!state) {
+        return;
+      }
+      return buildShockwaveImpact(balls, state.bricks, scorePerBrick ?? 0);
+    },
+    getLabelStack: (stacks) => stacks.shockwaveStacks,
   },
   laser: {
     type: "laser",
@@ -155,13 +297,14 @@ export const ITEM_REGISTRY: ItemRegistry = {
     weight: ITEM_CONFIG.laser.weight,
     maxStacks: 2,
     dropSuppressedWhenActive: false,
-    hudOrder: 7,
+    hudOrder: 8,
     sfxEvent: "item_laser",
+    presentation: createPresentation({ flashMs: 100, hitFreezeMs: 20 }),
     respectsNewStackSetting: true,
     debugPresetStacks: { boss_check: 2 },
-    applyPickup: ({ stacks }) => {
+    applyPickup: noImpact(({ stacks }) => {
       stacks.laserStacks = Math.min(2, stacks.laserStacks + 1);
-    },
+    }),
     getLabelStack: (stacks) => stacks.laserStacks,
   },
   homing: {
@@ -176,13 +319,14 @@ export const ITEM_REGISTRY: ItemRegistry = {
     weight: ITEM_CONFIG.homing.weight,
     maxStacks: 2,
     dropSuppressedWhenActive: false,
-    hudOrder: 8,
+    hudOrder: 9,
     sfxEvent: "item_homing",
+    presentation: createPresentation({ flashMs: 88 }),
     respectsNewStackSetting: true,
     debugPresetStacks: { boss_check: 2 },
-    applyPickup: ({ stacks }) => {
+    applyPickup: noImpact(({ stacks }) => {
       stacks.homingStacks = Math.min(2, stacks.homingStacks + 1);
-    },
+    }),
     getLabelStack: (stacks) => stacks.homingStacks,
   },
   rail: {
@@ -197,13 +341,14 @@ export const ITEM_REGISTRY: ItemRegistry = {
     weight: ITEM_CONFIG.rail.weight,
     maxStacks: 2,
     dropSuppressedWhenActive: false,
-    hudOrder: 9,
+    hudOrder: 10,
     sfxEvent: "item_rail",
+    presentation: createPresentation({ flashMs: 96, shakePx: 2.1 }),
     respectsNewStackSetting: true,
     debugPresetStacks: { boss_check: 2 },
-    applyPickup: ({ stacks }) => {
+    applyPickup: noImpact(({ stacks }) => {
       stacks.railStacks = Math.min(2, stacks.railStacks + 1);
-    },
+    }),
     getLabelStack: (stacks) => stacks.railStacks,
   },
   sticky: {
@@ -218,13 +363,14 @@ export const ITEM_REGISTRY: ItemRegistry = {
     weight: ITEM_CONFIG.sticky.weight,
     maxStacks: 1,
     dropSuppressedWhenActive: false,
-    hudOrder: 10,
+    hudOrder: 11,
     sfxEvent: "item_sticky",
+    presentation: createPresentation({ flashMs: 82, auraMs: 640 }),
     respectsNewStackSetting: true,
     debugPresetStacks: { boss_check: 1 },
-    applyPickup: ({ stacks }) => {
+    applyPickup: noImpact(({ stacks }) => {
       stacks.stickyStacks = 1;
-    },
+    }),
     getLabelStack: (stacks) => stacks.stickyStacks,
   },
 };

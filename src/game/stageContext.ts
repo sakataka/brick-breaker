@@ -21,6 +21,10 @@ export interface StageMetadata {
   effectiveStageIndex: number;
   totalStages: number;
   stage: StageDefinition;
+  chapter: number;
+  stageArchetype?: StageDefinition["archetype"];
+  stageTags: StageDefinition["tags"];
+  stageEvents: StageDefinition["events"];
   stageModifier?: StageModifier;
   themeBand: ThemeBandDefinition;
 }
@@ -37,11 +41,16 @@ export function resolveStageMetadata(input: StageContextInput): StageMetadata {
     input.gameMode,
     activeCatalog.length,
   );
+  const stage = getStageDefinition(input, activeCatalog, effectiveStageIndex);
   return {
     activeCatalog,
     effectiveStageIndex,
     totalStages: getTotalStagesForMode(input.gameMode, activeCatalog.length),
-    stage: getStageDefinition(input, activeCatalog, effectiveStageIndex),
+    stage,
+    chapter: stage.chapter ?? inferChapter(effectiveStageIndex),
+    stageArchetype: stage.archetype,
+    stageTags: stage.tags ?? [],
+    stageEvents: stage.events ?? [],
     stageModifier: getStageModifier(effectiveStageIndex + 1),
     themeBand: getThemeBandByStageIndex(effectiveStageIndex),
   };
@@ -164,4 +173,20 @@ function getModeScaledBallSpeed(baseSpeed: number, input: StageContextInput, sta
   }
   const rushScale = 1 + Math.max(0, input.stageIndex) * MODE_CONFIG.bossRushSpeedScaleStep;
   return baseSpeed * baseScale * rushScale;
+}
+
+function inferChapter(stageIndex: number): number {
+  if (stageIndex >= 11) {
+    return 4;
+  }
+  if (stageIndex >= 8) {
+    return 4;
+  }
+  if (stageIndex >= 5) {
+    return 3;
+  }
+  if (stageIndex >= 3) {
+    return 2;
+  }
+  return 1;
 }

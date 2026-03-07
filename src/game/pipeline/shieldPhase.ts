@@ -1,5 +1,6 @@
 import type { SfxManager } from "../../audio/sfx";
 import { applyDirectBrickDamage } from "../brickDamage";
+import { countsTowardStageClear } from "../brickRules";
 import type { Ball, GameState, RandomSource } from "../types";
 
 export interface ShieldBurstEvent {
@@ -45,7 +46,7 @@ export function processShieldBurst(
   }
 
   const candidates = state.bricks
-    .filter((brick) => brick.alive)
+    .filter((brick) => brick.alive && countsTowardStageClear(brick))
     .sort((a, b) => {
       if (b.y !== a.y) {
         return b.y - a.y;

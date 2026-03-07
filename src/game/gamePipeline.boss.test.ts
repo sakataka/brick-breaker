@@ -83,4 +83,32 @@ describe("gamePipeline boss", () => {
 
     expect(state.bricks.filter((brick) => !brick.alive).length).toBeGreaterThanOrEqual(2);
   });
+
+  test("phase 3 boss produces telegraph state before arena attack", () => {
+    const config = { ...GAME_CONFIG, width: 300, height: 220, fixedDeltaSec: 3.2 };
+    const state = createInitialGameState(config, true, "playing");
+    state.scene = "playing";
+    state.bricks = [
+      { id: 1, x: 110, y: 32, width: 80, height: 18, alive: true, kind: "boss", hp: 5, maxHp: 18 },
+    ];
+    overrideSingleBall(state, {
+      pos: { x: 150, y: 184 },
+      vel: { x: 0, y: -40 },
+      radius: 8,
+      speed: config.initialBallSpeed,
+    });
+
+    stepPlayingPipeline(state, {
+      config,
+      random,
+      sfx: sfxStub as never,
+      tryShieldRescue: () => false,
+      playPickupSfx: () => {},
+      playComboFillSfx: () => {},
+      playMagicCastSfx: () => {},
+    });
+
+    expect(state.combat.bossPhase).toBe(3);
+    expect(state.combat.bossAttackState.telegraph).not.toBeNull();
+  });
 });

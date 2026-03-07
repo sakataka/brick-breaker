@@ -14,6 +14,7 @@ export type EventName =
   | "item_sticky"
   | "item_homing"
   | "item_rail"
+  | "item_shockwave"
   | "shield_burst"
   | "magic_cast"
   | "combo_fill"
@@ -138,6 +139,11 @@ export class SfxManager {
         { freq: 880, type: "triangle", durationMs: 110, gain: 0.068 },
       ],
       item_rail: [{ freq: 1040, type: "square", durationMs: 140, gain: 0.075, glideTo: 1320 }],
+      item_shockwave: [
+        { freq: 260, type: "sawtooth", durationMs: 120, gain: 0.085 },
+        { freq: 520, type: "triangle", durationMs: 120, gain: 0.075 },
+        { freq: 840, type: "triangle", durationMs: 140, gain: 0.07 },
+      ],
       shield_burst: [
         { freq: 300, type: "sawtooth", durationMs: 100, gain: 0.07 },
         { freq: 620, type: "triangle", durationMs: 110, gain: 0.07 },

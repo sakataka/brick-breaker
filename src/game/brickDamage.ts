@@ -1,3 +1,4 @@
+import { getInitialBrickHp, isIndestructibleBrick } from "./brickRules";
 import type { Brick } from "./types";
 
 export type BrickDamageSource = "direct" | "explosion";
@@ -8,18 +9,14 @@ export interface BrickDamageResult {
 }
 
 export function getDefaultBrickHp(brick: Brick): number {
-  const kind = brick.kind ?? "normal";
-  if (kind === "boss") {
-    return 12;
-  }
-  if (kind === "normal" || kind === "hazard") {
-    return 1;
-  }
-  return 2;
+  return getInitialBrickHp(brick.kind ?? "normal");
 }
 
 export function applyBrickDamage(brick: Brick, source: BrickDamageSource): BrickDamageResult {
   if (!brick.alive) {
+    return { destroyed: false, hpChanged: false };
+  }
+  if (isIndestructibleBrick(brick)) {
     return { destroyed: false, hpChanged: false };
   }
 
@@ -72,6 +69,9 @@ export function applyDirectBrickDamage(brick: Brick): boolean {
 
 export function destroyBrickImmediately(brick: Brick): boolean {
   if (!brick.alive) {
+    return false;
+  }
+  if (isIndestructibleBrick(brick)) {
     return false;
   }
   brick.hp = 0;
