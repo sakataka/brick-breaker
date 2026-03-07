@@ -33,9 +33,6 @@ bun run verify:change-coverage
 # レイヤー依存の境界チェック
 bun run check:arch
 
-# リファクタ監査（ドキュメント乖離/重複設定/巨大ファイル）
-bun run refactor:audit
-
 # deadcode scan (CI-compatible)
 bun run deadcode
 

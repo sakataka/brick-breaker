@@ -171,23 +171,9 @@
 - `bun run guard:local`
 - `bun run verify:change-coverage`
 - `bun run check:arch`
-- `bun run refactor:audit`
 - `bun run deadcode`
 - `bun test`
 - `bun run e2e`
-
-## Refactor Gate
-
-- 監査スクリプト: `scripts/refactor-audit.ts`
-- 実行コマンド: `bun run refactor:audit`
-- 検査対象:
-  - READMEの既知乖離キーワード（Focus/旧DPR/HUD a11yバッジ）
-  - Hook設定の重複（`.lefthook.yml` と `lefthook.yml` の同居）
-  - `package.json` scripts の重複コマンド
-  - コードファイル行数（`>350` 警告、`>500` 失敗）
-- 運用:
-  - `pre-push` で常時実行
-  - CIでは `pull_request` を strict fail、`main` push はレポート保存
 
 ## Open Backlog
 
