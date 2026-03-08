@@ -129,16 +129,6 @@ export interface ModeConfig {
   bossRushBossHpStep: number;
 }
 
-export interface EncounterConfig {
-  overdriveDurationSec: number;
-  overdriveDamageScale: number;
-  overdriveScoreScale: number;
-  riskThreshold: number;
-  riskGainOnBossHit: number;
-  riskGainOnDangerHit: number;
-  riskDecayPerSec: number;
-}
-
 export const DEFAULT_MULTIBALL_MAX_BALLS = 4;
 
 const START_SETTING_LIMITS = {
@@ -326,16 +316,6 @@ export const MODE_CONFIG: ModeConfig = {
   bossRushRounds: 5,
   bossRushSpeedScaleStep: 0.04,
   bossRushBossHpStep: 2,
-} as const;
-
-export const ENCOUNTER_CONFIG: EncounterConfig = {
-  overdriveDurationSec: 5.5,
-  overdriveDamageScale: 1.35,
-  overdriveScoreScale: 1.5,
-  riskThreshold: 100,
-  riskGainOnBossHit: 24,
-  riskGainOnDangerHit: 12,
-  riskDecayPerSec: 18,
 } as const;
 
 export function getGameplayBalance(difficulty: Difficulty): GameplayBalance {

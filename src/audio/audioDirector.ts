@@ -10,6 +10,9 @@ interface AudioRuntime {
   playItemSfx(itemType: ItemType): void;
   playComboFill(): void;
   playMagicCast(): void;
+  playBossCast(): void;
+  playBossPhaseShift(): void;
+  playDangerLane(): void;
   destroy(): void;
 }
 
@@ -50,6 +53,18 @@ export class AudioDirector {
 
   playMagicCast(): void {
     this.runtime.playMagicCast();
+  }
+
+  playBossCast(): void {
+    this.runtime.playBossCast();
+  }
+
+  playBossPhaseShift(): void {
+    this.runtime.playBossPhaseShift();
+  }
+
+  playDangerLane(): void {
+    this.runtime.playDangerLane();
   }
 
   destroy(): void {

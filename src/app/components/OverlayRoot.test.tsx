@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { OverlayViewModel } from "../../game/renderTypes";
 import { START_SETTINGS_DEFAULT, type StartSettingsSelection } from "../../game/startSettingsSchema";
+import { getFallbackThemeTokens } from "../../game/uiTheme";
 import { OverlayRoot } from "./OverlayRoot";
 
 const BASE_SETTINGS: StartSettingsSelection = { ...START_SETTINGS_DEFAULT };
@@ -16,6 +17,15 @@ const BASE_OVERLAY: OverlayViewModel = {
     total: 12,
     debugModeEnabled: false,
     debugRecordResults: false,
+  },
+  visual: {
+    themeId: "chapter1",
+    assetProfileId: "chapter1",
+    chapterLabel: "Chapter 1",
+    warningLevel: "calm",
+    encounterEmphasis: "chapter",
+    motionProfile: "full",
+    tokens: getFallbackThemeTokens(),
   },
 };
 

@@ -123,8 +123,6 @@ function buildStageMissionResults(
         return { key: mission, achieved: state.stageStats.firstDestroyedKind === "turret" };
       case "shutdown_generator":
         return { key: mission, achieved: (state.stageStats.generatorShutdown ?? false) === true };
-      case "risk_chain_threshold":
-        return { key: mission, achieved: (state.stageStats.peakRiskChain ?? 0) >= 100 };
       default:
         return { key: mission, achieved: false };
     }

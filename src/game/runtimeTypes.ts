@@ -124,7 +124,6 @@ export interface ActiveItemState {
   railStacks: number;
   shockwaveStacks: number;
   pulseStacks: number;
-  decoyStacks: number;
 }
 
 export interface ItemState {
@@ -188,7 +187,6 @@ export interface StageStats {
   missionResults?: StageMissionStatus[];
   generatorShutdown?: boolean;
   firstDestroyedKind?: import("./domainTypes").BrickKind;
-  peakRiskChain?: number;
   clearedAtSec?: number;
   starRating?: 1 | 2 | 3;
   ratingScore?: number;
@@ -206,8 +204,7 @@ export type FloatingTextKey =
   | "spell"
   | "boss_phase_2"
   | "boss_phase_3"
-  | "boss_warning"
-  | "overdrive";
+  | "boss_warning";
 export type RuntimeErrorKey = "initialization" | "gameStart" | "startAction" | "shopPurchase" | "runtime";
 
 export interface StageMissionStatus {
@@ -320,8 +317,6 @@ export interface CombatState {
   bossPhaseSummonCooldownSec: number;
   bossAttackState: BossAttackState;
   encounterState: EncounterState;
-  riskChain: RiskChainState;
-  overdrive: OverdriveState;
   forcedBallLoss: boolean;
 }
 
@@ -368,19 +363,4 @@ export interface EncounterState extends BossAttackState {
   summonCooldownSec: number;
   vulnerabilitySec: number;
   vulnerabilityMaxSec: number;
-}
-
-export interface RiskChainState {
-  value: number;
-  max: number;
-  threshold: number;
-  decayPerSec: number;
-}
-
-export interface OverdriveState {
-  active: boolean;
-  remainingSec: number;
-  maxSec: number;
-  damageScale: number;
-  scoreScale: number;
 }

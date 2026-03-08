@@ -22,7 +22,7 @@ import {
   updateFallingItems,
 } from "./itemSystem";
 import { runPhysicsForBalls } from "./physicsApply";
-import { awardRiskChain, updateBossPhase } from "./pipeline/bossPhase";
+import { updateBossPhase } from "./pipeline/bossPhase";
 import { processEliteBrickEvents } from "./pipeline/elitePhase";
 import { resolveEnemyHits, updateEnemies, updateEnemyWaveEvent } from "./pipeline/enemyPhase";
 import { syncHeldBallsSnapshot, updateAutoLaserSpawner, updateLaserProjectiles } from "./pipeline/laserPhase";
@@ -106,9 +106,7 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   const homingStrength = getHomingStrength(state.items);
   const railLevel = getRailLevel(state.items);
   const scoreScale =
-    (state.options.riskMode ? RISK_MODE_CONFIG.scoreScale : 1) *
-    (1 + state.rogue.scoreScaleBonus) *
-    (state.combat.overdrive.active ? state.combat.overdrive.scoreScale : 1);
+    (state.options.riskMode ? RISK_MODE_CONFIG.scoreScale : 1) * (1 + state.rogue.scoreScaleBonus);
   const laserLevel = getLaserLevel(state.items);
 
   const projectileEvents = updateLaserProjectiles(state, pipelineDeltaSec, railLevel);
@@ -149,9 +147,6 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   state.score += enemyHits.scoreGain;
 
   const destroyedBricks = physics.events.filter((event) => event.kind === "brick").length;
-  const bossHitEvents = physics.events.filter(
-    (event) => event.kind === "brick" && event.brickKind === "boss",
-  );
   const firstDestroyed = physics.events.find((event) => event.kind === "brick");
   if (!state.stageStats.firstDestroyedKind && firstDestroyed?.kind === "brick") {
     state.stageStats.firstDestroyedKind = firstDestroyed.brickKind;
@@ -163,14 +158,6 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   const comboFillBefore = state.combo.fillTriggered;
   const baseScoreGain = applyComboHits(state.combo, state.elapsedSec, destroyedBricks, balance.scorePerBrick);
   state.score += Math.round(baseScoreGain * scoreScale);
-  if (bossHitEvents.length > 0 && isDangerWindowActive(state)) {
-    for (const event of bossHitEvents) {
-      awardRiskChain(state, 24, { x: event.x, y: event.y });
-    }
-  }
-  if (state.combat.overdrive.active && bossHitEvents.length > 0) {
-    applyOverdriveBossDamage(state, bossHitEvents);
-  }
   if (eliteEffects.scorePenalty > 0) {
     state.score = Math.max(0, state.score - eliteEffects.scorePenalty);
   }
@@ -282,21 +269,6 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
     return "ballloss";
   }
   return "continue";
-}
-
-function isDangerWindowActive(state: GameState): boolean {
-  return Boolean(state.combat.encounterState.telegraph || state.combat.encounterState.sweep);
-}
-
-function applyOverdriveBossDamage(state: GameState, bossHitEvents: CollisionEvent[]): void {
-  const boss = state.bricks.find((brick) => brick.alive && brick.kind === "boss");
-  if (!boss) {
-    return;
-  }
-  const bonusHits = Math.max(1, Math.floor(state.combat.overdrive.damageScale));
-  for (let index = 0; index < Math.min(bonusHits, bossHitEvents.length); index += 1) {
-    applyDirectBrickDamage(boss);
-  }
 }
 
 function applyPulseStrike(

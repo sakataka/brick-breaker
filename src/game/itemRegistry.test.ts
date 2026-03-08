@@ -15,7 +15,7 @@ describe("itemRegistry", () => {
   test("includes all item definitions with valid weights", () => {
     const result = validateItemRegistry();
     expect(result.valid).toBe(true);
-    expect(Object.keys(ITEM_REGISTRY)).toHaveLength(12);
+    expect(Object.keys(ITEM_REGISTRY)).toHaveLength(11);
   });
 
   test("detects invalid definition shape", () => {

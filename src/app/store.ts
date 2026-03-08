@@ -3,6 +3,7 @@ import { type MetaProgress, readMetaProgress } from "../game/metaProgress";
 import type { HudViewModel, OverlayViewModel } from "../game/renderTypes";
 import { START_SETTINGS_DEFAULT, type StartSettingsSelection } from "../game/startSettingsSchema";
 import type { RogueUpgradeType } from "../game/types";
+import { getFallbackThemeTokens } from "../game/uiTheme";
 import { type AppLocale, initializeLocale, setCurrentLocale } from "../i18n";
 
 export interface UiOverlayState {
@@ -49,6 +50,7 @@ interface AppStoreState {
 const initialLocale = typeof window === "undefined" ? "ja" : initializeLocale(window);
 const initialMetaProgress =
   typeof window === "undefined" ? { exUnlocked: false } : readMetaProgress(window.localStorage);
+const fallbackTokens = getFallbackThemeTokens();
 
 const DEFAULT_HUD: HudViewModel = {
   score: 0,
@@ -64,7 +66,15 @@ const DEFAULT_HUD: HudViewModel = {
     debugRecordResults: false,
   },
   activeItems: [],
-  visualThemeId: "chapter1",
+  visual: {
+    themeId: "chapter1",
+    assetProfileId: "chapter1",
+    chapterLabel: "Chapter 1",
+    warningLevel: "calm",
+    encounterEmphasis: "chapter",
+    motionProfile: "full",
+    tokens: fallbackTokens,
+  },
   missionProgress: [],
   flags: {
     hazardBoostActive: false,
@@ -78,16 +88,8 @@ const DEFAULT_HUD: HudViewModel = {
     generatorLegendVisible: false,
     gateLegendVisible: false,
     turretLegendVisible: false,
-    overdriveActive: false,
   },
   progressRatio: 0,
-  accentColor: "#29d3ff",
-  dangerColor: "#ff6a6a",
-  riskChain: {
-    value: 0,
-    max: 100,
-    progress: 0,
-  },
 };
 
 const DEFAULT_OVERLAY: OverlayViewModel = {
@@ -100,6 +102,15 @@ const DEFAULT_OVERLAY: OverlayViewModel = {
     total: 12,
     debugModeEnabled: false,
     debugRecordResults: false,
+  },
+  visual: {
+    themeId: "chapter1",
+    assetProfileId: "chapter1",
+    chapterLabel: "Chapter 1",
+    warningLevel: "calm",
+    encounterEmphasis: "chapter",
+    motionProfile: "full",
+    tokens: fallbackTokens,
   },
 };
 

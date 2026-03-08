@@ -1,7 +1,9 @@
-import type { ReactElement } from "react";
+import type { CSSProperties, ReactElement } from "react";
 import { type AppLocale, formatPoints, getItemTranslation, getLL } from "../../i18n";
 import type { ShopViewState } from "../store";
-import { GameIcon } from "./GameIcon";
+import { AppIcon } from "./AppIcon";
+import { getItemVisualSpec } from "./itemVisualRegistry";
+import { OptionCard, SectionHeader, Surface } from "./uiPrimitives";
 
 export interface ShopPanelProps {
   locale: AppLocale;
@@ -22,14 +24,17 @@ export function ShopPanel({ locale, shop, onSelect }: ShopPanelProps): ReactElem
     shop.optionAType === null ? LL.shop.choiceA() : getItemTranslation(LL, shop.optionAType).name();
   const optionBLabel =
     shop.optionBType === null ? LL.shop.choiceB() : getItemTranslation(LL, shop.optionBType).name();
+  const optionAVisual = shop.optionAType ? getItemVisualSpec(shop.optionAType) : null;
+  const optionBVisual = shop.optionBType ? getItemVisualSpec(shop.optionBType) : null;
   const priceBand = shop.cost >= 2200 ? "HIGH" : shop.cost >= 1600 ? "MID" : "LOW";
 
   return (
-    <div id="shop-panel" className={className}>
-      <p id="shop-status">{statusText}</p>
-      <p id="shop-cost">
-        {LL.shop.price()}: {formatPoints(locale, shop.cost)}
-      </p>
+    <Surface id="shop-panel" className={className} emphasis="accent" chrome="panel" elevated>
+      <SectionHeader
+        eyebrow="SHOP LINK"
+        title={statusText}
+        subtitle={`${LL.shop.price()}: ${formatPoints(locale, shop.cost)}`}
+      />
       {shop.priceBandVisible ? <p id="shop-price-band">{priceBand}</p> : null}
       <div className="shop-buttons">
         <button
@@ -40,8 +45,16 @@ export function ShopPanel({ locale, shop, onSelect }: ShopPanelProps): ReactElem
             onSelect(0);
           }}
         >
-          {shop.optionAType ? <GameIcon name={shop.optionAType} className="shop-option-icon" /> : null}
-          {optionALabel}
+          <OptionCard
+            active={!shop.optionADisabled}
+            disabled={shop.optionADisabled}
+            accent={optionAVisual?.accent}
+          >
+            <span className="shop-option-copy">
+              {optionAVisual ? <AppIcon name={optionAVisual.icon} className="shop-option-icon" /> : null}
+              <span>{optionALabel}</span>
+            </span>
+          </OptionCard>
         </button>
         <button
           id="shop-option-b"
@@ -51,10 +64,27 @@ export function ShopPanel({ locale, shop, onSelect }: ShopPanelProps): ReactElem
             onSelect(1);
           }}
         >
-          {shop.optionBType ? <GameIcon name={shop.optionBType} className="shop-option-icon" /> : null}
-          {optionBLabel}
+          <OptionCard
+            active={!shop.optionBDisabled}
+            disabled={shop.optionBDisabled}
+            accent={optionBVisual?.accent}
+          >
+            <span className="shop-option-copy">
+              {optionBVisual ? <AppIcon name={optionBVisual.icon} className="shop-option-icon" /> : null}
+              <span>{optionBLabel}</span>
+            </span>
+          </OptionCard>
         </button>
       </div>
-    </div>
+      <p
+        id="shop-status"
+        className="shop-status-copy"
+        style={
+          { "--shop-accent": optionAVisual?.accent ?? optionBVisual?.accent ?? "#ffb15c" } as CSSProperties
+        }
+      >
+        {statusText}
+      </p>
+    </Surface>
   );
 }

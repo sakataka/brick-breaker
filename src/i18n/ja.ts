@@ -130,8 +130,6 @@ export const ja = {
       bossHp: "ボスHP",
       cast: "詠唱",
       weakWindow: "ブレイク",
-      riskChain: "Risk Chain",
-      overdrive: "OVERDRIVE",
       upgrades: "強化",
       route: "ルート",
       modifier: "修飾",
@@ -253,12 +251,6 @@ export const ja = {
       hud: "📳パルス",
       description: "パドル反射時に近距離へ追撃",
     },
-    decoy: {
-      name: "デコイ",
-      short: "囮",
-      hud: "🎯デコイ",
-      description: "敵弾を引きつけるデコイを展開",
-    },
     stack: "{label}×{count:number}",
   },
   stageModifiers: {
@@ -287,7 +279,6 @@ export const ja = {
     combo_x2: "コンボ x2.0",
     destroy_turret_first: "砲台を先に破壊",
     shutdown_generator: "発生装置を止める",
-    risk_chain_threshold: "Risk Chain 到達",
   },
   results: {
     rating: "評価",
@@ -316,6 +307,5 @@ export const ja = {
     bossWarning: "WARNING",
     gate: "GATE",
     turret: "TURRET",
-    overdrive: "OVERDRIVE",
   },
 } as const satisfies BaseTranslation;

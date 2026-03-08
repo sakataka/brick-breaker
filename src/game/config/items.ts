@@ -25,7 +25,6 @@ export interface ItemBalance {
   railPierceHitsByLevel: readonly [number, number];
   pulseBrickRadius: number;
   pulseProjectileRadius: number;
-  decoyDurationSec: number;
 }
 
 export const ITEM_CONFIG: Record<ItemType, ItemRule> = {
@@ -41,7 +40,7 @@ export const ITEM_CONFIG: Record<ItemType, ItemRule> = {
   },
   shield: {
     type: "shield",
-    weight: 0.08,
+    weight: 0.1,
     label: "シールド",
   },
   multiball: {
@@ -56,38 +55,33 @@ export const ITEM_CONFIG: Record<ItemType, ItemRule> = {
   },
   bomb: {
     type: "bomb",
-    weight: 0.07,
+    weight: 0.08,
     label: "ボム",
   },
   laser: {
     type: "laser",
-    weight: 0.08,
+    weight: 0.1,
     label: "レーザー",
   },
   homing: {
     type: "homing",
-    weight: 0.08,
+    weight: 0.09,
     label: "ホーミング",
   },
   rail: {
     type: "rail",
-    weight: 0.07,
+    weight: 0.08,
     label: "レール",
   },
   shockwave: {
     type: "shockwave",
-    weight: 0.08,
+    weight: 0.1,
     label: "衝撃波",
   },
   pulse: {
     type: "pulse",
     weight: 0.09,
     label: "パルス",
-  },
-  decoy: {
-    type: "decoy",
-    weight: 0.09,
-    label: "デコイ",
   },
 };
 
@@ -106,7 +100,6 @@ export const ITEM_BALANCE: ItemBalance = {
   railPierceHitsByLevel: [2, 4],
   pulseBrickRadius: 84,
   pulseProjectileRadius: 108,
-  decoyDurationSec: 7,
 };
 
 export const DROP_CONFIG: DropConfig = {

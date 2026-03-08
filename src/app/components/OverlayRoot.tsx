@@ -1,4 +1,5 @@
-import type { ReactElement } from "react";
+import type { CSSProperties, ReactElement } from "react";
+import { getArtCssVars, resolveVisualAssetProfile } from "../../art/visualAssets";
 import type { OverlayViewModel } from "../../game/renderTypes";
 import type { StartSettingsSelection } from "../../game/startSettingsSchema";
 import type { RogueUpgradeType } from "../../game/types";
@@ -11,8 +12,10 @@ import {
   getOverlayButton,
   getOverlayMessage,
 } from "../viewmodels/overlayText";
+import { AppIcon } from "./AppIcon";
 import { StageResultPanel } from "./StageResultPanel";
 import { StartSettingsForm } from "./StartSettingsForm";
+import { Banner, SectionHeader, Surface } from "./uiPrimitives";
 
 export interface OverlayRootProps {
   locale: AppLocale;
@@ -50,13 +53,57 @@ export function OverlayRoot({
       ? LL.hud.debug.badgeOn()
       : LL.hud.debug.badgeOff()
     : "";
+  const tokens = overlay.visual.tokens;
+  const artProfile = resolveVisualAssetProfile(
+    overlay.visual.assetProfileId,
+    overlay.visual.warningLevel,
+    overlay.visual.encounterEmphasis,
+  );
+  const cssVars = {
+    "--overlay-accent": tokens.accent,
+    "--overlay-danger": tokens.danger,
+    "--overlay-surface": tokens.surface,
+    "--overlay-surface-raised": tokens.surfaceRaised,
+    "--overlay-border": tokens.border,
+    "--overlay-glow": tokens.glow,
+    "--overlay-text": tokens.text,
+    "--overlay-muted": tokens.muted,
+    ...getArtCssVars(artProfile),
+  } as CSSProperties;
 
   return (
-    <div id="overlay" data-scene={overlay.scene} className={showOverlay ? "overlay" : "overlay hidden"}>
-      <div className={isStartScene ? "card overlay-card-layout" : "card"}>
+    <div
+      id="overlay"
+      data-scene={overlay.scene}
+      data-theme={overlay.visual.themeId}
+      className={showOverlay ? "overlay" : "overlay hidden"}
+      style={cssVars}
+    >
+      <Surface
+        as="div"
+        className={isStartScene ? "card overlay-card-layout" : "card"}
+        emphasis="accent"
+        chrome={overlay.scene === "error" ? "warning" : overlay.stage.current >= 12 ? "boss" : "panel"}
+        elevated
+      >
+        <Banner
+          visible={Boolean(overlay.visual.banner)}
+          eyebrow={overlay.visual.chapterLabel.toUpperCase()}
+          title={buildStageLabel(LL, overlay)}
+          icon={<AppIcon name="warning" weight="fill" />}
+          chrome={overlay.visual.warningLevel === "critical" ? "warning" : "panel"}
+          motionProfile={overlay.visual.motionProfile}
+          warningLevel={overlay.visual.warningLevel}
+        >
+          <span>{overlayMessage}</span>
+        </Banner>
         <div className={isStartScene ? "overlay-card-header" : undefined}>
-          <h1>{LL.app.title()}</h1>
-          <p id="overlay-message">{overlayMessage}</p>
+          <SectionHeader
+            eyebrow={overlay.visual.chapterLabel.toUpperCase()}
+            title={LL.app.title()}
+            subtitle={overlayMessage}
+            icon={<AppIcon name={overlay.scene === "error" ? "warning" : "boss"} weight="fill" />}
+          />
           <p id="overlay-sub" className="subtle">
             {overlaySubText}
           </p>
@@ -119,7 +166,7 @@ export function OverlayRoot({
           </button>
           <p className="subtle">{LL.app.pauseHint()}</p>
         </div>
-      </div>
+      </Surface>
     </div>
   );
 }

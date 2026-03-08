@@ -1,4 +1,4 @@
-import type { BossAttackState, EncounterState, OverdriveState, RiskChainState } from "./types";
+import type { BossAttackState, EncounterState } from "./types";
 
 export function createBossAttackState(): BossAttackState {
   return {
@@ -22,24 +22,5 @@ export function createEncounterState(
     summonCooldownSec: 0,
     vulnerabilitySec: 0,
     vulnerabilityMaxSec: 0,
-  };
-}
-
-export function createRiskChainState(): RiskChainState {
-  return {
-    value: 0,
-    max: 100,
-    threshold: 100,
-    decayPerSec: 18,
-  };
-}
-
-export function createOverdriveState(): OverdriveState {
-  return {
-    active: false,
-    remainingSec: 0,
-    maxSec: 5.5,
-    damageScale: 1.35,
-    scoreScale: 1.5,
   };
 }

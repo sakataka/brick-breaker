@@ -1,5 +1,5 @@
 import { activateAssist, applyAssistToPaddle, createAssistState } from "./assistSystem";
-import { createEncounterState, createOverdriveState, createRiskChainState } from "./bossState";
+import { createEncounterState } from "./bossState";
 import { getGameplayBalance, getStageStory, getStageTimeTargetSec, MODE_CONFIG } from "./config";
 import { cloneActiveItemState, createItemState, ensureMultiballCount } from "./itemSystem";
 import { buildBricksFromStage } from "./level";
@@ -217,8 +217,6 @@ function resetCombatState(state: GameState, spawnEnemy: boolean): void {
   state.combat.enemyWaveCooldownSec = spawnEnemy ? 6 : 0;
   state.combat.bossAttackState = encounterState;
   state.combat.encounterState = encounterState;
-  state.combat.riskChain = createRiskChainState();
-  state.combat.overdrive = createOverdriveState();
   state.combat.forcedBallLoss = false;
 }
 
@@ -236,7 +234,6 @@ function resetStageStats(state: GameState): void {
     missionTargetSec: getStageTimeTargetSec(state.campaign.stageIndex),
     missionResults: [],
     generatorShutdown: false,
-    peakRiskChain: 0,
   };
 }
 

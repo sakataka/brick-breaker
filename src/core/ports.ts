@@ -18,6 +18,9 @@ export interface AudioPort {
   playItemPickup(itemType: ItemType): void;
   playComboFill(): void;
   playMagicCast(): void;
+  playBossCast(): void;
+  playBossPhaseShift(): void;
+  playDangerLane(): void;
   destroy(): void;
 }
 

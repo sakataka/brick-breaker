@@ -15,6 +15,7 @@ import type {
   StageRoute,
   Vector2,
 } from "./types";
+import type { VisualState } from "./uiTheme";
 
 export interface RenderViewState {
   scene: Scene;
@@ -43,21 +44,7 @@ export interface RenderViewState {
   fallingItems: FallingItem[];
   progressRatio: number;
   themeBandId: ThemeBandId;
-  visualTheme: {
-    accent: string;
-    danger: string;
-    glow: string;
-    pattern: string;
-  };
-  stageIntro?: {
-    kind: "stage" | "midboss" | "boss" | "ex";
-    progress: number;
-  };
-  bossBanner?: {
-    phase: 1 | 2 | 3;
-    warningLevel: "calm" | "elevated" | "critical";
-  };
-  warningLevel: "calm" | "elevated" | "critical";
+  visual: VisualState;
   slowBallActive: boolean;
   multiballActive: boolean;
   shieldCharges: number;
@@ -144,15 +131,7 @@ export interface HudViewModel {
   };
   missionProgress: StageMissionStatus[];
   activeItems: HudActiveItemView[];
-  visualThemeId: ThemeBandId;
-  stageIntro?: {
-    kind: "stage" | "midboss" | "boss" | "ex";
-    progress: number;
-  };
-  bossBanner?: {
-    phase: 1 | 2 | 3;
-    warningLevel: "calm" | "elevated" | "critical";
-  };
+  visual: VisualState;
   flags: {
     hazardBoostActive: boolean;
     pierceSlowSynergy: boolean;
@@ -165,19 +144,8 @@ export interface HudViewModel {
     generatorLegendVisible: boolean;
     gateLegendVisible: boolean;
     turretLegendVisible: boolean;
-    overdriveActive: boolean;
   };
   progressRatio: number;
-  accentColor: string;
-  dangerColor: string;
-  riskChain: {
-    value: number;
-    max: number;
-    progress: number;
-  };
-  overdrive?: {
-    progress: number;
-  };
   pickupToast?: {
     type: ItemType;
     color: string;
@@ -198,6 +166,7 @@ export interface OverlayViewModel {
   score: number;
   lives: number;
   stage: OverlayStageView;
+  visual: VisualState;
   clearElapsedSec?: number;
   error?: {
     key: RuntimeErrorKey;

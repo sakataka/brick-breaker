@@ -175,7 +175,7 @@ const STAGE_BLUEPRINTS: readonly StageBlueprint[] = [
       { row: 4, col: 2, kind: "split" },
       { row: 5, col: 5, kind: "boss" },
     ],
-    missions: ["destroy_turret_first", "risk_chain_threshold"],
+    missions: ["destroy_turret_first", "combo_x2"],
     encounter: { kind: "midboss", profile: "artillery" },
   },
   {
@@ -221,7 +221,7 @@ const STAGE_BLUEPRINTS: readonly StageBlueprint[] = [
       { row: 3, col: 3, kind: "hazard" },
       { row: 4, col: 7, kind: "regen" },
     ],
-    missions: ["shutdown_generator", "risk_chain_threshold"],
+    missions: ["shutdown_generator", "no_shop"],
   },
   {
     rows: ["0000000000", "0010000100", "0000100000", "0000000000", "0000000000", "0000000000"],
@@ -238,7 +238,7 @@ const STAGE_BLUEPRINTS: readonly StageBlueprint[] = [
       { row: 3, col: 7, kind: "steel" },
     ],
     elite: [{ row: 2, col: 4, kind: "boss" }],
-    missions: ["time_limit", "risk_chain_threshold"],
+    missions: ["time_limit", "no_miss_stage"],
     encounter: { kind: "boss", profile: "final_core" },
   },
 ] as const;
@@ -258,7 +258,7 @@ const EX_STAGE_BLUEPRINTS: readonly StageBlueprint[] = [
       { row: 3, col: 6, kind: "gate" },
     ],
     elite: [{ row: 4, col: 4, kind: "boss" }],
-    missions: ["no_miss_stage", "risk_chain_threshold"],
+    missions: ["no_miss_stage", "combo_x2"],
     encounter: { kind: "midboss", profile: "warden" },
   },
   {
@@ -289,7 +289,7 @@ const EX_STAGE_BLUEPRINTS: readonly StageBlueprint[] = [
       { row: 3, col: 7, kind: "turret" },
     ],
     elite: [{ row: 4, col: 4, kind: "boss" }],
-    missions: ["destroy_turret_first", "risk_chain_threshold"],
+    missions: ["destroy_turret_first", "combo_x2"],
     encounter: { kind: "midboss", profile: "artillery" },
   },
   {
@@ -306,7 +306,7 @@ const EX_STAGE_BLUEPRINTS: readonly StageBlueprint[] = [
       { row: 3, col: 7, kind: "turret" },
     ],
     elite: [{ row: 2, col: 4, kind: "boss" }],
-    missions: ["time_limit", "risk_chain_threshold"],
+    missions: ["time_limit", "combo_x2"],
     encounter: { kind: "ex_boss", profile: "ex_overlord" },
   },
 ] as const;
@@ -457,7 +457,7 @@ function inferStageMissions(stageNumber: number, blueprint: StageBlueprint): Sta
     return ["destroy_turret_first", "combo_x2"];
   }
   if (blueprint.encounter) {
-    return ["time_limit", "risk_chain_threshold"];
+    return ["time_limit", "combo_x2"];
   }
   return stageNumber >= 9 ? ["time_limit", "combo_x2"] : ["time_limit", "no_shop"];
 }

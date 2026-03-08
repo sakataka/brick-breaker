@@ -246,6 +246,9 @@ export class SessionController {
     }
     try {
       this.syncViewportForDpi();
+      const previousBossPhase = this.state.combat.bossPhase;
+      const previousTelegraphKind = this.state.combat.bossAttackState.telegraph?.kind;
+      const previousSweepActive = Boolean(this.state.combat.bossAttackState.sweep);
       this.engine.tick(
         timeMs,
         {
@@ -261,11 +264,35 @@ export class SessionController {
           onBallLoss: () => this.handleBallLoss(),
         },
       );
+      this.syncEncounterAudio(previousBossPhase, previousTelegraphKind, previousSweepActive);
       this.syncViewPorts();
     } catch (error) {
       this.setRuntimeError("runtime", error instanceof Error && error.message ? error.message : undefined);
     }
   };
+
+  private syncEncounterAudio(
+    previousBossPhase: number,
+    previousTelegraphKind:
+      | NonNullable<GameState["combat"]["bossAttackState"]["telegraph"]>["kind"]
+      | undefined,
+    previousSweepActive: boolean,
+  ): void {
+    const nextTelegraph = this.state.combat.bossAttackState.telegraph;
+    const nextSweepActive = Boolean(this.state.combat.bossAttackState.sweep);
+    if (this.state.combat.bossPhase > previousBossPhase) {
+      this.audioPort.playBossPhaseShift();
+    }
+    if (nextTelegraph && previousTelegraphKind !== nextTelegraph.kind) {
+      this.audioPort.playBossCast();
+      if (typeof nextTelegraph.lane === "number") {
+        this.audioPort.playDangerLane();
+      }
+    }
+    if (!previousSweepActive && nextSweepActive) {
+      this.audioPort.playDangerLane();
+    }
+  }
 
   private handleStageClear(): void {
     handleStageClearSession({

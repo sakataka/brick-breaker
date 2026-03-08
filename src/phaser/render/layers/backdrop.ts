@@ -20,13 +20,14 @@ export function drawBackdropLayer(
   lineWidth: number,
   snapStep: number,
 ): void {
-  const backdropTheme = resolveBackdropTheme(view.themeBandId, view.highContrast);
+  const backdropTheme = resolveBackdropTheme(view);
   const background = parseColor(backdropTheme.base, { value: 0x0b1020, alpha: 1 });
   graphics.fillStyle(background.value, 1);
   graphics.fillRect(0, 0, width, height);
 
   const header = parseColor(backdropTheme.top, { value: 0x161d30, alpha: 1 });
   drawTopVignette(graphics, header, width);
+  drawAmbientBursts(graphics, view, width, height, snapStep);
   drawPattern(graphics, view, width, height, snapStep);
 
   const frame = parseColor(backdropTheme.frame, { value: 0x29d3ff, alpha: 1 });
@@ -42,15 +43,40 @@ export function drawBackdropLayer(
   graphics.moveTo(snapByStep(1, snapStep), snapByStep(1, snapStep));
   graphics.lineTo(snapByStep(width - 1, snapStep), snapByStep(1, snapStep));
   graphics.strokePath();
-  if (view.warningLevel !== "calm") {
+  if (view.visual.warningLevel !== "calm") {
     const warning = parseColor(backdropTheme.danger, { value: 0xff6a6a, alpha: 0.18 });
-    const alpha = view.warningLevel === "critical" ? 0.16 : 0.08;
+    const alpha = view.visual.warningLevel === "critical" ? 0.16 : 0.08;
     graphics.fillStyle(warning.value, alpha);
     graphics.fillRect(0, 0, width, 18);
     graphics.fillRect(0, height - 18, width, 18);
   }
 
   drawWarpZones(graphics, view.warpZones, lineWidth, snapStep);
+}
+
+function drawAmbientBursts(
+  graphics: Phaser.GameObjects.Graphics,
+  view: RenderViewState,
+  width: number,
+  height: number,
+  snapStep: number,
+): void {
+  const accent = parseColor(view.visual.tokens.accent, { value: 0x40f4ff, alpha: 0.22 });
+  const danger = parseColor(view.visual.tokens.danger, { value: 0xff6a6a, alpha: 0.18 });
+  const pulse =
+    0.5 + Math.sin(view.elapsedSec * (view.visual.encounterEmphasis === "chapter" ? 1.1 : 2.6)) * 0.5;
+  graphics.fillStyle(accent.value, accent.alpha * (0.08 + pulse * 0.08));
+  graphics.fillCircle(
+    snapByStep(width * 0.18, snapStep),
+    snapByStep(height * 0.24, snapStep),
+    82 + pulse * 26,
+  );
+  graphics.fillStyle(danger.value, danger.alpha * (view.visual.warningLevel === "critical" ? 0.16 : 0.08));
+  graphics.fillCircle(
+    snapByStep(width * 0.78, snapStep),
+    snapByStep(height * 0.78, snapStep),
+    64 + pulse * 18,
+  );
 }
 
 function drawTopVignette(graphics: Phaser.GameObjects.Graphics, header: ParsedColor, width: number): void {
@@ -101,69 +127,15 @@ function drawWarpZones(
   }
 }
 
-function resolveBackdropTheme(
-  themeBandId: RenderViewState["themeBandId"],
-  highContrast: boolean,
-): BackdropTheme {
-  if (highContrast) {
-    return {
-      base: "#000000",
-      top: "#111111",
-      frame: "#f5e76a",
-      pattern: "rgba(255, 255, 255, 0.18)",
-      danger: "rgba(255, 112, 112, 0.5)",
-    };
-  }
-  switch (themeBandId) {
-    case "chapter2":
-      return {
-        base: "#23101b",
-        top: "#5c2d18",
-        frame: "#ffb05b",
-        pattern: "rgba(255, 214, 164, 0.14)",
-        danger: "rgba(255, 106, 68, 0.5)",
-      };
-    case "chapter3":
-      return {
-        base: "#190f31",
-        top: "#4a2065",
-        frame: "#ff74d1",
-        pattern: "rgba(255, 184, 247, 0.14)",
-        danger: "rgba(255, 104, 124, 0.52)",
-      };
-    case "midboss":
-      return {
-        base: "#230d20",
-        top: "#6e1f36",
-        frame: "#ff9d70",
-        pattern: "rgba(255, 188, 164, 0.18)",
-        danger: "rgba(255, 85, 110, 0.58)",
-      };
-    case "finalboss":
-      return {
-        base: "#170724",
-        top: "#5a1646",
-        frame: "#ff74d1",
-        pattern: "rgba(255, 179, 231, 0.18)",
-        danger: "rgba(255, 77, 118, 0.62)",
-      };
-    case "ex":
-      return {
-        base: "#081f1d",
-        top: "#16504b",
-        frame: "#56f7ba",
-        pattern: "rgba(180, 255, 219, 0.16)",
-        danger: "rgba(255, 136, 88, 0.52)",
-      };
-    default:
-      return {
-        base: "#081b35",
-        top: "#154269",
-        frame: "#42f3ff",
-        pattern: "rgba(179, 247, 255, 0.14)",
-        danger: "rgba(255, 122, 100, 0.46)",
-      };
-  }
+function resolveBackdropTheme(view: RenderViewState): BackdropTheme {
+  const tokens = view.visual.tokens;
+  return {
+    base: tokens.backdrop,
+    top: tokens.backdropTop,
+    frame: tokens.frame,
+    pattern: tokens.pattern,
+    danger: tokens.danger,
+  };
 }
 
 function drawPattern(
@@ -173,35 +145,37 @@ function drawPattern(
   height: number,
   snapStep: number,
 ): void {
-  const color = parseColor(view.visualTheme.pattern, { value: 0xffffff, alpha: 0.14 });
+  const color = parseColor(view.visual.tokens.pattern, { value: 0xffffff, alpha: 0.14 });
   graphics.lineStyle(1, color.value, color.alpha);
-  if (view.themeBandId === "chapter1") {
+  if (view.visual.themeId === "chapter1") {
     for (let y = 24; y < height; y += 28) {
       graphics.beginPath();
-      graphics.moveTo(0, snapByStep(y, snapStep));
-      graphics.lineTo(width, snapByStep(y - 10, snapStep));
+      graphics.moveTo(0, snapByStep(y + Math.sin(view.elapsedSec * 1.4 + y * 0.02) * 4, snapStep));
+      graphics.lineTo(width, snapByStep(y - 10 + Math.sin(view.elapsedSec * 1.4 + y * 0.02) * 4, snapStep));
       graphics.strokePath();
     }
     return;
   }
-  if (view.themeBandId === "chapter2") {
+  if (view.visual.themeId === "chapter2") {
     for (let x = 20; x < width; x += 64) {
-      graphics.strokeRect(snapByStep(x, snapStep), 24, 24, height - 48);
+      const offset = Math.sin(view.elapsedSec * 1.8 + x * 0.04) * 6;
+      graphics.strokeRect(snapByStep(x, snapStep), 24 + offset, 24, height - 48);
     }
     return;
   }
-  if (view.themeBandId === "chapter3") {
+  if (view.visual.themeId === "chapter3") {
     for (let x = 0; x < width; x += 48) {
       graphics.beginPath();
-      graphics.moveTo(snapByStep(x, snapStep), 20);
-      graphics.lineTo(snapByStep(x, snapStep), height - 20);
+      const drift = Math.sin(view.elapsedSec * 2.2 + x * 0.08) * 10;
+      graphics.moveTo(snapByStep(x + drift, snapStep), 20);
+      graphics.lineTo(snapByStep(x + drift, snapStep), height - 20);
       graphics.strokePath();
     }
     return;
   }
   for (let index = 0; index < 12; index += 1) {
     const x = ((index + 1) * width) / 13;
-    const radius = view.warningLevel === "critical" ? 22 : 16;
+    const radius = view.visual.warningLevel === "critical" ? 22 : 16;
     graphics.strokeCircle(snapByStep(x, snapStep), height * 0.28, radius);
   }
 }

@@ -98,6 +98,18 @@ export class ToneDirector {
     this.toneSfx.playMagicCast();
   }
 
+  playBossCast(): void {
+    this.toneSfx.playBossCast();
+  }
+
+  playBossPhaseShift(): void {
+    this.toneSfx.playBossPhaseShift();
+  }
+
+  playDangerLane(): void {
+    this.toneSfx.playDangerLane();
+  }
+
   destroy(): void {
     this.clearDelayedStageStart();
     this.bgm.destroy();

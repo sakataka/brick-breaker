@@ -129,9 +129,16 @@ test("start screen locale switch keeps CTA visible for long translations", async
   await page.locator("#setting-language").selectOption("en");
   await expect(page.locator("#overlay-button")).toHaveText("Start Game");
   await expect(page.locator("#setting-item-pool")).toContainText("Item Pool");
-  await expect(page.locator("#setting-item-pool input[type='checkbox']")).toHaveCount(12);
+  await expect(page.locator("#setting-item-pool input[type='checkbox']")).toHaveCount(11);
   await expect(page.locator("#setting-campaign-course")).toHaveCount(0);
   await expect(page.locator("#daily-challenge-label")).toHaveCount(0);
+  await expect
+    .poll(async () =>
+      page.locator("#overlay").evaluate((element) => {
+        return getComputedStyle(element).getPropertyValue("--art-panel-fill").trim();
+      }),
+    )
+    .toContain("data:image/svg+xml");
 
   const buttonBox = await page.locator("#overlay-button").boundingBox();
   const footerBox = await page.locator(".overlay-fixed-footer").boundingBox();
@@ -226,9 +233,15 @@ test("boss telegraph appears during debug boss fight", async ({ page }) => {
   });
 
   await expect(page.locator(".hud-stage-combat")).toContainText(/射撃予兆|制圧予兆|集中弾予兆|遮断掃射予兆/);
-  await expect(page.locator(".hud-stage-combat")).toContainText("Risk Chain");
   await expect(page.locator(".hud-boss-banner")).toBeVisible();
   await expect(page.locator("#stage-wrap")).toHaveAttribute("data-theme", /finalboss|midboss/);
+  await expect
+    .poll(async () =>
+      page.locator("#stage-wrap").evaluate((element) => {
+        return getComputedStyle(element).getPropertyValue("--art-backdrop-pattern").trim();
+      }),
+    )
+    .toContain("data:image/svg+xml");
 });
 
 test("item pool can disable drops but keeps at least one item enabled", async ({ page }) => {
@@ -242,7 +255,7 @@ test("item pool can disable drops but keeps at least one item enabled", async ({
 
   const checkboxes = itemPool.locator("input[type='checkbox']");
   const count = await checkboxes.count();
-  expect(count).toBe(12);
+  expect(count).toBe(11);
   for (let index = 1; index < count; index += 1) {
     const checkbox = checkboxes.nth(index);
     if (await checkbox.isChecked()) {

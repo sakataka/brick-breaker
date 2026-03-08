@@ -11,8 +11,7 @@ export type ItemType =
   | "homing"
   | "rail"
   | "shockwave"
-  | "pulse"
-  | "decoy";
+  | "pulse";
 export type BrickKind =
   | "normal"
   | "steel"
@@ -146,8 +145,7 @@ export type StageMissionKey =
   | "no_miss_stage"
   | "combo_x2"
   | "destroy_turret_first"
-  | "shutdown_generator"
-  | "risk_chain_threshold";
+  | "shutdown_generator";
 
 export type EncounterKind = "none" | "midboss" | "boss" | "ex_boss";
 export type EncounterProfile = "none" | "warden" | "artillery" | "final_core" | "ex_overlord";

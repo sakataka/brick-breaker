@@ -15,10 +15,12 @@ export type EventName =
   | "item_rail"
   | "item_shockwave"
   | "item_pulse"
-  | "item_decoy"
   | "shield_burst"
   | "magic_cast"
   | "combo_fill"
+  | "boss_cast"
+  | "boss_phase_shift"
+  | "danger_lane"
   | "jingle_start"
   | "jingle_stage_clear"
   | "jingle_game_clear"
@@ -145,10 +147,6 @@ export class SfxManager {
         { freq: 540, type: "triangle", durationMs: 90, gain: 0.075 },
         { freq: 920, type: "triangle", durationMs: 110, gain: 0.07 },
       ],
-      item_decoy: [
-        { freq: 420, type: "triangle", durationMs: 120, gain: 0.07 },
-        { freq: 760, type: "sine", durationMs: 140, gain: 0.065 },
-      ],
       shield_burst: [
         { freq: 300, type: "sawtooth", durationMs: 100, gain: 0.07 },
         { freq: 620, type: "triangle", durationMs: 110, gain: 0.07 },
@@ -163,6 +161,22 @@ export class SfxManager {
         { freq: 980, type: "triangle", durationMs: 90, gain: 0.07 },
         { freq: 1220, type: "triangle", durationMs: 100, gain: 0.07 },
         { freq: 1480, type: "triangle", durationMs: 120, gain: 0.068 },
+      ],
+      boss_cast: [
+        { freq: 420, type: "square", durationMs: 110, gain: 0.075 },
+        { freq: 560, type: "triangle", durationMs: 110, gain: 0.072 },
+        { freq: 740, type: "triangle", durationMs: 140, gain: 0.07 },
+      ],
+      boss_phase_shift: [
+        { freq: 360, type: "sawtooth", durationMs: 120, gain: 0.085 },
+        { freq: 720, type: "triangle", durationMs: 140, gain: 0.08 },
+        { freq: 1080, type: "triangle", durationMs: 160, gain: 0.075 },
+        { freq: 1440, type: "sine", durationMs: 180, gain: 0.072 },
+      ],
+      danger_lane: [
+        { freq: 520, type: "square", durationMs: 80, gain: 0.068 },
+        { freq: 680, type: "square", durationMs: 80, gain: 0.066 },
+        { freq: 520, type: "square", durationMs: 80, gain: 0.064 },
       ],
       jingle_start: [
         { freq: 560, type: "triangle", durationMs: 180, gain: 0.08 },

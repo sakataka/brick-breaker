@@ -47,7 +47,6 @@ const EMPTY_ITEM_STACKS: ItemStackState = {
   railStacks: 0,
   shockwaveStacks: 0,
   pulseStacks: 0,
-  decoyStacks: 0,
 };
 
 export function createItemStacks(): ItemStackState {

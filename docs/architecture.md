@@ -42,6 +42,7 @@
 
 ### 3. Phaser Host（描画・入力）
 
+- `src/art/visualAssets.ts`
 - `src/phaser/GameHost.ts`
 - `src/phaser/scenes/RuntimeScene.ts`
 - `src/phaser/scenes/BootScene.ts`
@@ -55,6 +56,7 @@
 責務:
 - Pointer/Keyboard 入力を受け取り `GameSession` へコマンド通知。
 - `RenderViewState` を Phaser Graphics 描画へ変換。
+- `BootScene` は art manifest 由来の SVG texture を preload し、`PhaserRenderPort` は texture key と asset profile を使って背景タイルを合成する。
 
 ### 4. React UI
 
@@ -64,6 +66,9 @@
 - `src/app/components/StartSettingsForm.tsx`
 - `src/app/components/StageResultPanel.tsx`
 - `src/app/components/ShopPanel.tsx`
+- `src/app/components/uiPrimitives.tsx`
+- `src/app/components/AppIcon.tsx`
+- `src/app/components/itemVisualRegistry.tsx`
 - `src/app/store.ts`
 - `src/app/viewmodels/overlayCopy.ts`
 - `src/app/viewmodels/overlayText.ts`
@@ -76,9 +81,13 @@
 - 開始画面の `Item Pool` は item registry を単一ソースとし、アイコン/名称/順序/有効状態を設定 UI と抽選ロジックで共通利用する。
 - `OverlayRoot` は開始画面のみ「ヘッダー / 設定スクロール / 固定CTAフッター」を適用し、設定増加時も開始操作を維持する。
 - `AppUi` はプレイ中のみ「上段情報バー（HUD+ショップ） / 下段ゲーム枠」の2分割レイアウトを有効化し、`data-theme` / `data-warning` で章別の Neon Pop 演出を切り替える。
+- React UI は `uiPrimitives` と `AppIcon` を介して `Space Grotesk + Public Sans` / `Phosphor` / theme tokens を共通利用する。
+- item の見た目差分は `itemVisualRegistry.tsx` に集約し、HUD / Shop / Start Settings で共有する。
+- `Surface` / `Banner` などの primitive は panel chrome を前提にし、`panel fill + frame + badge strip` を CSS custom property で合成する。
 - ショップは「2択購入のみ（無料交換なし）」を基本ルールとし、表示モデルは `src/game/shopUi.ts` で一元生成する。
-- HUD / Overlay / Shop は構造化 ViewModel を受け取り、ボス戦では `cast / weak window / Risk Chain / OVERDRIVE / mission progress` を強調する。
-- HUD は `stageIntro / bossBanner / warningLevel` を受け取り、通常面と encounter 面で見た目を切り替える。
+- HUD / Overlay / Shop は構造化 ViewModel を受け取り、ボス戦では `cast / weak window / mission progress` を強調する。
+- HUD / Overlay / Render は `visual` セクション（`themeId / warningLevel / chapterLabel / banner / motionProfile`）を共有し、通常面と encounter 面で見た目を切り替える。
+- motion は React UI のバナー / 導入 / トースト演出に使い、Phaser 側の描画更新とは責務を分ける。
 
 ### 4.5 i18n / Copy
 
@@ -94,20 +103,22 @@
 - `src/audio/toneSfx.ts`
 - `src/audio/sfx.ts`
 - `src/audio/bgmCatalog.ts`
+- `src/audio/bgmSequencer.ts`
 
 責務:
 - シーン遷移とステージ進行に同期した BGM/SE 制御。
 - BGMは `bgmCatalog` の cue 定義（`chapter1 / chapter2 / chapter3 / midboss / finalboss / ex / title`）を基に切り替える。
 - 再生は `bgmSequencer` の多声音（リード/ベース/和音/対旋律/パッド）スケジューリングで行う。
+- boss cast / phase shift / danger lane は accent cue として `ToneSfx` から個別再生する。
 - ゲーム側は `AudioPort` 契約のみを意識。
 
 ## データフロー
 
-1. `RuntimeScene.update` がフレーム時刻を `GameSession.loop` に渡す。
-2. `CoreEngine.tick` が fixed-step で `gamePipeline` を進行し、内部で `pipeline/*` フェーズを順に適用する。
-3. `GameSession` が `RenderViewState` / `HudViewModel` / `OverlayViewModel` を構築。
-4. `RenderPort`（Phaser）と `UiPort`（Zustand）へ同期。
-5. シーン変化時は `audioSync` 経由で `AudioPort` を同期。
+1. `GameHost` が入力とフレーム時刻を `SessionController` へ渡す。
+2. `SessionController` が `CoreEngine.tick` を呼び、fixed-step で `gamePipeline` と `pipeline/*` を進行する。
+3. `renderPresenter` / `overlay` 系が `RenderViewState` / `HudViewModel` / `OverlayViewModel` を構築する。
+4. `RenderPort`（Phaser）と `UiPort`（Zustand）へ同期する。
+5. シーン変化と stage cue 変化は `audioSync` と `AudioPort` を介して音へ同期する。
 
 ## ドキュメント運用ルール
 
@@ -117,7 +128,11 @@
 - ブロックHP/破壊判定: `src/game/brickDamage.ts`
 - ブロック分類/クリア判定ルール: `src/game/brickRules.ts`
 - アイテム仕様: `src/game/itemRegistry.ts`
-- アイテム表示情報（色/アイコン/表示順）: `src/game/itemRegistry.ts`
+- アイテム表示情報（順序/色/role）: `src/game/itemRegistryData.ts`
+- アイテムUI表現（Phosphor icon / tone / emphasis）: `src/app/components/itemVisualRegistry.tsx`
+- UI theme token 解決: `src/game/uiTheme.ts`
+- アート manifest / panel chrome / brick skin / backdrop tile: `src/art/visualAssets.ts`
+- Phaser 向け theme 変換: `src/game/renderer/theme.ts`
 - アイテム表示名/説明/短縮文字: `src/i18n/translations.ts`
 - ショップ候補生成と Item Pool 連携: `src/game/pipeline/shopPhase.ts` + `src/game/gamePipeline.ts`
 - UI状態: `src/app/store.ts`
@@ -125,11 +140,12 @@
 - EX解放の永続化: `src/game/metaProgress.ts`
 - ステージ解決: `src/game/stageContext.ts`
 - ステージ盤面の章/タグ/イベント/特殊セル定義: `src/game/config/stages.ts`
-- encounter / Risk Chain / OVERDRIVE: `src/game/bossState.ts` + `src/game/pipeline/bossPhase.ts`
+- encounter: `src/game/bossState.ts` + `src/game/pipeline/bossPhase.ts`
 - ショップ操作処理: `src/game/session/shopActions.ts`
 - View同期: `src/game/session/viewSync.ts`
 - デバッグ開始ロジック: `src/game/session/startSettings.ts` + `src/game/roundSystem.ts`
 - ロケール解決/保存: `src/i18n/index.ts`
+- EX解放の読み書き: `src/game/metaProgress.ts`
 - 未完了タスク: この文書末尾の `Open Backlog` のみ
 
 ## 追加時の手順
@@ -149,6 +165,13 @@
 2. `src/game/renderPresenter.ts` で ViewModel 生成。
 3. Phaser 側なら `src/phaser/render/layers/*`、React 側なら `src/app/components/*` を更新。
 
+### 新しいアート素材
+
+1. `src/art/visualAssets.ts` に SVG builder と manifest entry を追加する。
+2. `resolveVisualAssetProfile()` で chapter / warning / encounter ごとの素材セットを解決する。
+3. Phaser 側で使う texture は `src/phaser/scenes/BootScene.ts` の preload 対象へ自動的に乗るよう `getAllArtTextureEntries()` を更新する。
+4. React 側で使う panel/background は `getArtCssVars()` を通し、利用側で raw data URI を直書きしない。
+
 ### 新しい盤面要素
 
 1. `src/game/domainTypes.ts` の `BrickKind` / `StageDefinition` を更新。
@@ -156,6 +179,7 @@
 3. `src/game/level.ts` で盤面生成を拡張。
 4. 物理・破壊・クリア判定は `src/game/brickRules.ts` / `src/game/brickDamage.ts` へ寄せる。
 5. 盤面制御が必要な場合は `src/game/pipeline/stagePhase.ts` と `src/game/renderPresenter.ts` を同期更新する。
+6. 見た目差分が必要なら `src/art/visualAssets.ts` と `src/phaser/render/layers/world.ts` の kind skin を追加する。
 
 ### encounter / ボス攻撃追加
 
@@ -172,10 +196,11 @@
 - `bun run verify:change-coverage`
 - `bun run check:arch`
 - `bun run deadcode`
+- `bun run format`
 - `bun test`
 - `bun run e2e`
 
 ## Open Backlog
 
 - 現時点の残タスクはありません。
-- 最新完了サイクル: Neon Pop UI/BGM刷新 + Sticky削除 + cueベース音楽化（2026-03）。
+- 最新完了サイクル: SVGタイル合成ベースの背景/UI/ブロックスキン刷新 + Neon Pop UI/BGM刷新 + Sticky削除 + cueベース音楽化 + Risk Chain削除（2026-03-08）。

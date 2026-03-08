@@ -23,14 +23,14 @@ type TimerId = ReturnType<typeof setInterval>;
 const LOOKAHEAD_MS = 50;
 const SCHEDULE_AHEAD_SEC = 0.2;
 const DEFAULT_FADE_MS = 220;
-const MAX_NOTES_PER_STEP = 6;
+const MAX_NOTES_PER_STEP = 9;
 
 const VOICE_GAIN = {
-  lead: 0.086,
-  bass: 0.074,
-  harmony: 0.042,
-  counter: 0.035,
-  pad: 0.028,
+  lead: 0.104,
+  bass: 0.096,
+  harmony: 0.064,
+  counter: 0.048,
+  pad: 0.042,
 } as const;
 
 const VOICE_DURATION = {
@@ -44,7 +44,7 @@ const VOICE_DURATION = {
 export class BgmSequencer implements BgmController {
   private context: AudioContext | null = null;
   private enabled = true;
-  private targetGain = 0.19;
+  private targetGain = 0.28;
   private activeLayer: PlaybackLayer | null = null;
   private paused = false;
   private pendingTrack: BgmTrack | null = null;

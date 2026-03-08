@@ -13,7 +13,9 @@ import {
   toggleEnabledItem,
 } from "../../game/startSettingsSchema";
 import { type AppLocale, getItemTranslation, getLL, supportedLocales } from "../../i18n";
-import { GameIcon } from "./GameIcon";
+import { AppIcon } from "./AppIcon";
+import { getItemVisualSpec } from "./itemVisualRegistry";
+import { OptionCard, SectionHeader, Surface } from "./uiPrimitives";
 
 export interface StartSettingsFormProps {
   locale: AppLocale;
@@ -34,8 +36,15 @@ export function StartSettingsForm({
 
   return (
     <div id="start-settings" className="start-settings">
-      <section className="settings-section basic-settings">
-        <p className="settings-section-title">{LL.startSettings.sections.basic()}</p>
+      <Surface className="settings-section basic-settings" emphasis="accent" chrome="panel" elevated>
+        <SectionHeader
+          eyebrow="ARCADE CONFIG"
+          title={LL.startSettings.sections.basic()}
+          subtitle={
+            locale === "ja" ? "プレイ条件と進行ルートをここで決めます。" : "Shape the run before launch."
+          }
+          icon={<AppIcon name="score" weight="fill" />}
+        />
 
         <label htmlFor="setting-language">
           <span>{LL.startSettings.fields.language()}</span>
@@ -107,48 +116,62 @@ export function StartSettingsForm({
         </div>
 
         <div className="settings-item-pool" id="setting-item-pool">
-          <div className="settings-section-title-row">
-            <p className="settings-section-title">{LL.startSettings.sections.itemPool()}</p>
-            <p className="settings-section-note">{LL.startSettings.itemPoolHint()}</p>
-          </div>
+          <SectionHeader
+            eyebrow="ITEM POOL"
+            title={LL.startSettings.sections.itemPool()}
+            subtitle={LL.startSettings.itemPoolHint()}
+            icon={<AppIcon name="cast" weight="fill" />}
+          />
           <div className="item-pool-grid">
             {getStartSettingsItemEntries().map((entry) => {
               const translation = getItemTranslation(LL, entry.type);
               const checked = settings.enabledItems.includes(entry.type);
+              const visual = getItemVisualSpec(entry.type);
               return (
-                <label
-                  key={entry.type}
-                  className={`item-pool-card${checked ? " item-pool-card-active" : ""}`}
-                  htmlFor={`setting-item-${entry.type}`}
-                  style={{ "--item-accent": entry.color } as CSSProperties}
-                >
-                  <input
-                    id={`setting-item-${entry.type}`}
-                    type="checkbox"
-                    checked={checked}
-                    onChange={(event) => {
-                      onChange(toggleEnabledItem(settings, entry.type, event.target.checked));
-                    }}
-                  />
-                  <span className="item-pool-icon">
-                    <GameIcon name={entry.type} />
-                  </span>
-                  <span className="item-pool-copy">
-                    <strong>{translation.name()}</strong>
-                    <small>{translation.description()}</small>
-                  </span>
+                <label key={entry.type} htmlFor={`setting-item-${entry.type}`}>
+                  <OptionCard
+                    className={`item-pool-card${checked ? " item-pool-card-active" : ""}`}
+                    active={checked}
+                    accent={visual.accent}
+                  >
+                    <input
+                      id={`setting-item-${entry.type}`}
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(event) => {
+                        onChange(toggleEnabledItem(settings, entry.type, event.target.checked));
+                      }}
+                    />
+                    <span
+                      className="item-pool-icon"
+                      style={{ "--item-accent": entry.color } as CSSProperties}
+                    >
+                      <AppIcon name={visual.icon} size={20} weight="fill" />
+                    </span>
+                    <span className="item-pool-copy">
+                      <strong>{translation.name()}</strong>
+                      <small>{translation.description()}</small>
+                    </span>
+                  </OptionCard>
                 </label>
               );
             })}
           </div>
         </div>
-      </section>
+      </Surface>
 
-      <section
+      <Surface
         className={`settings-section debug-settings${settings.debugModeEnabled ? " debug-section-open" : ""}`}
+        emphasis="danger"
+        chrome="warning"
       >
         <div className="settings-section-title-row">
-          <p className="settings-section-title">{LL.startSettings.sections.debug()}</p>
+          <SectionHeader
+            eyebrow="DEBUG"
+            title={LL.startSettings.sections.debug()}
+            subtitle={settings.debugModeEnabled ? undefined : LL.startSettings.debugNote()}
+            icon={<AppIcon name="warning" weight="fill" />}
+          />
           <label className="toggle-row compact-toggle" htmlFor="setting-debug-mode">
             <span>{LL.startSettings.fields.debugEnabled()}</span>
             <input
@@ -223,10 +246,8 @@ export function StartSettingsForm({
               </>
             ) : null}
           </>
-        ) : (
-          <p className="settings-section-note">{LL.startSettings.debugNote()}</p>
-        )}
-      </section>
+        ) : null}
+      </Surface>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { createAssistState } from "./assistSystem";
-import { createEncounterState, createOverdriveState, createRiskChainState } from "./bossState";
+import { createEncounterState } from "./bossState";
 import { getGameplayBalance, getStageByIndex, getStageTimeTargetSec, STAGE_CATALOG } from "./config";
 import { ITEM_ORDER } from "./itemRegistryData";
 import { createItemState } from "./itemSystem";
@@ -114,8 +114,6 @@ export function createInitialGameState(
       enemyWaveCooldownSec: 0,
       bossAttackState: encounterState,
       encounterState,
-      riskChain: createRiskChainState(),
-      overdrive: createOverdriveState(),
       forcedBallLoss: false,
     },
     enemies: [],

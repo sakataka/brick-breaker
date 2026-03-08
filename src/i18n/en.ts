@@ -130,8 +130,6 @@ export const en: TranslationSchema = {
       bossHp: "Boss HP",
       cast: "Cast",
       weakWindow: "Break",
-      riskChain: "Risk Chain",
-      overdrive: "OVERDRIVE",
       upgrades: "Upgrades",
       route: "Route",
       modifier: "Modifier",
@@ -253,12 +251,6 @@ export const en: TranslationSchema = {
       hud: "📳 Pulse",
       description: "Emit a close-range burst on paddle rebound",
     },
-    decoy: {
-      name: "Decoy",
-      short: "DCY",
-      hud: "🎯 Decoy",
-      description: "Deploy a decoy that draws hostile shots",
-    },
     stack: "{label}×{count:number}",
   },
   stageModifiers: {
@@ -287,7 +279,6 @@ export const en: TranslationSchema = {
     combo_x2: "Combo x2.0",
     destroy_turret_first: "Destroy turret first",
     shutdown_generator: "Shut down generator",
-    risk_chain_threshold: "Risk Chain threshold",
   },
   results: {
     rating: "Rating",
@@ -316,6 +307,5 @@ export const en: TranslationSchema = {
     bossWarning: "WARNING",
     gate: "GATE",
     turret: "TURRET",
-    overdrive: "OVERDRIVE",
   },
 };

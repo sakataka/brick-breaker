@@ -1,6 +1,6 @@
 import type { SfxManager } from "../../audio/sfx";
 import { createEncounterState } from "../bossState";
-import { BOSS_PHASE_CONFIG, ENCOUNTER_CONFIG } from "../config";
+import { BOSS_PHASE_CONFIG } from "../config";
 import { consumeShield } from "../itemSystem";
 import { resolveStageMetadataFromState } from "../stageContext";
 import type { BossLane, GameConfig, GameState, RandomSource } from "../types";
@@ -14,8 +14,6 @@ export function updateBossPhase(
 ): number {
   const metadata = resolveStageMetadataFromState(state);
   const encounter = state.combat.encounterState;
-  syncOverdrive(state, deltaSec);
-  decayRiskChain(state, deltaSec);
   const boss = state.bricks.find((brick) => brick.alive && brick.kind === "boss");
   if (!boss) {
     state.combat.bossPhase = 0;
@@ -262,12 +260,6 @@ function updateBossSweep(state: GameState, config: GameConfig, deltaSec: number)
 }
 
 function applyBossHit(state: GameState): void {
-  if (state.items.active.decoyStacks > 0) {
-    state.items.active.decoyStacks = 0;
-    state.vfx.flashMs = Math.max(state.vfx.flashMs, 64);
-    state.vfx.flashColor = "rgba(255, 216, 144, 0.86)";
-    return;
-  }
   if (consumeShield(state.items)) {
     state.combat.shieldBurstQueued = true;
     state.vfx.flashMs = Math.max(state.vfx.flashMs, 72);
@@ -279,47 +271,6 @@ function applyBossHit(state: GameState): void {
   state.vfx.flashColor = "rgba(255, 108, 108, 0.92)";
   state.vfx.shakeMs = Math.max(state.vfx.shakeMs, 90);
   state.vfx.shakePx = Math.max(state.vfx.shakePx, 4);
-}
-
-function decayRiskChain(state: GameState, deltaSec: number): void {
-  state.combat.riskChain.value = Math.max(
-    0,
-    state.combat.riskChain.value - state.combat.riskChain.decayPerSec * deltaSec,
-  );
-}
-
-function syncOverdrive(state: GameState, deltaSec: number): void {
-  if (!state.combat.overdrive.active) {
-    return;
-  }
-  state.combat.overdrive.remainingSec = Math.max(0, state.combat.overdrive.remainingSec - deltaSec);
-  if (state.combat.overdrive.remainingSec <= 0) {
-    state.combat.overdrive.active = false;
-  }
-}
-
-export function awardRiskChain(state: GameState, amount: number, position: { x: number; y: number }): void {
-  state.combat.riskChain.value = Math.min(state.combat.riskChain.max, state.combat.riskChain.value + amount);
-  state.stageStats.peakRiskChain = Math.max(
-    state.stageStats.peakRiskChain ?? 0,
-    state.combat.riskChain.value,
-  );
-  if (state.combat.riskChain.value < state.combat.riskChain.threshold || state.combat.overdrive.active) {
-    return;
-  }
-  state.combat.riskChain.value = 0;
-  state.combat.overdrive.active = true;
-  state.combat.overdrive.remainingSec = ENCOUNTER_CONFIG.overdriveDurationSec;
-  state.combat.overdrive.maxSec = ENCOUNTER_CONFIG.overdriveDurationSec;
-  state.vfx.flashMs = Math.max(state.vfx.flashMs, 120);
-  state.vfx.flashColor = "rgba(255, 166, 84, 0.94)";
-  state.vfx.floatingTexts.push({
-    key: "overdrive",
-    pos: position,
-    lifeMs: 540,
-    maxLifeMs: 540,
-    color: "rgba(255, 214, 122, 0.96)",
-  });
 }
 
 function spawnBossAdd(state: GameState, config: GameConfig, random: RandomSource): void {

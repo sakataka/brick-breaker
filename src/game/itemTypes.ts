@@ -12,7 +12,6 @@ export interface ItemStackState {
   railStacks: number;
   shockwaveStacks: number;
   pulseStacks: number;
-  decoyStacks: number;
 }
 
 export interface ItemEffectContext {
@@ -88,8 +87,7 @@ export type ItemPickupSfxEvent =
   | "item_homing"
   | "item_rail"
   | "item_shockwave"
-  | "item_pulse"
-  | "item_decoy";
+  | "item_pulse";
 
 export interface ItemPickupPresentation {
   flashMs: number;

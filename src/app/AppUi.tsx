@@ -1,4 +1,5 @@
-import { type ReactElement, useEffect, useRef } from "react";
+import { type CSSProperties, type ReactElement, useEffect, useRef } from "react";
+import { getArtCssVars, resolveVisualAssetProfile } from "../art/visualAssets";
 import { HudPanel } from "./components/HudPanel";
 import { OverlayRoot } from "./components/OverlayRoot";
 import { ShopPanel } from "./components/ShopPanel";
@@ -17,9 +18,15 @@ export function AppUi(): ReactElement {
   const setRogueSelection = useAppStore((state) => state.setRogueSelection);
   const triggerPrimaryAction = useAppStore((state) => state.triggerPrimaryAction);
   const triggerShopOption = useAppStore((state) => state.triggerShopOption);
-  const scoreRef = useRef<HTMLSpanElement>(null);
+  const scoreRef = useRef<HTMLElement>(null);
   const lastScoreRef = useRef(0);
   const playLayoutActive = overlay.scene === "playing" || overlay.scene === "paused";
+  const topbarArtProfile = resolveVisualAssetProfile(
+    hud.visual.assetProfileId,
+    hud.visual.warningLevel,
+    hud.visual.encounterEmphasis,
+  );
+  const topbarArtVars = getArtCssVars(topbarArtProfile) as CSSProperties;
 
   useEffect(() => {
     const element = scoreRef.current;
@@ -53,14 +60,33 @@ export function AppUi(): ReactElement {
       return;
     }
     stageWrap.classList.toggle("layout-play", playLayoutActive);
-    stageWrap.setAttribute("data-theme", hud.visualThemeId);
-    stageWrap.setAttribute("data-warning", hud.bossBanner?.warningLevel ?? "calm");
+    stageWrap.setAttribute("data-theme", hud.visual.themeId);
+    stageWrap.setAttribute("data-warning", hud.visual.warningLevel);
+    stageWrap.style.setProperty("--stage-accent", hud.visual.tokens.accent);
+    stageWrap.style.setProperty("--stage-danger", hud.visual.tokens.danger);
+    stageWrap.style.setProperty("--stage-backdrop", hud.visual.tokens.backdrop);
+    stageWrap.style.setProperty("--stage-backdrop-top", hud.visual.tokens.backdropTop);
+    stageWrap.style.setProperty("--stage-frame", hud.visual.tokens.frame);
+    stageWrap.style.setProperty("--stage-pattern", hud.visual.tokens.pattern);
+    const artVars = getArtCssVars(topbarArtProfile);
+    for (const [key, value] of Object.entries(artVars)) {
+      stageWrap.style.setProperty(key, value);
+    }
     return () => {
       stageWrap.classList.remove("layout-play");
       stageWrap.removeAttribute("data-theme");
       stageWrap.removeAttribute("data-warning");
+      stageWrap.style.removeProperty("--stage-accent");
+      stageWrap.style.removeProperty("--stage-danger");
+      stageWrap.style.removeProperty("--stage-backdrop");
+      stageWrap.style.removeProperty("--stage-backdrop-top");
+      stageWrap.style.removeProperty("--stage-frame");
+      stageWrap.style.removeProperty("--stage-pattern");
+      for (const key of Object.keys(artVars)) {
+        stageWrap.style.removeProperty(key);
+      }
     };
-  }, [hud.bossBanner?.warningLevel, hud.visualThemeId, playLayoutActive]);
+  }, [hud.visual.themeId, hud.visual.tokens, hud.visual.warningLevel, playLayoutActive, topbarArtProfile]);
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -68,7 +94,11 @@ export function AppUi(): ReactElement {
 
   return (
     <>
-      <div id="play-topbar" className={playLayoutActive ? "play-topbar active" : "play-topbar"}>
+      <div
+        id="play-topbar"
+        className={playLayoutActive ? "play-topbar active" : "play-topbar"}
+        style={topbarArtVars}
+      >
         <HudPanel locale={locale} hud={hud} scoreRef={scoreRef} />
         <ShopPanel
           locale={locale}

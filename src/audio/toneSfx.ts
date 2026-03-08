@@ -36,4 +36,16 @@ export class ToneSfx {
   playMagicCast(): void {
     void this.sfx.play("magic_cast");
   }
+
+  playBossCast(): void {
+    void this.sfx.play("boss_cast");
+  }
+
+  playBossPhaseShift(): void {
+    void this.sfx.play("boss_phase_shift", { force: true });
+  }
+
+  playDangerLane(): void {
+    void this.sfx.play("danger_lane");
+  }
 }

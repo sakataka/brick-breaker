@@ -1,4 +1,5 @@
 import { THEME_BANDS, type ThemeBandId } from "../config";
+import type { UiThemeTokens } from "../uiTheme";
 
 export interface RenderTheme {
   backdropStart: string;
@@ -66,5 +67,28 @@ export function resolveRenderTheme(
     paddleText: "rgba(255, 255, 255, 1)",
     itemText: "rgba(255, 255, 255, 1)",
     overlayTint: "rgba(0, 0, 0, 0.24)",
+  };
+}
+
+export function resolveRenderThemeFromTokens(tokens: UiThemeTokens, baseTheme: RenderTheme): RenderTheme {
+  return {
+    ...baseTheme,
+    backdropStart: tokens.backdropTop,
+    backdropEnd: tokens.backdrop,
+    backdropStroke: tokens.frame,
+    overlayTint: tokens.accentSoft,
+    progressBar: tokens.accent,
+    brickGlow: tokens.glow,
+    brickStroke: tokens.border,
+    paddleStart: tokens.text,
+    paddleEnd: tokens.accent,
+    paddleStroke: tokens.border,
+    paddleText: tokens.text,
+    ballCore: tokens.accent,
+    ballStroke: tokens.text,
+    trail: tokens.accentSoft,
+    flash: tokens.danger,
+    itemText: tokens.text,
+    shield: tokens.success,
   };
 }

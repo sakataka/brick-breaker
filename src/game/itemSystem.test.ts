@@ -206,7 +206,7 @@ describe("itemSystem", () => {
     applyItemPickup(items, "rail", [createBall()]);
 
     const labels = getActiveItemEntries(items);
-    expect(labels).toHaveLength(12);
+    expect(labels).toHaveLength(11);
     expect(labels.find((label) => label.type === "multiball")?.count).toBe(1);
     expect(labels.find((label) => label.type === "pierce")?.count).toBe(1);
     expect(labels.find((label) => label.type === "bomb")?.count).toBe(0);
@@ -335,14 +335,14 @@ describe("itemSystem", () => {
       x: 120,
       y: 90,
     }));
-    const enabled = ITEM_ORDER.filter((type) => type !== "decoy");
+    const enabled = ITEM_ORDER.filter((type) => type !== "pulse");
 
     spawnDropsFromBrickEvents(items, events, sequenceRandom(Array(40).fill(0.99)), {
       enabledItems: enabled,
     });
-    expect(items.falling.every((drop) => drop.type !== "decoy")).toBe(true);
+    expect(items.falling.every((drop) => drop.type !== "pulse")).toBe(true);
 
     applyDebugItemPreset(items, "boss_check", true, enabled);
-    expect(items.active.decoyStacks).toBe(0);
+    expect(items.active.pulseStacks).toBe(0);
   });
 });

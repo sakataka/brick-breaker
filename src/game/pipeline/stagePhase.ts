@@ -80,10 +80,7 @@ function updateTurret(state: GameState, brick: Brick, deltaSec: number): void {
     return;
   }
   brick.cooldownSec = STAGE_CONTROL_CONFIG.turretFireIntervalSec;
-  const targetX =
-    state.items.active.decoyStacks > 0
-      ? state.paddle.x + state.paddle.width / 2 + Math.sin(state.elapsedSec * 2.4) * 48
-      : state.paddle.x + state.paddle.width / 2;
+  const targetX = state.paddle.x + state.paddle.width / 2;
   const centerX = brick.x + brick.width / 2;
   const centerY = brick.y + brick.height + 10;
   const dx = targetX - centerX;

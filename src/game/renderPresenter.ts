@@ -6,6 +6,12 @@ import type { HudViewModel, OverlayViewModel, RenderViewState } from "./renderTy
 import { getStageClearTimeSec } from "./roundSystem";
 import { resolveStageMetadataFromState } from "./stageContext";
 import type { GameState } from "./types";
+import {
+  clampBannerProgress,
+  resolveEncounterEmphasis,
+  resolveUiThemeTokens,
+  type VisualState,
+} from "./uiTheme";
 
 export function buildRenderViewState(state: GameState): RenderViewState {
   const stageContext = resolveStageMetadataFromState(state);
@@ -44,18 +50,7 @@ export function buildRenderViewState(state: GameState): RenderViewState {
     fallingItems: state.items.falling,
     progressRatio,
     themeBandId: stageContext.themeBand.id,
-    visualTheme: {
-      accent: stageContext.visualProfile.hudAccent,
-      danger: stageContext.visualProfile.dangerAccent,
-      glow: stageContext.visualProfile.panelGlow,
-      pattern: stageContext.visualProfile.patternColor,
-    },
-    stageIntro,
-    bossBanner:
-      state.combat.bossPhase > 0
-        ? { phase: Math.max(1, state.combat.bossPhase) as 1 | 2 | 3, warningLevel }
-        : undefined,
-    warningLevel,
+    visual: buildVisualState(state, stageContext, warningLevel, stageIntro),
     slowBallActive: state.items.active.slowBallStacks > 0,
     multiballActive: state.items.active.multiballStacks > 0,
     shieldCharges: state.items.active.shieldCharges,
@@ -125,11 +120,11 @@ export function buildHudViewModel(state: GameState): HudViewModel {
   const stageContext = resolveStageMetadataFromState(state);
   const progressRatio = computeProgressRatio(state);
   const activeItems = getActiveItemEntries(state.items);
-  const comboVisible = state.combo.streak > 1;
   const warningLevel = resolveWarningLevel(state);
   const hazardBoostActive = state.elapsedSec < state.hazard.speedBoostUntilSec;
   const pierceSlowSynergy = state.items.active.pierceStacks > 0 && state.items.active.slowBallStacks > 0;
   const boss = buildBossHud(state);
+  const stageIntro = buildStageIntro(state, stageContext);
   return {
     score: state.score,
     lives: state.lives,
@@ -146,9 +141,7 @@ export function buildHudViewModel(state: GameState): HudViewModel {
       debugRecordResults: state.options.debugRecordResults,
     },
     activeItems,
-    visualThemeId: stageContext.visualProfile.id,
-    stageIntro: buildStageIntro(state, stageContext),
-    bossBanner: boss ? { phase: boss.phase, warningLevel } : undefined,
+    visual: buildVisualState(state, stageContext, warningLevel, stageIntro),
     missionProgress: state.stageStats.missionResults ?? [],
     flags: {
       hazardBoostActive,
@@ -162,21 +155,8 @@ export function buildHudViewModel(state: GameState): HudViewModel {
       generatorLegendVisible: stageContext.stageTags?.includes("generator") ?? false,
       gateLegendVisible: stageContext.stageTags?.includes("gate") ?? false,
       turretLegendVisible: stageContext.stageTags?.includes("turret") ?? false,
-      overdriveActive: state.combat.overdrive.active,
     },
     progressRatio,
-    accentColor: comboVisible ? COMBO_ACTIVE_COLOR : stageContext.themeBand.hudAccent,
-    dangerColor: stageContext.visualProfile.dangerAccent,
-    riskChain: {
-      value: state.combat.riskChain.value,
-      max: state.combat.riskChain.max,
-      progress: state.combat.riskChain.value / Math.max(1, state.combat.riskChain.max),
-    },
-    overdrive: state.combat.overdrive.active
-      ? {
-          progress: state.combat.overdrive.remainingSec / Math.max(1, state.combat.overdrive.maxSec),
-        }
-      : undefined,
     pickupToast: state.vfx.pickupToast
       ? {
           type: state.vfx.pickupToast.itemType,
@@ -217,7 +197,7 @@ function buildBossHud(state: GameState): HudViewModel["stage"]["boss"] | undefin
 function buildStageIntro(
   state: GameState,
   stageContext: ReturnType<typeof resolveStageMetadataFromState>,
-): HudViewModel["stageIntro"] {
+): VisualState["banner"] {
   if (state.scene !== "playing") {
     return undefined;
   }
@@ -248,6 +228,8 @@ function resolveWarningLevel(state: GameState): "calm" | "elevated" | "critical"
 }
 
 export function buildOverlayViewModel(state: GameState): OverlayViewModel {
+  const stageContext = resolveStageMetadataFromState(state);
+  const warningLevel = resolveWarningLevel(state);
   const clearSec = getStageClearTimeSec(state);
   const overlayScore =
     state.scene === "gameover" && typeof state.lastGameOverScore === "number"
@@ -264,6 +246,7 @@ export function buildOverlayViewModel(state: GameState): OverlayViewModel {
       debugModeEnabled: state.options.debugModeEnabled,
       debugRecordResults: state.options.debugRecordResults,
     },
+    visual: buildVisualState(state, stageContext, warningLevel, buildStageIntro(state, stageContext)),
     clearElapsedSec: state.scene === "clear" ? state.elapsedSec : undefined,
     error: state.error ?? undefined,
     stageResult:
@@ -308,7 +291,39 @@ export function buildOverlayViewModel(state: GameState): OverlayViewModel {
   };
 }
 
-const COMBO_ACTIVE_COLOR = "#ffd46b";
+function buildVisualState(
+  state: GameState,
+  stageContext: ReturnType<typeof resolveStageMetadataFromState>,
+  warningLevel: VisualState["warningLevel"],
+  banner: VisualState["banner"],
+): VisualState {
+  const themeId = stageContext.visualProfile.id;
+  return {
+    themeId,
+    assetProfileId: themeId,
+    chapterLabel: stageContext.visualProfile.label,
+    warningLevel,
+    encounterEmphasis: resolveEncounterEmphasis(themeId),
+    motionProfile: state.vfx.reducedMotion ? "reduced" : "full",
+    banner: banner
+      ? {
+          kind: banner.kind,
+          progress: clampBannerProgress(banner.progress),
+        }
+      : undefined,
+    bossPhase:
+      state.combat.bossPhase > 0
+        ? {
+            phase: Math.max(1, state.combat.bossPhase) as 1 | 2 | 3,
+            warningLevel,
+          }
+        : undefined,
+    tokens: resolveUiThemeTokens(stageContext.visualProfile, {
+      warningLevel,
+      highContrast: state.a11y.highContrast,
+    }),
+  };
+}
 
 function computeProgressRatio(state: GameState): number {
   const total = state.bricks.filter((brick) => (brick.kind ?? "normal") !== "steel").length;
