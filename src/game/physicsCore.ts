@@ -58,7 +58,14 @@ export function stepPhysicsCore({
   for (let i = 0; i < iterations; i += 1) {
     ball.warpCooldownSec = Math.max(0, (ball.warpCooldownSec ?? 0) - subDt);
     if (homingStrength > 0) {
-      applyHomingAssist(ball, bricks, subDt, homingStrength, maxBallSpeed, ITEM_BALANCE.homingAcceleration);
+      applyHomingAssist(
+        ball,
+        bricks,
+        subDt,
+        homingStrength,
+        maxBallSpeed,
+        ITEM_BALANCE.homingAcceleration,
+      );
     }
     integratePosition(ball, subDt);
     applyWarpZones(ball, warpZones);
@@ -79,7 +86,15 @@ export function stepPhysicsCore({
     }
 
     if (resolvePaddleCollision(ball, paddle.x, paddle.y, paddle.width, paddle.height)) {
-      applyPaddleCollision(ball, paddle.x, paddle.y, paddle.width, initialBallSpeed, balance, maxBallSpeed);
+      applyPaddleCollision(
+        ball,
+        paddle.x,
+        paddle.y,
+        paddle.width,
+        initialBallSpeed,
+        balance,
+        maxBallSpeed,
+      );
       result.collision.paddle = true;
       result.events.push({
         kind: "paddle",
@@ -96,7 +111,9 @@ export function stepPhysicsCore({
       }
       const hitBrick = bricks[hitBrickIndex];
       const repeatedPierceProtectedHit =
-        pierceDepth > 0 && shouldLimitPierceRepeatHit(hitBrick) && protectedPierceHits.has(hitBrick.id);
+        pierceDepth > 0 &&
+        shouldLimitPierceRepeatHit(hitBrick) &&
+        protectedPierceHits.has(hitBrick.id);
       const repeatedLatchedHit =
         pierceDepth > 0 && isMultiHpTarget(hitBrick) && ball.lastDamageBrickId === hitBrick.id;
       if (repeatedPierceProtectedHit || repeatedLatchedHit) {
@@ -248,7 +265,10 @@ function applyPaddleCollision(
   const relativeX = (ball.pos.x - (paddleX + paddleWidth / 2)) / (paddleWidth / 2);
   const impact = Math.max(-1, Math.min(1, relativeX));
   const angle = impact * balance.paddleMaxBounceAngle;
-  const speed = Math.min(maxBallSpeed, Math.max(initialBallSpeed, Math.hypot(ball.vel.x, ball.vel.y)));
+  const speed = Math.min(
+    maxBallSpeed,
+    Math.max(initialBallSpeed, Math.hypot(ball.vel.x, ball.vel.y)),
+  );
   ball.vel.x = Math.sin(angle) * speed;
   ball.vel.y = -Math.cos(angle) * speed;
 }

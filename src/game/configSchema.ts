@@ -5,7 +5,12 @@ import type { ItemType, StageDefinition } from "./types";
 const stageSpecialSchema = z.object({
   row: z.number().int().min(0),
   col: z.number().int().min(0),
-  kind: z.union([z.literal("steel"), z.literal("generator"), z.literal("gate"), z.literal("turret")]),
+  kind: z.union([
+    z.literal("steel"),
+    z.literal("generator"),
+    z.literal("gate"),
+    z.literal("turret"),
+  ]),
 });
 
 const stageDefinitionSchema = z.object({
@@ -70,7 +75,12 @@ const stageDefinitionSchema = z.object({
     .optional(),
   encounter: z
     .object({
-      kind: z.union([z.literal("none"), z.literal("midboss"), z.literal("boss"), z.literal("ex_boss")]),
+      kind: z.union([
+        z.literal("none"),
+        z.literal("midboss"),
+        z.literal("boss"),
+        z.literal("ex_boss"),
+      ]),
       profile: z.union([
         z.literal("none"),
         z.literal("warden"),
@@ -109,7 +119,9 @@ const itemRuleSchema = z.object({
 export function validateStageCatalog(catalog: StageDefinition[]): StageDefinition[] {
   const parsed = z.array(stageDefinitionSchema).min(1).safeParse(catalog);
   if (!parsed.success) {
-    throw new Error(`Invalid STAGE_CATALOG: ${parsed.error.issues.map((issue) => issue.message).join(", ")}`);
+    throw new Error(
+      `Invalid STAGE_CATALOG: ${parsed.error.issues.map((issue) => issue.message).join(", ")}`,
+    );
   }
 
   const columnCount = parsed.data[0].layout[0]?.length ?? 0;
@@ -126,7 +138,9 @@ export function validateStageCatalog(catalog: StageDefinition[]): StageDefinitio
         throw new Error(`Invalid STAGE_CATALOG: elite cell out of range in stage ${stage.id}`);
       }
       if (stage.layout[elite.row]?.[elite.col] !== 1) {
-        throw new Error(`Invalid STAGE_CATALOG: elite cell must be placed on a brick in stage ${stage.id}`);
+        throw new Error(
+          `Invalid STAGE_CATALOG: elite cell must be placed on a brick in stage ${stage.id}`,
+        );
       }
     }
     const occupied = new Set((stage.elite ?? []).map((elite) => `${elite.row}:${elite.col}`));
@@ -136,7 +150,9 @@ export function validateStageCatalog(catalog: StageDefinition[]): StageDefinitio
       }
       const key = `${special.row}:${special.col}`;
       if (occupied.has(key)) {
-        throw new Error(`Invalid STAGE_CATALOG: overlapping special/elite cell in stage ${stage.id}`);
+        throw new Error(
+          `Invalid STAGE_CATALOG: overlapping special/elite cell in stage ${stage.id}`,
+        );
       }
       occupied.add(key);
     }
@@ -149,7 +165,9 @@ export function validateItemConfig(config: Record<ItemType, ItemRule>): Record<I
   const entries = Object.values(config);
   const parsed = z.array(itemRuleSchema).length(11).safeParse(entries);
   if (!parsed.success) {
-    throw new Error(`Invalid ITEM_CONFIG: ${parsed.error.issues.map((issue) => issue.message).join(", ")}`);
+    throw new Error(
+      `Invalid ITEM_CONFIG: ${parsed.error.issues.map((issue) => issue.message).join(", ")}`,
+    );
   }
 
   const weightTotal = entries.reduce((total, rule) => total + rule.weight, 0);

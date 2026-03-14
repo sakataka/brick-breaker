@@ -205,7 +205,12 @@ export type FloatingTextKey =
   | "boss_phase_2"
   | "boss_phase_3"
   | "boss_warning";
-export type RuntimeErrorKey = "initialization" | "gameStart" | "startAction" | "shopPurchase" | "runtime";
+export type RuntimeErrorKey =
+  | "initialization"
+  | "gameStart"
+  | "startAction"
+  | "shopPurchase"
+  | "runtime";
 
 export interface StageMissionStatus {
   key: StageMissionKey;

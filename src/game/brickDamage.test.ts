@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 
 import {
   applyBrickDamage,
@@ -11,10 +11,12 @@ import type { Brick } from "./types";
 describe("brickDamage", () => {
   test("resolves default hp by brick kind", () => {
     expect(getDefaultBrickHp({ id: 1, x: 0, y: 0, width: 1, height: 1, alive: true })).toBe(1);
-    expect(getDefaultBrickHp({ id: 2, x: 0, y: 0, width: 1, height: 1, alive: true, kind: "durable" })).toBe(
-      2,
-    );
-    expect(getDefaultBrickHp({ id: 3, x: 0, y: 0, width: 1, height: 1, alive: true, kind: "boss" })).toBe(18);
+    expect(
+      getDefaultBrickHp({ id: 2, x: 0, y: 0, width: 1, height: 1, alive: true, kind: "durable" }),
+    ).toBe(2);
+    expect(
+      getDefaultBrickHp({ id: 3, x: 0, y: 0, width: 1, height: 1, alive: true, kind: "boss" }),
+    ).toBe(18);
   });
 
   test("armored brick survives explosion at 1 hp", () => {

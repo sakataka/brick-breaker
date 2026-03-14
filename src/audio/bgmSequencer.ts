@@ -227,7 +227,11 @@ export class BgmSequencer implements BgmController {
             notesScheduled,
           );
         }
-        if (step.harmonyMidis && step.harmonyMidis.length > 0 && notesScheduled < MAX_NOTES_PER_STEP) {
+        if (
+          step.harmonyMidis &&
+          step.harmonyMidis.length > 0 &&
+          notesScheduled < MAX_NOTES_PER_STEP
+        ) {
           const remaining = MAX_NOTES_PER_STEP - notesScheduled;
           const notes = step.harmonyMidis.slice(0, remaining);
           const perNoteGain = Math.min(

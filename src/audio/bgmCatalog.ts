@@ -234,7 +234,10 @@ function buildTrackSteps(input: StepBuilderInput): readonly BgmStep[] {
         index % 4 === 0 || (input.variant >= 2 && offBeat)
           ? input.padIntervals.map((interval) => root + interval - 12)
           : undefined,
-      bassMidi: index % 2 === 0 ? root + input.bassOffsets[chordIndex % input.bassOffsets.length] : undefined,
+      bassMidi:
+        index % 2 === 0
+          ? root + input.bassOffsets[chordIndex % input.bassOffsets.length]
+          : undefined,
       leadGain: strongBeat ? 0.11 : 0.09,
       harmonyGain: strongBeat ? 0.12 : 0.09,
       counterGain: 0.064,

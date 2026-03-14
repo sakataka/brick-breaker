@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 
 import { applyPhysicsResultScore, playCollisionSounds } from "./collisionEffects";
 import { GAME_CONFIG } from "./config";

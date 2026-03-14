@@ -122,7 +122,8 @@ export function buildHudViewModel(state: GameState): HudViewModel {
   const activeItems = getActiveItemEntries(state.items);
   const warningLevel = resolveWarningLevel(state);
   const hazardBoostActive = state.elapsedSec < state.hazard.speedBoostUntilSec;
-  const pierceSlowSynergy = state.items.active.pierceStacks > 0 && state.items.active.slowBallStacks > 0;
+  const pierceSlowSynergy =
+    state.items.active.pierceStacks > 0 && state.items.active.slowBallStacks > 0;
   const boss = buildBossHud(state);
   const stageIntro = buildStageIntro(state, stageContext);
   return {
@@ -218,7 +219,10 @@ function buildStageIntro(
 }
 
 function resolveWarningLevel(state: GameState): "calm" | "elevated" | "critical" {
-  if (state.combat.bossAttackState.sweep || state.combat.bossAttackState.telegraph?.kind === "gate_sweep") {
+  if (
+    state.combat.bossAttackState.sweep ||
+    state.combat.bossAttackState.telegraph?.kind === "gate_sweep"
+  ) {
     return "critical";
   }
   if (state.combat.bossAttackState.telegraph || state.combat.encounterState.vulnerabilitySec > 0) {
@@ -246,7 +250,12 @@ export function buildOverlayViewModel(state: GameState): OverlayViewModel {
       debugModeEnabled: state.options.debugModeEnabled,
       debugRecordResults: state.options.debugRecordResults,
     },
-    visual: buildVisualState(state, stageContext, warningLevel, buildStageIntro(state, stageContext)),
+    visual: buildVisualState(
+      state,
+      stageContext,
+      warningLevel,
+      buildStageIntro(state, stageContext),
+    ),
     clearElapsedSec: state.scene === "clear" ? state.elapsedSec : undefined,
     error: state.error ?? undefined,
     stageResult:

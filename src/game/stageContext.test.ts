@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 import { GAME_CONFIG, MODE_CONFIG, STAGE_CATALOG } from "./config";
 import { resolveStageContext, resolveStageMetadata } from "./stageContext";
 
@@ -50,7 +50,9 @@ describe("stageContext", () => {
     expect(stage.totalStages).toBe(MODE_CONFIG.bossRushRounds);
     expect(stage.stage.id).toBe(12);
     expect(stage.musicCue.id).toBe("finalboss");
-    expect(stage.initialBallSpeed).toBeGreaterThan(GAME_CONFIG.initialBallSpeed * stage.stage.speedScale);
+    expect(stage.initialBallSpeed).toBeGreaterThan(
+      GAME_CONFIG.initialBallSpeed * stage.stage.speedScale,
+    );
     expect(stage.maxBallSpeed).toBeGreaterThan(GAME_CONFIG.maxBallSpeed * stage.stage.speedScale);
   });
 

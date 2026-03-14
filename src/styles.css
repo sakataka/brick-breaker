@@ -74,7 +74,11 @@ body::before {
       var(--stage-backdrop-top, rgba(16, 46, 88, 0.9)),
       var(--stage-backdrop, rgba(8, 21, 44, 0.9))
     ),
-    radial-gradient(circle at 20% 20%, var(--stage-accent, rgba(41, 211, 255, 0.22)), transparent 36%);
+    radial-gradient(
+      circle at 20% 20%,
+      var(--stage-accent, rgba(41, 211, 255, 0.22)),
+      transparent 36%
+    );
   border: 1px solid var(--line);
   overflow: hidden;
 }
@@ -153,7 +157,8 @@ body::before {
 #stage-wrap::after {
   inset: 8px;
   border-radius: 18px;
-  border: 1px solid color-mix(in srgb, var(--stage-frame, rgba(255, 255, 255, 0.12)) 54%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--stage-frame, rgba(255, 255, 255, 0.12)) 54%, transparent);
   background:
     linear-gradient(
       90deg,
@@ -194,7 +199,11 @@ body::before {
   position: relative;
   border-radius: 18px;
   border: 1px solid
-    color-mix(in srgb, var(--overlay-border, var(--hud-border, rgba(120, 198, 255, 0.4))) 100%, transparent);
+    color-mix(
+      in srgb,
+      var(--overlay-border, var(--hud-border, rgba(120, 198, 255, 0.4))) 100%,
+      transparent
+    );
   background:
     var(--art-panel-fill, none),
     linear-gradient(
@@ -226,7 +235,8 @@ body::before {
   inset: 0;
   pointer-events: none;
   background:
-    var(--art-panel-frame, none), linear-gradient(180deg, var(--art-panel-badge, none), transparent 28px),
+    var(--art-panel-frame, none),
+    linear-gradient(180deg, var(--art-panel-badge, none), transparent 28px),
     linear-gradient(120deg, transparent 0%, rgba(255, 255, 255, 0.08) 20%, transparent 38%),
     radial-gradient(
       circle at 20% 0%,
@@ -249,7 +259,8 @@ body::before {
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(0deg, rgba(255, 255, 255, 0.03), transparent 32%), var(--art-warning-stripe, none);
+    linear-gradient(0deg, rgba(255, 255, 255, 0.03), transparent 32%),
+    var(--art-warning-stripe, none);
   background-size:
     auto,
     calc(96px * var(--art-texture-scale, 1)) calc(32px * var(--art-texture-scale, 1));
@@ -266,7 +277,8 @@ body::before {
 .ui-surface-chrome-boss,
 .ui-banner-chrome-boss {
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--overlay-danger, var(--hud-danger, #ff6a6a)) 18%, transparent),
+    inset 0 0 0 1px
+      color-mix(in srgb, var(--overlay-danger, var(--hud-danger, #ff6a6a)) 18%, transparent),
     0 22px 44px rgba(2, 10, 22, 0.36),
     0 0 28px color-mix(in srgb, var(--overlay-danger, var(--hud-danger, #ff6a6a)) 14%, transparent);
 }
@@ -480,7 +492,8 @@ body::before {
   border: 1px solid
     color-mix(in srgb, var(--card-accent, rgba(149, 211, 255, 0.48)) 36%, rgba(255, 255, 255, 0.08));
   background:
-    var(--art-panel-fill, none), linear-gradient(145deg, rgba(5, 18, 40, 0.88), rgba(7, 26, 50, 0.72));
+    var(--art-panel-fill, none),
+    linear-gradient(145deg, rgba(5, 18, 40, 0.88), rgba(7, 26, 50, 0.72));
   background-size:
     calc(64px * var(--art-texture-scale, 1)) calc(64px * var(--art-texture-scale, 1)),
     auto;
@@ -492,7 +505,8 @@ body::before {
 }
 
 .ui-option-card-active {
-  box-shadow: 0 0 18px color-mix(in srgb, var(--card-accent, var(--hud-accent, #40f4ff)) 18%, transparent);
+  box-shadow: 0 0 18px
+    color-mix(in srgb, var(--card-accent, var(--hud-accent, #40f4ff)) 18%, transparent);
 }
 
 .ui-option-card-disabled {
@@ -709,7 +723,8 @@ body::before {
   gap: 0.4rem;
   padding: 0.26rem 0.46rem;
   border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--item-accent, var(--hud-accent)) 42%, rgba(255, 255, 255, 0.08));
+  border: 1px solid
+    color-mix(in srgb, var(--item-accent, var(--hud-accent)) 42%, rgba(255, 255, 255, 0.08));
   background: linear-gradient(
     135deg,
     color-mix(in srgb, var(--item-accent, var(--hud-accent)) 18%, rgba(255, 255, 255, 0.05)),
@@ -725,7 +740,11 @@ body::before {
   height: 1.65rem;
   border-radius: 10px;
   color: var(--item-accent, var(--hud-accent));
-  background: color-mix(in srgb, var(--item-accent, var(--hud-accent)) 20%, rgba(255, 255, 255, 0.05));
+  background: color-mix(
+    in srgb,
+    var(--item-accent, var(--hud-accent)) 20%,
+    rgba(255, 255, 255, 0.05)
+  );
 }
 
 .hud-active-item-copy {
@@ -809,8 +828,13 @@ body::before {
   justify-self: start;
   padding: 0.22rem 0.58rem;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--toast-color, var(--hud-accent)) 22%, rgba(255, 255, 255, 0.08));
-  border: 1px solid color-mix(in srgb, var(--toast-color, var(--hud-accent)) 46%, rgba(255, 255, 255, 0.12));
+  background: color-mix(
+    in srgb,
+    var(--toast-color, var(--hud-accent)) 22%,
+    rgba(255, 255, 255, 0.08)
+  );
+  border: 1px solid
+    color-mix(in srgb, var(--toast-color, var(--hud-accent)) 46%, rgba(255, 255, 255, 0.12));
   color: var(--text-1);
   font-size: 0.78rem;
   box-shadow: 0 0 16px color-mix(in srgb, var(--toast-color, var(--hud-accent)) 28%, transparent);
@@ -856,7 +880,11 @@ body::before {
   width: 2rem;
   height: 2rem;
   border-radius: 10px;
-  background: color-mix(in srgb, var(--item-accent, var(--hud-accent)) 24%, rgba(255, 255, 255, 0.04));
+  background: color-mix(
+    in srgb,
+    var(--item-accent, var(--hud-accent)) 24%,
+    rgba(255, 255, 255, 0.04)
+  );
 }
 
 .item-pool-copy {
@@ -1110,7 +1138,8 @@ body::before {
   min-height: 120px;
   resize: vertical;
   font-family:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
   font-size: 0.76rem;
   line-height: 1.35;
 }

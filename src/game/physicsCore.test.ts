@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 
 import { stepPhysicsCore } from "./physicsCore";
 import type { Ball, Brick, GameConfig, Paddle } from "./types";
@@ -52,7 +52,9 @@ describe("physicsCore", () => {
     });
 
     expect(result.collision.brick).toBeGreaterThanOrEqual(2);
-    expect(result.events.filter((event) => event.kind === "brick").length).toBe(result.collision.brick);
+    expect(result.events.filter((event) => event.kind === "brick").length).toBe(
+      result.collision.brick,
+    );
   });
 
   test("non-recursive bomb does not erase every brick in one tick", () => {
@@ -128,8 +130,30 @@ describe("physicsCore", () => {
       speed: 320,
     };
     const bricks: Brick[] = [
-      { id: 1, x: 60, y: 64, width: 20, height: 10, alive: true, row: 1, col: 1, kind: "normal", hp: 1 },
-      { id: 2, x: 84, y: 64, width: 20, height: 10, alive: true, row: 1, col: 2, kind: "armored", hp: 2 },
+      {
+        id: 1,
+        x: 60,
+        y: 64,
+        width: 20,
+        height: 10,
+        alive: true,
+        row: 1,
+        col: 1,
+        kind: "normal",
+        hp: 1,
+      },
+      {
+        id: 2,
+        x: 84,
+        y: 64,
+        width: 20,
+        height: 10,
+        alive: true,
+        row: 1,
+        col: 2,
+        kind: "armored",
+        hp: 2,
+      },
     ];
 
     const result = stepPhysicsCore({
@@ -157,7 +181,17 @@ describe("physicsCore", () => {
       speed: 320,
     };
     const bricks: Brick[] = [
-      { id: 1, x: 60, y: 64, width: 20, height: 10, alive: true, kind: "regen", hp: 2, regenCharges: 1 },
+      {
+        id: 1,
+        x: 60,
+        y: 64,
+        width: 20,
+        height: 10,
+        alive: true,
+        kind: "regen",
+        hp: 2,
+        regenCharges: 1,
+      },
     ];
 
     const first = stepPhysicsCore({
@@ -218,7 +252,9 @@ describe("physicsCore", () => {
     });
 
     expect(result.collision.brick).toBe(1);
-    expect(result.events.some((event) => event.kind === "brick" && event.brickKind === "hazard")).toBe(true);
+    expect(
+      result.events.some((event) => event.kind === "brick" && event.brickKind === "hazard"),
+    ).toBe(true);
   });
 
   test("boss brick survives multiple hits and tracks hp", () => {

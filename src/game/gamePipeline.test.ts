@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 
 import { GAME_CONFIG } from "./config";
 import { generateShopOffer, stepPlayingPipeline } from "./gamePipeline";
@@ -196,7 +196,13 @@ describe("gamePipeline", () => {
   });
 
   test("multiball pickup adds one from current surviving balls instead of old stack history", () => {
-    const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60, multiballMaxBalls: 4 };
+    const config = {
+      ...GAME_CONFIG,
+      width: 260,
+      height: 180,
+      fixedDeltaSec: 1 / 60,
+      multiballMaxBalls: 4,
+    };
     const state = createInitialGameState(config, true, "playing");
     state.scene = "playing";
     state.items.active.multiballStacks = 3;

@@ -1,6 +1,11 @@
 import { applyDirectBrickDamage } from "./brickDamage";
 import { ITEM_BALANCE, ITEM_CONFIG } from "./config/items";
-import type { ItemEffectContext, ItemPickupImpact, ItemPickupPresentation, ItemRegistry } from "./itemTypes";
+import type {
+  ItemEffectContext,
+  ItemPickupImpact,
+  ItemPickupPresentation,
+  ItemRegistry,
+} from "./itemTypes";
 import type { Ball, Brick, ItemType } from "./types";
 
 export const ITEM_TYPE_ORDER = [
@@ -35,7 +40,9 @@ function createPresentation(overrides: Partial<ItemPickupPresentation>): ItemPic
   };
 }
 
-function noImpact(effect: (context: ItemEffectContext) => void): (context: ItemEffectContext) => undefined {
+function noImpact(
+  effect: (context: ItemEffectContext) => void,
+): (context: ItemEffectContext) => undefined {
   return (context) => {
     effect(context);
     return undefined;

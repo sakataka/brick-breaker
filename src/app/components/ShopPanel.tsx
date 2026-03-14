@@ -51,7 +51,9 @@ export function ShopPanel({ locale, shop, onSelect }: ShopPanelProps): ReactElem
             accent={optionAVisual?.accent}
           >
             <span className="shop-option-copy">
-              {optionAVisual ? <AppIcon name={optionAVisual.icon} className="shop-option-icon" /> : null}
+              {optionAVisual ? (
+                <AppIcon name={optionAVisual.icon} className="shop-option-icon" />
+              ) : null}
               <span>{optionALabel}</span>
             </span>
           </OptionCard>
@@ -70,7 +72,9 @@ export function ShopPanel({ locale, shop, onSelect }: ShopPanelProps): ReactElem
             accent={optionBVisual?.accent}
           >
             <span className="shop-option-copy">
-              {optionBVisual ? <AppIcon name={optionBVisual.icon} className="shop-option-icon" /> : null}
+              {optionBVisual ? (
+                <AppIcon name={optionBVisual.icon} className="shop-option-icon" />
+              ) : null}
               <span>{optionBLabel}</span>
             </span>
           </OptionCard>
@@ -80,7 +84,9 @@ export function ShopPanel({ locale, shop, onSelect }: ShopPanelProps): ReactElem
         id="shop-status"
         className="shop-status-copy"
         style={
-          { "--shop-accent": optionAVisual?.accent ?? optionBVisual?.accent ?? "#ffb15c" } as CSSProperties
+          {
+            "--shop-accent": optionAVisual?.accent ?? optionBVisual?.accent ?? "#ffb15c",
+          } as CSSProperties
         }
       >
         {statusText}

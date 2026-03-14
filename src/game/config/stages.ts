@@ -449,7 +449,10 @@ function createMirroredStage(stage: StageDefinition): StageDefinition {
   };
 }
 
-function inferStageMissions(stageNumber: number, blueprint: StageBlueprint): StageDefinition["missions"] {
+function inferStageMissions(
+  stageNumber: number,
+  blueprint: StageBlueprint,
+): StageDefinition["missions"] {
   if (blueprint.tags?.includes("generator")) {
     return ["shutdown_generator", "no_shop"];
   }

@@ -55,7 +55,11 @@ export function computeParticleSpawnCount(
   return Math.max(1, Math.round(baseCount * densityScale * reduction));
 }
 
-export function applyCollisionEvents(vfx: VfxState, events: CollisionEvent[], random: RandomSource): void {
+export function applyCollisionEvents(
+  vfx: VfxState,
+  events: CollisionEvent[],
+  random: RandomSource,
+): void {
   for (const event of events) {
     if (event.kind === "brick") {
       spawnParticles(vfx, event, 14, 260, event.color ?? "rgba(255, 196, 118, 0.95)", random);

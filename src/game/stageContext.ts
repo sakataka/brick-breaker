@@ -9,7 +9,14 @@ import {
 } from "./config/stages";
 import type { StageVisualProfile } from "./config/themes";
 import { getVisualProfile } from "./config/themes";
-import type { GameConfig, GameMode, GameState, MusicCue, StageDefinition, StageRoute } from "./types";
+import type {
+  GameConfig,
+  GameMode,
+  GameState,
+  MusicCue,
+  StageDefinition,
+  StageRoute,
+} from "./types";
 
 export interface StageContextInput {
   stageIndex: number;
@@ -70,12 +77,18 @@ export function resolveStageContext(
   const metadata = resolveStageMetadata(input);
   return {
     ...metadata,
-    initialBallSpeed: getModeScaledBallSpeed(config.initialBallSpeed, input, metadata.activeCatalog.length),
+    initialBallSpeed: getModeScaledBallSpeed(
+      config.initialBallSpeed,
+      input,
+      metadata.activeCatalog.length,
+    ),
     maxBallSpeed: getModeScaledBallSpeed(config.maxBallSpeed, input, metadata.activeCatalog.length),
   };
 }
 
-export function resolveStageMetadataFromState(state: Pick<GameState, "campaign" | "options">): StageMetadata {
+export function resolveStageMetadataFromState(
+  state: Pick<GameState, "campaign" | "options">,
+): StageMetadata {
   return resolveStageMetadata({
     stageIndex: state.campaign.stageIndex,
     gameMode: state.options.gameMode,
@@ -165,16 +178,31 @@ function getStageDefinition(
   effectiveStageIndex: number,
 ): StageDefinition {
   if (input.customStageCatalog && activeCatalog.length > 0) {
-    return activeCatalog[effectiveStageIndex] ?? activeCatalog[activeCatalog.length - 1] ?? STAGE_CATALOG[0];
+    return (
+      activeCatalog[effectiveStageIndex] ??
+      activeCatalog[activeCatalog.length - 1] ??
+      STAGE_CATALOG[0]
+    );
   }
   if (input.campaignCourse === "ex") {
     return getExStageByIndex(effectiveStageIndex);
   }
-  return getStageForCampaign(effectiveStageIndex, input.gameMode === "campaign" ? input.route : null);
+  return getStageForCampaign(
+    effectiveStageIndex,
+    input.gameMode === "campaign" ? input.route : null,
+  );
 }
 
-function getModeScaledBallSpeed(baseSpeed: number, input: StageContextInput, stageCount: number): number {
-  const effectiveStageIndex = getModeEffectiveStageIndex(input.stageIndex, input.gameMode, stageCount);
+function getModeScaledBallSpeed(
+  baseSpeed: number,
+  input: StageContextInput,
+  stageCount: number,
+): number {
+  const effectiveStageIndex = getModeEffectiveStageIndex(
+    input.stageIndex,
+    input.gameMode,
+    stageCount,
+  );
   const stage = getStageDefinition(
     input,
     getActiveStageCatalog(input.customStageCatalog, input.campaignCourse),

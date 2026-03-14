@@ -86,7 +86,13 @@ export function AppUi(): ReactElement {
         stageWrap.style.removeProperty(key);
       }
     };
-  }, [hud.visual.themeId, hud.visual.tokens, hud.visual.warningLevel, playLayoutActive, topbarArtProfile]);
+  }, [
+    hud.visual.themeId,
+    hud.visual.tokens,
+    hud.visual.warningLevel,
+    playLayoutActive,
+    topbarArtProfile,
+  ]);
 
   useEffect(() => {
     document.documentElement.lang = locale;

@@ -1,6 +1,11 @@
 import { createAssistState } from "./assistSystem";
 import { createEncounterState } from "./bossState";
-import { getGameplayBalance, getStageByIndex, getStageTimeTargetSec, STAGE_CATALOG } from "./config";
+import {
+  getGameplayBalance,
+  getStageByIndex,
+  getStageTimeTargetSec,
+  STAGE_CATALOG,
+} from "./config";
 import { ITEM_ORDER } from "./itemRegistryData";
 import { createItemState } from "./itemSystem";
 import { buildBricksFromStage } from "./level";
@@ -18,7 +23,11 @@ export function createBasePaddle(config: GameConfig): Paddle {
   };
 }
 
-function createRestingBall(config: GameConfig, paddle: Paddle, speed = config.initialBallSpeed): Ball {
+function createRestingBall(
+  config: GameConfig,
+  paddle: Paddle,
+  speed = config.initialBallSpeed,
+): Ball {
   const balance = getGameplayBalance(config.difficulty);
   return {
     pos: {

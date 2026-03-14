@@ -83,7 +83,9 @@ export function OverlayRoot({
         as="div"
         className={isStartScene ? "card overlay-card-layout" : "card"}
         emphasis="accent"
-        chrome={overlay.scene === "error" ? "warning" : overlay.stage.current >= 12 ? "boss" : "panel"}
+        chrome={
+          overlay.scene === "error" ? "warning" : overlay.stage.current >= 12 ? "boss" : "panel"
+        }
         elevated
       >
         <Banner

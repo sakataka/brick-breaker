@@ -36,12 +36,19 @@ export function StartSettingsForm({
 
   return (
     <div id="start-settings" className="start-settings">
-      <Surface className="settings-section basic-settings" emphasis="accent" chrome="panel" elevated>
+      <Surface
+        className="settings-section basic-settings"
+        emphasis="accent"
+        chrome="panel"
+        elevated
+      >
         <SectionHeader
           eyebrow="ARCADE CONFIG"
           title={LL.startSettings.sections.basic()}
           subtitle={
-            locale === "ja" ? "プレイ条件と進行ルートをここで決めます。" : "Shape the run before launch."
+            locale === "ja"
+              ? "プレイ条件と進行ルートをここで決めます。"
+              : "Shape the run before launch."
           }
           icon={<AppIcon name="score" weight="fill" />}
         />
@@ -65,7 +72,8 @@ export function StartSettingsForm({
 
         <div className="settings-grid">
           {BASIC_SELECT_FIELDS.filter(
-            (field) => field.field !== "campaignCourse" || (settings.gameMode === "campaign" && exUnlocked),
+            (field) =>
+              field.field !== "campaignCourse" || (settings.gameMode === "campaign" && exUnlocked),
           ).map((field) => (
             <label key={field.id} htmlFor={field.id}>
               <span>{getSelectFieldLabel(LL, field)}</span>
@@ -252,14 +260,20 @@ export function StartSettingsForm({
   );
 }
 
-function getSelectFieldValue(settings: StartSettingsSelection, field: StartSettingsSelectField): string {
+function getSelectFieldValue(
+  settings: StartSettingsSelection,
+  field: StartSettingsSelectField,
+): string {
   if (field.field === "debugRecordResults") {
     return settings.debugRecordResults ? "true" : "false";
   }
   return String(settings[field.field]);
 }
 
-function getSelectFieldLabel(LL: ReturnType<typeof getLL>, field: StartSettingsSelectField): string {
+function getSelectFieldLabel(
+  LL: ReturnType<typeof getLL>,
+  field: StartSettingsSelectField,
+): string {
   switch (field.field) {
     case "gameMode":
       return LL.startSettings.fields.mode();
@@ -295,15 +309,23 @@ function getSelectOptionLabel(
     case "gameMode":
       return LL.startSettings.values.gameMode[value as StartSettingsSelection["gameMode"]]();
     case "campaignCourse":
-      return LL.startSettings.values.campaignCourse[value as StartSettingsSelection["campaignCourse"]]();
+      return LL.startSettings.values.campaignCourse[
+        value as StartSettingsSelection["campaignCourse"]
+      ]();
     case "difficulty":
       return LL.startSettings.values.difficulty[value as StartSettingsSelection["difficulty"]]();
     case "routePreference":
-      return LL.startSettings.values.routePreference[value as StartSettingsSelection["routePreference"]]();
+      return LL.startSettings.values.routePreference[
+        value as StartSettingsSelection["routePreference"]
+      ]();
     case "debugScenario":
-      return LL.startSettings.values.debugScenario[value as StartSettingsSelection["debugScenario"]]();
+      return LL.startSettings.values.debugScenario[
+        value as StartSettingsSelection["debugScenario"]
+      ]();
     case "debugItemPreset":
-      return LL.startSettings.values.debugItemPreset[value as StartSettingsSelection["debugItemPreset"]]();
+      return LL.startSettings.values.debugItemPreset[
+        value as StartSettingsSelection["debugItemPreset"]
+      ]();
     case "debugRecordResults":
       return LL.startSettings.values.debugRecordResults[value as "false" | "true"]();
     default:
@@ -311,7 +333,10 @@ function getSelectOptionLabel(
   }
 }
 
-function getToggleFieldLabel(LL: ReturnType<typeof getLL>, field: StartSettingsToggleField): string {
+function getToggleFieldLabel(
+  LL: ReturnType<typeof getLL>,
+  field: StartSettingsToggleField,
+): string {
   switch (field.field) {
     case "challengeMode":
       return LL.startSettings.fields.challengeMode();

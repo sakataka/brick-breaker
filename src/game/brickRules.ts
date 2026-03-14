@@ -28,8 +28,13 @@ export function countsTowardStageClear(brick: Pick<Brick, "kind">): boolean {
   return kind !== "steel" && kind !== "gate";
 }
 
-export function countAliveObjectiveBricks(bricks: readonly Pick<Brick, "alive" | "kind">[]): number {
-  return bricks.reduce((count, brick) => count + (brick.alive && countsTowardStageClear(brick) ? 1 : 0), 0);
+export function countAliveObjectiveBricks(
+  bricks: readonly Pick<Brick, "alive" | "kind">[],
+): number {
+  return bricks.reduce(
+    (count, brick) => count + (brick.alive && countsTowardStageClear(brick) ? 1 : 0),
+    0,
+  );
 }
 
 export function isGeneratorRespawnTarget(brick: Pick<Brick, "kind">): boolean {

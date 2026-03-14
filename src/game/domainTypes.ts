@@ -1,4 +1,12 @@
-export type Scene = "start" | "story" | "playing" | "paused" | "gameover" | "stageclear" | "clear" | "error";
+export type Scene =
+  | "start"
+  | "story"
+  | "playing"
+  | "paused"
+  | "gameover"
+  | "stageclear"
+  | "clear"
+  | "error";
 export type Difficulty = "casual" | "standard" | "hard";
 export type ItemType =
   | "paddle_plus"
@@ -114,7 +122,14 @@ export type StageArchetype =
   | "boss_arena"
   | "ex_arena";
 
-export type StageTag = "steel" | "generator" | "gate" | "turret" | "enemy_pressure" | "boss" | "midboss";
+export type StageTag =
+  | "steel"
+  | "generator"
+  | "gate"
+  | "turret"
+  | "enemy_pressure"
+  | "boss"
+  | "midboss";
 
 export type StageEventKey =
   | "generator_respawn"
@@ -155,7 +170,14 @@ export interface StageEncounterDefinition {
   profile: EncounterProfile;
 }
 
-export type MusicCueId = "title" | "chapter1" | "chapter2" | "chapter3" | "midboss" | "finalboss" | "ex";
+export type MusicCueId =
+  | "title"
+  | "chapter1"
+  | "chapter2"
+  | "chapter3"
+  | "midboss"
+  | "finalboss"
+  | "ex";
 
 export interface MusicCue {
   id: MusicCueId;

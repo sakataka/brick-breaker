@@ -30,7 +30,9 @@ export function applyComboHits(
   }
 
   const chainContinues =
-    combo.streak > 0 && combo.lastHitSec >= 0 && nowSec - combo.lastHitSec <= COMBO_CONFIG.windowSec;
+    combo.streak > 0 &&
+    combo.lastHitSec >= 0 &&
+    nowSec - combo.lastHitSec <= COMBO_CONFIG.windowSec;
   if (!chainContinues) {
     resetCombo(combo);
   }

@@ -31,7 +31,10 @@ export function ensureShopOffer(
   });
 }
 
-function generateShopOfferByContext(random: RandomSource, context: ShopOfferContext): [ItemType, ItemType] {
+function generateShopOfferByContext(
+  random: RandomSource,
+  context: ShopOfferContext,
+): [ItemType, ItemType] {
   const enabled = new Set(context.enabledItems);
   const available = (Object.keys(ITEM_REGISTRY) as ItemType[]).filter((type) => enabled.has(type));
   const rolePriority: Array<"attack" | "defense" | "control"> =
@@ -45,12 +48,16 @@ function generateShopOfferByContext(random: RandomSource, context: ShopOfferCont
     ) ??
     pickWeightedItemType(
       random,
-      (Object.keys(ITEM_REGISTRY) as ItemType[]).filter((type) => !enabled.has(type) || type === first),
+      (Object.keys(ITEM_REGISTRY) as ItemType[]).filter(
+        (type) => !enabled.has(type) || type === first,
+      ),
     );
   if (first === second) {
     const fallback = pickWeightedItemType(
       random,
-      (Object.keys(ITEM_REGISTRY) as ItemType[]).filter((type) => !enabled.has(type) || type === first),
+      (Object.keys(ITEM_REGISTRY) as ItemType[]).filter(
+        (type) => !enabled.has(type) || type === first,
+      ),
     );
     return [first, fallback];
   }

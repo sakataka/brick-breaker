@@ -44,7 +44,8 @@ export function runPlayingLoop(
       config: deps.config,
       random: deps.random,
       sfx: deps.sfx,
-      tryShieldRescue: (ball, maxSpeed) => tryShieldRescue(state, deps.config, deps.random, ball, maxSpeed),
+      tryShieldRescue: (ball, maxSpeed) =>
+        tryShieldRescue(state, deps.config, deps.random, ball, maxSpeed),
       playPickupSfx: deps.playPickupSfx,
       playComboFillSfx: deps.playComboFillSfx,
       playMagicCastSfx: deps.playMagicCastSfx,

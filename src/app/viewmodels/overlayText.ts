@@ -1,4 +1,8 @@
-import type { OverlayViewModel, StageResultSummaryView, StageResultView } from "../../game/renderTypes";
+import type {
+  OverlayViewModel,
+  StageResultSummaryView,
+  StageResultView,
+} from "../../game/renderTypes";
 import { formatTime } from "../../game/time";
 import type { AppLocale, LL } from "../../i18n";
 import { formatPoints, getRogueUpgradeLabel, getStageMissionLabel } from "../../i18n";

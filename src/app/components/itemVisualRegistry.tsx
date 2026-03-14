@@ -18,6 +18,10 @@ export function getItemVisualSpec(type: ItemType): ItemVisualSpec {
     accent: item.color,
     tone: item.roleTag,
     emphasis:
-      item.encounterBias === "boss" ? "boss" : item.encounterBias === "midboss" ? "midboss" : "default",
+      item.encounterBias === "boss"
+        ? "boss"
+        : item.encounterBias === "midboss"
+          ? "midboss"
+          : "default",
   };
 }

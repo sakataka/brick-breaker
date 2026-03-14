@@ -179,9 +179,12 @@ export function resolveVisualAssetProfile(
     density: resolveDensity(themeId, encounterEmphasis),
     textureScale: themeId === "chapter1" ? 1 : themeId === "chapter2" ? 1.1 : 1.18,
     panel: {
-      fillDataUri: getTextureEntry(`panel-fill:${themeId}`, buildPanelFillSvg(themeId, palette)).dataUri,
-      frameDataUri: getTextureEntry(`panel-frame:${themeId}`, buildPanelFrameSvg(themeId, palette)).dataUri,
-      badgeDataUri: getTextureEntry(`panel-badge:${themeId}`, buildPanelBadgeSvg(themeId, palette)).dataUri,
+      fillDataUri: getTextureEntry(`panel-fill:${themeId}`, buildPanelFillSvg(themeId, palette))
+        .dataUri,
+      frameDataUri: getTextureEntry(`panel-frame:${themeId}`, buildPanelFrameSvg(themeId, palette))
+        .dataUri,
+      badgeDataUri: getTextureEntry(`panel-badge:${themeId}`, buildPanelBadgeSvg(themeId, palette))
+        .dataUri,
     },
     backdrop: resolveBackdropTileSet(themeId, palette, warningLevel, encounterEmphasis),
     warning: resolveWarningDecalSet(themeId, palette, warningLevel),
@@ -330,13 +333,14 @@ export function getArtCssVars(profile: VisualAssetProfile): Record<string, strin
 }
 
 export function getAllArtTextureEntries(): TextureEntry[] {
-  const profiles = (["chapter1", "chapter2", "chapter3", "midboss", "finalboss", "ex"] as const).flatMap(
-    (themeId) =>
-      (["calm", "elevated", "critical"] as const).flatMap((warningLevel) =>
-        (["chapter", "midboss", "finalboss", "ex"] as const).map((encounterEmphasis) =>
-          resolveVisualAssetProfile(themeId, warningLevel, encounterEmphasis),
-        ),
+  const profiles = (
+    ["chapter1", "chapter2", "chapter3", "midboss", "finalboss", "ex"] as const
+  ).flatMap((themeId) =>
+    (["calm", "elevated", "critical"] as const).flatMap((warningLevel) =>
+      (["chapter", "midboss", "finalboss", "ex"] as const).map((encounterEmphasis) =>
+        resolveVisualAssetProfile(themeId, warningLevel, encounterEmphasis),
       ),
+    ),
   );
   const entries = new Map<string, TextureEntry>();
   for (const profile of profiles) {
@@ -378,7 +382,10 @@ function resolveBackdropTileSet(
     `backdrop-pattern:${themeId}`,
     buildBackdropPatternSvg(themeId, palette),
   );
-  const motifEntry = getTextureEntry(`backdrop-motif:${themeId}`, buildBackdropMotifSvg(themeId, palette));
+  const motifEntry = getTextureEntry(
+    `backdrop-motif:${themeId}`,
+    buildBackdropMotifSvg(themeId, palette),
+  );
   const emphasisBoost = encounterEmphasis === "chapter" ? 0 : 0.08;
   return {
     patternTextureKey: patternEntry.key,
@@ -397,7 +404,10 @@ function resolveWarningDecalSet(
   palette: ThemeArtPalette,
   warningLevel: ArtWarningLevel,
 ): WarningDecalSet {
-  const stripeEntry = getTextureEntry(`warning-stripe:${themeId}`, buildWarningStripeSvg(themeId, palette));
+  const stripeEntry = getTextureEntry(
+    `warning-stripe:${themeId}`,
+    buildWarningStripeSvg(themeId, palette),
+  );
   return {
     stripeTextureKey: stripeEntry.key,
     stripeDataUri: stripeEntry.dataUri,

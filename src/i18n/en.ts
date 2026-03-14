@@ -261,7 +261,8 @@ export const en: TranslationSchema = {
   },
   story: {
     stage4: "Stage 4: You reached the deep gate. Route choices start to matter from here.",
-    stage8: "Stage 8: You enter the gravity lens zone. Ball speed and trajectories become unstable here.",
+    stage8:
+      "Stage 8: You enter the gravity lens zone. Ball speed and trajectories become unstable here.",
     stage12: "Final Stage: Core Guardian engaged. Use every upgrade you have to break through.",
   },
   rogue: {

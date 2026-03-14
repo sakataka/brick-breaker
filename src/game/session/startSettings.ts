@@ -28,7 +28,10 @@ export function resolveStartStageIndex(selected: StartSettingsSelection): number
   return Math.max(0, Math.min(11, Math.round(selected.debugStartStage) - 1));
 }
 
-export function applyStartSettingsToState(state: GameState, selected: StartSettingsSelection): void {
+export function applyStartSettingsToState(
+  state: GameState,
+  selected: StartSettingsSelection,
+): void {
   state.options.gameMode = selected.gameMode;
   state.options.campaignCourse = selected.campaignCourse;
   state.options.riskMode = selected.riskMode;
@@ -79,7 +82,10 @@ export function applyDebugPresetOnRoundStart(
   state.balls = ensureMultiballCount(state.items, state.balls, random, multiballMaxBalls);
 }
 
-function resolveRandomSource(baseRandom: RandomSource, selected: StartSettingsSelection): RandomSource {
+function resolveRandomSource(
+  baseRandom: RandomSource,
+  selected: StartSettingsSelection,
+): RandomSource {
   const customSeed = selected.challengeSeedCode.trim();
   if (customSeed.length > 0) {
     return createSeededRandomSource(hashSeedText(customSeed));

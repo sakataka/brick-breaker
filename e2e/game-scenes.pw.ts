@@ -8,7 +8,10 @@ async function presetLocale(page: Page, locale: "ja" | "en") {
 
 async function presetExUnlocked(page: Page) {
   await page.addInitScript(() => {
-    window.localStorage.setItem("brick_breaker:meta_progress", JSON.stringify({ exUnlocked: true }));
+    window.localStorage.setItem(
+      "brick_breaker:meta_progress",
+      JSON.stringify({ exUnlocked: true }),
+    );
   });
 }
 
@@ -232,7 +235,9 @@ test("boss telegraph appears during debug boss fight", async ({ page }) => {
     };
   });
 
-  await expect(page.locator(".hud-stage-combat")).toContainText(/射撃予兆|制圧予兆|集中弾予兆|遮断掃射予兆/);
+  await expect(page.locator(".hud-stage-combat")).toContainText(
+    /射撃予兆|制圧予兆|集中弾予兆|遮断掃射予兆/,
+  );
   await expect(page.locator(".hud-boss-banner")).toBeVisible();
   await expect(page.locator("#stage-wrap")).toHaveAttribute("data-theme", /finalboss|midboss/);
   await expect

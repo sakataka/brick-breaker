@@ -1,12 +1,15 @@
-const inputName = Bun.argv[2];
+import { access, mkdir, writeFile } from "node:fs/promises";
+import { constants as fsConstants } from "node:fs";
 
-function fail(message: string): never {
+const inputName = process.argv[2];
+
+function fail(message) {
   console.error(`[scaffold-feature] ${message}`);
   process.exit(1);
 }
 
 if (!inputName) {
-  fail("Usage: bun run scaffold:feature <feature-name>");
+  fail("Usage: node scripts/scaffold-feature.mjs <feature-name>");
 }
 
 const slug = inputName
@@ -19,7 +22,7 @@ if (!slug) {
   fail("Feature name becomes empty after normalization.");
 }
 
-const toPascalCase = (value: string): string =>
+const toPascalCase = (value) =>
   value
     .split("-")
     .filter(Boolean)
@@ -32,14 +35,23 @@ const directory = "src/game/features";
 const sourcePath = `${directory}/${slug}.ts`;
 const testPath = `${directory}/${slug}.test.ts`;
 
-if (await Bun.file(sourcePath).exists()) {
+async function exists(path) {
+  try {
+    await access(path, fsConstants.F_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+if (await exists(sourcePath)) {
   fail(`Source file already exists: ${sourcePath}`);
 }
-if (await Bun.file(testPath).exists()) {
+if (await exists(testPath)) {
   fail(`Test file already exists: ${testPath}`);
 }
 
-await Bun.$`mkdir -p ${directory}`;
+await mkdir(directory, { recursive: true });
 
 const sourceCode = `export interface ${pascalName}FeatureInput {
   // TODO: define required input fields.
@@ -53,7 +65,7 @@ export function ${functionName}(input: ${pascalName}FeatureInput): void {
 }
 `;
 
-const testCode = `import { describe, expect, test } from "bun:test";
+const testCode = `import { describe, expect, test } from "vite-plus/test";
 import { ${functionName} } from "./${slug}";
 
 describe("${slug}", () => {
@@ -63,8 +75,8 @@ describe("${slug}", () => {
 });
 `;
 
-await Bun.write(sourcePath, sourceCode);
-await Bun.write(testPath, testCode);
+await writeFile(sourcePath, sourceCode, "utf8");
+await writeFile(testPath, testCode, "utf8");
 
 console.log("[scaffold-feature] Generated:");
 console.log(`- ${sourcePath}`);

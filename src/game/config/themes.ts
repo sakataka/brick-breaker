@@ -126,7 +126,10 @@ export const THEME_BANDS: StageVisualProfile[] = [
   },
 ] as const;
 
-export function getBrickPaletteColor(row: number, palette: BrickTheme["palette"] = BRICK_PALETTE): string {
+export function getBrickPaletteColor(
+  row: number,
+  palette: BrickTheme["palette"] = BRICK_PALETTE,
+): string {
   return palette[row % palette.length];
 }
 

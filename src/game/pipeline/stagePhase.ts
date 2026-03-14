@@ -119,8 +119,10 @@ function findGeneratorTarget(bricks: Brick[], generator: Brick): Brick | null {
         Math.abs(brick.col - generatorCol) <= STAGE_CONTROL_CONFIG.generatorRespawnRange,
     )
     .sort((a, b) => {
-      const aDistance = Math.abs((a.row ?? 0) - generatorRow) + Math.abs((a.col ?? 0) - generatorCol);
-      const bDistance = Math.abs((b.row ?? 0) - generatorRow) + Math.abs((b.col ?? 0) - generatorCol);
+      const aDistance =
+        Math.abs((a.row ?? 0) - generatorRow) + Math.abs((a.col ?? 0) - generatorCol);
+      const bDistance =
+        Math.abs((b.row ?? 0) - generatorRow) + Math.abs((b.col ?? 0) - generatorCol);
       if (aDistance !== bDistance) {
         return aDistance - bDistance;
       }

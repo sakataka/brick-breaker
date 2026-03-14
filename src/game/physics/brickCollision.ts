@@ -176,7 +176,12 @@ export function applyHomingAssist(
   normalizeVelocity(ball, maxBallSpeed);
 }
 
-function damageExplodedBricks(bricks: Brick[], center: Brick, radiusTiles: number, destroyed: Brick[]): void {
+function damageExplodedBricks(
+  bricks: Brick[],
+  center: Brick,
+  radiusTiles: number,
+  destroyed: Brick[],
+): void {
   for (const candidate of bricks) {
     if (!candidate.alive || candidate.id === center.id) {
       continue;
@@ -188,7 +193,11 @@ function damageExplodedBricks(bricks: Brick[], center: Brick, radiusTiles: numbe
   }
 }
 
-function applyDamageAndTrack(brick: Brick, source: "direct" | "explosion", destroyed: Brick[]): void {
+function applyDamageAndTrack(
+  brick: Brick,
+  source: "direct" | "explosion",
+  destroyed: Brick[],
+): void {
   const result = applyBrickDamage(brick, source);
   if (result.destroyed) {
     destroyed.push(brick);

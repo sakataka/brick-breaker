@@ -115,7 +115,8 @@ function drawBricks(
       drawGateGhost(graphics, brick, offsetX, offsetY, lineWidth, snapStep);
       continue;
     }
-    const fallbackColor = fallbackBrickPalette[(brick.row ?? 0) % fallbackBrickPalette.length] ?? "#ffffff";
+    const fallbackColor =
+      fallbackBrickPalette[(brick.row ?? 0) % fallbackBrickPalette.length] ?? "#ffffff";
     const skin = getBrickSkin(brick.kind, assetProfile, brick.color ?? fallbackColor);
     const body = parseColor(skin.baseColor, { value: 0xa0c8ff, alpha: 0.72 });
     const inset = parseColor(skin.insetColor, { value: 0xb7d8ff, alpha: 0.68 });
@@ -216,7 +217,10 @@ function drawGateStripe(
   for (let stripeIndex = -1; stripeIndex < 5; stripeIndex += 1) {
     const startX = brick.x + stripeIndex * 12 + offsetX;
     graphics.beginPath();
-    graphics.moveTo(snapByStep(startX, snapStep), snapByStep(brick.y + brick.height + offsetY, snapStep));
+    graphics.moveTo(
+      snapByStep(startX, snapStep),
+      snapByStep(brick.y + brick.height + offsetY, snapStep),
+    );
     graphics.lineTo(snapByStep(startX + 18, snapStep), snapByStep(brick.y + offsetY, snapStep));
     graphics.strokePath();
   }
@@ -247,7 +251,13 @@ function drawPaddle(
   if (view.paddleAuraColor) {
     const aura = parseColor(view.paddleAuraColor, { value: 0x78dcff, alpha: 0.22 });
     graphics.fillStyle(aura.value, aura.alpha * 0.28);
-    graphics.fillRoundedRect(paddleX - 8, paddleY - 5, view.paddle.width + 16, view.paddle.height + 10, 10);
+    graphics.fillRoundedRect(
+      paddleX - 8,
+      paddleY - 5,
+      view.paddle.width + 16,
+      view.paddle.height + 10,
+      10,
+    );
   }
 
   if (!view.paddle.glowActive) {
@@ -255,7 +265,13 @@ function drawPaddle(
   }
   const glow = parseColor("rgba(120,220,255,0.28)", { value: 0x78dcff, alpha: 0.28 });
   graphics.fillStyle(glow.value, glow.alpha);
-  graphics.fillRoundedRect(paddleX - 4, paddleY - 3, view.paddle.width + 8, view.paddle.height + 6, 8);
+  graphics.fillRoundedRect(
+    paddleX - 4,
+    paddleY - 3,
+    view.paddle.width + 8,
+    view.paddle.height + 6,
+    8,
+  );
 }
 
 function drawFluxField(
@@ -565,7 +581,12 @@ function drawBrickSurfacePattern(
     case "turret":
       graphics.fillStyle(accent.value, 0.24);
       graphics.fillRect(brickX + brick.width * 0.42, brickY + 2, 5, brick.height - 8);
-      graphics.fillRect(brickX + brick.width * 0.32, brickY + brick.height * 0.42, brick.width * 0.36, 4);
+      graphics.fillRect(
+        brickX + brick.width * 0.32,
+        brickY + brick.height * 0.42,
+        brick.width * 0.36,
+        4,
+      );
       break;
     case "hazard":
       for (let stripe = -1; stripe < 4; stripe += 1) {

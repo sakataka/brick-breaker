@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 
 import { GAME_CONFIG, MODE_CONFIG, STAGE_CATALOG } from "./config";
 import {
@@ -254,7 +254,9 @@ describe("roundSystem", () => {
 
     finalizeStageStats(state);
 
-    const noShopMission = state.stageStats.missionResults?.find((mission) => mission.key === "no_shop");
+    const noShopMission = state.stageStats.missionResults?.find(
+      (mission) => mission.key === "no_shop",
+    );
     expect(noShopMission?.achieved).toBe(false);
     expect(state.stageStats.missionAchieved).toBe(false);
   });

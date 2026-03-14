@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 import { ITEM_ORDER } from "./itemRegistryData";
 
 import {
@@ -88,10 +88,20 @@ describe("itemSystem", () => {
     expect(getTargetBallCount(items, 4)).toBe(4);
     expect(getTargetBallCount(items, 6)).toBe(6);
 
-    const expanded = ensureMultiballCount(items, [createBall()], sequenceRandom([0.4, 0.6, 0.2]), 4);
+    const expanded = ensureMultiballCount(
+      items,
+      [createBall()],
+      sequenceRandom([0.4, 0.6, 0.2]),
+      4,
+    );
     expect(expanded).toHaveLength(4);
 
-    const trimmed = ensureMultiballCount(items, [...expanded, createBall()], sequenceRandom([0.5]), 4);
+    const trimmed = ensureMultiballCount(
+      items,
+      [...expanded, createBall()],
+      sequenceRandom([0.5]),
+      4,
+    );
     expect(trimmed).toHaveLength(4);
   });
 
@@ -235,8 +245,28 @@ describe("itemSystem", () => {
     const items = createItemState();
     const balls = [createBall()];
     const bricks = [
-      { id: 1, x: 90, y: 90, width: 24, height: 12, alive: true, kind: "normal" as const, hp: 1, maxHp: 1 },
-      { id: 2, x: 210, y: 90, width: 24, height: 12, alive: true, kind: "normal" as const, hp: 1, maxHp: 1 },
+      {
+        id: 1,
+        x: 90,
+        y: 90,
+        width: 24,
+        height: 12,
+        alive: true,
+        kind: "normal" as const,
+        hp: 1,
+        maxHp: 1,
+      },
+      {
+        id: 2,
+        x: 210,
+        y: 90,
+        width: 24,
+        height: 12,
+        alive: true,
+        kind: "normal" as const,
+        hp: 1,
+        maxHp: 1,
+      },
     ];
 
     const impact = applyItemPickup(items, "shockwave", balls, {

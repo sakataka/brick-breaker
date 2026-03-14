@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 
 import { stepPhysics } from "./physics";
 import type { Ball, Brick, GameConfig, Paddle } from "./types";
@@ -274,7 +274,9 @@ describe("stepPhysics", () => {
     });
 
     expect(result.collision.brick).toBeGreaterThanOrEqual(3);
-    expect(result.events.filter((event) => event.kind === "brick").length).toBe(result.collision.brick);
+    expect(result.events.filter((event) => event.kind === "brick").length).toBe(
+      result.collision.brick,
+    );
   });
 
   test("bomb does not chain recursively from exploded bricks", () => {

@@ -104,7 +104,9 @@ export function applyDebugPresetFromRegistry(
     const definition = ITEM_REGISTRY[type];
     const baseCount = definition.debugPresetStacks?.[preset] ?? 0;
     const nextCount =
-      !options.enableNewItemStacks && definition.respectsNewStackSetting ? Math.min(baseCount, 1) : baseCount;
+      !options.enableNewItemStacks && definition.respectsNewStackSetting
+        ? Math.min(baseCount, 1)
+        : baseCount;
     if (nextCount > 0) {
       setItemStackCount(items.active, type, Math.min(definition.maxStacks, nextCount));
     }
@@ -132,7 +134,8 @@ export function createItemModifiers(
     paddleScale,
     maxSpeedScale,
     targetBallCount: Math.min(1 + stacks.multiballStacks, multiballMaxBalls),
-    pierceDepth: Math.min(1, stacks.pierceStacks) * ITEM_BALANCE.pierceDepthPerStack + synergyPierceBonus,
+    pierceDepth:
+      Math.min(1, stacks.pierceStacks) * ITEM_BALANCE.pierceDepthPerStack + synergyPierceBonus,
     bombRadiusTiles: stacks.bombStacks,
     explodeOnHit: stacks.bombStacks > 0,
     shieldCharges: stacks.shieldCharges,
@@ -179,7 +182,10 @@ export function getDropSuppressedTypes(stacks: ItemStackState): ItemType[] {
   return suppressed;
 }
 
-export function pickWeightedItemType(random: RandomSource, excludedTypes: ItemType[] = []): ItemType {
+export function pickWeightedItemType(
+  random: RandomSource,
+  excludedTypes: ItemType[] = [],
+): ItemType {
   const excluded = new Set(excludedTypes);
   const selectable = ITEM_ORDER.filter((type) => !excluded.has(type));
   if (selectable.length <= 0) {

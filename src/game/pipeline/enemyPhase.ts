@@ -68,7 +68,11 @@ export function updateEnemyWaveEvent(
   return true;
 }
 
-export function resolveEnemyHits(state: GameState, balls: Ball[], scoreScale: number): EnemyHitResult {
+export function resolveEnemyHits(
+  state: GameState,
+  balls: Ball[],
+  scoreScale: number,
+): EnemyHitResult {
   let scoreGain = 0;
   const events: EnemyHitEvent[] = [];
 

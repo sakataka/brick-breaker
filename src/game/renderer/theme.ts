@@ -70,7 +70,10 @@ export function resolveRenderTheme(
   };
 }
 
-export function resolveRenderThemeFromTokens(tokens: UiThemeTokens, baseTheme: RenderTheme): RenderTheme {
+export function resolveRenderThemeFromTokens(
+  tokens: UiThemeTokens,
+  baseTheme: RenderTheme,
+): RenderTheme {
   return {
     ...baseTheme,
     backdropStart: tokens.backdropTop,

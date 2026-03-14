@@ -121,7 +121,12 @@ export function Surface({
   );
 }
 
-export function SectionHeader({ eyebrow, title, subtitle, icon }: SectionHeaderProps): ReactElement {
+export function SectionHeader({
+  eyebrow,
+  title,
+  subtitle,
+  icon,
+}: SectionHeaderProps): ReactElement {
   return (
     <div className="ui-section-header">
       {icon ? <span className="ui-section-header-icon">{icon}</span> : null}
@@ -150,7 +155,12 @@ export function Banner({
     <AnimatePresence initial={false}>
       {visible ? (
         <motion.div
-          className={clsx("ui-banner", className, `ui-banner-${warningLevel}`, `ui-banner-chrome-${chrome}`)}
+          className={clsx(
+            "ui-banner",
+            className,
+            `ui-banner-${warningLevel}`,
+            `ui-banner-chrome-${chrome}`,
+          )}
           initial={motionConfig.initial}
           animate={motionConfig.animate}
           exit={motionConfig.exit}
@@ -190,7 +200,10 @@ export function StatChip({
 export function ProgressBar({ value, id }: ProgressBarProps): ReactElement {
   return (
     <div id={id} className="ui-progress-track" aria-hidden="true">
-      <div className="ui-progress-fill" style={{ width: `${Math.max(0, Math.min(1, value)) * 100}%` }} />
+      <div
+        className="ui-progress-fill"
+        style={{ width: `${Math.max(0, Math.min(1, value)) * 100}%` }}
+      />
     </div>
   );
 }
@@ -224,7 +237,11 @@ export function OptionCard({
   );
 }
 
-export function DangerPill({ icon, children, warningLevel = "elevated" }: DangerPillProps): ReactElement {
+export function DangerPill({
+  icon,
+  children,
+  warningLevel = "elevated",
+}: DangerPillProps): ReactElement {
   return (
     <span className={clsx("ui-danger-pill", `ui-danger-pill-${warningLevel}`)}>
       {icon ? <span className="ui-danger-pill-icon">{icon}</span> : null}

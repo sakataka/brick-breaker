@@ -1,4 +1,11 @@
-import type { Ball, CollisionEvent, DebugItemPreset, GameState, ItemType, RandomSource } from "./types";
+import type {
+  Ball,
+  CollisionEvent,
+  DebugItemPreset,
+  GameState,
+  ItemType,
+  RandomSource,
+} from "./types";
 
 export interface ItemStackState {
   paddlePlusStacks: number;

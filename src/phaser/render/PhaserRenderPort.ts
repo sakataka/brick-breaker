@@ -86,7 +86,8 @@ export class PhaserRenderPort {
       view.visual.encounterEmphasis,
     );
     const theme = resolveRenderThemeFromTokens(view.visual.tokens, DEFAULT_RENDER_THEME);
-    const band = THEME_BANDS.find((candidate) => candidate.id === view.themeBandId) ?? THEME_BANDS[0];
+    const band =
+      THEME_BANDS.find((candidate) => candidate.id === view.themeBandId) ?? THEME_BANDS[0];
     const offsetX = view.shake.active ? view.shake.offset.x : 0;
     const offsetY = view.shake.active ? view.shake.offset.y : 0;
     const profile = resolveDpiRenderProfile(readDevicePixelRatio(this.scene));
@@ -175,7 +176,9 @@ export class PhaserRenderPort {
     this.backdropMotif.tileScaleX = artProfile.textureScale;
     this.backdropMotif.tileScaleY = artProfile.textureScale;
     this.backdropMotif.setBlendMode(
-      view.visual.encounterEmphasis === "chapter" ? Phaser.BlendModes.ADD : Phaser.BlendModes.SCREEN,
+      view.visual.encounterEmphasis === "chapter"
+        ? Phaser.BlendModes.ADD
+        : Phaser.BlendModes.SCREEN,
     );
 
     this.backdropWarning.setVisible(view.visual.warningLevel !== "calm");

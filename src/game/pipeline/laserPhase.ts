@@ -10,7 +10,11 @@ export interface LaserHitEvent {
   brickKind?: GameState["bricks"][number]["kind"];
 }
 
-export function updateLaserProjectiles(state: GameState, deltaSec: number, railLevel = 0): LaserHitEvent[] {
+export function updateLaserProjectiles(
+  state: GameState,
+  deltaSec: number,
+  railLevel = 0,
+): LaserHitEvent[] {
   if (state.combat.laserProjectiles.length <= 0) {
     return [];
   }
@@ -65,7 +69,11 @@ export function updateLaserProjectiles(state: GameState, deltaSec: number, railL
   return events;
 }
 
-export function updateAutoLaserSpawner(state: GameState, deltaSec: number, laserLevel: number): void {
+export function updateAutoLaserSpawner(
+  state: GameState,
+  deltaSec: number,
+  laserLevel: number,
+): void {
   if (laserLevel <= 0) {
     state.combat.laserCooldownSec = 0;
     state.combat.laserProjectiles = [];

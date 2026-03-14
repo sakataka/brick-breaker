@@ -47,7 +47,10 @@ export interface SessionControllerDeps {
   uiPort: UiPort<OverlayViewModel, HudViewModel, unknown>;
   getStartSettings: () => StartSettingsSelection;
   getRogueSelection: () => RogueUpgradeType;
-  setUiHandlers: (handlers: { primaryAction: () => void; shopOption: (index: 0 | 1) => void }) => void;
+  setUiHandlers: (handlers: {
+    primaryAction: () => void;
+    shopOption: (index: 0 | 1) => void;
+  }) => void;
   setMetaProgress: (metaProgress: MetaProgress) => void;
 }
 
@@ -267,7 +270,10 @@ export class SessionController {
       this.syncEncounterAudio(previousBossPhase, previousTelegraphKind, previousSweepActive);
       this.syncViewPorts();
     } catch (error) {
-      this.setRuntimeError("runtime", error instanceof Error && error.message ? error.message : undefined);
+      this.setRuntimeError(
+        "runtime",
+        error instanceof Error && error.message ? error.message : undefined,
+      );
     }
   };
 

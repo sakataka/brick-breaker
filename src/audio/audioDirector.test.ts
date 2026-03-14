@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 
 import { AudioDirector } from "./audioDirector";
 import type { BgmTrack } from "./bgmCatalog";
@@ -101,7 +101,9 @@ describe("AudioDirector", () => {
     director.syncScene("stageclear", "playing");
 
     expect(sequencer.actions).toContain("stop");
-    expect(sfx.events.some((event) => event.name === "jingle_stage_clear" && event.force)).toBe(true);
+    expect(sfx.events.some((event) => event.name === "jingle_stage_clear" && event.force)).toBe(
+      true,
+    );
   });
 
   test("playing -> clear plays game clear jingle without restarting bgm", () => {
@@ -114,7 +116,9 @@ describe("AudioDirector", () => {
     director.syncScene("clear", "playing");
 
     expect(sequencer.actions).toContain("stop");
-    expect(sfx.events.some((event) => event.name === "jingle_game_clear" && event.force)).toBe(true);
+    expect(sfx.events.some((event) => event.name === "jingle_game_clear" && event.force)).toBe(
+      true,
+    );
   });
 
   test("paused -> playing resumes current stage bgm", () => {

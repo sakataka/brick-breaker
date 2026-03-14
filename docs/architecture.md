@@ -22,6 +22,7 @@
 - `src/game/roundSystem.ts`
 
 ルール:
+
 - Core は DOM / Phaser Scene / Audio API を直接触らない。
 - 外部副作用は Port 越しで同期する。
 
@@ -37,6 +38,7 @@
 - `src/game/session/viewSync.ts`
 
 責務:
+
 - 入力・シーン遷移・フレーム進行のオーケストレーション。
 - `RenderPort` / `UiPort` / `AudioPort` への同期。
 
@@ -54,6 +56,7 @@
 - `src/phaser/render/layers/overlay.ts`
 
 責務:
+
 - Pointer/Keyboard 入力を受け取り `GameSession` へコマンド通知。
 - `RenderViewState` を Phaser Graphics 描画へ変換。
 - `BootScene` は art manifest 由来の SVG texture を preload し、`PhaserRenderPort` は texture key と asset profile を使って背景タイルを合成する。
@@ -74,6 +77,7 @@
 - `src/app/viewmodels/overlayText.ts`
 
 責務:
+
 - 表示は宣言的に実装。
 - ゲーム本体との接続点は store のみ。
 - `StartSettingsForm` は `src/game/startSettingsSchema.ts` の schema を参照し、設定UIを定義駆動で生成する。
@@ -106,6 +110,7 @@
 - `src/audio/bgmSequencer.ts`
 
 責務:
+
 - シーン遷移とステージ進行に同期した BGM/SE 制御。
 - BGMは `bgmCatalog` の cue 定義（`chapter1 / chapter2 / chapter3 / midboss / finalboss / ex / title`）を基に切り替える。
 - 再生は `bgmSequencer` の多声音（リード/ベース/和音/対旋律/パッド）スケジューリングで行う。
@@ -123,6 +128,7 @@
 ## ドキュメント運用ルール
 
 - 設定値: `src/game/config/*`
+- ビルド設定: `vite.config.ts`（`Vite+` の primary config。`vp dev / build / check` の入口であり、chunk 分割は `build.rolldownOptions.output.codeSplitting`、repo 品質タスクは `run.tasks` を使う）
 - 開始設定 schema: `src/game/startSettingsSchema.ts`
 - ショップ価格計算: `src/game/config/gameplay.ts` (`getShopPurchaseCost`)
 - ブロックHP/破壊判定: `src/game/brickDamage.ts`
@@ -190,17 +196,16 @@
 
 ## 品質ゲート
 
-- `bun run check`
-- `bun run check:fast`
-- `bun run guard:local`
-- `bun run verify:change-coverage`
-- `bun run check:arch`
-- `bun run deadcode`
-- `bun run format`
-- `bun test`
-- `bun run e2e`
+- `vp check`
+- `vp run check:fast`
+- `vp run guard:local`
+- `vp run verify:change-coverage`
+- `vp run check:arch`
+- `vp run deadcode`
+- `vp fmt`
+- `vp test`
+- `vp run e2e`
 
 ## Open Backlog
 
 - 現時点の残タスクはありません。
-- 最新完了サイクル: SVGタイル合成ベースの背景/UI/ブロックスキン刷新 + Neon Pop UI/BGM刷新 + Sticky削除 + cueベース音楽化 + Risk Chain削除（2026-03-08）。

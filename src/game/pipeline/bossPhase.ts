@@ -33,7 +33,8 @@ export function updateBossPhase(
   const maxHp = Math.max(hp, boss.maxHp ?? 18);
   const phase = resolveBossPhase(hp, maxHp);
   const profile =
-    metadata.stage.encounter?.profile ?? (state.campaign.stageIndex >= 11 ? "final_core" : "warden");
+    metadata.stage.encounter?.profile ??
+    (state.campaign.stageIndex >= 11 ? "final_core" : "warden");
   encounter.kind = metadata.stage.encounter?.kind ?? "boss";
   encounter.profile = profile;
   encounter.phase = phase;
@@ -51,7 +52,10 @@ export function updateBossPhase(
   encounter.vulnerabilitySec = Math.max(0, encounter.vulnerabilitySec - deltaSec);
 
   if (phase <= 2 && profile !== "artillery") {
-    state.combat.bossPhaseSummonCooldownSec = Math.max(0, state.combat.bossPhaseSummonCooldownSec - deltaSec);
+    state.combat.bossPhaseSummonCooldownSec = Math.max(
+      0,
+      state.combat.bossPhaseSummonCooldownSec - deltaSec,
+    );
     encounter.summonCooldownSec = state.combat.bossPhaseSummonCooldownSec;
     if (state.combat.bossPhaseSummonCooldownSec <= 0) {
       spawnBossAdd(state, config, random);
@@ -111,7 +115,8 @@ function updateTelegraph(
     if (attack.telegraph.remainingSec <= 0) {
       resolveTelegraphedAttack(state, boss, config, attack.telegraph);
       attack.telegraph = null;
-      attack.actionCooldownSec = BOSS_PHASE_CONFIG.actionCooldownSecByPhase[state.combat.bossPhase - 1];
+      attack.actionCooldownSec =
+        BOSS_PHASE_CONFIG.actionCooldownSecByPhase[state.combat.bossPhase - 1];
       attack.vulnerabilityMaxSec = profile === "ex_overlord" ? 1.1 : 1.8;
       attack.vulnerabilitySec = attack.vulnerabilityMaxSec;
     }
@@ -182,7 +187,13 @@ function resolveTelegraphedAttack(
   telegraph: NonNullable<GameState["combat"]["bossAttackState"]["telegraph"]>,
 ): void {
   if (telegraph.kind === "volley" || telegraph.kind === "burst") {
-    spawnBossVolley(state, boss, config, telegraph.targetX ?? config.width / 2, telegraph.spread ?? 0);
+    spawnBossVolley(
+      state,
+      boss,
+      config,
+      telegraph.targetX ?? config.width / 2,
+      telegraph.spread ?? 0,
+    );
     return;
   }
   if ((telegraph.kind === "sweep" || telegraph.kind === "gate_sweep") && telegraph.lane) {

@@ -28,7 +28,9 @@ export function isSupportedLocale(value: string): value is SupportedLocale {
   return supportedLocales.includes(value as SupportedLocale);
 }
 
-export function resolveStoredLocale(storage: Pick<Storage, "getItem"> | null | undefined): AppLocale | null {
+export function resolveStoredLocale(
+  storage: Pick<Storage, "getItem"> | null | undefined,
+): AppLocale | null {
   const stored = storage?.getItem(STORAGE_KEY);
   return stored && isSupportedLocale(stored) ? stored : null;
 }
@@ -59,7 +61,10 @@ export function resolveInitialLocale(windowRef?: Window): AppLocale {
   return resolveBrowserLocale(windowRef?.navigator);
 }
 
-export function setCurrentLocale(locale: AppLocale, storage?: Pick<Storage, "setItem"> | null): void {
+export function setCurrentLocale(
+  locale: AppLocale,
+  storage?: Pick<Storage, "setItem"> | null,
+): void {
   currentLocale = locale;
   storage?.setItem(STORAGE_KEY, locale);
 }

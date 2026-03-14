@@ -4,7 +4,13 @@ import { ROGUE_CONFIG } from "../../game/config";
 import type { HudViewModel } from "../../game/renderTypes";
 import { formatTime } from "../../game/time";
 import type { VisualState } from "../../game/uiTheme";
-import { type AppLocale, formatDecimal, formatInteger, getItemTranslation, getLL } from "../../i18n";
+import {
+  type AppLocale,
+  formatDecimal,
+  formatInteger,
+  getItemTranslation,
+  getLL,
+} from "../../i18n";
 import { AppIcon } from "./AppIcon";
 import { getItemVisualSpec } from "./itemVisualRegistry";
 import { Banner, DangerPill, IconLabel, ProgressBar, StatChip } from "./uiPrimitives";
@@ -67,7 +73,10 @@ export function HudPanel({ locale, hud, scoreRef }: HudPanelProps): ReactElement
         motionProfile={hud.visual.motionProfile}
         warningLevel={hud.visual.warningLevel}
       >
-        <DangerPill icon={<AppIcon name="warning" weight="fill" />} warningLevel={hud.visual.warningLevel}>
+        <DangerPill
+          icon={<AppIcon name="warning" weight="fill" />}
+          warningLevel={hud.visual.warningLevel}
+        >
           {getWarningLabel(locale, hud.visual.warningLevel)}
         </DangerPill>
       </Banner>
@@ -216,8 +225,14 @@ export function HudPanel({ locale, hud, scoreRef }: HudPanelProps): ReactElement
         ))}
       </div>
       {hud.pickupToast ? (
-        <div className="hud-pickup-toast" style={{ "--toast-color": hud.pickupToast.color } as CSSProperties}>
-          <AppIcon name={getItemVisualSpec(hud.pickupToast.type).icon} className="hud-inline-icon" />
+        <div
+          className="hud-pickup-toast"
+          style={{ "--toast-color": hud.pickupToast.color } as CSSProperties}
+        >
+          <AppIcon
+            name={getItemVisualSpec(hud.pickupToast.type).icon}
+            className="hud-inline-icon"
+          />
           <span>{getItemTranslation(LL, hud.pickupToast.type).name()}</span>
         </div>
       ) : null}
@@ -241,7 +256,11 @@ function getBannerEyebrow(locale: AppLocale, banner: VisualState["banner"]): str
   }
 }
 
-function getBannerTitle(locale: AppLocale, banner: VisualState["banner"], fallback: string): string {
+function getBannerTitle(
+  locale: AppLocale,
+  banner: VisualState["banner"],
+  fallback: string,
+): string {
   if (!banner) {
     return fallback;
   }

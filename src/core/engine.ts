@@ -1,5 +1,10 @@
 import type { SfxManager } from "../audio/sfx";
-import { computeFrameDelta, handleBallLoss, handleStageClear, runPlayingLoop } from "../game/gameRuntime";
+import {
+  computeFrameDelta,
+  handleBallLoss,
+  handleStageClear,
+  runPlayingLoop,
+} from "../game/gameRuntime";
 import type { GameConfig, GameState, ItemType, RandomSource } from "../game/types";
 import { nextDensityScale, updateVfxState } from "../game/vfxSystem";
 
@@ -37,7 +42,11 @@ export class CoreEngine {
     const frame = computeFrameDelta(this.lastFrameTime, timeSec);
     const delta = frame.delta;
     this.lastFrameTime = frame.nextFrameTime;
-    this.state.vfx.densityScale = nextDensityScale(this.state.vfx.densityScale, delta, this.state.scene);
+    this.state.vfx.densityScale = nextDensityScale(
+      this.state.vfx.densityScale,
+      delta,
+      this.state.scene,
+    );
     if (this.state.scene === "playing") {
       this.accumulator = runPlayingLoop(
         this.state,

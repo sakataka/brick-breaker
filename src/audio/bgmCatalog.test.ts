@@ -1,6 +1,11 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 
-import { getAllStageBgmTracks, getCueBgmTrack, getStageBgmTrack, getTitleBgmTrack } from "./bgmCatalog";
+import {
+  getAllStageBgmTracks,
+  getCueBgmTrack,
+  getStageBgmTrack,
+  getTitleBgmTrack,
+} from "./bgmCatalog";
 
 describe("bgmCatalog", () => {
   test("provides title and 12 unique campaign tracks", () => {
@@ -34,7 +39,9 @@ describe("bgmCatalog", () => {
     expect(stage1.theme).not.toBe(stage4.theme);
     expect(stage4.theme).not.toBe(stage7.theme);
     expect(stage7.theme).not.toBe(stage10.theme);
-    expect(`${stage1.leadWave}/${stage1.bassWave}`).not.toBe(`${stage10.leadWave}/${stage10.bassWave}`);
+    expect(`${stage1.leadWave}/${stage1.bassWave}`).not.toBe(
+      `${stage10.leadWave}/${stage10.bassWave}`,
+    );
   });
 
   test("includes triad or seventh harmony steps for richer chord feel", () => {

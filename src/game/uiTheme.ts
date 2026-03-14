@@ -1,5 +1,3 @@
-// biome-ignore lint/suspicious/noTsIgnore: culori ships JS-only entrypoints here.
-// @ts-ignore
 import { formatHex, formatRgb, interpolate, parse } from "culori";
 import type { StageVisualProfile, ThemeBandId } from "./config/themes";
 

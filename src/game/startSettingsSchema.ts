@@ -157,7 +157,11 @@ export const DEBUG_SELECT_FIELDS: readonly StartSettingsSelectField[] = [
   { id: "setting-debug-start-stage", field: "debugStartStage", optionsKey: "debugStartStage" },
   { id: "setting-debug-scenario", field: "debugScenario", optionsKey: "debugScenario" },
   { id: "setting-debug-item-preset", field: "debugItemPreset", optionsKey: "debugItemPreset" },
-  { id: "setting-debug-record-results", field: "debugRecordResults", optionsKey: "debugRecordResults" },
+  {
+    id: "setting-debug-record-results",
+    field: "debugRecordResults",
+    optionsKey: "debugRecordResults",
+  },
 ];
 
 export function buildStartSettingsPatch<K extends keyof StartSettingsSelection>(
@@ -214,14 +218,20 @@ function coerceStartSettingsValue<K extends keyof StartSettingsSelection>(
 ): StartSettingsSelection[K] {
   switch (field) {
     case "initialLives":
-      return parseIntegerSetting(value, START_SETTINGS_DEFAULT.initialLives) as StartSettingsSelection[K];
+      return parseIntegerSetting(
+        value,
+        START_SETTINGS_DEFAULT.initialLives,
+      ) as StartSettingsSelection[K];
     case "multiballMaxBalls":
       return parseIntegerSetting(
         value,
         START_SETTINGS_DEFAULT.multiballMaxBalls,
       ) as StartSettingsSelection[K];
     case "debugStartStage":
-      return parseIntegerSetting(value, START_SETTINGS_DEFAULT.debugStartStage) as StartSettingsSelection[K];
+      return parseIntegerSetting(
+        value,
+        START_SETTINGS_DEFAULT.debugStartStage,
+      ) as StartSettingsSelection[K];
     case "debugRecordResults":
       return (value === true || value === "true") as StartSettingsSelection[K];
     case "challengeMode":

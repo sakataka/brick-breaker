@@ -50,7 +50,11 @@ function drawImpactRings(
     const ratio = ring.maxLifeMs > 0 ? 1 - Math.max(0, ring.lifeMs / ring.maxLifeMs) : 0;
     const radius = ring.radiusStart + (ring.radiusEnd - ring.radiusStart) * ratio;
     const color = parseColor(ring.color, { value: 0xffffff, alpha: 0.75 });
-    graphics.lineStyle(Math.max(options.lineWidth, 1), color.value, color.alpha * (1 - ratio * 0.6));
+    graphics.lineStyle(
+      Math.max(options.lineWidth, 1),
+      color.value,
+      color.alpha * (1 - ratio * 0.6),
+    );
     graphics.strokeCircle(
       snapByStep(ring.pos.x + offsetX, options.snapStep),
       snapByStep(ring.pos.y + offsetY, options.snapStep),

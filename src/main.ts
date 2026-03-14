@@ -15,8 +15,16 @@ declare global {
   }
 }
 
-const canvas = getRequiredElement<HTMLCanvasElement>(document, "#game-canvas", "canvas要素が見つかりません");
-const uiRootElement = getRequiredElement<HTMLDivElement>(document, "#ui-root", "ui-root要素が見つかりません");
+const canvas = getRequiredElement<HTMLCanvasElement>(
+  document,
+  "#game-canvas",
+  "canvas要素が見つかりません",
+);
+const uiRootElement = getRequiredElement<HTMLDivElement>(
+  document,
+  "#ui-root",
+  "ui-root要素が見つかりません",
+);
 const uiRoot = createRoot(uiRootElement);
 uiRoot.render(createElement(AppUi));
 

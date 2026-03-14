@@ -360,5 +360,8 @@ export function buildStartConfig(base: GameConfig, setup: StartSetupOptions): Ga
 export function getShopPurchaseCost(purchaseCount: number): number {
   const clampedCount = Math.max(0, Math.floor(purchaseCount));
   const raw = SHOP_CONFIG.basePurchaseCost * SHOP_CONFIG.growthFactor ** clampedCount;
-  return Math.max(SHOP_CONFIG.roundUnit, Math.round(raw / SHOP_CONFIG.roundUnit) * SHOP_CONFIG.roundUnit);
+  return Math.max(
+    SHOP_CONFIG.roundUnit,
+    Math.round(raw / SHOP_CONFIG.roundUnit) * SHOP_CONFIG.roundUnit,
+  );
 }

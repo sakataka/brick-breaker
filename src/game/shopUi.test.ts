@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 
 import { GAME_CONFIG } from "./config";
 import { buildShopUiView } from "./shopUi";

@@ -69,7 +69,11 @@ export function advanceStage(state: GameState, config: GameConfig, random: Rando
   return true;
 }
 
-export function retryCurrentStage(state: GameState, config: GameConfig, random: RandomSource): void {
+export function retryCurrentStage(
+  state: GameState,
+  config: GameConfig,
+  random: RandomSource,
+): void {
   state.score = state.campaign.stageStartScore;
   state.rogue.pendingOffer = null;
   state.story.activeStageNumber = null;
@@ -90,7 +94,13 @@ export function applyLifeLoss(
   }
 
   activateAssist(state.assist, state.elapsedSec, config);
-  applyAssistToPaddle(state.paddle, balance.paddleWidth, config.width, state.assist, state.elapsedSec);
+  applyAssistToPaddle(
+    state.paddle,
+    balance.paddleWidth,
+    config.width,
+    state.assist,
+    state.elapsedSec,
+  );
   const stageMetadata = resolveStageMetadataFromState(state);
   resetCombatState(
     state,
@@ -161,7 +171,15 @@ function buildStageRuntime(
   );
   state.balls = ensureMultiballCount(
     state.items,
-    [createServeBall(config, state.paddle, balance.ballRadius, random, stageContext.initialBallSpeed)],
+    [
+      createServeBall(
+        config,
+        state.paddle,
+        balance.ballRadius,
+        random,
+        stageContext.initialBallSpeed,
+      ),
+    ],
     random,
     config.multiballMaxBalls,
   );
@@ -240,7 +258,9 @@ function resetStageStats(state: GameState): void {
 function clampStartStageIndex(state: GameState, stageIndex: number): number {
   const activeCatalog = resolveStageMetadataFromState(state).activeCatalog;
   const stageStartCap =
-    state.options.gameMode === "boss_rush" ? MODE_CONFIG.bossRushRounds - 1 : activeCatalog.length - 1;
+    state.options.gameMode === "boss_rush"
+      ? MODE_CONFIG.bossRushRounds - 1
+      : activeCatalog.length - 1;
   return Math.max(0, Math.min(stageStartCap, stageIndex));
 }
 

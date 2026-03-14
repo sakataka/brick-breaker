@@ -23,7 +23,15 @@ import {
 import type { ReactElement } from "react";
 import type { ItemType } from "../../game/types";
 
-export type AppIconName = ItemType | "score" | "lives" | "time" | "combo" | "cast" | "boss" | "warning";
+export type AppIconName =
+  | ItemType
+  | "score"
+  | "lives"
+  | "time"
+  | "combo"
+  | "cast"
+  | "boss"
+  | "warning";
 
 const ICON_MAP: Record<AppIconName, Icon> = {
   paddle_plus: ArrowsOutLineHorizontal,
@@ -50,7 +58,12 @@ export interface AppIconProps extends Omit<IconProps, "children"> {
   name: AppIconName;
 }
 
-export function AppIcon({ name, size = 18, weight = "duotone", ...props }: AppIconProps): ReactElement {
+export function AppIcon({
+  name,
+  size = 18,
+  weight = "duotone",
+  ...props
+}: AppIconProps): ReactElement {
   const Component = ICON_MAP[name] ?? Skull;
   return <Component aria-hidden="true" size={size} weight={weight} {...props} />;
 }

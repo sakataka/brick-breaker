@@ -1,27 +1,27 @@
+import { spawnSync } from "node:child_process";
+
 const DOC_FILES = new Set(["README.md", "docs/architecture.md"]);
 const DEFAULT_DIFF_BASE = process.env.COVERAGE_DIFF_BASE ?? "origin/main";
 
-const isTestFile = (path: string): boolean => /\.test\.(ts|tsx)$/.test(path);
+const isTestFile = (path) => /\.test\.(ts|tsx)$/.test(path);
 
-const isGameplaySourceFile = (path: string): boolean =>
+const isGameplaySourceFile = (path) =>
   (path.startsWith("src/game/") || path.startsWith("src/app/")) &&
   /\.(ts|tsx)$/.test(path) &&
   !isTestFile(path);
 
-const isConfigSourceFile = (path: string): boolean =>
+const isConfigSourceFile = (path) =>
   path.startsWith("src/game/config/") || path === "src/game/itemRegistry.ts";
 
-const isCoreSourceFile = (path: string): boolean => path.startsWith("src/core/");
+const isCoreSourceFile = (path) => path.startsWith("src/core/");
 
-function run(command: string[], label: string): { success: boolean; output: string } {
-  const result = Bun.spawnSync({
-    cmd: command,
-    stdout: "pipe",
-    stderr: "pipe",
+function run(command, label) {
+  const result = spawnSync(command[0], command.slice(1), {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
   });
-  const output =
-    `${new TextDecoder().decode(result.stdout)}${new TextDecoder().decode(result.stderr)}`.trim();
-  if (result.exitCode !== 0) {
+  const output = `${result.stdout ?? ""}${result.stderr ?? ""}`.trim();
+  if (result.status !== 0) {
     return {
       success: false,
       output: output || `${label} failed without output`,
@@ -33,7 +33,7 @@ function run(command: string[], label: string): { success: boolean; output: stri
   };
 }
 
-function resolveChangedFiles(): string[] {
+function resolveChangedFiles() {
   const diffRanges = [`${DEFAULT_DIFF_BASE}...HEAD`, "HEAD~1...HEAD", "HEAD"];
   for (const range of diffRanges) {
     const args =
@@ -48,19 +48,19 @@ function resolveChangedFiles(): string[] {
       .split("\n")
       .map((line) => line.trim())
       .filter(Boolean);
-    return Array.from(new Set(files));
+    return [...new Set(files)];
   }
   return [];
 }
 
-function main(): number {
+function main() {
   const changedFiles = resolveChangedFiles();
   if (changedFiles.length === 0) {
     console.log("[verify-change-coverage] No changed files detected. Skipping.");
     return 0;
   }
 
-  const violations: string[] = [];
+  const violations = [];
   const hasGameplaySourceChange = changedFiles.some(isGameplaySourceFile);
   const hasTestChange = changedFiles.some(isTestFile);
   const hasConfigChange = changedFiles.some(isConfigSourceFile);
@@ -80,9 +80,11 @@ function main(): number {
   }
 
   if (hasCoreChange) {
-    const archCheck = run(["bun", "run", "check:arch"], "bun run check:arch");
+    const archCheck = run(["vp", "run", "check:arch"], "vp run check:arch");
     if (!archCheck.success) {
-      violations.push(`src/core changed and architecture boundary check failed.\n${archCheck.output}`);
+      violations.push(
+        `src/core changed and architecture boundary check failed.\n${archCheck.output}`,
+      );
     }
   }
 

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 import { GAME_CONFIG } from "../config";
 import { createInitialGameState } from "../stateFactory";
 import { updateStageControlBricks } from "./stagePhase";
@@ -36,7 +36,11 @@ describe("stagePhase", () => {
       },
     ];
 
-    updateStageControlBricks(state, { generatorActive: true, gateActive: false, turretActive: false }, 0.2);
+    updateStageControlBricks(
+      state,
+      { generatorActive: true, gateActive: false, turretActive: false },
+      0.2,
+    );
 
     expect(state.bricks[1]?.alive).toBe(true);
     expect(state.vfx.floatingTexts.some((text) => text.key === "generator")).toBe(true);

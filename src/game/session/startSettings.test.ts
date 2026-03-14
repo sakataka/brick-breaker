@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 import { GAME_CONFIG } from "../config";
 import { ITEM_ORDER } from "../itemRegistryData";
 import { createInitialGameState } from "../stateFactory";
@@ -70,10 +70,15 @@ describe("session/startSettings", () => {
       debugScenario: "boss_check",
       debugStartStage: 1,
     } as never;
-    const applied = computeAppliedStartSettings(GAME_CONFIG, baseRandom, selected, (base, setup) => ({
-      ...base,
-      difficulty: setup.difficulty,
-    }));
+    const applied = computeAppliedStartSettings(
+      GAME_CONFIG,
+      baseRandom,
+      selected,
+      (base, setup) => ({
+        ...base,
+        difficulty: setup.difficulty,
+      }),
+    );
 
     expect(applied.config.difficulty).toBe("hard");
     expect(applied.audioSettings).toEqual({ bgmEnabled: false, sfxEnabled: true });

@@ -25,7 +25,11 @@ import { runPhysicsForBalls } from "./physicsApply";
 import { updateBossPhase } from "./pipeline/bossPhase";
 import { processEliteBrickEvents } from "./pipeline/elitePhase";
 import { resolveEnemyHits, updateEnemies, updateEnemyWaveEvent } from "./pipeline/enemyPhase";
-import { syncHeldBallsSnapshot, updateAutoLaserSpawner, updateLaserProjectiles } from "./pipeline/laserPhase";
+import {
+  syncHeldBallsSnapshot,
+  updateAutoLaserSpawner,
+  updateLaserProjectiles,
+} from "./pipeline/laserPhase";
 import { castMagicStrike } from "./pipeline/magicPhase";
 import { processShieldBurst } from "./pipeline/shieldPhase";
 import { ensureShopOffer } from "./pipeline/shopPhase";
@@ -87,7 +91,11 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   state.elapsedSec += config.fixedDeltaSec;
   const bossPhaseSpeedScale = updateBossPhase(state, config, random, deps.sfx, pipelineDeltaSec);
 
-  const maxWithAssist = getCurrentMaxBallSpeed(stageContext.maxBallSpeed, state.assist, state.elapsedSec);
+  const maxWithAssist = getCurrentMaxBallSpeed(
+    stageContext.maxBallSpeed,
+    state.assist,
+    state.elapsedSec,
+  );
   const hazardSpeedScale =
     state.elapsedSec < state.hazard.speedBoostUntilSec ? HAZARD_CONFIG.maxSpeedScale : 1;
   const riskSpeedScale = state.options.riskMode ? RISK_MODE_CONFIG.maxSpeedScale : 1;
@@ -115,17 +123,24 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
     balance.paddleWidth * getPaddleScale(state.items) * (1 + state.rogue.paddleScaleBonus);
   applyAssistToPaddle(state.paddle, basePaddleWidth, config.width, state.assist, state.elapsedSec);
 
-  const physics = runPhysicsForBalls(state.balls, state.paddle, state.bricks, config, pipelineDeltaSec, {
-    maxBallSpeed: effectiveMaxSpeed,
-    initialBallSpeed: stageContext.initialBallSpeed,
-    pierceDepth,
-    bombRadiusTiles,
-    explodeOnHit: bombRadiusTiles > 0,
-    homingStrength,
-    fluxField: stageContext.stageModifier?.fluxField,
-    warpZones: stageContext.stageModifier?.warpZones,
-    onMiss: (target) => deps.tryShieldRescue(target, effectiveMaxSpeed),
-  });
+  const physics = runPhysicsForBalls(
+    state.balls,
+    state.paddle,
+    state.bricks,
+    config,
+    pipelineDeltaSec,
+    {
+      maxBallSpeed: effectiveMaxSpeed,
+      initialBallSpeed: stageContext.initialBallSpeed,
+      pierceDepth,
+      bombRadiusTiles,
+      explodeOnHit: bombRadiusTiles > 0,
+      homingStrength,
+      fluxField: stageContext.stageModifier?.fluxField,
+      warpZones: stageContext.stageModifier?.warpZones,
+      onMiss: (target) => deps.tryShieldRescue(target, effectiveMaxSpeed),
+    },
+  );
   if (projectileEvents.length > 0) {
     physics.events.push(...projectileEvents);
   }
@@ -139,7 +154,13 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   if (enemyHits.events.length > 0) {
     physics.events.push(...enemyHits.events);
   }
-  const burstEvents = processShieldBurst(state, physics.survivors, effectiveMaxSpeed, deps.sfx, random);
+  const burstEvents = processShieldBurst(
+    state,
+    physics.survivors,
+    effectiveMaxSpeed,
+    deps.sfx,
+    random,
+  );
   if (burstEvents.length > 0) {
     physics.events.push(...burstEvents);
   }
@@ -156,7 +177,12 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
   );
   const comboRewardBefore = state.combo.rewardGranted;
   const comboFillBefore = state.combo.fillTriggered;
-  const baseScoreGain = applyComboHits(state.combo, state.elapsedSec, destroyedBricks, balance.scorePerBrick);
+  const baseScoreGain = applyComboHits(
+    state.combo,
+    state.elapsedSec,
+    destroyedBricks,
+    balance.scorePerBrick,
+  );
   state.score += Math.round(baseScoreGain * scoreScale);
   if (eliteEffects.scorePenalty > 0) {
     state.score = Math.max(0, state.score - eliteEffects.scorePenalty);
@@ -261,7 +287,8 @@ export function stepPlayingPipeline(state: GameState, deps: GamePipelineDeps): P
     return "ballloss";
   }
 
-  const clearedAfterMagic = hadAliveBricksBeforeTick && countAliveObjectiveBricks(state.bricks) <= 0;
+  const clearedAfterMagic =
+    hadAliveBricksBeforeTick && countAliveObjectiveBricks(state.bricks) <= 0;
   if (physics.hasClear || clearedAfterMagic) {
     return "stageclear";
   }
@@ -284,7 +311,11 @@ function applyPulseStrike(
   const centerY = state.paddle.y - 18;
   const collisionEvents: CollisionEvent[] = [];
   for (const brick of state.bricks) {
-    if (!brick.alive || (brick.kind ?? "normal") === "steel" || (brick.kind ?? "normal") === "gate") {
+    if (
+      !brick.alive ||
+      (brick.kind ?? "normal") === "steel" ||
+      (brick.kind ?? "normal") === "gate"
+    ) {
       continue;
     }
     const dx = brick.x + brick.width / 2 - centerX;

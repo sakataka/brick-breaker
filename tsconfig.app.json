@@ -9,7 +9,7 @@
     "allowJs": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "types": ["vite/client"],
+    "types": ["node", "vite/client"],
     "resolveJsonModule": true,
     "noEmit": true
   },

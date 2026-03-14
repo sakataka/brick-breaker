@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vite-plus/test";
 import { SceneMachine } from "./sceneMachine";
 import { applySceneTransition } from "./sceneSync";
 import type { GameState } from "./types";

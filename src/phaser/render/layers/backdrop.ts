@@ -64,14 +64,18 @@ function drawAmbientBursts(
   const accent = parseColor(view.visual.tokens.accent, { value: 0x40f4ff, alpha: 0.22 });
   const danger = parseColor(view.visual.tokens.danger, { value: 0xff6a6a, alpha: 0.18 });
   const pulse =
-    0.5 + Math.sin(view.elapsedSec * (view.visual.encounterEmphasis === "chapter" ? 1.1 : 2.6)) * 0.5;
+    0.5 +
+    Math.sin(view.elapsedSec * (view.visual.encounterEmphasis === "chapter" ? 1.1 : 2.6)) * 0.5;
   graphics.fillStyle(accent.value, accent.alpha * (0.08 + pulse * 0.08));
   graphics.fillCircle(
     snapByStep(width * 0.18, snapStep),
     snapByStep(height * 0.24, snapStep),
     82 + pulse * 26,
   );
-  graphics.fillStyle(danger.value, danger.alpha * (view.visual.warningLevel === "critical" ? 0.16 : 0.08));
+  graphics.fillStyle(
+    danger.value,
+    danger.alpha * (view.visual.warningLevel === "critical" ? 0.16 : 0.08),
+  );
   graphics.fillCircle(
     snapByStep(width * 0.78, snapStep),
     snapByStep(height * 0.78, snapStep),
@@ -79,7 +83,11 @@ function drawAmbientBursts(
   );
 }
 
-function drawTopVignette(graphics: Phaser.GameObjects.Graphics, header: ParsedColor, width: number): void {
+function drawTopVignette(
+  graphics: Phaser.GameObjects.Graphics,
+  header: ParsedColor,
+  width: number,
+): void {
   const height = 72;
   const steps = 8;
   const stripeHeight = height / steps;
@@ -119,7 +127,16 @@ function drawWarpZones(
     const entryCenterY = zone.inYMin + height / 2;
     graphics.fillRect(entryX, entryY, width, height);
     graphics.strokeRect(entryX, entryY, width, height);
-    drawGuideSegments(graphics, entryCenterX, entryCenterY, zone.outX, zone.outY, guide, lineWidth, snapStep);
+    drawGuideSegments(
+      graphics,
+      entryCenterX,
+      entryCenterY,
+      zone.outX,
+      zone.outY,
+      guide,
+      lineWidth,
+      snapStep,
+    );
     graphics.fillStyle(exitFill.value, exitFill.alpha);
     graphics.fillCircle(snapByStep(zone.outX, snapStep), snapByStep(zone.outY, snapStep), 3.6);
     graphics.lineStyle(lineWidth, exitRing.value, exitRing.alpha);
@@ -151,7 +168,10 @@ function drawPattern(
     for (let y = 24; y < height; y += 28) {
       graphics.beginPath();
       graphics.moveTo(0, snapByStep(y + Math.sin(view.elapsedSec * 1.4 + y * 0.02) * 4, snapStep));
-      graphics.lineTo(width, snapByStep(y - 10 + Math.sin(view.elapsedSec * 1.4 + y * 0.02) * 4, snapStep));
+      graphics.lineTo(
+        width,
+        snapByStep(y - 10 + Math.sin(view.elapsedSec * 1.4 + y * 0.02) * 4, snapStep),
+      );
       graphics.strokePath();
     }
     return;
@@ -206,8 +226,14 @@ function drawGuideSegments(
     const start = cursor;
     const end = Math.min(distance, cursor + dashLength);
     graphics.beginPath();
-    graphics.moveTo(snapByStep(fromX + unitX * start, snapStep), snapByStep(fromY + unitY * start, snapStep));
-    graphics.lineTo(snapByStep(fromX + unitX * end, snapStep), snapByStep(fromY + unitY * end, snapStep));
+    graphics.moveTo(
+      snapByStep(fromX + unitX * start, snapStep),
+      snapByStep(fromY + unitY * start, snapStep),
+    );
+    graphics.lineTo(
+      snapByStep(fromX + unitX * end, snapStep),
+      snapByStep(fromY + unitY * end, snapStep),
+    );
     graphics.strokePath();
     cursor += dashLength + gapLength;
   }

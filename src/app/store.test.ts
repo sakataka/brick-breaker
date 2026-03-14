@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "bun:test";
+import { beforeEach, describe, expect, test } from "vite-plus/test";
 import { START_SETTINGS_DEFAULT } from "../game/startSettingsSchema";
 import { appStore, useAppStore } from "./store";
 

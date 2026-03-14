@@ -27,7 +27,10 @@ export function updateGhostRecording(state: GameState, deltaSec: number): void {
   }
 }
 
-export function getGhostPlaybackSample(playback: GhostSample[], elapsedSec: number): GhostSample | null {
+export function getGhostPlaybackSample(
+  playback: GhostSample[],
+  elapsedSec: number,
+): GhostSample | null {
   if (playback.length <= 0) {
     return null;
   }

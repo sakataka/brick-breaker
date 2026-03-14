@@ -1,69 +1,103 @@
 # Brick Breaker Local
 
-Bun + Vite + TypeScript を基盤に、`Phaser` をホストにした描画/入力、`React + Zustand` の UI、`Tone/WebAudio` のサウンドで構成したローカル向けブロック崩しです。  
-表示は `motion`、`@phosphor-icons/react`、`@fontsource/space-grotesk`、`@fontsource/public-sans`、`clsx`、`culori` を使った Neon Pop 系 UI に更新されています。
+Vite+ + pnpm + TypeScript を基盤に、`Phaser` をホストにした描画/入力、`React + Zustand` の UI、`Tone/WebAudio` のサウンドで構成したローカル向けブロック崩しです。  
+表示は `motion`、`@phosphor-icons/react`、`@fontsource/space-grotesk`、`@fontsource/public-sans`、`clsx`、`culori` を使った Neon Pop 系 UI で構成しています。
 
 マウス操作を中心に、通常 12 ステージキャンペーン、EX 4 ステージ、11 種アイテム、複数ゲームモード、コンボ、評価、サウンド、開始前設定を備えています。
+
+## 前提環境
+
+- `vp`（Vite+ CLI）
+- `pnpm 10.x`（`vp install` から利用）
+- `Node.js 20.19+` または `22.12+`（Vite 8 の要件）
+- 推奨 Node: `.node-version` に合わせた `24.3.0`
+- 想定シェル: `zsh`
 
 ## セットアップ
 
 ```bash
-bun install
-bun run dev
+curl -fsSL https://vite.plus | bash
+vp install
+vp dev
 ```
 
-`bun install` 時に `lefthook` の `pre-push` フックが自動インストールされます。
+依存解決、hook 設定、日常的な dev/build/test/check は `vp` を基準に使います。  
+Project 固有 script だけ `vp run ...` で呼びます。  
+コマンド例はローカルの `zsh` 実行を前提にしています。
+
+## 標準ループ
+
+通常の開発は次の流れです。
+
+```bash
+vp install
+vp check
+vp test
+vp build
+```
+
+E2E を含める場合は初回にブラウザを入れてから実行します。
+
+```bash
+vp exec playwright install chromium
+vp run e2e:ci
+```
+
+ツールチェーンの詳細は `docs/toolchain.md` を参照してください。
 
 ローカル確認用の preview は次で起動できます。
 
 ```bash
-bun run preview
+vp preview
 ```
 
 ## 開発コマンド
 
 ```bash
-# 型 + lint + deadcode + build
-bun run check
+# 型 + lint + format check（Vite+）
+vp check
+
+# unit tests（Vitest via Vite+）
+vp test
 
 # 翻訳辞書の型検証 / 生成
-bun run typesafe-i18n --no-watch
+vp run typesafe-i18n
 
-# 反復開発向け（buildを省いた高速ゲート）
-bun run check:fast
+# deadcode scan
+vp run deadcode
 
-# pre-pushと同じガード
-bun run guard:local
+# 反復開発向けの高速ゲート
+vp run check:fast
+
+# ローカル品質ゲート
+vp run guard:local
+
+# CI 相当の品質ゲート
+vp run guard:ci
 
 # 差分に応じた対応漏れ検知
-bun run verify:change-coverage
+vp run verify:change-coverage
 
 # レイヤー依存の境界チェック
-bun run check:arch
-
-# deadcode scan (CI-compatible)
-bun run deadcode
+vp run check:arch
 
 # deadcode scan (report only)
-bun run deadcode:report
-
-# unit/integration tests
-bun test
-
-# e2e tests (Playwright)
-bun run e2e
+vp run deadcode:report
 
 # CI同等のe2e（previewサーバ利用）
-bun run e2e:ci
+vp run e2e:ci
+
+# e2e tests (Playwright)
+vp run e2e
 
 # 新機能の雛形生成（本体 + テスト + doc TODOコメント）
-bun run scaffold:feature -- <feature-name>
+vp run scaffold:feature -- <feature-name>
 ```
 
 初回のみ Playwright ブラウザをインストールしてください。
 
 ```bash
-bunx playwright install chromium
+vp exec playwright install chromium
 ```
 
 ## 操作
@@ -187,6 +221,9 @@ bunx playwright install chromium
 ## 公開（GitHub Pages）
 
 - `vite.config.ts` は GitHub Actions 上で `base: /brick-breaker/` を自動適用
+- 開発コマンドの入口は `Vite+` (`vp`) に統一
+- ビルドは `Rolldown` 前提で、`output.codeSplitting` で `phaser` を専用 chunk に分離
+- unit test は `vp test`、E2E は `vp run e2e:ci` を使う
 - Workflow:
   - CI: `.github/workflows/ci.yml`（`quick-guard` + `build` + `e2e`）
   - Deploy: `.github/workflows/deploy-pages.yml`
@@ -200,6 +237,7 @@ GitHub Pages 公開手順:
 ## 設計ドキュメント
 
 - `docs/architecture.md`
+- `docs/toolchain.md`
 - `README.md`
 
 ## 実装メモ
