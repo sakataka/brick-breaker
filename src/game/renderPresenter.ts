@@ -1,6 +1,5 @@
 import { countAliveObjectiveBricks } from "./brickRules";
-import { getStageStory, ROGUE_CONFIG } from "./config";
-import { getGhostPlaybackSample } from "./ghostSystem";
+import { getStageStory } from "./config";
 import { getActiveItemEntries } from "./itemSystem";
 import type { HudViewModel, OverlayViewModel, RenderViewState } from "./renderTypes";
 import { getStageClearTimeSec } from "./roundSystem";
@@ -18,10 +17,6 @@ export function buildRenderViewState(state: GameState): RenderViewState {
   const progressRatio = computeProgressRatio(state);
   const warningLevel = resolveWarningLevel(state);
   const stageIntro = buildStageIntro(state, stageContext);
-  const ghostSample =
-    state.options.ghostReplayEnabled && state.ghost.playbackEnabled
-      ? getGhostPlaybackSample(state.ghost.playback, state.elapsedSec)
-      : null;
 
   return {
     scene: state.scene,
@@ -104,13 +99,6 @@ export function buildRenderViewState(state: GameState): RenderViewState {
     fluxFieldActive: stageContext.stageModifier?.fluxField ?? false,
     stageModifierKey: stageContext.stageModifier?.key,
     warpZones: stageContext.stageModifier?.warpZones,
-    ghostPlayback: ghostSample
-      ? {
-          paddleX: ghostSample.paddleX,
-          ballX: ghostSample.ballX,
-          ballY: ghostSample.ballY,
-        }
-      : undefined,
     paddleAuraColor: state.vfx.pickupAuraMs > 0 ? state.vfx.pickupAuraColor : undefined,
     ballAuraColor: state.vfx.pickupAuraMs > 0 ? state.vfx.pickupAuraColor : undefined,
   };
@@ -132,7 +120,6 @@ export function buildHudViewModel(state: GameState): HudViewModel {
     elapsedSec: state.elapsedSec,
     comboMultiplier: state.combo.streak > 1 ? state.combo.multiplier : 1,
     stage: {
-      mode: state.options.gameMode,
       current: state.campaign.stageIndex + 1,
       total: state.campaign.totalStages,
       route: state.campaign.resolvedRoute,
@@ -147,9 +134,6 @@ export function buildHudViewModel(state: GameState): HudViewModel {
     flags: {
       hazardBoostActive,
       pierceSlowSynergy,
-      riskMode: state.options.riskMode,
-      rogueUpgradesTaken: state.rogue.upgradesTaken,
-      rogueUpgradeCap: ROGUE_CONFIG.maxUpgrades,
       magicCooldownSec: state.magic.cooldownSec,
       warpLegendVisible: Boolean(stageContext.stageModifier?.warpZones?.length),
       steelLegendVisible: stageContext.stageTags?.includes("steel") ?? false,
@@ -244,7 +228,6 @@ export function buildOverlayViewModel(state: GameState): OverlayViewModel {
     score: overlayScore,
     lives: state.lives,
     stage: {
-      mode: state.options.gameMode,
       current: state.campaign.stageIndex + 1,
       total: state.campaign.totalStages,
       debugModeEnabled: state.options.debugModeEnabled,
@@ -285,13 +268,6 @@ export function buildOverlayViewModel(state: GameState): OverlayViewModel {
             missionAchieved: result.missionAchieved,
             missionResults: result.missionResults,
           }))
-        : undefined,
-    rogueOffer:
-      state.scene === "stageclear" && state.rogue.pendingOffer
-        ? {
-            options: state.rogue.pendingOffer,
-            remaining: Math.max(0, ROGUE_CONFIG.maxUpgrades - state.rogue.upgradesTaken),
-          }
         : undefined,
     storyStageNumber:
       state.scene === "story" && typeof state.story.activeStageNumber === "number"

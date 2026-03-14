@@ -1,5 +1,5 @@
 import { i18nObject } from "typesafe-i18n";
-import type { ItemType, RogueUpgradeType, StageMissionKey } from "../game/types";
+import type { ItemType, StageMissionKey } from "../game/types";
 import { translationCatalog } from "./translations";
 
 export const supportedLocales = ["ja", "en"] as const;
@@ -16,26 +16,18 @@ function createTranslator(locale: AppLocale) {
 
 export type LL = ReturnType<typeof createTranslator>;
 
-export function getLocaleStorageKey(): string {
-  return STORAGE_KEY;
-}
-
-export function isAppLocale(value: string): value is AppLocale {
-  return supportedLocales.includes(value as AppLocale);
-}
-
-export function isSupportedLocale(value: string): value is SupportedLocale {
+function isSupportedLocale(value: string): value is SupportedLocale {
   return supportedLocales.includes(value as SupportedLocale);
 }
 
-export function resolveStoredLocale(
+function resolveStoredLocale(
   storage: Pick<Storage, "getItem"> | null | undefined,
 ): AppLocale | null {
   const stored = storage?.getItem(STORAGE_KEY);
   return stored && isSupportedLocale(stored) ? stored : null;
 }
 
-export function resolveBrowserLocale(
+function resolveBrowserLocale(
   navigatorRef: Pick<Navigator, "language" | "languages"> | null | undefined,
 ): SupportedLocale {
   const candidates = navigatorRef?.languages?.length
@@ -53,7 +45,7 @@ export function resolveBrowserLocale(
   return "ja";
 }
 
-export function resolveInitialLocale(windowRef?: Window): AppLocale {
+function resolveInitialLocale(windowRef?: Window): AppLocale {
   const stored = resolveStoredLocale(windowRef?.localStorage);
   if (stored) {
     return stored;
@@ -111,14 +103,10 @@ export function getItemTranslation(LL: LL, itemType: ItemType) {
   return LL.items[itemType];
 }
 
-export function getRogueUpgradeLabel(LL: LL, upgrade: RogueUpgradeType): string {
-  return LL.rogue[upgrade]();
-}
-
 export function getStageMissionLabel(LL: LL, key: StageMissionKey): string {
   return LL.stageMission[key]();
 }
 
-export function getIntlLocale(locale: AppLocale): string {
+function getIntlLocale(locale: AppLocale): string {
   return locale;
 }

@@ -1,7 +1,7 @@
-import type { ShopViewState } from "../app/store";
 import { appStore } from "../app/store";
 import type { GameHost } from "../phaser/GameHost";
 import type { HudViewModel, OverlayViewModel } from "./renderTypes";
+import type { ShopUiView } from "./shopUi";
 import { SessionController } from "./session/SessionController";
 import type { GameConfig, RandomSource, Scene } from "./types";
 
@@ -22,10 +22,9 @@ export class GameSession {
       uiPort: {
         syncOverlay: (view: OverlayViewModel) => appStore.getState().setOverlayModel(view),
         syncHud: (view: HudViewModel) => appStore.getState().setHud(view),
-        syncShop: (view: unknown) => appStore.getState().setShop(view as ShopViewState),
+        syncShop: (view: ShopUiView) => appStore.getState().setShop(view),
       },
       getStartSettings: () => appStore.getState().startSettings,
-      getRogueSelection: () => appStore.getState().rogueSelection,
       setUiHandlers: (handlers) => appStore.getState().setHandlers(handlers),
       setMetaProgress: (metaProgress) => appStore.getState().setMetaProgress(metaProgress),
     });

@@ -1,8 +1,7 @@
 import { describe, expect, test } from "vite-plus/test";
-import { ITEM_ORDER } from "./itemRegistryData";
+import { ITEM_ORDER } from "./itemRegistry";
 
 import {
-  applyDebugItemPreset,
   applyItemPickup,
   canUseShield,
   clearActiveItemEffects,
@@ -45,7 +44,6 @@ function createBall(): Ball {
 }
 
 describe("itemSystem", () => {
-  const allEnabled = ITEM_ORDER as unknown as readonly import("./types").ItemType[];
   test("stacking increases power without overwrite", () => {
     const items = createItemState();
 
@@ -302,36 +300,6 @@ describe("itemSystem", () => {
     expect(getLaserLevel(items)).toBe(1);
   });
 
-  test("debug presets apply expected stacks", () => {
-    const items = createItemState();
-
-    applyDebugItemPreset(items, "combat_check", false, allEnabled);
-    expect(items.active.paddlePlusStacks).toBe(1);
-    expect(items.active.slowBallStacks).toBe(1);
-    expect(items.active.multiballStacks).toBe(1);
-    expect(items.active.shieldCharges).toBe(1);
-
-    applyDebugItemPreset(items, "boss_check", false, allEnabled);
-    expect(items.active.shieldCharges).toBe(2);
-    expect(items.active.pierceStacks).toBe(1);
-    expect(items.active.bombStacks).toBe(1);
-    expect(items.active.laserStacks).toBe(1);
-
-    applyDebugItemPreset(items, "boss_check", true, allEnabled);
-    expect(items.active.laserStacks).toBe(2);
-
-    applyDebugItemPreset(items, "none", true, allEnabled);
-    expect(items.active.multiballStacks).toBe(0);
-    expect(items.active.shieldCharges).toBe(0);
-  });
-
-  test("combat debug preset can expand balls via multiball target", () => {
-    const items = createItemState();
-    applyDebugItemPreset(items, "combat_check", true, allEnabled);
-    const balls = ensureMultiballCount(items, [createBall()], sequenceRandom([0.5, 0.2, 0.7]), 4);
-    expect(balls).toHaveLength(2);
-  });
-
   test("clearActiveItemEffects resets all active stacks", () => {
     const items = createItemState();
     applyItemPickup(items, "multiball", [createBall()]);
@@ -358,7 +326,7 @@ describe("itemSystem", () => {
     expect(items.active.shieldCharges).toBe(1);
   });
 
-  test("disabled item pools exclude removed items from drops and debug preset", () => {
+  test("disabled item pools exclude removed items from drops", () => {
     const items = createItemState();
     const events: CollisionEvent[] = Array.from({ length: 20 }, () => ({
       kind: "brick",
@@ -371,8 +339,5 @@ describe("itemSystem", () => {
       enabledItems: enabled,
     });
     expect(items.falling.every((drop) => drop.type !== "pulse")).toBe(true);
-
-    applyDebugItemPreset(items, "boss_check", true, enabled);
-    expect(items.active.pulseStacks).toBe(0);
   });
 });

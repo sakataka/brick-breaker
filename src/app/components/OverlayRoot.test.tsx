@@ -15,7 +15,6 @@ const BASE_OVERLAY: OverlayViewModel = {
   score: 0,
   lives: 4,
   stage: {
-    mode: "campaign",
     current: 1,
     total: 12,
     debugModeEnabled: false,
@@ -39,10 +38,8 @@ function render(settings: StartSettingsSelection, overlay: OverlayViewModel): st
       overlay={overlay}
       startSettings={settings}
       exUnlocked={false}
-      rogueSelection="score_core"
       onStartSettingsChange={() => {}}
       onLocaleChange={() => {}}
-      onRogueSelectionChange={() => {}}
       onPrimaryAction={() => {}}
     />,
   );
@@ -54,9 +51,7 @@ describe("OverlayRoot", () => {
     expect(markup).toContain("overlay-card-layout");
     expect(markup).toContain("overlay-settings-scroll");
     expect(markup).toContain("overlay-fixed-footer");
-    expect(markup).not.toContain('value="pseudo"');
     expect(markup).toContain('id="setting-item-pool"');
-    expect(markup).not.toContain('id="app-summary-pdf-link"');
   });
 
   test("debug options remain collapsed when debug mode is OFF", () => {
@@ -65,15 +60,15 @@ describe("OverlayRoot", () => {
     expect(markup).toContain("デバッグモードをONにすると検証用オプションを表示します");
   });
 
-  test("debug options expand when debug mode is ON", () => {
+  test("debug options expand with the reduced debug surface", () => {
     const settings: StartSettingsSelection = {
       ...BASE_SETTINGS,
       debugModeEnabled: true,
     };
     const markup = render(settings, BASE_OVERLAY);
     expect(markup).toContain('id="setting-debug-start-stage"');
-    expect(markup).toContain('id="setting-debug-scenario"');
-    expect(markup).toContain('id="setting-debug-item-preset"');
     expect(markup).toContain('id="setting-debug-record-results"');
+    expect(markup).not.toContain('id="setting-debug-scenario"');
+    expect(markup).not.toContain('id="setting-debug-item-preset"');
   });
 });

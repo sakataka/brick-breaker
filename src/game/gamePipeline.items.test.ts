@@ -216,34 +216,6 @@ describe("gamePipeline items", () => {
     expect(state.bricks.filter((brick) => !brick.alive).length).toBeGreaterThanOrEqual(2);
   });
 
-  test("risk mode raises brick score gain", () => {
-    const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60 };
-    const state = createInitialGameState(config, true, "playing");
-    state.scene = "playing";
-    state.options.riskMode = true;
-    state.bricks = [{ id: 1, x: 100, y: 70, width: 40, height: 12, alive: true }];
-    state.balls = [
-      {
-        pos: { x: 120, y: 68 },
-        vel: { x: 0, y: 70 },
-        radius: 8,
-        speed: config.initialBallSpeed,
-      },
-    ];
-
-    stepPlayingPipeline(state, {
-      config,
-      random,
-      sfx: sfxStub as never,
-      tryShieldRescue: () => false,
-      playPickupSfx: () => {},
-      playComboFillSfx: () => {},
-      playMagicCastSfx: () => {},
-    });
-
-    expect(state.score).toBe(135);
-  });
-
   test("generates one shop offer per stage", () => {
     const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60 };
     const state = createInitialGameState(config, true, "playing");

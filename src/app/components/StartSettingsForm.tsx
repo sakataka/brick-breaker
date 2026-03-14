@@ -5,7 +5,6 @@ import {
   BASIC_TOGGLE_FIELDS,
   buildStartSettingsPatch,
   DEBUG_SELECT_FIELDS,
-  getDefaultCustomStageJson,
   START_SETTINGS_OPTIONS,
   type StartSettingsSelectField,
   type StartSettingsSelection,
@@ -43,12 +42,12 @@ export function StartSettingsForm({
         elevated
       >
         <SectionHeader
-          eyebrow="ARCADE CONFIG"
+          eyebrow="CAMPAIGN CONFIG"
           title={LL.startSettings.sections.basic()}
           subtitle={
             locale === "ja"
-              ? "プレイ条件と進行ルートをここで決めます。"
-              : "Shape the run before launch."
+              ? "キャンペーン進行に必要な設定だけを残しています。"
+              : "Only campaign-relevant settings remain."
           }
           icon={<AppIcon name="score" weight="fill" />}
         />
@@ -73,7 +72,7 @@ export function StartSettingsForm({
         <div className="settings-grid">
           {BASIC_SELECT_FIELDS.filter(
             (field) =>
-              field.field !== "campaignCourse" || (settings.gameMode === "campaign" && exUnlocked),
+              field.field !== "campaignCourse" || exUnlocked || settings.campaignCourse !== "ex",
           ).map((field) => (
             <label key={field.id} htmlFor={field.id}>
               <span>{getSelectFieldLabel(LL, field)}</span>
@@ -93,19 +92,6 @@ export function StartSettingsForm({
             </label>
           ))}
         </div>
-
-        <label htmlFor="setting-seed-code">
-          <span>{LL.startSettings.fields.seedCode()}</span>
-          <input
-            id="setting-seed-code"
-            type="text"
-            value={settings.challengeSeedCode}
-            placeholder={LL.startSettings.placeholders.seedCode()}
-            onChange={(event) => {
-              onChange(buildStartSettingsPatch("challengeSeedCode", event.target.value));
-            }}
-          />
-        </label>
 
         <div className="settings-toggle-list">
           {BASIC_TOGGLE_FIELDS.map((field) => (
@@ -194,66 +180,26 @@ export function StartSettingsForm({
         </div>
 
         {settings.debugModeEnabled ? (
-          <>
-            <div className="settings-grid">
-              {DEBUG_SELECT_FIELDS.map((field) => (
-                <label key={field.id} htmlFor={field.id}>
-                  <span>{getSelectFieldLabel(LL, field)}</span>
-                  <select
-                    id={field.id}
-                    value={getSelectFieldValue(settings, field)}
-                    onChange={(event) => {
-                      onChange(buildStartSettingsPatch(field.field, event.target.value));
-                    }}
-                  >
-                    {START_SETTINGS_OPTIONS[field.optionsKey].map((option) => (
-                      <option key={String(option.value)} value={option.value}>
-                        {getSelectOptionLabel(LL, field, option.value)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ))}
-            </div>
-            <label className="toggle-row" htmlFor="setting-custom-stage-json-enabled">
-              <span>{LL.startSettings.fields.customStageJsonEnabled()}</span>
-              <input
-                id="setting-custom-stage-json-enabled"
-                type="checkbox"
-                checked={settings.customStageJsonEnabled}
-                onChange={(event) => {
-                  onChange(buildStartSettingsPatch("customStageJsonEnabled", event.target.checked));
-                }}
-              />
-            </label>
-            {settings.customStageJsonEnabled ? (
-              <>
-                <label htmlFor="setting-custom-stage-json">
-                  <span>{LL.startSettings.fields.customStageJson()}</span>
-                  <textarea
-                    id="setting-custom-stage-json"
-                    value={settings.customStageJson}
-                    placeholder={LL.startSettings.placeholders.customStageJson()}
-                    onChange={(event) => {
-                      onChange(buildStartSettingsPatch("customStageJson", event.target.value));
-                    }}
-                  />
-                </label>
-                <button
-                  id="setting-custom-stage-json-fill"
-                  type="button"
-                  onClick={() => {
-                    onChange({
-                      customStageJsonEnabled: true,
-                      customStageJson: getDefaultCustomStageJson(),
-                    });
+          <div className="settings-grid">
+            {DEBUG_SELECT_FIELDS.map((field) => (
+              <label key={field.id} htmlFor={field.id}>
+                <span>{getSelectFieldLabel(LL, field)}</span>
+                <select
+                  id={field.id}
+                  value={getSelectFieldValue(settings, field)}
+                  onChange={(event) => {
+                    onChange(buildStartSettingsPatch(field.field, event.target.value));
                   }}
                 >
-                  {LL.startSettings.loadDefaultStageJson()}
-                </button>
-              </>
-            ) : null}
-          </>
+                  {START_SETTINGS_OPTIONS[field.optionsKey].map((option) => (
+                    <option key={String(option.value)} value={option.value}>
+                      {getSelectOptionLabel(LL, field, option.value)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ))}
+          </div>
         ) : null}
       </Surface>
     </div>
@@ -275,8 +221,6 @@ function getSelectFieldLabel(
   field: StartSettingsSelectField,
 ): string {
   switch (field.field) {
-    case "gameMode":
-      return LL.startSettings.fields.mode();
     case "campaignCourse":
       return LL.startSettings.fields.campaignCourse();
     case "difficulty":
@@ -285,16 +229,10 @@ function getSelectFieldLabel(
       return LL.startSettings.fields.initialLives();
     case "speedPreset":
       return LL.startSettings.fields.speed();
-    case "routePreference":
-      return LL.startSettings.fields.route();
     case "multiballMaxBalls":
       return LL.startSettings.fields.multiballMax();
     case "debugStartStage":
       return LL.startSettings.fields.debugStartStage();
-    case "debugScenario":
-      return LL.startSettings.fields.debugScenario();
-    case "debugItemPreset":
-      return LL.startSettings.fields.debugItemPreset();
     case "debugRecordResults":
       return LL.startSettings.fields.debugRecordResults();
   }
@@ -306,26 +244,12 @@ function getSelectOptionLabel(
   value: string | number,
 ): string {
   switch (field.field) {
-    case "gameMode":
-      return LL.startSettings.values.gameMode[value as StartSettingsSelection["gameMode"]]();
     case "campaignCourse":
       return LL.startSettings.values.campaignCourse[
         value as StartSettingsSelection["campaignCourse"]
       ]();
     case "difficulty":
       return LL.startSettings.values.difficulty[value as StartSettingsSelection["difficulty"]]();
-    case "routePreference":
-      return LL.startSettings.values.routePreference[
-        value as StartSettingsSelection["routePreference"]
-      ]();
-    case "debugScenario":
-      return LL.startSettings.values.debugScenario[
-        value as StartSettingsSelection["debugScenario"]
-      ]();
-    case "debugItemPreset":
-      return LL.startSettings.values.debugItemPreset[
-        value as StartSettingsSelection["debugItemPreset"]
-      ]();
     case "debugRecordResults":
       return LL.startSettings.values.debugRecordResults[value as "false" | "true"]();
     default:
@@ -338,21 +262,13 @@ function getToggleFieldLabel(
   field: StartSettingsToggleField,
 ): string {
   switch (field.field) {
-    case "challengeMode":
-      return LL.startSettings.fields.challengeMode();
-    case "riskMode":
-      return LL.startSettings.fields.riskMode();
     case "enableNewItemStacks":
       return LL.startSettings.fields.newItemStacks();
-    case "ghostReplayEnabled":
-      return LL.startSettings.fields.ghostReplay();
     case "bgmEnabled":
       return LL.startSettings.fields.bgm();
     case "sfxEnabled":
       return LL.startSettings.fields.sfx();
     case "debugModeEnabled":
       return LL.startSettings.fields.debugEnabled();
-    case "customStageJsonEnabled":
-      return LL.startSettings.fields.customStageJsonEnabled();
   }
 }

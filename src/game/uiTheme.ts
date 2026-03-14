@@ -1,3 +1,4 @@
+// @ts-expect-error culori does not ship types in this environment.
 import { formatHex, formatRgb, interpolate, parse } from "culori";
 import type { StageVisualProfile, ThemeBandId } from "./config/themes";
 

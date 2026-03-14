@@ -137,7 +137,7 @@ export function getVisualProfile(themeBandId: ThemeBandId): StageVisualProfile {
   return THEME_BANDS.find((band) => band.id === themeBandId) ?? THEME_BANDS[0];
 }
 
-export function getThemeBandByStageIndex(stageIndex: number): StageVisualProfile {
+function getThemeBandByStageIndex(stageIndex: number): StageVisualProfile {
   if (stageIndex >= 8) {
     return getVisualProfile("chapter3");
   }

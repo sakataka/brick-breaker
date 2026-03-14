@@ -1,24 +1,13 @@
 import { create } from "zustand";
 import { type MetaProgress, readMetaProgress } from "../game/metaProgress";
 import type { HudViewModel, OverlayViewModel } from "../game/renderTypes";
+import type { ShopUiView } from "../game/shopUi";
 import { START_SETTINGS_DEFAULT, type StartSettingsSelection } from "../game/startSettingsSchema";
-import type { RogueUpgradeType } from "../game/types";
 import { getFallbackThemeTokens } from "../game/uiTheme";
 import { type AppLocale, initializeLocale, setCurrentLocale } from "../i18n";
 
 export interface UiOverlayState {
   model: OverlayViewModel;
-}
-
-export interface ShopViewState {
-  visible: boolean;
-  status: "hidden" | "one_time" | "purchased";
-  cost: number;
-  priceBandVisible: boolean;
-  optionAType: import("../game/types").ItemType | null;
-  optionBType: import("../game/types").ItemType | null;
-  optionADisabled: boolean;
-  optionBDisabled: boolean;
 }
 
 interface UiHandlers {
@@ -29,19 +18,17 @@ interface UiHandlers {
 interface AppStoreState {
   hud: HudViewModel;
   overlay: UiOverlayState;
-  shop: ShopViewState;
+  shop: ShopUiView;
   startSettings: StartSettingsSelection;
   locale: AppLocale;
   metaProgress: MetaProgress;
-  rogueSelection: RogueUpgradeType;
   handlers: UiHandlers;
   setHud: (hud: HudViewModel) => void;
   setOverlayModel: (model: OverlayViewModel) => void;
-  setShop: (shop: ShopViewState) => void;
+  setShop: (shop: ShopUiView) => void;
   setStartSettings: (patch: Partial<StartSettingsSelection>) => void;
   setLocale: (locale: AppLocale) => void;
   setMetaProgress: (metaProgress: MetaProgress) => void;
-  setRogueSelection: (selection: RogueUpgradeType) => void;
   setHandlers: (handlers: Partial<UiHandlers>) => void;
   triggerPrimaryAction: () => void;
   triggerShopOption: (index: 0 | 1) => void;
@@ -58,7 +45,6 @@ const DEFAULT_HUD: HudViewModel = {
   elapsedSec: 0,
   comboMultiplier: 1,
   stage: {
-    mode: "campaign",
     current: 1,
     total: 12,
     route: null,
@@ -79,9 +65,6 @@ const DEFAULT_HUD: HudViewModel = {
   flags: {
     hazardBoostActive: false,
     pierceSlowSynergy: false,
-    riskMode: false,
-    rogueUpgradesTaken: 0,
-    rogueUpgradeCap: 3,
     magicCooldownSec: 0,
     warpLegendVisible: false,
     steelLegendVisible: false,
@@ -97,7 +80,6 @@ const DEFAULT_OVERLAY: OverlayViewModel = {
   score: 0,
   lives: 4,
   stage: {
-    mode: "campaign",
     current: 1,
     total: 12,
     debugModeEnabled: false,
@@ -114,7 +96,7 @@ const DEFAULT_OVERLAY: OverlayViewModel = {
   },
 };
 
-const DEFAULT_SHOP: ShopViewState = {
+const DEFAULT_SHOP: ShopUiView = {
   visible: false,
   status: "hidden",
   cost: 0,
@@ -132,7 +114,6 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
   startSettings: START_SETTINGS_DEFAULT,
   locale: initialLocale,
   metaProgress: initialMetaProgress,
-  rogueSelection: "score_core",
   handlers: {
     primaryAction: () => {},
     shopOption: () => {},
@@ -156,7 +137,6 @@ export const useAppStore = create<AppStoreState>((set, get) => ({
     set({ locale });
   },
   setMetaProgress: (metaProgress) => set({ metaProgress }),
-  setRogueSelection: (selection) => set({ rogueSelection: selection }),
   setHandlers: (handlers) =>
     set((state) => ({
       handlers: {

@@ -1,6 +1,5 @@
 import { DROP_CONFIG } from "./config";
 import {
-  applyDebugPresetFromRegistry,
   applyItemPickupFromRegistry,
   cloneItemStacks,
   createItemModifiers,
@@ -14,7 +13,6 @@ import type { ItemPickupImpact } from "./itemTypes";
 import type {
   Ball,
   CollisionEvent,
-  DebugItemPreset,
   FallingItem,
   GameState,
   ItemState,
@@ -104,18 +102,6 @@ export function applyItemPickup(
   options: ItemPickupOptions = {},
 ): ItemPickupImpact {
   return applyItemPickupFromRegistry(items, type, balls, options);
-}
-
-export function applyDebugItemPreset(
-  items: ItemState,
-  preset: DebugItemPreset,
-  enableNewItemStacks: boolean,
-  enabledItems: readonly ItemType[],
-): void {
-  applyDebugPresetFromRegistry(items, preset, {
-    enableNewItemStacks,
-    enabledItems,
-  });
 }
 
 export function spawnDropsFromBrickEvents(

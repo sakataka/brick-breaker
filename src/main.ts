@@ -6,12 +6,12 @@ import "./styles.css";
 import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { AppUi } from "./app/AppUi";
-import { Game } from "./game/Game";
+import { GameSession } from "./game/GameSession";
 import { getRequiredElement } from "./util/dom";
 
 declare global {
   interface Window {
-    __brickBreaker?: Game;
+    __brickBreaker?: GameSession;
   }
 }
 
@@ -28,7 +28,7 @@ const uiRootElement = getRequiredElement<HTMLDivElement>(
 const uiRoot = createRoot(uiRootElement);
 uiRoot.render(createElement(AppUi));
 
-const game = new Game(canvas);
+const game = new GameSession(canvas);
 
 game.start();
 window.__brickBreaker = game;

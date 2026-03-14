@@ -41,9 +41,6 @@ importers:
       typesafe-i18n:
         specifier: ^5.27.1
         version: 5.27.1(typescript@5.9.3)
-      xstate:
-        specifier: ^5.28.0
-        version: 5.28.0
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -1382,9 +1379,6 @@ packages:
       utf-8-validate:
         optional: true
 
-  xstate@5.28.0:
-    resolution: {integrity: sha512-Iaqq6ZrUzqeUtA3hC5LQKZfR8ZLzEFTImMHJM3jWEdVvXWdKvvVLXZEiNQWm3SCA9ZbEou/n5rcsna1wb9t28A==}
-
   yaml@2.8.2:
     resolution: {integrity: sha512-mplynKqc1C2hTVYxd0PU2xQAc22TI1vShAYGksCCfxbn/dFwnHTNi1bvYsBTkhdUNtGIf5xNOg938rrSSYvS9A==}
     engines: {node: '>= 14.6'}
@@ -2423,8 +2417,6 @@ snapshots:
       isexe: 2.0.0
 
   ws@8.19.0: {}
-
-  xstate@5.28.0: {}
 
   yaml@2.8.2: {}
 

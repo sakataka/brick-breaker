@@ -55,7 +55,6 @@ export function drawWorldLayer(
     fallbackBrickPalette,
     assetProfile,
   );
-  drawGhostPlayback(graphics, view, offsetX, offsetY);
   drawPaddle(graphics, view, offsetX, offsetY, lineWidth, heavyLineWidth);
   drawFluxField(graphics, view, offsetX, offsetY);
   drawShield(graphics, view.shieldCharges, width, height, offsetX, offsetY);
@@ -67,31 +66,6 @@ export function drawWorldLayer(
   drawBossProjectiles(graphics, view, offsetX, offsetY);
   drawEnemies(graphics, view, offsetX, offsetY);
   return drawFallingItems(graphics, view, offsetX, offsetY, lineWidth);
-}
-
-function drawGhostPlayback(
-  graphics: Phaser.GameObjects.Graphics,
-  view: RenderViewState,
-  offsetX: number,
-  offsetY: number,
-): void {
-  if (!view.ghostPlayback) {
-    return;
-  }
-  const ghostFill = parseColor("rgba(154, 206, 255, 0.26)", { value: 0x9aceff, alpha: 0.26 });
-  const ghostStroke = parseColor("rgba(220, 242, 255, 0.52)", { value: 0xdcf2ff, alpha: 0.52 });
-  const ghostPaddleX = snapPixel(view.ghostPlayback.paddleX + offsetX);
-  const paddleY = snapPixel(view.paddle.y + offsetY);
-  graphics.fillStyle(ghostFill.value, ghostFill.alpha);
-  graphics.fillRoundedRect(ghostPaddleX, paddleY, view.paddle.width, view.paddle.height, 6);
-  graphics.lineStyle(1, ghostStroke.value, ghostStroke.alpha);
-  graphics.strokeRoundedRect(ghostPaddleX, paddleY, view.paddle.width, view.paddle.height, 6);
-  graphics.fillStyle(ghostStroke.value, 0.66);
-  graphics.fillCircle(
-    snapPixel(view.ghostPlayback.ballX + offsetX),
-    snapPixel(view.ghostPlayback.ballY + offsetY),
-    6,
-  );
 }
 
 function drawBricks(

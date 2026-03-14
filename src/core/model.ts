@@ -28,7 +28,6 @@ export type {
   Particle,
   PickedItem,
   ProgressState,
-  RogueState,
   RuntimeState,
   ShopState,
   StageResultEntry,

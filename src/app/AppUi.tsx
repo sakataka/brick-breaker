@@ -12,10 +12,8 @@ export function AppUi(): ReactElement {
   const shop = useAppStore((state) => state.shop);
   const startSettings = useAppStore((state) => state.startSettings);
   const metaProgress = useAppStore((state) => state.metaProgress);
-  const rogueSelection = useAppStore((state) => state.rogueSelection);
   const setStartSettings = useAppStore((state) => state.setStartSettings);
   const setLocale = useAppStore((state) => state.setLocale);
-  const setRogueSelection = useAppStore((state) => state.setRogueSelection);
   const triggerPrimaryAction = useAppStore((state) => state.triggerPrimaryAction);
   const triggerShopOption = useAppStore((state) => state.triggerShopOption);
   const scoreRef = useRef<HTMLElement>(null);
@@ -119,10 +117,8 @@ export function AppUi(): ReactElement {
         overlay={overlay}
         startSettings={startSettings}
         exUnlocked={metaProgress.exUnlocked}
-        rogueSelection={rogueSelection}
         onStartSettingsChange={setStartSettings}
         onLocaleChange={setLocale}
-        onRogueSelectionChange={setRogueSelection}
         onPrimaryAction={triggerPrimaryAction}
       />
     </>

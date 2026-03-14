@@ -16,12 +16,12 @@ import { applySceneTransition, type SceneTransitionResult } from "../sceneSync";
 import { resolveStageMetadataFromState } from "../stageContext";
 import type { StartSettingsSelection } from "../startSettingsSchema";
 import { createInitialGameState } from "../stateFactory";
+import type { ShopUiView } from "../shopUi";
 import type {
   GameAudioSettings,
   GameConfig,
   GameState,
   RandomSource,
-  RogueUpgradeType,
   RuntimeErrorKey,
   Scene,
 } from "../types";
@@ -44,9 +44,8 @@ export interface SessionControllerDeps {
   windowRef?: Window;
   host?: GameHost;
   renderPort?: RenderPort<RenderViewState>;
-  uiPort: UiPort<OverlayViewModel, HudViewModel, unknown>;
+  uiPort: UiPort<OverlayViewModel, HudViewModel, ShopUiView>;
   getStartSettings: () => StartSettingsSelection;
-  getRogueSelection: () => RogueUpgradeType;
   setUiHandlers: (handlers: {
     primaryAction: () => void;
     shopOption: (index: 0 | 1) => void;
@@ -55,12 +54,11 @@ export interface SessionControllerDeps {
 }
 
 export class SessionController {
-  static readonly GHOST_STORAGE_KEY = "brick_breaker:last_ghost";
   private readonly baseRandom: RandomSource;
   private readonly baseConfig: GameConfig;
   private config: GameConfig;
   private readonly renderPort: RenderPort<RenderViewState>;
-  private readonly uiPort: UiPort<OverlayViewModel, HudViewModel, unknown>;
+  private readonly uiPort: UiPort<OverlayViewModel, HudViewModel, ShopUiView>;
   private readonly audioPort: AudioPort;
   private readonly sfx = new SfxManager();
   private readonly audioDirector = new AudioDirector(this.sfx);
@@ -218,13 +216,10 @@ export class SessionController {
       random: this.random,
       audioPort: this.audioPort,
       engine: this.engine,
-      windowRef: this.windowRef,
       pendingStartStageIndex: this.pendingStartStageIndex,
-      ghostStorageKey: SessionController.GHOST_STORAGE_KEY,
       transition: (event) => this.transition(event),
       syncAudioForTransition: (result) => this.syncAudioForTransition(result),
       syncViewPorts: () => this.syncViewPorts(),
-      getRogueSelection: () => this.deps.getRogueSelection(),
       setMetaProgress: (metaProgress) => this.deps.setMetaProgress(metaProgress),
     });
   }
@@ -308,7 +303,6 @@ export class SessionController {
       audioPort: this.audioPort,
       engine: this.engine,
       windowRef: this.windowRef,
-      ghostStorageKey: SessionController.GHOST_STORAGE_KEY,
       transition: (event) => this.transition(event),
       syncAudioForTransition: (result) => this.syncAudioForTransition(result),
       syncViewPorts: () => this.syncViewPorts(),
@@ -323,8 +317,6 @@ export class SessionController {
       random: this.random,
       audioPort: this.audioPort,
       engine: this.engine,
-      windowRef: this.windowRef,
-      ghostStorageKey: SessionController.GHOST_STORAGE_KEY,
       transition: (event) => this.transition(event),
       syncAudioForTransition: (result) => this.syncAudioForTransition(result),
       syncViewPorts: () => this.syncViewPorts(),

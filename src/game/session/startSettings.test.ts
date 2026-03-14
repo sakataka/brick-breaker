@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vite-plus/test";
 import { GAME_CONFIG } from "../config";
-import { ITEM_ORDER } from "../itemRegistryData";
+import { ITEM_ORDER } from "../itemRegistry";
 import { createInitialGameState } from "../stateFactory";
 import type { RandomSource } from "../types";
 import {
@@ -13,63 +13,56 @@ import {
 const baseRandom: RandomSource = { next: () => 0.123 };
 
 describe("session/startSettings", () => {
-  test("resolveStartStageIndex follows debug scenario overrides", () => {
+  test("resolveStartStageIndex only honors debug start stage when debug is enabled", () => {
     expect(
       resolveStartStageIndex({
-        gameMode: "campaign",
+        campaignCourse: "normal",
+        difficulty: "standard",
+        initialLives: 4,
+        speedPreset: "1.00",
+        multiballMaxBalls: 4,
+        enableNewItemStacks: false,
+        enabledItems: [...ITEM_ORDER],
+        debugRecordResults: false,
+        bgmEnabled: true,
+        sfxEnabled: true,
         debugModeEnabled: false,
-        debugScenario: "boss_check",
         debugStartStage: 12,
-      } as never),
+      }),
     ).toBe(0);
     expect(
       resolveStartStageIndex({
-        gameMode: "campaign",
+        campaignCourse: "normal",
+        difficulty: "standard",
+        initialLives: 4,
+        speedPreset: "1.00",
+        multiballMaxBalls: 4,
+        enableNewItemStacks: false,
+        enabledItems: [...ITEM_ORDER],
+        debugRecordResults: false,
+        bgmEnabled: true,
+        sfxEnabled: true,
         debugModeEnabled: true,
-        debugScenario: "enemy_check",
-        debugStartStage: 1,
-      } as never),
-    ).toBe(8);
-    expect(
-      resolveStartStageIndex({
-        gameMode: "campaign",
-        debugModeEnabled: true,
-        debugScenario: "boss_check",
-        debugStartStage: 1,
-      } as never),
-    ).toBe(11);
-    expect(
-      resolveStartStageIndex({
-        gameMode: "campaign",
-        debugModeEnabled: true,
-        debugScenario: "normal",
         debugStartStage: 5,
-      } as never),
+      }),
     ).toBe(4);
-    expect(
-      resolveStartStageIndex({
-        gameMode: "boss_rush",
-        debugModeEnabled: false,
-        debugScenario: "normal",
-        debugStartStage: 1,
-      } as never),
-    ).toBe(0);
   });
 
-  test("computeAppliedStartSettings applies config/audio and challenge seed", () => {
+  test("computeAppliedStartSettings applies config and audio without changing random source", () => {
     const selected = {
+      campaignCourse: "ex",
       difficulty: "hard",
       initialLives: 2,
       speedPreset: "1.25",
       multiballMaxBalls: 4,
-      challengeMode: true,
-      challengeSeedCode: "",
+      enableNewItemStacks: true,
+      enabledItems: ITEM_ORDER.slice(0, -1),
+      debugModeEnabled: true,
+      debugStartStage: 3,
+      debugRecordResults: true,
       bgmEnabled: false,
       sfxEnabled: true,
-      debugModeEnabled: true,
-      debugScenario: "boss_check",
-      debugStartStage: 1,
-    } as never;
+    } as const;
     const applied = computeAppliedStartSettings(
       GAME_CONFIG,
       baseRandom,
@@ -77,74 +70,42 @@ describe("session/startSettings", () => {
       (base, setup) => ({
         ...base,
         difficulty: setup.difficulty,
+        initialLives: setup.initialLives,
       }),
     );
 
     expect(applied.config.difficulty).toBe("hard");
+    expect(applied.config.initialLives).toBe(2);
     expect(applied.audioSettings).toEqual({ bgmEnabled: false, sfxEnabled: true });
-    expect(applied.pendingStartStageIndex).toBe(11);
-    expect(applied.random.next()).not.toBe(baseRandom.next());
+    expect(applied.pendingStartStageIndex).toBe(2);
+    expect(applied.random).toBe(baseRandom);
   });
 
-  test("applyStartSettingsToState copies run options to state", () => {
+  test("applyStartSettingsToState copies reduced run options to state", () => {
     const state = createInitialGameState(GAME_CONFIG, true, "start");
     applyStartSettingsToState(state, {
-      gameMode: "boss_rush",
       campaignCourse: "normal",
-      riskMode: true,
+      difficulty: "standard",
+      initialLives: 4,
+      speedPreset: "1.00",
+      multiballMaxBalls: 4,
       enableNewItemStacks: true,
       enabledItems: ITEM_ORDER.slice(0, -1),
-      ghostReplayEnabled: true,
       debugModeEnabled: true,
+      debugStartStage: 4,
       debugRecordResults: true,
-      debugScenario: "enemy_check",
-      debugItemPreset: "combat_check",
-      routePreference: "B",
-      customStageJsonEnabled: false,
-      customStageJson: "",
-    } as never);
-    expect(state.options.gameMode).toBe("boss_rush");
+      bgmEnabled: true,
+      sfxEnabled: true,
+    });
+
     expect(state.options.campaignCourse).toBe("normal");
-    expect(state.options.riskMode).toBe(true);
     expect(state.options.enableNewItemStacks).toBe(true);
     expect(state.options.enabledItems).toEqual(ITEM_ORDER.slice(0, -1));
-    expect(state.options.ghostReplayEnabled).toBe(true);
     expect(state.options.debugModeEnabled).toBe(true);
     expect(state.options.debugRecordResults).toBe(true);
-    expect(state.options.debugScenario).toBe("enemy_check");
-    expect(state.options.debugItemPreset).toBe("combat_check");
-    expect(state.campaign.routePreference).toBe("B");
   });
 
-  test("applyStartSettingsToState safely ignores invalid custom stage json", () => {
-    const state = createInitialGameState(GAME_CONFIG, true, "start");
-    applyStartSettingsToState(state, {
-      gameMode: "campaign",
-      campaignCourse: "normal",
-      riskMode: false,
-      enableNewItemStacks: false,
-      enabledItems: [...ITEM_ORDER],
-      ghostReplayEnabled: false,
-      debugModeEnabled: false,
-      debugRecordResults: false,
-      debugScenario: "normal",
-      debugItemPreset: "none",
-      routePreference: "auto",
-      customStageJsonEnabled: true,
-      customStageJson: "{invalid",
-    } as never);
-    expect(state.options.customStageCatalog).toBeNull();
-  });
-
-  test("applyDebugPresetOnRoundStart only applies in debug mode", () => {
-    const state = createInitialGameState(GAME_CONFIG, true, "playing");
-    state.options.debugModeEnabled = false;
-    state.options.debugItemPreset = "boss_check";
-    applyDebugPresetOnRoundStart(state, baseRandom, GAME_CONFIG.multiballMaxBalls);
-    expect(state.items.active.shieldCharges).toBe(0);
-
-    state.options.debugModeEnabled = true;
-    applyDebugPresetOnRoundStart(state, baseRandom, GAME_CONFIG.multiballMaxBalls);
-    expect(state.items.active.shieldCharges).toBeGreaterThan(0);
+  test("applyDebugPresetOnRoundStart is intentionally empty in campaign-first mode", () => {
+    expect(() => applyDebugPresetOnRoundStart()).not.toThrow();
   });
 });

@@ -31,19 +31,15 @@ export function writeMetaProgress(
 export function shouldUnlockEx(state: {
   scene: string;
   options: {
-    gameMode: string;
     campaignCourse: string;
     debugModeEnabled: boolean;
     debugRecordResults: boolean;
-    customStageCatalog: unknown;
   };
 }): boolean {
   return (
     state.scene === "clear" &&
-    state.options.gameMode === "campaign" &&
     state.options.campaignCourse === "normal" &&
     !state.options.debugModeEnabled &&
-    state.options.debugRecordResults &&
-    state.options.customStageCatalog === null
+    state.options.debugRecordResults
   );
 }

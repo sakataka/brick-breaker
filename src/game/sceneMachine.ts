@@ -1,4 +1,3 @@
-import { createActor, createMachine } from "xstate";
 import type { Scene } from "./types";
 
 export const SceneTransitionInput = {
@@ -16,83 +15,61 @@ export const SceneTransitionInput = {
 export type SceneTransitionInput = (typeof SceneTransitionInput)[keyof typeof SceneTransitionInput];
 export type SceneEvent = { type: SceneTransitionInput };
 
-const sceneMachineDefinition = createMachine({
-  id: "brick-breaker-scene",
-  initial: "start",
-  states: {
-    start: {
-      on: {
-        START_OR_RESUME: "playing",
-        RUNTIME_ERROR: "error",
-      },
-    },
-    story: {
-      on: {
-        START_OR_RESUME: "playing",
-        RUNTIME_ERROR: "error",
-      },
-    },
-    playing: {
-      on: {
-        TOGGLE_PAUSE: "paused",
-        STAGE_CLEAR: "stageclear",
-        GAME_CLEAR: "clear",
-        GAME_OVER: "gameover",
-        RUNTIME_ERROR: "error",
-      },
-    },
-    paused: {
-      on: {
-        TOGGLE_PAUSE: "playing",
-        START_OR_RESUME: "playing",
-        RUNTIME_ERROR: "error",
-      },
-    },
-    gameover: {
-      on: {
-        START_OR_RESUME: "playing",
-        RUNTIME_ERROR: "error",
-      },
-    },
-    clear: {
-      on: {
-        START_OR_RESUME: "playing",
-        BACK_TO_START: "start",
-        RUNTIME_ERROR: "error",
-      },
-    },
-    stageclear: {
-      on: {
-        SHOW_STORY: "story",
-        START_OR_RESUME: "playing",
-        RUNTIME_ERROR: "error",
-      },
-    },
-    error: {
-      on: {
-        RESET: "start",
-      },
-    },
+const TRANSITIONS: Record<Scene, Partial<Record<SceneTransitionInput, Scene>>> = {
+  start: {
+    START_OR_RESUME: "playing",
+    RUNTIME_ERROR: "error",
   },
-});
+  story: {
+    START_OR_RESUME: "playing",
+    RUNTIME_ERROR: "error",
+  },
+  playing: {
+    TOGGLE_PAUSE: "paused",
+    STAGE_CLEAR: "stageclear",
+    GAME_CLEAR: "clear",
+    GAME_OVER: "gameover",
+    RUNTIME_ERROR: "error",
+  },
+  paused: {
+    TOGGLE_PAUSE: "playing",
+    START_OR_RESUME: "playing",
+    RUNTIME_ERROR: "error",
+  },
+  gameover: {
+    START_OR_RESUME: "playing",
+    RUNTIME_ERROR: "error",
+  },
+  clear: {
+    START_OR_RESUME: "playing",
+    BACK_TO_START: "start",
+    RUNTIME_ERROR: "error",
+  },
+  stageclear: {
+    SHOW_STORY: "story",
+    START_OR_RESUME: "playing",
+    RUNTIME_ERROR: "error",
+  },
+  error: {
+    RESET: "start",
+  },
+};
+
+function transitionScene(current: Scene, event: SceneEvent): Scene {
+  return TRANSITIONS[current][event.type] ?? current;
+}
 
 export class SceneMachine {
-  private readonly actor = createActor(sceneMachineDefinition);
-
-  constructor() {
-    this.actor.start();
-  }
+  constructor(private current: Scene = "start") {}
 
   get value(): Scene {
-    return this.actor.getSnapshot().value as Scene;
+    return this.current;
   }
 
   send(event: SceneEvent): Scene {
-    this.actor.send(event);
-    return this.value;
+    this.current = transitionScene(this.current, event);
+    return this.current;
   }
 
-  stop(): void {
-    this.actor.stop();
-  }
+  stop(): void {}
 }

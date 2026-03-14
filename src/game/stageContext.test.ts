@@ -1,15 +1,13 @@
 import { describe, expect, test } from "vite-plus/test";
-import { GAME_CONFIG, MODE_CONFIG, STAGE_CATALOG } from "./config";
+import { GAME_CONFIG, STAGE_CATALOG } from "./config";
 import { resolveStageContext, resolveStageMetadata } from "./stageContext";
 
 describe("stageContext", () => {
   test("resolves campaign metadata from the shared stage catalog", () => {
     const stage = resolveStageMetadata({
       stageIndex: 5,
-      gameMode: "campaign",
       campaignCourse: "normal",
       route: null,
-      customStageCatalog: null,
     });
 
     expect(stage.effectiveStageIndex).toBe(5);
@@ -20,69 +18,30 @@ describe("stageContext", () => {
     expect(stage.musicCue.id).toBe("chapter2");
   });
 
-  test("resolves endless stage index modulo the active catalog", () => {
+  test("clamps stage index to the final stage", () => {
     const stage = resolveStageMetadata({
-      stageIndex: 14,
-      gameMode: "endless",
+      stageIndex: 99,
       campaignCourse: "normal",
       route: null,
-      customStageCatalog: null,
     });
 
-    expect(stage.effectiveStageIndex).toBe(2);
-    expect(stage.totalStages).toBe(MODE_CONFIG.endlessVirtualStages);
-    expect(stage.stage.id).toBe(3);
-  });
-
-  test("resolves boss rush against the last stage and applies rush speed scale", () => {
-    const stage = resolveStageContext(
-      {
-        stageIndex: 3,
-        gameMode: "boss_rush",
-        campaignCourse: "normal",
-        route: null,
-        customStageCatalog: null,
-      },
-      GAME_CONFIG,
-    );
-
     expect(stage.effectiveStageIndex).toBe(STAGE_CATALOG.length - 1);
-    expect(stage.totalStages).toBe(MODE_CONFIG.bossRushRounds);
     expect(stage.stage.id).toBe(12);
-    expect(stage.musicCue.id).toBe("finalboss");
-    expect(stage.initialBallSpeed).toBeGreaterThan(
-      GAME_CONFIG.initialBallSpeed * stage.stage.speedScale,
-    );
-    expect(stage.maxBallSpeed).toBeGreaterThan(GAME_CONFIG.maxBallSpeed * stage.stage.speedScale);
   });
 
-  test("uses custom stage catalog as the single source for stage and speed resolution", () => {
+  test("uses EX catalog for EX course speed resolution", () => {
     const stage = resolveStageContext(
       {
-        stageIndex: 4,
-        gameMode: "campaign",
-        campaignCourse: "normal",
-        route: "B",
-        customStageCatalog: [
-          {
-            id: 101,
-            speedScale: 0.9,
-            layout: [[1]],
-          },
-          {
-            id: 102,
-            speedScale: 1.4,
-            layout: [[1, 1]],
-          },
-        ],
+        stageIndex: 1,
+        campaignCourse: "ex",
+        route: null,
       },
       GAME_CONFIG,
     );
 
-    expect(stage.effectiveStageIndex).toBe(4);
-    expect(stage.totalStages).toBe(2);
-    expect(stage.stage.id).toBe(102);
-    expect(stage.initialBallSpeed).toBe(GAME_CONFIG.initialBallSpeed * 1.4);
-    expect(stage.maxBallSpeed).toBe(GAME_CONFIG.maxBallSpeed * 1.4);
+    expect(stage.totalStages).toBe(4);
+    expect(stage.stage.course).toBe("ex");
+    expect(stage.initialBallSpeed).toBe(GAME_CONFIG.initialBallSpeed * stage.stage.speedScale);
+    expect(stage.maxBallSpeed).toBe(GAME_CONFIG.maxBallSpeed * stage.stage.speedScale);
   });
 });

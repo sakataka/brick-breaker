@@ -1,6 +1,5 @@
 import type { CSSProperties, ReactElement, RefObject } from "react";
 import { getArtCssVars, resolveVisualAssetProfile } from "../../art/visualAssets";
-import { ROGUE_CONFIG } from "../../game/config";
 import type { HudViewModel } from "../../game/renderTypes";
 import { formatTime } from "../../game/time";
 import type { VisualState } from "../../game/uiTheme";
@@ -23,11 +22,7 @@ export interface HudPanelProps {
 
 export function HudPanel({ locale, hud, scoreRef }: HudPanelProps): ReactElement {
   const LL = getLL(locale);
-  const stageModeLabel = LL.hud.stageMode[hud.stage.mode]();
-  const stageCounter =
-    hud.stage.mode === "endless"
-      ? LL.hud.endlessStageCounter({ current: hud.stage.current })
-      : LL.hud.stageCounter({ current: hud.stage.current, total: hud.stage.total });
+  const stageCounter = LL.hud.stageCounter({ current: hud.stage.current, total: hud.stage.total });
   const activeItems = hud.activeItems.filter((entry) => entry.count > 0);
   const tokens = hud.visual.tokens;
   const artProfile = resolveVisualAssetProfile(
@@ -55,7 +50,7 @@ export function HudPanel({ locale, hud, scoreRef }: HudPanelProps): ReactElement
         visible={Boolean(hud.visual.banner)}
         className="hud-stage-intro"
         eyebrow={getBannerEyebrow(locale, hud.visual.banner)}
-        title={getBannerTitle(locale, hud.visual.banner, `${stageModeLabel} ${stageCounter}`)}
+        title={getBannerTitle(locale, hud.visual.banner, stageCounter)}
         icon={<AppIcon name="warning" weight="fill" />}
         chrome="warning"
         motionProfile={hud.visual.motionProfile}
@@ -137,7 +132,7 @@ export function HudPanel({ locale, hud, scoreRef }: HudPanelProps): ReactElement
       </div>
       <div id="stage" className="hud-stage-meta">
         <IconLabel icon={<AppIcon name="warning" className="hud-inline-icon" />}>
-          {stageModeLabel} {stageCounter}
+          {stageCounter}
         </IconLabel>
         {hud.stage.route ? (
           <IconLabel icon={<AppIcon name="cast" className="hud-inline-icon" />}>
@@ -294,17 +289,6 @@ function buildLegendTags(locale: AppLocale, hud: HudViewModel): string[] {
   }
   if (hud.flags.pierceSlowSynergy) {
     tags.push(LL.hud.effect.pierceSlow());
-  }
-  if (hud.flags.riskMode) {
-    tags.push(LL.hud.effect.risk());
-  }
-  if (hud.flags.rogueUpgradesTaken > 0) {
-    tags.push(
-      `${LL.hud.labels.upgrades()} ${LL.hud.rogueProgress({
-        taken: hud.flags.rogueUpgradesTaken,
-        max: Math.max(ROGUE_CONFIG.maxUpgrades, hud.flags.rogueUpgradeCap),
-      })}`,
-    );
   }
   tags.push(
     hud.flags.magicCooldownSec <= 0

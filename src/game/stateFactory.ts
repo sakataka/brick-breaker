@@ -6,7 +6,7 @@ import {
   getStageTimeTargetSec,
   STAGE_CATALOG,
 } from "./config";
-import { ITEM_ORDER } from "./itemRegistryData";
+import { ITEM_ORDER } from "./itemRegistry";
 import { createItemState } from "./itemSystem";
 import { buildBricksFromStage } from "./level";
 import { clamp } from "./math";
@@ -97,17 +97,11 @@ export function createInitialGameState(
       missionResults: [],
     },
     options: {
-      gameMode: "campaign",
       campaignCourse: "normal",
-      riskMode: false,
       enableNewItemStacks: false,
       enabledItems: [...ITEM_ORDER],
-      ghostReplayEnabled: false,
-      customStageCatalog: null,
       debugModeEnabled: false,
       debugRecordResults: false,
-      debugScenario: "normal",
-      debugItemPreset: "none",
     },
     balls: [ball],
     paddle,
@@ -136,7 +130,6 @@ export function createInitialGameState(
       totalStages: STAGE_CATALOG.length,
       stageStartScore: 0,
       results: [],
-      routePreference: "auto",
       resolvedRoute: null,
     },
     items: createItemState(),
@@ -150,23 +143,9 @@ export function createInitialGameState(
       lastOffer: null,
       lastChosen: null,
     },
-    rogue: {
-      upgradesTaken: 0,
-      paddleScaleBonus: 0,
-      maxSpeedScaleBonus: 0,
-      scoreScaleBonus: 0,
-      pendingOffer: null,
-      lastChosen: null,
-    },
     story: {
       activeStageNumber: null,
       seenStageNumbers: [],
-    },
-    ghost: {
-      playbackEnabled: false,
-      recordAccumulatorSec: 0,
-      recording: [],
-      playback: [],
     },
     vfx: createVfxState(reducedMotion),
     a11y: {

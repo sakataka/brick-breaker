@@ -28,7 +28,6 @@
 
 ### 2. Orchestrator
 
-- `src/game/Game.ts`
 - `src/game/GameSession.ts`
 - `src/game/session/SessionController.ts`
 - `src/game/sceneSync.ts`
@@ -83,6 +82,7 @@
 - `StartSettingsForm` は `src/game/startSettingsSchema.ts` の schema を参照し、設定UIを定義駆動で生成する。
 - ロケール状態は store が保持し、開始画面の言語 selector から更新する。選択ロケールは `localStorage` に保存する。
 - 開始画面の `Item Pool` は item registry を単一ソースとし、アイコン/名称/順序/有効状態を設定 UI と抽選ロジックで共通利用する。
+- 開始設定は campaign-first を前提にし、コース/難易度/残機/速度/マルチ上限/Item Pool/音声/最小デバッグ設定に限定する。
 - `OverlayRoot` は開始画面のみ「ヘッダー / 設定スクロール / 固定CTAフッター」を適用し、設定増加時も開始操作を維持する。
 - `AppUi` はプレイ中のみ「上段情報バー（HUD+ショップ） / 下段ゲーム枠」の2分割レイアウトを有効化し、`data-theme` / `data-warning` で章別の Neon Pop 演出を切り替える。
 - React UI は `uiPrimitives` と `AppIcon` を介して `Space Grotesk + Public Sans` / `Phosphor` / theme tokens を共通利用する。
@@ -134,7 +134,6 @@
 - ブロックHP/破壊判定: `src/game/brickDamage.ts`
 - ブロック分類/クリア判定ルール: `src/game/brickRules.ts`
 - アイテム仕様: `src/game/itemRegistry.ts`
-- アイテム表示情報（順序/色/role）: `src/game/itemRegistryData.ts`
 - アイテムUI表現（Phosphor icon / tone / emphasis）: `src/app/components/itemVisualRegistry.tsx`
 - UI theme token 解決: `src/game/uiTheme.ts`
 - アート manifest / panel chrome / brick skin / backdrop tile: `src/art/visualAssets.ts`
@@ -161,9 +160,8 @@
 1. `src/game/domainTypes.ts` に `ItemType` を追加。
 2. `src/game/config/items.ts` に定義追加。
 3. `src/game/itemRegistry.ts` に仕様追加。
-4. 即時効果が必要なら `src/game/itemRegistryData.ts` の pickup impact を追加する。
-5. `Item Pool` に出す場合は `startSettingsVisibleOrder` / `icon` / `roleTag` も追加する。
-6. 必要なら `src/game/physicsCore.ts` と `src/phaser/render/PhaserRenderPort.ts` を更新。
+4. `Item Pool` に出す場合は `startSettingsVisibleOrder` / `icon` / `roleTag` も追加する。
+5. 必要なら `src/game/physicsCore.ts` と `src/phaser/render/PhaserRenderPort.ts` を更新。
 
 ### 新しい表示要素
 

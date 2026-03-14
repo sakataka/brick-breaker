@@ -1,5 +1,4 @@
 import { getStageTimeTargetSec, MISSION_CONFIG, RATING_CONFIG } from "./config";
-import { prepareRogueUpgradeOffer } from "./rogueProgression";
 import { resolveStageMetadataFromState } from "./stageContext";
 import type { GameState } from "./types";
 
@@ -28,7 +27,6 @@ export function finalizeStageStats(state: GameState, persistResult = true): void
       missionResults,
     );
   }
-  prepareRogueUpgradeOffer(state);
 }
 
 export function getStageClearTimeSec(state: GameState): number | null {

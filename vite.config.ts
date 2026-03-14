@@ -16,6 +16,8 @@ export default defineConfig({
     exclude: ["e2e/**", "dist/**", "node_modules/**"],
     globals: false,
     environment: "node",
+    pool: "forks",
+    fileParallelism: false,
   },
   staged: {
     "*": "vp check --fix",

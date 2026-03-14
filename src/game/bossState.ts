@@ -1,6 +1,6 @@
 import type { BossAttackState, EncounterState } from "./types";
 
-export function createBossAttackState(): BossAttackState {
+function createBossAttackState(): BossAttackState {
   return {
     actionCooldownSec: 0,
     nextProjectileId: 1,

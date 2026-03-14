@@ -8,7 +8,7 @@ import type {
 } from "./itemTypes";
 import type { Ball, Brick, ItemType } from "./types";
 
-export const ITEM_TYPE_ORDER = [
+const ITEM_TYPE_ORDER = [
   "paddle_plus",
   "slow_ball",
   "shield",

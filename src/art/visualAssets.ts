@@ -197,10 +197,6 @@ export function getBackdropTileSet(profile: VisualAssetProfile): BackdropTileSet
   return profile.backdrop;
 }
 
-export function getPanelChrome(profile: VisualAssetProfile): PanelChrome {
-  return profile.panel;
-}
-
 export function getBrickSkin(
   kind: BrickKind | undefined,
   profile: VisualAssetProfile,

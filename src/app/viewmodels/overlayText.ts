@@ -5,7 +5,7 @@ import type {
 } from "../../game/renderTypes";
 import { formatTime } from "../../game/time";
 import type { AppLocale, LL } from "../../i18n";
-import { formatPoints, getRogueUpgradeLabel, getStageMissionLabel } from "../../i18n";
+import { formatPoints, getStageMissionLabel } from "../../i18n";
 
 export function getOverlayMessage(LL: LL, scene: OverlayViewModel["scene"]): string {
   return LL.overlay.message[scene]();
@@ -33,15 +33,14 @@ export function getOverlayButton(LL: LL, scene: OverlayViewModel["scene"]): stri
 }
 
 export function buildStageLabel(LL: LL, overlay: OverlayViewModel): string {
-  const modeLabel = LL.hud.stageMode[overlay.stage.mode]();
-  const counter =
-    overlay.stage.mode === "endless"
-      ? LL.hud.endlessStageCounter({ current: overlay.stage.current })
-      : LL.hud.stageCounter({ current: overlay.stage.current, total: overlay.stage.total });
+  const counter = LL.hud.stageCounter({
+    current: overlay.stage.current,
+    total: overlay.stage.total,
+  });
   const debugPrefix = overlay.stage.debugModeEnabled
     ? `[${overlay.stage.debugRecordResults ? LL.hud.debug.badgeOn() : LL.hud.debug.badgeOff()}] `
     : "";
-  return `${debugPrefix}${modeLabel} ${counter}`;
+  return `${debugPrefix}${counter}`;
 }
 
 export function buildOverlaySubText(locale: AppLocale, LL: LL, overlay: OverlayViewModel): string {
@@ -86,14 +85,7 @@ export function buildCampaignResultRows(LL: LL, results: StageResultSummaryView[
   );
 }
 
-export function formatRogueUpgradeLabel(
-  LL: LL,
-  upgrade: "paddle_core" | "speed_core" | "score_core",
-): string {
-  return getRogueUpgradeLabel(LL, upgrade);
-}
-
-export function formatMissionSummary(LL: LL, missions: StageResultView["missionResults"]): string {
+function formatMissionSummary(LL: LL, missions: StageResultView["missionResults"]): string {
   if (!missions || missions.length === 0) {
     return "-";
   }
@@ -110,7 +102,7 @@ export function formatMissionSummary(LL: LL, missions: StageResultView["missionR
     .join(" / ");
 }
 
-export function getStoryText(LL: LL, stageNumber: number): string {
+function getStoryText(LL: LL, stageNumber: number): string {
   if (stageNumber === 4) {
     return LL.story.stage4();
   }

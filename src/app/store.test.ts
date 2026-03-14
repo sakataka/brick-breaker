@@ -6,7 +6,6 @@ describe("app store", () => {
   beforeEach(() => {
     useAppStore.setState({
       startSettings: { ...START_SETTINGS_DEFAULT },
-      rogueSelection: "score_core",
       handlers: {
         primaryAction: () => {},
         shopOption: () => {},

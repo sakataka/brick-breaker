@@ -16,11 +16,11 @@ describe("audioSync", () => {
 
     syncAudioScene(audio, "start", "playing", {
       campaign: { stageIndex: 3, resolvedRoute: null },
-      options: { gameMode: "campaign", campaignCourse: "normal", customStageCatalog: null },
+      options: { campaignCourse: "normal" },
     } as never);
 
     expect(events).toEqual([
-      { kind: "stage", payload: { id: "midboss", variant: 1 } },
+      { kind: "stage", payload: { id: "midboss", variant: 0 } },
       { kind: "scene", payload: { scene: "playing", previousScene: "start" } },
     ]);
   });
@@ -34,7 +34,7 @@ describe("audioSync", () => {
 
     syncAudioScene(audio, "playing", "playing", {
       campaign: { stageIndex: 5, resolvedRoute: null },
-      options: { gameMode: "campaign", campaignCourse: "normal", customStageCatalog: null },
+      options: { campaignCourse: "normal" },
     } as never);
 
     expect(events).toEqual([]);

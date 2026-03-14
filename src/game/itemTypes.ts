@@ -1,11 +1,4 @@
-import type {
-  Ball,
-  CollisionEvent,
-  DebugItemPreset,
-  GameState,
-  ItemType,
-  RandomSource,
-} from "./types";
+import type { Ball, CollisionEvent, GameState, ItemType, RandomSource } from "./types";
 
 export interface ItemStackState {
   paddlePlusStacks: number;
@@ -66,7 +59,7 @@ export interface ItemDefinition {
   sfxEvent: ItemPickupSfxEvent;
   presentation: ItemPickupPresentation;
   respectsNewStackSetting?: boolean;
-  debugPresetStacks?: Partial<Record<Exclude<DebugItemPreset, "none">, number>>;
+  debugPresetStacks?: Partial<Record<"combat_check" | "boss_check", number>>;
   applyPickup: (context: ItemEffectContext) => ItemPickupImpact | undefined;
   getLabelStack: (stacks: ItemStackState) => number;
 }

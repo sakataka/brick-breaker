@@ -7,12 +7,7 @@ import {
   shouldUnlockEx,
   writeMetaProgress,
 } from "../metaProgress";
-import {
-  advanceStage,
-  applyRogueUpgradeSelection,
-  prepareStageStory,
-  resetRoundState,
-} from "../roundSystem";
+import { advanceStage, prepareStageStory, resetRoundState } from "../roundSystem";
 import type { SceneEvent } from "../sceneMachine";
 import type {
   GameAudioSettings,
@@ -22,12 +17,7 @@ import type {
   RuntimeErrorKey,
   Scene,
 } from "../types";
-import { prepareGhostPlayback, saveGhostRecording } from "./sessionPersistence";
-import {
-  applyDebugPresetOnRoundStart,
-  applyStartSettingsToState,
-  computeAppliedStartSettings,
-} from "./startSettings";
+import { applyStartSettingsToState, computeAppliedStartSettings } from "./startSettings";
 
 export interface SessionTransitionResult {
   previous: Scene;
@@ -55,10 +45,7 @@ interface SessionFlowBase {
 
 export interface StartOrResumeParams extends SessionFlowBase {
   engine: CoreEngine;
-  windowRef: Window;
   pendingStartStageIndex: number;
-  ghostStorageKey: string;
-  getRogueSelection: () => GameState["rogue"]["lastChosen"];
 }
 
 export function resolveSessionStartSettings(
@@ -82,12 +69,6 @@ export function startOrResumeSession(params: StartOrResumeParams): void {
   }
 
   if (params.state.scene === "stageclear") {
-    if (params.state.rogue.pendingOffer) {
-      const selection = params.getRogueSelection();
-      if (selection) {
-        applyRogueUpgradeSelection(params.state, selection);
-      }
-    }
     advanceStage(params.state, params.config, params.random);
     if (prepareStageStory(params.state)) {
       const storyResult = params.transition({ type: "SHOW_STORY" });
@@ -108,8 +89,7 @@ export function startOrResumeSession(params: StartOrResumeParams): void {
     resetRoundState(params.state, params.config, params.state.vfx.reducedMotion, params.random, {
       startStageIndex: params.pendingStartStageIndex,
     });
-    applyDebugPresetOnRoundStart(params.state, params.random, params.config.multiballMaxBalls);
-    prepareGhostPlayback(params.state, params.windowRef.localStorage, params.ghostStorageKey);
+    params.state.story.activeStageNumber = null;
   } else if (result.previous === "story") {
     params.state.story.activeStageNumber = null;
   }
@@ -123,7 +103,6 @@ export function handleStageClearSession(
   params: SessionFlowBase & {
     engine: CoreEngine;
     windowRef: Window;
-    ghostStorageKey: string;
   },
 ): void {
   let transitionResult: SessionTransitionResult | null = null;
@@ -132,16 +111,13 @@ export function handleStageClearSession(
     reachedClear = event === "GAME_CLEAR";
     transitionResult = params.transition({ type: event });
   });
-  if (reachedClear) {
-    saveGhostRecording(params.state, params.windowRef.localStorage, params.ghostStorageKey);
-    if (shouldUnlockEx(params.state)) {
-      const nextMeta = {
-        ...readMetaProgress(params.windowRef.localStorage),
-        exUnlocked: true,
-      };
-      writeMetaProgress(params.windowRef.localStorage, nextMeta);
-      params.setMetaProgress(nextMeta);
-    }
+  if (reachedClear && shouldUnlockEx(params.state)) {
+    const nextMeta = {
+      ...readMetaProgress(params.windowRef.localStorage),
+      exUnlocked: true,
+    };
+    writeMetaProgress(params.windowRef.localStorage, nextMeta);
+    params.setMetaProgress(nextMeta);
   }
   if (transitionResult) {
     params.syncAudioForTransition(transitionResult);
@@ -152,17 +128,12 @@ export function handleStageClearSession(
 export function handleBallLossSession(
   params: SessionFlowBase & {
     engine: CoreEngine;
-    windowRef: Window;
-    ghostStorageKey: string;
   },
 ): void {
   params.engine.applyBallLoss(() => {
     const result = params.transition({ type: "GAME_OVER" });
     params.syncAudioForTransition(result);
   });
-  if (params.state.scene === "gameover") {
-    saveGhostRecording(params.state, params.windowRef.localStorage, params.ghostStorageKey);
-  }
   params.syncViewPorts();
 }
 

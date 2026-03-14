@@ -1,4 +1,3 @@
-import { MODE_CONFIG } from "./config/gameplay";
 import type { StageModifier } from "./config/stages";
 import {
   EX_STAGE_CATALOG,
@@ -9,21 +8,12 @@ import {
 } from "./config/stages";
 import type { StageVisualProfile } from "./config/themes";
 import { getVisualProfile } from "./config/themes";
-import type {
-  GameConfig,
-  GameMode,
-  GameState,
-  MusicCue,
-  StageDefinition,
-  StageRoute,
-} from "./types";
+import type { GameConfig, GameState, MusicCue, StageDefinition, StageRoute } from "./types";
 
 export interface StageContextInput {
   stageIndex: number;
-  gameMode: GameMode;
   campaignCourse: GameState["options"]["campaignCourse"];
   route: StageRoute | null;
-  customStageCatalog: GameState["options"]["customStageCatalog"];
 }
 
 export interface StageMetadata {
@@ -47,17 +37,13 @@ export interface StageContext extends StageMetadata {
 }
 
 export function resolveStageMetadata(input: StageContextInput): StageMetadata {
-  const activeCatalog = getActiveStageCatalog(input.customStageCatalog, input.campaignCourse);
-  const effectiveStageIndex = getModeEffectiveStageIndex(
-    input.stageIndex,
-    input.gameMode,
-    activeCatalog.length,
-  );
-  const stage = getStageDefinition(input, activeCatalog, effectiveStageIndex);
+  const activeCatalog = getActiveStageCatalog(input.campaignCourse);
+  const effectiveStageIndex = clampStageIndex(input.stageIndex, activeCatalog.length);
+  const stage = getStageDefinition(input, effectiveStageIndex);
   return {
     activeCatalog,
     effectiveStageIndex,
-    totalStages: getTotalStagesForMode(input.gameMode, activeCatalog.length),
+    totalStages: activeCatalog.length,
     stage,
     chapter: stage.chapter ?? inferChapter(effectiveStageIndex),
     stageArchetype: stage.archetype,
@@ -75,14 +61,11 @@ export function resolveStageContext(
   config: Pick<GameConfig, "initialBallSpeed" | "maxBallSpeed">,
 ): StageContext {
   const metadata = resolveStageMetadata(input);
+  const stage = metadata.stage;
   return {
     ...metadata,
-    initialBallSpeed: getModeScaledBallSpeed(
-      config.initialBallSpeed,
-      input,
-      metadata.activeCatalog.length,
-    ),
-    maxBallSpeed: getModeScaledBallSpeed(config.maxBallSpeed, input, metadata.activeCatalog.length),
+    initialBallSpeed: config.initialBallSpeed * stage.speedScale,
+    maxBallSpeed: config.maxBallSpeed * stage.speedScale,
   };
 }
 
@@ -91,10 +74,8 @@ export function resolveStageMetadataFromState(
 ): StageMetadata {
   return resolveStageMetadata({
     stageIndex: state.campaign.stageIndex,
-    gameMode: state.options.gameMode,
     campaignCourse: state.options.campaignCourse,
     route: state.campaign.resolvedRoute,
-    customStageCatalog: state.options.customStageCatalog,
   });
 }
 
@@ -105,10 +86,8 @@ export function resolveStageContextFromState(
   return resolveStageContext(
     {
       stageIndex: state.campaign.stageIndex,
-      gameMode: state.options.gameMode,
       campaignCourse: state.options.campaignCourse,
       route: state.campaign.resolvedRoute,
-      customStageCatalog: state.options.customStageCatalog,
     },
     config,
   );
@@ -118,102 +97,31 @@ export function getStageInitialBallSpeed(
   config: Pick<GameConfig, "initialBallSpeed">,
   input: StageContextInput,
 ): number {
-  return getModeScaledBallSpeed(
-    config.initialBallSpeed,
-    input,
-    getActiveStageCatalog(input.customStageCatalog, input.campaignCourse).length,
+  return (
+    config.initialBallSpeed *
+    getStageDefinition(input, clampStageIndex(input.stageIndex)).speedScale
   );
-}
-
-export function getStageMaxBallSpeed(
-  config: Pick<GameConfig, "maxBallSpeed">,
-  input: StageContextInput,
-): number {
-  return getModeScaledBallSpeed(
-    config.maxBallSpeed,
-    input,
-    getActiveStageCatalog(input.customStageCatalog, input.campaignCourse).length,
-  );
-}
-
-export function getTotalStagesForMode(mode: GameMode, stageCount: number): number {
-  const safeStageCount = Math.max(1, stageCount);
-  if (mode === "endless") {
-    return MODE_CONFIG.endlessVirtualStages;
-  }
-  if (mode === "boss_rush") {
-    return MODE_CONFIG.bossRushRounds;
-  }
-  return safeStageCount;
-}
-
-export function getModeEffectiveStageIndex(
-  stageIndex: number,
-  mode: GameMode,
-  stageCount = STAGE_CATALOG.length,
-): number {
-  const safeStageCount = Math.max(1, stageCount);
-  if (mode === "boss_rush") {
-    return safeStageCount - 1;
-  }
-  if (mode === "endless") {
-    return stageIndex % safeStageCount;
-  }
-  return stageIndex;
 }
 
 function getActiveStageCatalog(
-  customStageCatalog: GameState["options"]["customStageCatalog"],
   campaignCourse: GameState["options"]["campaignCourse"],
 ): readonly StageDefinition[] {
-  if (customStageCatalog && customStageCatalog.length > 0) {
-    return customStageCatalog;
-  }
   return campaignCourse === "ex" ? EX_STAGE_CATALOG : STAGE_CATALOG;
 }
 
 function getStageDefinition(
   input: StageContextInput,
-  activeCatalog: readonly StageDefinition[],
   effectiveStageIndex: number,
 ): StageDefinition {
-  if (input.customStageCatalog && activeCatalog.length > 0) {
-    return (
-      activeCatalog[effectiveStageIndex] ??
-      activeCatalog[activeCatalog.length - 1] ??
-      STAGE_CATALOG[0]
-    );
-  }
   if (input.campaignCourse === "ex") {
     return getExStageByIndex(effectiveStageIndex);
   }
-  return getStageForCampaign(
-    effectiveStageIndex,
-    input.gameMode === "campaign" ? input.route : null,
-  );
+  return getStageForCampaign(effectiveStageIndex, input.route);
 }
 
-function getModeScaledBallSpeed(
-  baseSpeed: number,
-  input: StageContextInput,
-  stageCount: number,
-): number {
-  const effectiveStageIndex = getModeEffectiveStageIndex(
-    input.stageIndex,
-    input.gameMode,
-    stageCount,
-  );
-  const stage = getStageDefinition(
-    input,
-    getActiveStageCatalog(input.customStageCatalog, input.campaignCourse),
-    effectiveStageIndex,
-  );
-  const baseScale = stage.speedScale;
-  if (input.gameMode !== "boss_rush") {
-    return baseSpeed * baseScale;
-  }
-  const rushScale = 1 + Math.max(0, input.stageIndex) * MODE_CONFIG.bossRushSpeedScaleStep;
-  return baseSpeed * baseScale * rushScale;
+function clampStageIndex(stageIndex: number, stageCount = STAGE_CATALOG.length): number {
+  const lastIndex = Math.max(0, stageCount - 1);
+  return Math.max(0, Math.min(lastIndex, stageIndex));
 }
 
 function inferChapter(stageIndex: number): number {
@@ -259,25 +167,19 @@ function resolveVisualProfile(stage: StageDefinition): StageVisualProfile {
 
 function resolveMusicCue(stage: StageDefinition, effectiveStageIndex: number): MusicCue {
   if (stage.course === "ex") {
-    return {
-      id: "ex",
-      variant: (effectiveStageIndex % 4) + 1,
-    };
+    return { id: "ex", variant: 0 };
   }
   if (stage.encounter?.kind === "boss") {
-    return { id: "finalboss", variant: 1 };
+    return { id: "finalboss", variant: 0 };
   }
   if (stage.encounter?.kind === "midboss") {
-    return { id: "midboss", variant: stage.id >= 8 ? 2 : 1 };
+    return { id: "midboss", variant: 0 };
   }
-  switch (stage.chapter) {
-    case 2:
-      return { id: "chapter2", variant: Math.min(3, Math.max(1, stage.id - 3)) };
-    case 3:
-      return { id: "chapter3", variant: Math.min(3, Math.max(1, stage.id - 6)) };
-    case 4:
-      return { id: "chapter3", variant: Math.min(3, Math.max(1, stage.id - 9)) };
-    default:
-      return { id: "chapter1", variant: Math.min(3, Math.max(1, effectiveStageIndex + 1)) };
+  if (effectiveStageIndex >= 8) {
+    return { id: "chapter3", variant: 0 };
   }
+  if (effectiveStageIndex >= 4) {
+    return { id: "chapter2", variant: 0 };
+  }
+  return { id: "chapter1", variant: 0 };
 }

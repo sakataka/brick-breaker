@@ -1,13 +1,13 @@
 import type { CSSProperties, ReactElement } from "react";
+import type { ShopUiView } from "../../game/shopUi";
 import { type AppLocale, formatPoints, getItemTranslation, getLL } from "../../i18n";
-import type { ShopViewState } from "../store";
 import { AppIcon } from "./AppIcon";
 import { getItemVisualSpec } from "./itemVisualRegistry";
 import { OptionCard, SectionHeader, Surface } from "./uiPrimitives";
 
 export interface ShopPanelProps {
   locale: AppLocale;
-  shop: ShopViewState;
+  shop: ShopUiView;
   onSelect: (index: 0 | 1) => void;
 }
 

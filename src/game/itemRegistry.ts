@@ -9,9 +9,9 @@ import type {
   ItemRegistry,
   ItemStackState,
 } from "./itemTypes";
-import type { Ball, DebugItemPreset, GameState, ItemState, ItemType, RandomSource } from "./types";
+import type { Ball, GameState, ItemState, ItemType, RandomSource } from "./types";
 
-export { ITEM_REGISTRY } from "./itemRegistryData";
+export { ITEM_ORDER, ITEM_REGISTRY } from "./itemRegistryData";
 
 export interface ActiveItemEntry {
   type: ItemType;
@@ -28,11 +28,6 @@ export interface ItemPickupPolicyOptions {
   enableNewItemStacks?: boolean;
   gameState?: Pick<GameState, "bricks" | "vfx">;
   scorePerBrick?: number;
-}
-
-export interface DebugPresetOptions {
-  enableNewItemStacks: boolean;
-  enabledItems: readonly ItemType[];
 }
 
 const EMPTY_ITEM_STACKS: ItemStackState = {
@@ -57,11 +52,11 @@ export function cloneItemStacks(stacks: ItemStackState): ItemStackState {
   return { ...stacks };
 }
 
-export function getItemStackCount(stacks: ItemStackState, type: ItemType): number {
+function getItemStackCount(stacks: ItemStackState, type: ItemType): number {
   return ITEM_REGISTRY[type].getLabelStack(stacks);
 }
 
-export function setItemStackCount(stacks: ItemStackState, type: ItemType, count: number): void {
+function setItemStackCount(stacks: ItemStackState, type: ItemType, count: number): void {
   const definition = ITEM_REGISTRY[type];
   stacks[definition.stackKey] = count;
 }
@@ -85,32 +80,6 @@ export function applyItemPickupFromRegistry(
       scorePerBrick: options.scorePerBrick,
     }) ?? {}
   );
-}
-
-export function applyDebugPresetFromRegistry(
-  items: ItemState,
-  preset: DebugItemPreset,
-  options: DebugPresetOptions,
-): void {
-  items.active = createItemStacks();
-  const enabled = new Set(options.enabledItems);
-  if (preset === "none") {
-    return;
-  }
-  for (const type of ITEM_ORDER) {
-    if (!enabled.has(type)) {
-      continue;
-    }
-    const definition = ITEM_REGISTRY[type];
-    const baseCount = definition.debugPresetStacks?.[preset] ?? 0;
-    const nextCount =
-      !options.enableNewItemStacks && definition.respectsNewStackSetting
-        ? Math.min(baseCount, 1)
-        : baseCount;
-    if (nextCount > 0) {
-      setItemStackCount(items.active, type, Math.min(definition.maxStacks, nextCount));
-    }
-  }
 }
 
 export function createItemModifiers(
@@ -154,10 +123,6 @@ export function getActiveItemEntriesFromRegistry(stacks: ItemStackState): Active
 
 export function getItemEmoji(type: ItemType): string {
   return ITEM_REGISTRY[type].emoji;
-}
-
-export function getItemIcon(type: ItemType): string {
-  return ITEM_REGISTRY[type].icon;
 }
 
 export function getItemColor(type: ItemType): string {

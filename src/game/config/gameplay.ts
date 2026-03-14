@@ -63,23 +63,10 @@ export interface HazardConfig {
   instantSpeedScale: number;
 }
 
-export interface RiskModeConfig {
-  scoreScale: number;
-  maxSpeedScale: number;
-}
-
 export interface ShopConfig {
   basePurchaseCost: number;
   growthFactor: number;
   roundUnit: number;
-}
-
-export interface RogueConfig {
-  maxUpgrades: number;
-  checkpointStages: readonly number[];
-  paddleScaleStep: number;
-  maxSpeedScaleStep: number;
-  scoreScaleStep: number;
 }
 
 export interface CombatConfig {
@@ -120,13 +107,6 @@ export interface StageControlConfig {
 
 export interface MissionConfig {
   bonusStarsOnAllClear: number;
-}
-
-export interface ModeConfig {
-  endlessVirtualStages: number;
-  bossRushRounds: number;
-  bossRushSpeedScaleStep: number;
-  bossRushBossHpStep: number;
 }
 
 export const DEFAULT_MULTIBALL_MAX_BALLS = 4;
@@ -252,23 +232,10 @@ export const HAZARD_CONFIG: HazardConfig = {
   instantSpeedScale: 1.15,
 };
 
-export const RISK_MODE_CONFIG: RiskModeConfig = {
-  scoreScale: 1.35,
-  maxSpeedScale: 1.12,
-};
-
 const SHOP_CONFIG: ShopConfig = {
   basePurchaseCost: 1200,
   growthFactor: 1.35,
   roundUnit: 100,
-};
-
-export const ROGUE_CONFIG: RogueConfig = {
-  maxUpgrades: 3,
-  checkpointStages: [3, 7, 11],
-  paddleScaleStep: 0.08,
-  maxSpeedScaleStep: 0.07,
-  scoreScaleStep: 0.15,
 };
 
 export const COMBAT_CONFIG: CombatConfig = {
@@ -309,13 +276,6 @@ export const STAGE_CONTROL_CONFIG: StageControlConfig = {
 
 export const MISSION_CONFIG: MissionConfig = {
   bonusStarsOnAllClear: 1,
-} as const;
-
-export const MODE_CONFIG: ModeConfig = {
-  endlessVirtualStages: 999,
-  bossRushRounds: 5,
-  bossRushSpeedScaleStep: 0.04,
-  bossRushBossHpStep: 2,
 } as const;
 
 export function getGameplayBalance(difficulty: Difficulty): GameplayBalance {

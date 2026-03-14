@@ -1,9 +1,7 @@
 import { describe, expect, test } from "vite-plus/test";
-import { ITEM_ORDER } from "./itemRegistryData";
+import { ITEM_ORDER } from "./itemRegistry";
 import {
   buildStartSettingsPatch,
-  getDefaultCustomStageJson,
-  parseCustomStageCatalog,
   START_SETTINGS_DEFAULT,
   toggleEnabledItem,
 } from "./startSettingsSchema";
@@ -16,8 +14,8 @@ describe("startSettingsSchema", () => {
       debugRecordResults: true,
     });
     expect(buildStartSettingsPatch("campaignCourse", "ex")).toEqual({ campaignCourse: "ex" });
-    expect(buildStartSettingsPatch("challengeSeedCode", "  demo  ")).toEqual({
-      challengeSeedCode: "demo",
+    expect(buildStartSettingsPatch("enableNewItemStacks", true)).toEqual({
+      enableNewItemStacks: true,
     });
   });
 
@@ -35,22 +33,6 @@ describe("startSettingsSchema", () => {
       toggleEnabledItem({ enabledItems: disabledAllButOne }, ITEM_ORDER.at(-1) as ItemType, true)
         .enabledItems,
     ).toHaveLength(ITEM_ORDER.length);
-  });
-
-  test("parses valid custom stage json and rejects invalid input", () => {
-    const valid = parseCustomStageCatalog({
-      customStageJsonEnabled: true,
-      customStageJson: getDefaultCustomStageJson(),
-    });
-
-    expect(valid).not.toBeNull();
-    expect(valid?.length).toBeGreaterThan(0);
-    expect(
-      parseCustomStageCatalog({
-        ...START_SETTINGS_DEFAULT,
-        customStageJsonEnabled: true,
-        customStageJson: "{invalid",
-      }),
-    ).toBeNull();
+    expect(START_SETTINGS_DEFAULT.enabledItems).toEqual(ITEM_ORDER);
   });
 });

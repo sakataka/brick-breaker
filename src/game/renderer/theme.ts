@@ -1,4 +1,3 @@
-import { THEME_BANDS, type ThemeBandId } from "../config";
 import type { UiThemeTokens } from "../uiTheme";
 
 export interface RenderTheme {
@@ -40,35 +39,6 @@ export const DEFAULT_RENDER_THEME: RenderTheme = {
   itemText: "rgba(235, 244, 255, 1)",
   shield: "rgba(116, 255, 229, 0.66)",
 };
-
-export function resolveRenderTheme(
-  themeBandId: ThemeBandId,
-  baseTheme: RenderTheme,
-  highContrast = false,
-): RenderTheme {
-  const band = THEME_BANDS.find((candidate) => candidate.id === themeBandId) ?? THEME_BANDS[0];
-  const theme: RenderTheme = {
-    ...baseTheme,
-    backdropStart: band.backdropStart,
-    backdropEnd: band.backdropEnd,
-    backdropStroke: band.backdropStroke,
-    progressBar: band.progressBar,
-  };
-  if (!highContrast) {
-    return theme;
-  }
-  return {
-    ...theme,
-    backdropStart: "rgba(0, 0, 0, 0.94)",
-    backdropEnd: "rgba(0, 0, 0, 0.78)",
-    backdropStroke: "rgba(255, 255, 255, 0.95)",
-    progressBar: "rgba(255, 234, 102, 1)",
-    brickStroke: "rgba(255, 255, 255, 1)",
-    paddleText: "rgba(255, 255, 255, 1)",
-    itemText: "rgba(255, 255, 255, 1)",
-    overlayTint: "rgba(0, 0, 0, 0.24)",
-  };
-}
 
 export function resolveRenderThemeFromTokens(
   tokens: UiThemeTokens,

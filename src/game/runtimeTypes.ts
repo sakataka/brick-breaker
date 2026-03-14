@@ -7,7 +7,6 @@ import type {
   ItemType,
   Paddle,
   Scene,
-  StageDefinition,
   StageMissionKey,
   Vector2,
 } from "./domainTypes";
@@ -84,7 +83,6 @@ export interface CampaignState {
   totalStages: number;
   stageStartScore: number;
   results: StageResultEntry[];
-  routePreference: RoutePreference;
   resolvedRoute: StageRoute | null;
 }
 
@@ -154,9 +152,7 @@ export interface RuntimeState {
   assist: AssistState;
   hazard: HazardState;
   shop: ShopState;
-  rogue: RogueState;
   story: StoryState;
-  ghost: GhostState;
   vfx: VfxState;
   a11y: A11yState;
 }
@@ -228,22 +224,12 @@ export interface HazardState {
 }
 
 export interface RunOptions {
-  gameMode: GameMode;
   campaignCourse: import("./domainTypes").CampaignCourse;
-  riskMode: boolean;
   enableNewItemStacks: boolean;
   enabledItems: ItemType[];
-  ghostReplayEnabled: boolean;
-  customStageCatalog: StageDefinition[] | null;
   debugModeEnabled: boolean;
   debugRecordResults: boolean;
-  debugScenario: DebugScenario;
-  debugItemPreset: DebugItemPreset;
 }
-
-export type DebugScenario = "normal" | "enemy_check" | "boss_check";
-export type DebugItemPreset = "none" | "combat_check" | "boss_check";
-export type GameMode = "campaign" | "endless" | "boss_rush";
 
 export interface ShopState {
   usedThisStage: boolean;
@@ -258,37 +244,11 @@ export interface MagicState {
   cooldownMaxSec: number;
 }
 
-export interface RogueState {
-  upgradesTaken: number;
-  paddleScaleBonus: number;
-  maxSpeedScaleBonus: number;
-  scoreScaleBonus: number;
-  pendingOffer: [RogueUpgradeType, RogueUpgradeType] | null;
-  lastChosen: RogueUpgradeType | null;
-}
-
 export interface StoryState {
   activeStageNumber: number | null;
   seenStageNumbers: number[];
 }
-
-export interface GhostSample {
-  t: number;
-  paddleX: number;
-  ballX: number;
-  ballY: number;
-}
-
-export interface GhostState {
-  playbackEnabled: boolean;
-  recordAccumulatorSec: number;
-  recording: GhostSample[];
-  playback: GhostSample[];
-}
-
-export type RoutePreference = "auto" | "A" | "B";
 export type StageRoute = "A" | "B";
-export type RogueUpgradeType = "paddle_core" | "speed_core" | "score_core";
 
 export interface EnemyUnit {
   id: number;

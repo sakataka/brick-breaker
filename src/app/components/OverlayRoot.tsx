@@ -2,13 +2,11 @@ import type { CSSProperties, ReactElement } from "react";
 import { getArtCssVars, resolveVisualAssetProfile } from "../../art/visualAssets";
 import type { OverlayViewModel } from "../../game/renderTypes";
 import type { StartSettingsSelection } from "../../game/startSettingsSchema";
-import type { RogueUpgradeType } from "../../game/types";
 import { type AppLocale, getLL } from "../../i18n";
 import {
   buildCampaignResultRows,
   buildOverlaySubText,
   buildStageLabel,
-  formatRogueUpgradeLabel,
   getOverlayButton,
   getOverlayMessage,
 } from "../viewmodels/overlayText";
@@ -22,10 +20,8 @@ export interface OverlayRootProps {
   overlay: OverlayViewModel;
   startSettings: StartSettingsSelection;
   exUnlocked: boolean;
-  rogueSelection: RogueUpgradeType;
   onStartSettingsChange: (patch: Partial<StartSettingsSelection>) => void;
   onLocaleChange: (locale: AppLocale) => void;
-  onRogueSelectionChange: (value: RogueUpgradeType) => void;
   onPrimaryAction: () => void;
 }
 
@@ -34,10 +30,8 @@ export function OverlayRoot({
   overlay,
   startSettings,
   exUnlocked,
-  rogueSelection,
   onStartSettingsChange,
   onLocaleChange,
-  onRogueSelectionChange,
   onPrimaryAction,
 }: OverlayRootProps): ReactElement {
   const LL = getLL(locale);
@@ -47,7 +41,6 @@ export function OverlayRoot({
   const showOverlay = overlay.scene !== "playing";
   const isStartScene = overlay.scene === "start";
   const showResults = overlay.scene === "clear";
-  const showRogue = overlay.scene === "stageclear" && Boolean(overlay.rogueOffer);
   const debugBadge = overlay.stage.debugModeEnabled
     ? overlay.stage.debugRecordResults
       ? LL.hud.debug.badgeOn()
@@ -133,28 +126,6 @@ export function OverlayRoot({
               listId="overlay-results"
               hidden={!showResults}
             />
-
-            <StageResultPanel
-              title={LL.overlay.rogueTitle()}
-              rows={[]}
-              sectionId="overlay-rogue-section"
-              hidden={!showRogue}
-            >
-              <select
-                id="overlay-rogue-select"
-                value={rogueSelection}
-                onChange={(event) => {
-                  onRogueSelectionChange(event.target.value as RogueUpgradeType);
-                }}
-              >
-                {(overlay.rogueOffer?.options ?? ["score_core", "speed_core"]).map((option) => (
-                  <option key={option} value={option}>
-                    {formatRogueUpgradeLabel(LL, option)}{" "}
-                    {LL.overlay.rogueRemaining({ count: overlay.rogueOffer?.remaining ?? 0 })}
-                  </option>
-                ))}
-              </select>
-            </StageResultPanel>
 
             {overlay.scene !== "story" && overlay.scene !== "error" ? (
               <p className="subtle overlay-stage-label">{buildStageLabel(LL, overlay)}</p>
