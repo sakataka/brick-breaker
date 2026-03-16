@@ -2,15 +2,13 @@
 
 ## 目的
 
-機能追加時の変更範囲を局所化し、AI/人間どちらでも誤読しにくい構造を維持すること。
+変更範囲を局所化し、browser-first campaign の shipped 仕様を UI / Phaser / Audio / test で一貫して扱える構造を維持すること。
 
 ## レイヤー構成
 
-### 1. Core（純ロジック）
+### 1. Core Simulation
 
-- `src/core/model.ts`
-- `src/core/engine.ts`
-- `src/core/ports.ts`
+- `src/core/*`
 - `src/game/gamePipeline.ts`
 - `src/game/pipeline/*`
 - `src/game/physicsCore.ts`
@@ -23,199 +21,250 @@
 
 ルール:
 
-- Core は DOM / Phaser Scene / Audio API を直接触らない。
-- 外部副作用は Port 越しで同期する。
+- Core は DOM / Phaser / Audio API を直接触らない
+- frame 中の gameplay rule は `gamePipeline` と各 phase に閉じる
+- `gamePipeline.ts` は orchestration のみを持ち、具体処理は `pipeline/*` に分ける
 
-### 2. Orchestrator
+### 2. Runtime Orchestrator
 
 - `src/game/GameSession.ts`
 - `src/game/session/RuntimeController.ts`
 - `src/game/session/SessionPorts.ts`
+- `src/game/session/startSettings.ts`
+- `src/game/session/sessionFlow.ts`
+- `src/game/session/shopActions.ts`
 - `src/game/sceneSync.ts`
 - `src/game/audioSync.ts`
-- `src/game/session/startSettings.ts`
-- `src/game/session/shopActions.ts`
-- `src/game/session/viewSync.ts`
 
 責務:
 
-- 入力・シーン遷移・フレーム進行のオーケストレーション。
-- `RenderPort` / `UiPort` / `AudioPort` への同期。
+- `GameSession` は public facade
+- `RuntimeController` は start / pause / resume / frame loop / scene transition を束ねる唯一の orchestrator
+- `SessionPorts` は `RenderPort / UiPort / AudioPort / MetaProgress` への同期境界
+- shipped 開始設定を runtime state に適用し、run を開始する
 
-### 3. Phaser Host（描画・入力）
+### 3. Phaser Host
 
-- `src/art/visualAssets.ts`
 - `src/phaser/GameHost.ts`
-- `src/phaser/scenes/RuntimeScene.ts`
 - `src/phaser/scenes/BootScene.ts`
+- `src/phaser/scenes/RuntimeScene.ts`
 - `src/phaser/render/PhaserRenderPort.ts`
-- `src/phaser/render/color.ts`
 - `src/phaser/render/layers/backdrop.ts`
 - `src/phaser/render/layers/world.ts`
+- `src/phaser/render/layers/renderers/*`
 - `src/phaser/render/layers/effects.ts`
 - `src/phaser/render/layers/overlay.ts`
+- `src/art/visualAssets.ts`
 
 責務:
 
-- Pointer/Keyboard 入力を受け取り `GameSession` へコマンド通知。
-- `RenderViewState` を Phaser Graphics 描画へ変換。
-- `BootScene` は art manifest 由来の SVG texture を preload し、`PhaserRenderPort` は texture key と asset profile を使って背景タイルを合成する。
+- Pointer / keyboard 入力を `GameSession` へ通知する
+- presenter が生成した `RenderViewState` を Phaser 描画へ変換する
+- `world.ts` は coordinator として各 renderer を呼び、描画ロジックの集中を避ける
+- `BootScene` は art manifest 由来の texture を preload する
 
 ### 4. React UI
 
 - `src/app/AppUi.tsx`
-- `src/app/components/HudPanel.tsx`
-- `src/app/components/OverlayRoot.tsx`
-- `src/app/components/StartSettingsForm.tsx`
-- `src/app/components/StageResultPanel.tsx`
-- `src/app/components/ShopPanel.tsx`
-- `src/app/components/uiPrimitives.tsx`
-- `src/app/components/AppIcon.tsx`
-- `src/app/components/itemVisualRegistry.tsx`
 - `src/app/store.ts`
-- `src/app/viewmodels/overlayCopy.ts`
-- `src/app/viewmodels/overlayText.ts`
+- `src/app/components/*`
+- `src/app/viewmodels/*`
 
 責務:
 
-- 表示は宣言的に実装。
-- ゲーム本体との接続点は store のみ。
-- `StartSettingsForm` は `src/game/startSettingsSchema.ts` の schema を参照し、設定UIを定義駆動で生成する。
-- ロケール状態は store が保持し、開始画面の言語 selector から更新する。選択ロケールは `localStorage` に保存する。
-- 開始設定は browser-first campaign を前提にし、言語/難易度/アクセシビリティ/音声のみを shipped UI へ出す。
-- `prefers-reduced-motion` / `prefers-contrast` は store 初期値に取り込みつつ、プレイ開始後は開始設定で選んだ値を優先する。
-- `OverlayRoot` は開始画面のみ「ヘッダー / 設定スクロール / 固定CTAフッター」を適用し、設定増加時も開始操作を維持する。
-- `AppUi` はプレイ中のみ「上段情報バー（HUD+ショップ） / 下段ゲーム枠」の2分割レイアウトを有効化し、`data-theme` / `data-warning` で章別の premium SF arena 演出を切り替える。
-- React UI は `uiPrimitives` と `AppIcon` を介して `Space Grotesk + Public Sans` / `Phosphor` / theme tokens を共通利用する。
-- item の見た目差分は `itemVisualRegistry.tsx` に集約し、HUD / Shop / Start Settings で共有する。
-- `Surface` / `Banner` などの primitive は panel chrome を前提にし、`panel fill + frame + badge strip` を CSS custom property で合成する。
-- ショップは「2択購入のみ（無料交換なし）」を基本ルールとし、表示モデルは `src/game/shopUi.ts` で一元生成する。
-- HUD / Overlay / Shop は構造化 ViewModel を受け取り、ボス戦では `cast / weak window / mission progress / threat` を強調する。
-- スコア系表示は presenter で `scoreFeed / styleBonus / recordState / previewFocus` へ正規化し、React 側で計算を持たない。
-- HUD / Overlay / Render は `visual` セクション（`themeId / warningLevel / chapterLabel / banner / motionProfile`）と `encounter` セクション（`stageThreatLevel / activeCues / previewTags`）を共有し、通常面と encounter 面で見た目を切り替える。
-- motion は React UI のバナー / 導入 / トースト演出に使い、Phaser 側の描画更新とは責務を分ける。
-
-### 4.5 i18n / Copy
-
-- `src/i18n/translations.ts` を翻訳辞書の基準とする。`ja` を canonical source とし、`en` は同一キー構造を必須とする。
-- `src/i18n/index.ts` はロケール解決（保存済み > ブラウザ言語 > `ja`）、永続化、React/非 React 共通の翻訳取得を提供する。
-- Phaser 側の落下アイテム短縮ラベルも i18n 経由で解決する。
+- 表示は宣言的に実装する
+- ゲーム本体との接続点は store と `UiPort` のみ
+- 開始画面は shipped 設定だけを表示する
+- HUD / Overlay / Shop は presenter から受け取る view model をそのまま描画する
 
 ### 5. Audio
 
-- `src/audio/audioDirector.ts`（Facade）
+- `src/audio/audioDirector.ts`
 - `src/audio/toneDirector.ts`
 - `src/audio/toneBgm.ts`
 - `src/audio/toneSfx.ts`
-- `src/audio/sfx.ts`
 - `src/audio/bgmCatalog.ts`
 - `src/audio/bgmSequencer.ts`
 
 責務:
 
-- シーン遷移とステージ進行に同期した BGM/SE 制御。
-- BGMは `bgmCatalog` の cue 定義（`chapter1 / chapter2 / chapter3 / midboss / finalboss / ex / title`）を基に切り替える。
-- 再生は `bgmSequencer` の多声音（リード/ベース/和音/対旋律/パッド）スケジューリングで行う。
-- boss cast / phase shift / danger lane は accent cue として `ToneSfx` から個別再生する。
-- ゲーム側は `AudioPort` 契約のみを意識。
+- scene / encounter / warning cue に同期した BGM / SE を制御する
+- runtime 側は `AudioPort` 契約だけを意識する
 
-## データフロー
+## Runtime State
 
-1. `GameHost` が入力とフレーム時刻を `RuntimeController` へ渡す。
-2. `RuntimeController` が `CoreEngine.tick` を呼び、fixed-step で `gamePipeline` と `pipeline/*` を進行する。
-3. `src/game/presenter/*` が `RenderViewState` / `HudViewModel` / `OverlayViewModel` を構築し、`renderPresenter.ts` は facade として残す。
-4. `RenderPort`（Phaser）と `UiPort`（Zustand）へ同期する。
-5. シーン変化と stage cue 変化は `audioSync` と `AudioPort` を介して音へ同期する。
+runtime の正式 state shape は `src/game/runtimeTypes.ts` の nested contract のみです。
+
+- `scene`
+- `run`
+  - score
+  - lives
+  - elapsed
+  - progress
+  - combo
+  - options
+  - modulePolicy
+  - records
+- `encounter`
+  - current encounter id
+  - stage stats
+  - shop state
+  - story state
+  - threat level
+  - active telegraphs
+  - reward preview
+  - encounter runtime
+- `combat`
+  - balls
+  - paddle
+  - bricks
+  - enemies
+  - items
+  - assist
+  - hazard
+  - magic
+- `ui`
+  - vfx
+  - a11y
+  - score feed
+  - style bonus
+  - error
+
+旧 flat state を前提にした runtime contract は使いません。
+
+## Run / Content Structure
+
+進行の上位単位は `EncounterDefinition` です。
+
+- `src/game/content/runDefinition.ts`
+  - `threatTier: 1 | 2` ごとの run を定義
+- `src/game/content/encounters.ts`
+  - encounter の順序、preview、score focus、board/boss 接続を定義
+- `src/game/content/modules.ts`
+  - `core / tactical / active` の上位分類を定義
+- `src/game/config/stages.ts`
+  - 低レベルの盤面テンプレートと stage metadata を保持
+
+公開進行は `12 encounter の Tier 1` を基準にし、clear 後に `Threat Tier 2` を解放します。  
+旧 `course` や route 分岐は shipped 仕様に含めません。
+
+## Data Flow
+
+1. `GameHost` が入力とフレーム時刻を `RuntimeController` へ渡す
+2. `RuntimeController` が `CoreEngine.tick` を呼ぶ
+3. `gamePipeline.ts` が次の phase を固定順で進める
+   - `resolveInputPhase`
+   - `runEncounterScriptPhase`
+   - `runCombatSimulationPhase`
+   - `resolveCollisionPhase`
+   - `applyScoringPhase`
+   - `resolveRewardsAndTransitionPhase`
+4. presenter facade が `src/game/presenter/*` を通して `RenderViewState` / `HudViewModel` / `OverlayViewModel` を生成する
+5. `SessionPorts.publish(state)` が `RenderPort` と `UiPort` に同期する
+6. `audioSync` が scene / cue 変化を `AudioPort` に同期する
+
+## Presenter / Render Contract
+
+- presenter facade: `src/game/renderPresenter.ts`
+- world presenter: `src/game/presenter/worldPresenter.ts`
+- HUD presenter: `src/game/presenter/hudPresenter.ts`
+- overlay presenter: `src/game/presenter/overlayPresenter.ts`
+
+責務:
+
+- gameplay state を UI / Phaser 向け view model に変換する
+- score feed、record 状態、preview focus、warning level は presenter で正規化する
+- React / Phaser は表示側の加工ロジックを極力持たない
+
+Phaser world 描画は renderer 分割済みです。
+
+- bricks
+- paddle / player ball
+- enemy shot
+- boss
+- hazard
+- item
+- cue overlay
+- arena frame
+
+敵弾と player ball の識別は renderer 層で固定します。
+
+## Start Settings / Public UX
+
+shipped 開始設定の単一定義は `src/game/startSettingsSchema.ts` です。
+
+公開する設定:
+
+- `difficulty`
+- `reducedMotionEnabled`
+- `highContrastEnabled`
+- `bgmEnabled`
+- `sfxEnabled`
+
+開始画面は browser-first campaign の導線だけを持ち、debug 設定は shipped UI に含めません。
+
+## Persistence
+
+保存は `src/game/metaProgress.ts` が担当し、次の 2 系統に分けます。
+
+- `progression`
+  - `threatTier2Unlocked`
+- `records`
+  - `overallBestScore`
+  - `tier1BestScore`
+  - `tier2BestScore`
+  - `latestRunScore`
+
+旧 `meta_progress` save からの migration は維持します。
 
 ## ドキュメント運用ルール
 
-- 設定値: `src/game/config/*`
-- ビルド設定: `vite.config.ts`（`Vite+` の primary config。`vp dev / build / check` の入口であり、chunk 分割は `build.rolldownOptions.output.codeSplitting`、repo 品質タスクは `run.tasks` を使う）
+- 公開仕様: `README.md`
+- 実装設計: `docs/architecture.md`
+- ツールチェーン: `docs/toolchain.md`
+- 開発運用ルール: `AGENTS.md`
 - 開始設定 schema: `src/game/startSettingsSchema.ts`
-- run / encounter 定義: `src/game/content/runDefinition.ts` + `src/game/content/encounters.ts`
+- run / encounter 定義: `src/game/content/runDefinition.ts` と `src/game/content/encounters.ts`
 - module catalog: `src/game/content/modules.ts`
-- ショップ価格計算: `src/game/config/gameplay.ts` (`getShopPurchaseCost`)
-- ブロックHP/破壊判定: `src/game/brickDamage.ts`
-- ブロック分類/クリア判定ルール: `src/game/brickRules.ts`
-- アイテム仕様: `src/game/itemRegistry.ts`
-- アイテムUI表現（Phosphor icon / tone / emphasis）: `src/app/components/itemVisualRegistry.tsx`
-- UI theme token 解決: `src/game/uiTheme.ts`
-- アート manifest / panel chrome / brick skin / backdrop tile: `src/art/visualAssets.ts`
-- Phaser 向け theme 変換: `src/game/renderer/theme.ts`
-- アイテム表示名/説明/短縮文字: `src/i18n/translations.ts`
-- ショップ候補生成と Item Pool 連携: `src/game/pipeline/shopPhase.ts` + `src/game/gamePipeline.ts`
-- UI状態: `src/app/store.ts`
-- 開始設定の反映: `src/game/session/startSettings.ts`
-- progression / record 永続化: `src/game/metaProgress.ts` + `src/game/scoreSystem.ts`
-- ステージ解決: `src/game/stageContext.ts`
-- ステージ盤面の章/タグ/イベント/特殊セル定義: `src/game/config/stages.ts`
-- encounter: `src/game/bossState.ts` + `src/game/pipeline/bossPhase.ts`
-- ショップ操作処理: `src/game/session/shopActions.ts`
-- View同期: `src/game/session/viewSync.ts`
-- 開始設定の runtime 反映: `src/game/session/startSettings.ts`
-- ロケール解決/保存: `src/i18n/index.ts`
-- Threat Tier 2 解放と record の読み書き: `src/game/metaProgress.ts`
-- 未完了タスク: この文書末尾の `Open Backlog` のみ
+- 保存: `src/game/metaProgress.ts`
+- runtime state contract: `src/game/runtimeTypes.ts`
+
+この文書には「現行実装」を書き、将来構想は載せません。
 
 ## 追加時の手順
 
-### 新アイテム
+### 新しい encounter
 
-1. `src/game/domainTypes.ts` に `ItemType` を追加。
-2. `src/game/config/items.ts` に定義追加。
-3. `src/game/itemRegistry.ts` に仕様追加。
-4. `Item Pool` に出す場合は `startSettingsVisibleOrder` / `icon` / `roleTag` も追加する。
-5. 必要なら `src/game/physicsCore.ts` と `src/phaser/render/PhaserRenderPort.ts` を更新。
+1. `src/game/content/encounters.ts` に定義を追加する
+2. 必要なら `src/game/content/runDefinition.ts` に順序を反映する
+3. 低レベル盤面は `src/game/config/stages.ts` に追加する
+4. 必要な warning / cue / presenter 出力を更新する
+5. README では shipped 仕様が変わる場合のみ更新する
 
-### 新しい表示要素
+### 新しい module / pickup / active skill
 
-1. `src/game/renderTypes.ts` を拡張。
-2. `src/game/presenter/*` で ViewModel を生成し、必要なら `src/game/renderPresenter.ts` の facade export を更新する。
-3. Phaser 側なら `src/phaser/render/layers/*`、React 側なら `src/app/components/*` を更新。
-4. スコアや record の新規表示は presenter に集約し、UI では数値加工ロジックを増やさない。
+1. `src/game/domainTypes.ts` に型を追加する
+2. `src/game/itemRegistry.ts` と `src/game/itemSystem.ts` に低レベル仕様を追加する
+3. `src/game/content/modules.ts` で `core / tactical / active` の分類を更新する
+4. presenter と HUD / Shop 表示を同期更新する
+5. tests と docs を更新する
 
-### 新しいアート素材
+### 新しい描画要素
 
-1. `src/art/visualAssets.ts` に SVG builder と manifest entry を追加する。
-2. `resolveVisualAssetProfile()` で chapter / warning / encounter ごとの素材セットを解決する。
-3. Phaser 側で使う texture は `src/phaser/scenes/BootScene.ts` の preload 対象へ自動的に乗るよう `getAllArtTextureEntries()` を更新する。
-4. React 側で使う panel/background は `getArtCssVars()` を通し、利用側で raw data URI を直書きしない。
-
-### 新しい盤面要素
-
-1. `src/game/domainTypes.ts` の `BrickKind` / `StageDefinition` を更新。
-2. `src/game/config/stages.ts` に `specials / tags / events` を追加。
-3. `src/game/level.ts` で盤面生成を拡張。
-4. 物理・破壊・クリア判定は `src/game/brickRules.ts` / `src/game/brickDamage.ts` へ寄せる。
-5. 盤面制御が必要な場合は `src/game/pipeline/stagePhase.ts` と `src/game/presenter/*` を同期更新する。
-6. 見た目差分が必要なら `src/art/visualAssets.ts` と `src/phaser/render/layers/world.ts` の kind skin を追加する。
-
-### encounter / ボス攻撃追加
-
-1. `src/game/config/stages.ts` の `encounter` に profile を追加する。
-2. `src/game/bossState.ts` で state 初期値を定義する。
-3. `src/game/pipeline/bossPhase.ts` で `telegraph -> attack -> vulnerability` を実装する。
-4. HUD/描画で必要な情報は `src/game/renderTypes.ts` と `src/game/presenter/*` を拡張する。
-
-### score chase 追加
-
-1. `src/game/config/stages.ts` の `scoreFocus / bonusRules / enemyShotProfile` を更新する。
-2. 加点ロジックは `src/game/gamePipeline.ts` と `src/game/scoreSystem.ts` に寄せる。
-3. 保存が必要な値は `src/game/metaProgress.ts` へ追加し、旧 save からの移行を維持する。
-4. Shop/HUD/Overlay の score 表示は `src/game/presenter/*` を経由して反映する。
+1. `src/game/renderTypes.ts` と presenter を更新する
+2. Phaser 側は `src/phaser/render/layers/renderers/*` に追加する
+3. art asset が必要なら `src/art/visualAssets.ts` を更新する
 
 ## 品質ゲート
 
 - `vp check`
-- `vp run check:fast`
-- `vp run guard:local`
-- `vp run verify:change-coverage`
-- `vp run check:arch`
-- `vp run deadcode`
-- `vp fmt`
 - `vp test`
+- `vp run typecheck`
+- `vp run deadcode:report`
+- `vp run check:arch`
+- `vp run guard:test-state-shape`
 - `vp run e2e`
 
 ## Open Backlog
 
-- 現時点の残タスクはありません。
+- 現時点で、この文書に追記すべき既知の runtime backlog はありません。
