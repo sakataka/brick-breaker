@@ -1,4 +1,11 @@
-import type { Ball, CollisionEvent, GameState, ItemType, RandomSource } from "./types";
+import type {
+  Ball,
+  CollisionEvent,
+  GameState,
+  ItemType,
+  RandomSource,
+  StagePreviewTag,
+} from "./types";
 
 export interface ItemStackState {
   paddlePlusStacks: number;
@@ -17,7 +24,12 @@ export interface ItemStackState {
 export interface ItemEffectContext {
   stacks: ItemStackState;
   balls: Ball[];
-  state?: Pick<GameState, "bricks" | "vfx">;
+  state?:
+    | Pick<GameState, "combat" | "ui">
+    | {
+        bricks: GameState["combat"]["bricks"];
+        vfx: GameState["ui"]["vfx"];
+      };
   scorePerBrick?: number;
 }
 
@@ -42,12 +54,7 @@ export interface ItemModifierBundle {
 export interface ItemDefinition {
   type: ItemType;
   stackKey: keyof ItemStackState;
-  label: string;
-  hudLabel: string;
   icon: string;
-  emoji: string;
-  description: string;
-  shortLabel: string;
   color: string;
   weight: number;
   maxStacks: number;
@@ -56,10 +63,12 @@ export interface ItemDefinition {
   startSettingsVisibleOrder: number;
   roleTag: "attack" | "defense" | "control";
   encounterBias?: "midboss" | "boss" | "any";
+  synergyTags: readonly ("offense" | "control" | "survival" | "boss_break")[];
+  counterplayTags: readonly StagePreviewTag[];
+  previewAffinity: readonly StagePreviewTag[];
   sfxEvent: ItemPickupSfxEvent;
   presentation: ItemPickupPresentation;
   respectsNewStackSetting?: boolean;
-  debugPresetStacks?: Partial<Record<"combat_check" | "boss_check", number>>;
   applyPickup: (context: ItemEffectContext) => ItemPickupImpact | undefined;
   getLabelStack: (stacks: ItemStackState) => number;
 }

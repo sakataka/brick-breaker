@@ -9,11 +9,11 @@ export function castMagicStrike(
   random: RandomSource,
   playMagicCastSfx: () => void,
 ): void {
-  if (!state.magic.requestCast) {
+  if (!state.combat.magic.requestCast) {
     return;
   }
-  state.magic.requestCast = false;
-  if (state.magic.cooldownSec > 0) {
+  state.combat.magic.requestCast = false;
+  if (state.combat.magic.cooldownSec > 0) {
     return;
   }
   const target = selectMagicTarget(state);
@@ -23,19 +23,19 @@ export function castMagicStrike(
   if (!destroyBrickImmediately(target)) {
     return;
   }
-  state.score += Math.round(COMBAT_CONFIG.magicStrikeScore * scoreScale);
-  state.magic.cooldownSec = state.magic.cooldownMaxSec;
-  state.vfx.flashMs = Math.max(state.vfx.flashMs, 90);
-  state.vfx.shakeMs = Math.max(state.vfx.shakeMs, 80);
-  state.vfx.shakePx = Math.max(state.vfx.shakePx, 3);
-  state.vfx.floatingTexts.push({
+  state.run.score += Math.round(COMBAT_CONFIG.magicStrikeScore * scoreScale);
+  state.combat.magic.cooldownSec = state.combat.magic.cooldownMaxSec;
+  state.ui.vfx.flashMs = Math.max(state.ui.vfx.flashMs, 90);
+  state.ui.vfx.shakeMs = Math.max(state.ui.vfx.shakeMs, 80);
+  state.ui.vfx.shakePx = Math.max(state.ui.vfx.shakePx, 3);
+  state.ui.vfx.floatingTexts.push({
     key: "spell",
     pos: { x: target.x + target.width / 2, y: target.y + target.height / 2 },
     lifeMs: 420,
     maxLifeMs: 420,
     color: "rgba(130, 247, 255, 0.92)",
   });
-  state.vfx.impactRings.push({
+  state.ui.vfx.impactRings.push({
     pos: { x: target.x + target.width / 2, y: target.y + target.height / 2 },
     radiusStart: 6,
     radiusEnd: 28,
@@ -46,7 +46,7 @@ export function castMagicStrike(
   for (let i = 0; i < 8; i += 1) {
     const angle = random.next() * Math.PI * 2;
     const speed = 90 + random.next() * 110;
-    state.vfx.particles.push({
+    state.ui.vfx.particles.push({
       pos: { x: target.x + target.width / 2, y: target.y + target.height / 2 },
       vel: { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed },
       lifeMs: 240,
@@ -58,12 +58,12 @@ export function castMagicStrike(
   playMagicCastSfx();
 }
 
-function selectMagicTarget(state: GameState): GameState["bricks"][number] | null {
-  let best: GameState["bricks"][number] | null = null;
+function selectMagicTarget(state: GameState): GameState["combat"]["bricks"][number] | null {
+  let best: GameState["combat"]["bricks"][number] | null = null;
   let bestDistance = Number.POSITIVE_INFINITY;
-  const originX = state.paddle.x + state.paddle.width / 2;
-  const originY = state.paddle.y;
-  for (const brick of state.bricks) {
+  const originX = state.combat.paddle.x + state.combat.paddle.width / 2;
+  const originY = state.combat.paddle.y;
+  for (const brick of state.combat.bricks) {
     if (!brick.alive || !countsTowardStageClear(brick)) {
       continue;
     }

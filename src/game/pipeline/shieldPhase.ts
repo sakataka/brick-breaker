@@ -8,7 +8,7 @@ export interface ShieldBurstEvent {
   x: number;
   y: number;
   color?: string;
-  brickKind?: GameState["bricks"][number]["kind"];
+  brickKind?: GameState["combat"]["bricks"][number]["kind"];
 }
 
 export function processShieldBurst(
@@ -23,17 +23,17 @@ export function processShieldBurst(
   }
   state.combat.shieldBurstQueued = false;
   void sfx.play("shield_burst");
-  state.vfx.impactRings.push({
-    pos: { x: state.paddle.x + state.paddle.width / 2, y: state.paddle.y - 4 },
+  state.ui.vfx.impactRings.push({
+    pos: { x: state.combat.paddle.x + state.combat.paddle.width / 2, y: state.combat.paddle.y - 4 },
     radiusStart: 10,
     radiusEnd: 86,
     lifeMs: 220,
     maxLifeMs: 220,
     color: "rgba(120,255,230,0.88)",
   });
-  state.vfx.flashMs = Math.max(state.vfx.flashMs, 110);
-  state.vfx.shakeMs = Math.max(state.vfx.shakeMs, 70);
-  state.vfx.shakePx = Math.max(state.vfx.shakePx, 3);
+  state.ui.vfx.flashMs = Math.max(state.ui.vfx.flashMs, 110);
+  state.ui.vfx.shakeMs = Math.max(state.ui.vfx.shakeMs, 70);
+  state.ui.vfx.shakePx = Math.max(state.ui.vfx.shakePx, 3);
 
   for (const ball of survivors) {
     const upward = Math.max(260, Math.abs(ball.vel.y));
@@ -45,13 +45,13 @@ export function processShieldBurst(
     ball.speed = Math.min(maxBallSpeed, Math.max(ball.speed, nextSpeed));
   }
 
-  const candidates = state.bricks
+  const candidates = state.combat.bricks
     .filter((brick) => brick.alive && countsTowardStageClear(brick))
     .sort((a, b) => {
       if (b.y !== a.y) {
         return b.y - a.y;
       }
-      const center = state.paddle.x + state.paddle.width / 2;
+      const center = state.combat.paddle.x + state.combat.paddle.width / 2;
       const da = Math.abs(a.x + a.width / 2 - center);
       const db = Math.abs(b.x + b.width / 2 - center);
       return da - db;

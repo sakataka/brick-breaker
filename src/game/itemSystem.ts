@@ -26,7 +26,12 @@ const ITEM_SIZE = 16;
 
 export interface ItemPickupOptions {
   enableNewItemStacks?: boolean;
-  gameState?: Pick<GameState, "bricks" | "vfx">;
+  gameState?:
+    | Pick<GameState, "combat" | "ui">
+    | {
+        bricks: GameState["combat"]["bricks"];
+        vfx: GameState["ui"]["vfx"];
+      };
   scorePerBrick?: number;
 }
 

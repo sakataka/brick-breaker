@@ -4,11 +4,14 @@ import type {
   BossAttackKind,
   BossLane,
   Brick,
+  EnemyShotProfile,
+  EncounterCueKind,
   FallingItem,
   FloatingText,
   ImpactRing,
   Particle,
   Scene,
+  ThreatLevel,
   Vector2,
 } from "../types";
 import type { VisualState } from "../uiTheme";
@@ -41,6 +44,14 @@ export interface RenderViewState {
   progressRatio: number;
   themeBandId: ThemeBandId;
   visual: VisualState;
+  arena: {
+    depth: "stellar" | "orbital" | "fortress";
+    frame: "clean" | "hazard" | "citadel";
+    blockMaterial: "glass" | "alloy" | "armor" | "core";
+    particleDensity: number;
+    cameraIntensity: "steady" | "alert" | "assault";
+    threatLevel: ThreatLevel;
+  };
   slowBallActive: boolean;
   multiballActive: boolean;
   shieldCharges: number;
@@ -62,6 +73,8 @@ export interface RenderViewState {
     x: number;
     y: number;
     radius: number;
+    source?: "boss" | "turret";
+    style: EnemyShotProfile;
   }>;
   bossTelegraph?: {
     kind: BossAttackKind;
@@ -79,6 +92,11 @@ export interface RenderViewState {
     kind: BossAttackKind;
     progress: number;
   };
+  activeCues: Array<{
+    kind: EncounterCueKind;
+    severity: ThreatLevel;
+    progress: number;
+  }>;
   fluxFieldActive: boolean;
   stageModifierKey?: StageModifierKey;
   warpZones?: Array<{

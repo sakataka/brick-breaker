@@ -75,83 +75,121 @@ export function createInitialGameState(
   const stageSpeed = config.initialBallSpeed * stage.speedScale;
   const paddle = createBasePaddle(config);
   const ball = createRestingBall(config, paddle, stageSpeed);
-  const encounterState = createEncounterState();
+  const encounterRuntime = createEncounterState();
+  const vfx = createVfxState(reducedMotion);
 
   return {
     scene,
-    score: 0,
-    lives: config.initialLives,
-    lastGameOverScore: null,
-    elapsedSec: 0,
-    combo: {
-      multiplier: 1,
-      streak: 0,
-      lastHitSec: -1,
-      rewardGranted: false,
-      fillTriggered: false,
+    run: {
+      score: 0,
+      lives: config.initialLives,
+      lastGameOverScore: null,
+      elapsedSec: 0,
+      progress: {
+        encounterIndex: 0,
+        totalEncounters: STAGE_CATALOG.length,
+        encounterStartScore: 0,
+        results: [],
+        unlockedThreatTier: 1,
+      },
+      combo: {
+        multiplier: 1,
+        streak: 0,
+        lastHitSec: -1,
+        rewardGranted: false,
+        fillTriggered: false,
+      },
+      options: {
+        threatTier: 1,
+        difficulty: config.difficulty,
+        reducedMotionEnabled: reducedMotion,
+        highContrastEnabled: highContrast,
+        bgmEnabled: true,
+        sfxEnabled: true,
+      },
+      modulePolicy: {
+        enabledTypes: [...ITEM_ORDER],
+        allowExtendedStacks: false,
+      },
+      records: {
+        overallBestScore: 0,
+        tier1BestScore: 0,
+        tier2BestScore: 0,
+        latestRunScore: 0,
+        currentRunRecord: false,
+        deltaToBest: 0,
+      },
     },
-    stageStats: {
-      hitsTaken: 0,
-      startedAtSec: 0,
-      missionTargetSec: getStageTimeTargetSec(0),
-      missionResults: [],
+    encounter: {
+      currentEncounterId: null,
+      stats: {
+        hitsTaken: 0,
+        startedAtSec: 0,
+        missionTargetSec: getStageTimeTargetSec(0),
+        missionResults: [],
+        canceledShots: 0,
+      },
+      shop: {
+        usedThisStage: false,
+        purchaseCount: 0,
+        lastOffer: null,
+        lastChosen: null,
+      },
+      story: {
+        activeStageNumber: null,
+        seenStageNumbers: [],
+      },
+      threatLevel: "low",
+      activeTelegraphs: [],
+      rewardPreview: null,
+      runtime: encounterRuntime,
+      bossPhase: 0,
+      bossPhaseSummonCooldownSec: 0,
+      enemyWaveCooldownSec: 0,
+      forcedBallLoss: false,
     },
-    options: {
-      campaignCourse: "normal",
-      enableNewItemStacks: false,
-      enabledItems: [...ITEM_ORDER],
-      debugModeEnabled: false,
-      debugRecordResults: false,
-    },
-    balls: [ball],
-    paddle,
-    bricks: buildBricksFromStage(stage),
     combat: {
+      balls: [ball],
+      paddle,
+      bricks: buildBricksFromStage(stage),
+      enemies: [],
       laserCooldownSec: 0,
       nextLaserId: 1,
       laserProjectiles: [],
       heldBalls: [],
       shieldBurstQueued: false,
-      bossPhase: 0,
-      bossPhaseSummonCooldownSec: 0,
-      enemyWaveCooldownSec: 0,
-      bossAttackState: encounterState,
-      encounterState,
-      forcedBallLoss: false,
+      magic: {
+        cooldownSec: 0,
+        requestCast: false,
+        cooldownMaxSec: 10,
+      },
+      items: createItemState(),
+      assist: createAssistState(config),
+      hazard: {
+        speedBoostUntilSec: 0,
+      },
+      enemyProjectileStyle: {
+        defaultProfile: "spike_orb",
+        turretProfile: "plasma_bolt",
+        bossProfile: "void_core",
+      },
     },
-    enemies: [],
-    magic: {
-      cooldownSec: 0,
-      requestCast: false,
-      cooldownMaxSec: 10,
+    ui: {
+      vfx,
+      a11y: {
+        reducedMotion,
+        highContrast,
+      },
+      scoreFeed: [],
+      styleBonus: {
+        stageFocus: "survival_chain",
+        bonusRules: [],
+        chainLevel: 0,
+        lastBonusLabel: null,
+        lastBonusScore: 0,
+        noDropChainActive: false,
+      },
+      error: null,
     },
-    campaign: {
-      stageIndex: 0,
-      totalStages: STAGE_CATALOG.length,
-      stageStartScore: 0,
-      results: [],
-      resolvedRoute: null,
-    },
-    items: createItemState(),
-    assist: createAssistState(config),
-    hazard: {
-      speedBoostUntilSec: 0,
-    },
-    shop: {
-      usedThisStage: false,
-      purchaseCount: 0,
-      lastOffer: null,
-      lastChosen: null,
-    },
-    story: {
-      activeStageNumber: null,
-      seenStageNumbers: [],
-    },
-    vfx: createVfxState(reducedMotion),
-    a11y: {
-      reducedMotion,
-      highContrast,
-    },
-    error: null,
   };
 }

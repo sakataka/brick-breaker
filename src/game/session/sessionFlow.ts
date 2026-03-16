@@ -2,12 +2,14 @@ import type { CoreEngine } from "../../core/engine";
 import type { AudioPort } from "../../core/ports";
 import { buildStartConfig } from "../config";
 import {
+  applyRunScoreToMeta,
   type MetaProgress,
   readMetaProgress,
-  shouldUnlockEx,
+  shouldUnlockThreatTier2,
   writeMetaProgress,
 } from "../metaProgress";
 import { advanceStage, prepareStageStory, resetRoundState } from "../roundSystem";
+import { syncRecordStateFromMeta } from "../scoreSystem";
 import type { SceneEvent } from "../sceneMachine";
 import type {
   GameAudioSettings,
@@ -86,12 +88,12 @@ export function startOrResumeSession(params: StartOrResumeParams): void {
   }
 
   if (result.previous === "start") {
-    resetRoundState(params.state, params.config, params.state.vfx.reducedMotion, params.random, {
+    resetRoundState(params.state, params.config, params.state.ui.vfx.reducedMotion, params.random, {
       startStageIndex: params.pendingStartStageIndex,
     });
-    params.state.story.activeStageNumber = null;
+    params.state.encounter.story.activeStageNumber = null;
   } else if (result.previous === "story") {
-    params.state.story.activeStageNumber = null;
+    params.state.encounter.story.activeStageNumber = null;
   }
 
   params.engine.resetClock();
@@ -111,13 +113,32 @@ export function handleStageClearSession(
     reachedClear = event === "GAME_CLEAR";
     transitionResult = params.transition({ type: event });
   });
-  if (reachedClear && shouldUnlockEx(params.state)) {
-    const nextMeta = {
-      ...readMetaProgress(params.windowRef.localStorage),
-      exUnlocked: true,
-    };
+  if (reachedClear) {
+    let nextMeta = readMetaProgress(params.windowRef.localStorage);
+    if (
+      reachedClear &&
+      shouldUnlockThreatTier2({
+        scene: params.state.scene,
+        options: { threatTier: params.state.run.options.threatTier },
+      })
+    ) {
+      nextMeta = {
+        ...nextMeta,
+        progression: {
+          ...nextMeta.progression,
+          threatTier2Unlocked: true,
+        },
+      };
+    }
+    if (shouldPersistRunScore(params.state)) {
+      nextMeta = applyRunScoreToMeta(nextMeta, {
+        score: params.state.run.score,
+        threatTier: params.state.run.options.threatTier,
+      });
+    }
     writeMetaProgress(params.windowRef.localStorage, nextMeta);
     params.setMetaProgress(nextMeta);
+    syncRecordStateFromMeta(params.state, nextMeta);
   }
   if (transitionResult) {
     params.syncAudioForTransition(transitionResult);
@@ -128,9 +149,19 @@ export function handleStageClearSession(
 export function handleBallLossSession(
   params: SessionFlowBase & {
     engine: CoreEngine;
+    windowRef: Window;
   },
 ): void {
   params.engine.applyBallLoss(() => {
+    if (shouldPersistRunScore(params.state)) {
+      const nextMeta = applyRunScoreToMeta(readMetaProgress(params.windowRef.localStorage), {
+        score: params.state.run.lastGameOverScore ?? params.state.run.score,
+        threatTier: params.state.run.options.threatTier,
+      });
+      writeMetaProgress(params.windowRef.localStorage, nextMeta);
+      params.setMetaProgress(nextMeta);
+      syncRecordStateFromMeta(params.state, nextMeta);
+    }
     const result = params.transition({ type: "GAME_OVER" });
     params.syncAudioForTransition(result);
   });
@@ -147,4 +178,9 @@ export function runSafely(
   } catch (error) {
     onError(key, error instanceof Error && error.message ? error.message : undefined);
   }
+}
+
+function shouldPersistRunScore(state: GameState): boolean {
+  void state;
+  return true;
 }

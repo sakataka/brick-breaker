@@ -13,6 +13,90 @@ const stageSpecialSchema = z.object({
   ]),
 });
 
+const stageVisualProfileSchema = z.object({
+  depth: z.union([z.literal("stellar"), z.literal("orbital"), z.literal("fortress")]),
+  arenaFrame: z.union([z.literal("clean"), z.literal("hazard"), z.literal("citadel")]),
+  blockMaterial: z.union([
+    z.literal("glass"),
+    z.literal("alloy"),
+    z.literal("armor"),
+    z.literal("core"),
+  ]),
+  particleDensity: z.number().positive(),
+  cameraIntensity: z.union([z.literal("steady"), z.literal("alert"), z.literal("assault")]),
+  bossTone: z.union([
+    z.literal("hunter"),
+    z.literal("artillery"),
+    z.literal("citadel"),
+    z.literal("overlord"),
+  ]),
+});
+
+const stageBoardMechanicSchema = z.object({
+  role: z.union([
+    z.literal("shield"),
+    z.literal("relay"),
+    z.literal("reactor"),
+    z.literal("turret"),
+    z.literal("hazard"),
+  ]),
+  label: z.string().min(1),
+  intensity: z.union([
+    z.literal("low"),
+    z.literal("medium"),
+    z.literal("high"),
+    z.literal("critical"),
+  ]),
+});
+
+const stageHazardScriptSchema = z.object({
+  id: z.union([
+    z.literal("none"),
+    z.literal("gate_pulse"),
+    z.literal("turret_crossfire"),
+    z.literal("flux_field"),
+    z.literal("reactor_chain"),
+    z.literal("boss_arena"),
+  ]),
+  intensity: z.union([
+    z.literal("low"),
+    z.literal("medium"),
+    z.literal("high"),
+    z.literal("critical"),
+  ]),
+});
+
+const encounterTimelineSchema = z.object({
+  trigger: z.union([
+    z.literal("stage_start"),
+    z.literal("elapsed_10"),
+    z.literal("elapsed_20"),
+    z.literal("boss_phase_2"),
+    z.literal("boss_phase_3"),
+    z.literal("generator_down"),
+    z.literal("turret_destroyed"),
+    z.literal("board_clear"),
+  ]),
+  cue: z.union([
+    z.literal("boss_phase_shift"),
+    z.literal("shield_online"),
+    z.literal("relay_online"),
+    z.literal("reactor_critical"),
+    z.literal("warning_lane"),
+    z.literal("turret_crossfire"),
+    z.literal("stage_breakthrough"),
+    z.literal("punish_window"),
+    z.literal("hazard_surge"),
+  ]),
+  threatLevel: z.union([
+    z.literal("low"),
+    z.literal("medium"),
+    z.literal("high"),
+    z.literal("critical"),
+  ]),
+  durationSec: z.number().positive(),
+});
+
 const stageDefinitionSchema = z.object({
   id: z.number().int().positive(),
   speedScale: z.number().min(0.5).max(2),
@@ -20,7 +104,6 @@ const stageDefinitionSchema = z.object({
     .array(z.array(z.union([z.literal(0), z.literal(1)])))
     .min(1)
     .refine((rows) => rows.every((row) => row.length > 0), "layout must include columns"),
-  course: z.union([z.literal("normal"), z.literal("ex")]).optional(),
   chapter: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
   archetype: z
     .union([
@@ -59,6 +142,48 @@ const stageDefinitionSchema = z.object({
     )
     .optional(),
   specials: z.array(stageSpecialSchema).optional(),
+  visualProfile: stageVisualProfileSchema.optional(),
+  boardMechanics: z.array(stageBoardMechanicSchema).optional(),
+  hazardScript: stageHazardScriptSchema.optional(),
+  encounterTimeline: z.array(encounterTimelineSchema).optional(),
+  scoreFocus: z
+    .union([
+      z.literal("reactor_chain"),
+      z.literal("turret_cancel"),
+      z.literal("boss_break"),
+      z.literal("survival_chain"),
+    ])
+    .optional(),
+  bonusRules: z
+    .array(
+      z.union([
+        z.literal("hazard_first"),
+        z.literal("cancel_shots"),
+        z.literal("weak_window_burst"),
+        z.literal("no_drop_chain"),
+      ]),
+    )
+    .optional(),
+  enemyShotProfile: z
+    .union([z.literal("spike_orb"), z.literal("plasma_bolt"), z.literal("void_core")])
+    .optional(),
+  visualSetId: z.string().min(1).optional(),
+  previewTags: z
+    .array(
+      z.union([
+        z.literal("shielded_grid"),
+        z.literal("relay_chain"),
+        z.literal("reactor_chain"),
+        z.literal("turret_lane"),
+        z.literal("hazard_flux"),
+        z.literal("gate_pressure"),
+        z.literal("boss_break"),
+        z.literal("survival_check"),
+        z.literal("fortress_core"),
+        z.literal("sweep_alert"),
+      ]),
+    )
+    .optional(),
   missions: z
     .array(
       z.union([
@@ -88,6 +213,53 @@ const stageDefinitionSchema = z.object({
         z.literal("final_core"),
         z.literal("ex_overlord"),
       ]),
+      bossDefinition: z
+        .object({
+          profile: z.union([
+            z.literal("none"),
+            z.literal("warden"),
+            z.literal("artillery"),
+            z.literal("final_core"),
+            z.literal("ex_overlord"),
+          ]),
+          label: z.string().min(1),
+          telegraphSet: z.array(z.string().min(1)).min(1),
+          phaseRules: z.array(
+            z.object({
+              phase: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+              hpRatioThreshold: z.number().positive().max(1),
+              threatLevel: z.union([
+                z.literal("low"),
+                z.literal("medium"),
+                z.literal("high"),
+                z.literal("critical"),
+              ]),
+              punishWindowSec: z.number().positive(),
+            }),
+          ),
+          attackPatterns: z.array(
+            z.object({
+              phase: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+              attacks: z.array(z.string().min(1)).min(1),
+            }),
+          ),
+          breakpoints: z.array(z.number().positive().max(1)),
+          punishWindows: z.array(z.number().positive()),
+          arenaEffects: z.array(z.string().min(1)),
+          projectileSkin: z.union([
+            z.literal("spike_orb"),
+            z.literal("plasma_bolt"),
+            z.literal("void_core"),
+          ]),
+          cancelReward: z.number().nonnegative(),
+          phaseScoreRules: z.array(
+            z.object({
+              phase: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+              bonusPerWeakHit: z.number().nonnegative(),
+            }),
+          ),
+        })
+        .optional(),
     })
     .optional(),
   elite: z

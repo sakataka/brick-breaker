@@ -1,19 +1,13 @@
 import type { StageModifier } from "./config/stages";
-import {
-  EX_STAGE_CATALOG,
-  getExStageByIndex,
-  getStageForCampaign,
-  getStageModifier,
-  STAGE_CATALOG,
-} from "./config/stages";
+import { getStageModifier, STAGE_CATALOG } from "./config/stages";
 import type { StageVisualProfile } from "./config/themes";
 import { getVisualProfile } from "./config/themes";
-import type { GameConfig, GameState, MusicCue, StageDefinition, StageRoute } from "./types";
+import { getEncounterDefinition, getRunDefinition, type ThreatTier } from "./content/runDefinition";
+import type { GameConfig, GameState, MusicCue, StageDefinition, StagePreviewTag } from "./types";
 
 export interface StageContextInput {
   stageIndex: number;
-  campaignCourse: GameState["options"]["campaignCourse"];
-  route: StageRoute | null;
+  threatTier: ThreatTier;
 }
 
 export interface StageMetadata {
@@ -37,9 +31,10 @@ export interface StageContext extends StageMetadata {
 }
 
 export function resolveStageMetadata(input: StageContextInput): StageMetadata {
-  const activeCatalog = getActiveStageCatalog(input.campaignCourse);
+  const run = getRunDefinition(input.threatTier);
+  const activeCatalog = run.encounters.map((entry) => entry.stage);
   const effectiveStageIndex = clampStageIndex(input.stageIndex, activeCatalog.length);
-  const stage = getStageDefinition(input, effectiveStageIndex);
+  const stage = getEncounterDefinition(input.threatTier, effectiveStageIndex).stage;
   return {
     activeCatalog,
     effectiveStageIndex,
@@ -50,9 +45,9 @@ export function resolveStageMetadata(input: StageContextInput): StageMetadata {
     stageTags: stage.tags ?? [],
     stageEvents: stage.events ?? [],
     stageModifier: getStageModifier(effectiveStageIndex + 1),
-    themeBand: resolveVisualProfile(stage),
-    visualProfile: resolveVisualProfile(stage),
-    musicCue: resolveMusicCue(stage, effectiveStageIndex),
+    themeBand: resolveVisualProfile(stage, input.threatTier),
+    visualProfile: resolveVisualProfile(stage, input.threatTier),
+    musicCue: resolveMusicCue(stage, effectiveStageIndex, input.threatTier),
   };
 }
 
@@ -69,25 +64,42 @@ export function resolveStageContext(
   };
 }
 
-export function resolveStageMetadataFromState(
-  state: Pick<GameState, "campaign" | "options">,
-): StageMetadata {
+export function resolveStageMetadataFromState(state: Pick<GameState, "run">): StageMetadata {
   return resolveStageMetadata({
-    stageIndex: state.campaign.stageIndex,
-    campaignCourse: state.options.campaignCourse,
-    route: state.campaign.resolvedRoute,
+    stageIndex: state.run.progress.encounterIndex,
+    threatTier: resolveThreatTier(state.run.options),
   });
 }
 
+export function resolveUpcomingStagePreviewFromState(state: Pick<GameState, "run">): {
+  stageNumber: number;
+  previewTags: readonly StagePreviewTag[];
+  scoreFocus: NonNullable<StageDefinition["scoreFocus"]>;
+} | null {
+  const current = resolveStageMetadataFromState(state);
+  const nextStageIndex = current.effectiveStageIndex + 1;
+  if (nextStageIndex >= current.activeCatalog.length) {
+    return null;
+  }
+  const stage = resolveStageMetadata({
+    stageIndex: nextStageIndex,
+    threatTier: resolveThreatTier(state.run.options),
+  }).stage;
+  return {
+    stageNumber: nextStageIndex + 1,
+    previewTags: stage.previewTags ?? [],
+    scoreFocus: stage.scoreFocus ?? "survival_chain",
+  };
+}
+
 export function resolveStageContextFromState(
-  state: Pick<GameState, "campaign" | "options">,
+  state: Pick<GameState, "run">,
   config: Pick<GameConfig, "initialBallSpeed" | "maxBallSpeed">,
 ): StageContext {
   return resolveStageContext(
     {
-      stageIndex: state.campaign.stageIndex,
-      campaignCourse: state.options.campaignCourse,
-      route: state.campaign.resolvedRoute,
+      stageIndex: state.run.progress.encounterIndex,
+      threatTier: resolveThreatTier(state.run.options),
     },
     config,
   );
@@ -97,31 +109,18 @@ export function getStageInitialBallSpeed(
   config: Pick<GameConfig, "initialBallSpeed">,
   input: StageContextInput,
 ): number {
-  return (
-    config.initialBallSpeed *
-    getStageDefinition(input, clampStageIndex(input.stageIndex)).speedScale
-  );
-}
-
-function getActiveStageCatalog(
-  campaignCourse: GameState["options"]["campaignCourse"],
-): readonly StageDefinition[] {
-  return campaignCourse === "ex" ? EX_STAGE_CATALOG : STAGE_CATALOG;
-}
-
-function getStageDefinition(
-  input: StageContextInput,
-  effectiveStageIndex: number,
-): StageDefinition {
-  if (input.campaignCourse === "ex") {
-    return getExStageByIndex(effectiveStageIndex);
-  }
-  return getStageForCampaign(effectiveStageIndex, input.route);
+  return config.initialBallSpeed * resolveStageMetadata(input).stage.speedScale;
 }
 
 function clampStageIndex(stageIndex: number, stageCount = STAGE_CATALOG.length): number {
   const lastIndex = Math.max(0, stageCount - 1);
   return Math.max(0, Math.min(lastIndex, stageIndex));
+}
+
+function resolveThreatTier(
+  options: Partial<Pick<GameState["run"]["options"], "threatTier">>,
+): ThreatTier {
+  return options.threatTier ?? 1;
 }
 
 function inferChapter(stageIndex: number): number {
@@ -140,8 +139,8 @@ function inferChapter(stageIndex: number): number {
   return 1;
 }
 
-function resolveVisualProfile(stage: StageDefinition): StageVisualProfile {
-  if (stage.course === "ex") {
+function resolveVisualProfile(stage: StageDefinition, threatTier: ThreatTier): StageVisualProfile {
+  if (threatTier === 2) {
     return getVisualProfile("ex");
   }
   if (stage.encounter?.kind === "boss") {
@@ -165,8 +164,12 @@ function resolveVisualProfile(stage: StageDefinition): StageVisualProfile {
   }
 }
 
-function resolveMusicCue(stage: StageDefinition, effectiveStageIndex: number): MusicCue {
-  if (stage.course === "ex") {
+function resolveMusicCue(
+  stage: StageDefinition,
+  effectiveStageIndex: number,
+  threatTier: ThreatTier,
+): MusicCue {
+  if (threatTier === 2) {
     return { id: "ex", variant: 0 };
   }
   if (stage.encounter?.kind === "boss") {

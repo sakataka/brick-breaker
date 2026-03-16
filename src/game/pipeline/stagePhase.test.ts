@@ -6,7 +6,7 @@ import { updateStageControlBricks } from "./stagePhase";
 describe("stagePhase", () => {
   test("generator respawns one nearby normal brick after cooldown", () => {
     const state = createInitialGameState(GAME_CONFIG, true, "playing");
-    state.bricks = [
+    state.combat.bricks = [
       {
         id: 1,
         x: 120,
@@ -42,7 +42,7 @@ describe("stagePhase", () => {
       0.2,
     );
 
-    expect(state.bricks[1]?.alive).toBe(true);
-    expect(state.vfx.floatingTexts.some((text) => text.key === "generator")).toBe(true);
+    expect(state.combat.bricks[1]?.alive).toBe(true);
+    expect(state.ui.vfx.floatingTexts.some((text) => text.key === "generator")).toBe(true);
   });
 });

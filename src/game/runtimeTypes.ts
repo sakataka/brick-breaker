@@ -1,13 +1,20 @@
 import type {
   Ball,
+  BossAttackKind,
   Brick,
   BrickKind,
+  EnemyShotProfile,
+  EncounterCueKind,
   EncounterKind,
   EncounterProfile,
   ItemType,
   Paddle,
+  ScoreFocus,
   Scene,
+  StageMechanicRole,
   StageMissionKey,
+  StageBonusRule,
+  ThreatLevel,
   Vector2,
 } from "./domainTypes";
 
@@ -78,12 +85,12 @@ export interface CollisionEvent {
   brickId?: number;
 }
 
-export interface CampaignState {
-  stageIndex: number;
-  totalStages: number;
-  stageStartScore: number;
+export interface RunProgressState {
+  encounterIndex: number;
+  totalEncounters: number;
+  encounterStartScore: number;
   results: StageResultEntry[];
-  resolvedRoute: StageRoute | null;
+  unlockedThreatTier: 1 | 2;
 }
 
 export interface StageResultEntry {
@@ -130,41 +137,80 @@ export interface ItemState {
   nextId: number;
 }
 
-export interface ProgressState {
+export interface RunModulePolicy {
+  enabledTypes: ItemType[];
+  allowExtendedStacks: boolean;
+}
+
+export interface RunState {
   score: number;
   lives: number;
   lastGameOverScore: number | null;
   elapsedSec: number;
-  campaign: CampaignState;
+  progress: RunProgressState;
   combo: ComboState;
-  stageStats: StageStats;
   options: RunOptions;
+  modulePolicy: RunModulePolicy;
+  records: RecordState;
 }
 
-export interface RuntimeState {
+export interface EncounterSessionState {
+  currentEncounterId: string | null;
+  stats: StageStats;
+  shop: ShopState;
+  story: StoryState;
+  threatLevel: ThreatLevel;
+  activeTelegraphs: BossTelegraph[];
+  rewardPreview: {
+    stageNumber: number | null;
+    previewTags: readonly import("./domainTypes").StagePreviewTag[];
+    scoreFocus: ScoreFocus | null;
+  } | null;
+  runtime: EncounterRuntimeState;
+  bossPhase: 0 | 1 | 2 | 3;
+  bossPhaseSummonCooldownSec: number;
+  enemyWaveCooldownSec: number;
+  forcedBallLoss: boolean;
+}
+
+export interface CombatState {
   balls: Ball[];
   paddle: Paddle;
   bricks: Brick[];
-  combat: CombatState;
   enemies: EnemyUnit[];
+  laserCooldownSec: number;
+  nextLaserId: number;
+  laserProjectiles: LaserProjectile[];
+  heldBalls: HeldBallState[];
+  shieldBurstQueued: boolean;
   magic: MagicState;
   items: ItemState;
   assist: AssistState;
   hazard: HazardState;
-  shop: ShopState;
-  story: StoryState;
-  vfx: VfxState;
-  a11y: A11yState;
+  enemyProjectileStyle: {
+    defaultProfile: EnemyShotProfile;
+    turretProfile: EnemyShotProfile;
+    bossProfile: EnemyShotProfile;
+  };
 }
 
-export type GameState = GameSceneState & ProgressState & RuntimeState;
-
-interface GameSceneState {
-  scene: Scene;
+export interface UiProjectionSource {
+  vfx: VfxState;
+  a11y: A11yState;
+  scoreFeed: ScoreFeedEntry[];
+  styleBonus: StyleBonusState;
   error: {
     key: RuntimeErrorKey;
     detail?: string;
   } | null;
+}
+
+export interface GameState {
+  scene: Scene;
+  run: RunState;
+  encounter: EncounterSessionState;
+  combat: CombatState;
+  ui: UiProjectionSource;
 }
 
 export interface ComboState {
@@ -186,6 +232,34 @@ export interface StageStats {
   clearedAtSec?: number;
   starRating?: 1 | 2 | 3;
   ratingScore?: number;
+  canceledShots?: number;
+}
+
+export interface RecordState {
+  overallBestScore: number;
+  tier1BestScore: number;
+  tier2BestScore: number;
+  latestRunScore: number;
+  currentRunRecord: boolean;
+  deltaToBest: number;
+}
+
+export interface ScoreFeedEntry {
+  id: number;
+  label: string;
+  amount: number;
+  lifeMs: number;
+  maxLifeMs: number;
+  tone: "score" | "style" | "record";
+}
+
+export interface StyleBonusState {
+  stageFocus: ScoreFocus;
+  bonusRules: readonly StageBonusRule[];
+  chainLevel: number;
+  lastBonusLabel: string | null;
+  lastBonusScore: number;
+  noDropChainActive: boolean;
 }
 
 export type FloatingTextKey =
@@ -224,11 +298,12 @@ export interface HazardState {
 }
 
 export interface RunOptions {
-  campaignCourse: import("./domainTypes").CampaignCourse;
-  enableNewItemStacks: boolean;
-  enabledItems: ItemType[];
-  debugModeEnabled: boolean;
-  debugRecordResults: boolean;
+  threatTier: 1 | 2;
+  difficulty: import("./domainTypes").Difficulty;
+  reducedMotionEnabled: boolean;
+  highContrastEnabled: boolean;
+  bgmEnabled: boolean;
+  sfxEnabled: boolean;
 }
 
 export interface ShopState {
@@ -248,7 +323,6 @@ export interface StoryState {
   activeStageNumber: number | null;
   seenStageNumbers: number[];
 }
-export type StageRoute = "A" | "B";
 
 export interface EnemyUnit {
   id: number;
@@ -271,21 +345,6 @@ export interface HeldBallState {
   remainingSec: number;
 }
 
-export interface CombatState {
-  laserCooldownSec: number;
-  nextLaserId: number;
-  laserProjectiles: LaserProjectile[];
-  heldBalls: HeldBallState[];
-  shieldBurstQueued: boolean;
-  enemyWaveCooldownSec: number;
-  bossPhase: 0 | 1 | 2 | 3;
-  bossPhaseSummonCooldownSec: number;
-  bossAttackState: BossAttackState;
-  encounterState: EncounterState;
-  forcedBallLoss: boolean;
-}
-
-export type BossAttackKind = "summon" | "volley" | "sweep" | "burst" | "gate_sweep";
 export type BossLane = "left" | "center" | "right";
 
 export interface BossProjectile {
@@ -305,6 +364,7 @@ export interface BossTelegraph {
   lane?: BossLane;
   targetX?: number;
   spread?: number;
+  severity?: ThreatLevel;
 }
 
 export interface BossSweepState {
@@ -321,11 +381,24 @@ export interface BossAttackState {
   sweep: BossSweepState | null;
 }
 
-export interface EncounterState extends BossAttackState {
+export interface EncounterRuntimeState extends BossAttackState {
   kind: EncounterKind;
   profile: EncounterProfile;
   phase: 0 | 1 | 2 | 3;
   summonCooldownSec: number;
   vulnerabilitySec: number;
   vulnerabilityMaxSec: number;
+  stageThreatLevel: ThreatLevel;
+  activeMechanics: StageMechanicRole[];
+  activeCues: EncounterCue[];
+  cueCursor: number;
+  triggeredTimelineEvents: string[];
+  lastTriggeredPhase: 0 | 1 | 2 | 3;
+}
+
+export interface EncounterCue {
+  kind: EncounterCueKind;
+  remainingSec: number;
+  maxSec: number;
+  severity: ThreatLevel;
 }

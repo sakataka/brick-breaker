@@ -25,8 +25,8 @@ describe("gameRuntime", () => {
     const config = { ...GAME_CONFIG, fixedDeltaSec: 1 / 60 };
     const state = createInitialGameState(config, false, "playing");
     state.scene = "playing";
-    state.vfx.hitFreezeMs = 18;
-    state.bricks = [];
+    state.ui.vfx.hitFreezeMs = 18;
+    state.combat.bricks = [];
 
     let stageClearCount = 0;
     let ballLossCount = 0;
@@ -51,7 +51,7 @@ describe("gameRuntime", () => {
     );
 
     expect(next).toBe(0);
-    expect(state.vfx.hitFreezeMs).toBeGreaterThan(0);
+    expect(state.ui.vfx.hitFreezeMs).toBeGreaterThan(0);
     expect(stageClearCount).toBe(0);
     expect(ballLossCount).toBe(0);
   });
@@ -60,8 +60,8 @@ describe("gameRuntime", () => {
     const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60 };
     const state = createInitialGameState(config, true, "playing");
     state.scene = "playing";
-    state.bricks = [{ id: 1, x: 100, y: 70, width: 40, height: 12, alive: true }];
-    state.balls = [
+    state.combat.bricks = [{ id: 1, x: 100, y: 70, width: 40, height: 12, alive: true }];
+    state.combat.balls = [
       {
         pos: { x: 120, y: 68 },
         vel: { x: 0, y: 70 },
@@ -100,9 +100,9 @@ describe("gameRuntime", () => {
     const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60 };
     const state = createInitialGameState(config, true, "playing");
     state.scene = "playing";
-    state.items.active.shieldCharges = 1;
-    state.bricks = [];
-    state.balls = [
+    state.combat.items.active.shieldCharges = 1;
+    state.combat.bricks = [];
+    state.combat.balls = [
       {
         pos: { x: 130, y: 190 },
         vel: { x: 0, y: 260 },
@@ -131,16 +131,16 @@ describe("gameRuntime", () => {
     );
 
     expect(ballLossCount).toBe(0);
-    expect(state.items.active.shieldCharges).toBe(0);
-    expect(state.vfx.impactRings.length).toBeGreaterThan(0);
-    expect(state.balls).toHaveLength(1);
+    expect(state.combat.items.active.shieldCharges).toBe(0);
+    expect(state.ui.vfx.impactRings.length).toBeGreaterThan(0);
+    expect(state.combat.balls).toHaveLength(1);
   });
 
   test("runPlayingLoop does not one-shot boss during high-delta catch-up with pierce", () => {
     const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 120 };
     const state = createInitialGameState(config, true, "playing");
     state.scene = "playing";
-    state.bricks = [
+    state.combat.bricks = [
       {
         id: 1,
         x: 48,
@@ -153,8 +153,8 @@ describe("gameRuntime", () => {
         maxHp: 12,
       },
     ];
-    state.items.active.pierceStacks = 1;
-    state.balls = [
+    state.combat.items.active.pierceStacks = 1;
+    state.combat.balls = [
       {
         pos: { x: 120, y: 88 },
         vel: { x: 0, y: -220 },
@@ -179,17 +179,17 @@ describe("gameRuntime", () => {
       () => {},
     );
 
-    expect(state.bricks[0]?.alive).toBe(true);
-    expect((state.bricks[0]?.hp ?? 0) > 0).toBe(true);
+    expect(state.combat.bricks[0]?.alive).toBe(true);
+    expect((state.combat.bricks[0]?.hp ?? 0) > 0).toBe(true);
   });
 
   test("handleBallLoss retries stage and emits game over when lives are exhausted", () => {
     const config = { ...GAME_CONFIG, width: 260, height: 180 };
     const state = createInitialGameState(config, true, "playing");
     state.scene = "playing";
-    state.lives = 1;
-    state.score = 3000;
-    state.campaign.stageStartScore = 1200;
+    state.run.lives = 1;
+    state.run.score = 3000;
+    state.run.progress.encounterStartScore = 1200;
 
     let gameOverCount = 0;
     handleBallLoss(state, config, random, () => {
@@ -197,21 +197,21 @@ describe("gameRuntime", () => {
     });
 
     expect(gameOverCount).toBe(1);
-    expect(state.score).toBe(1200);
-    expect(state.lastGameOverScore).toBe(3000);
-    expect(state.lives).toBe(config.initialLives);
+    expect(state.run.score).toBe(1200);
+    expect(state.run.lastGameOverScore).toBe(3000);
+    expect(state.run.lives).toBe(config.initialLives);
   });
 
   test("handleStageClear applies life bonus and transition event", () => {
     const config = { ...GAME_CONFIG, width: 260, height: 180 };
     const state = createInitialGameState(config, true, "playing");
     state.scene = "playing";
-    state.campaign.stageIndex = 0;
-    state.campaign.totalStages = 12;
-    state.stageStats.startedAtSec = 0;
-    state.elapsedSec = 30;
-    state.lives = 2;
-    const before = state.score;
+    state.run.progress.encounterIndex = 0;
+    state.run.progress.totalEncounters = 12;
+    state.encounter.stats.startedAtSec = 0;
+    state.run.elapsedSec = 30;
+    state.run.lives = 2;
+    const before = state.run.score;
 
     let transition: "GAME_CLEAR" | "STAGE_CLEAR" | null = null;
     handleStageClear(state, config, (event) => {
@@ -219,7 +219,7 @@ describe("gameRuntime", () => {
     });
 
     expect(transition === "STAGE_CLEAR").toBe(true);
-    expect(state.score).toBe(before + 1000);
-    expect(state.stageStats.starRating).toBeDefined();
+    expect(state.run.score).toBe(before + 1000);
+    expect(state.encounter.stats.starRating).toBeDefined();
   });
 });

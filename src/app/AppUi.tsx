@@ -11,7 +11,6 @@ export function AppUi(): ReactElement {
   const overlay = useAppStore((state) => state.overlay.model);
   const shop = useAppStore((state) => state.shop);
   const startSettings = useAppStore((state) => state.startSettings);
-  const metaProgress = useAppStore((state) => state.metaProgress);
   const setStartSettings = useAppStore((state) => state.setStartSettings);
   const setLocale = useAppStore((state) => state.setLocale);
   const triggerPrimaryAction = useAppStore((state) => state.triggerPrimaryAction);
@@ -116,7 +115,6 @@ export function AppUi(): ReactElement {
         locale={locale}
         overlay={overlay}
         startSettings={startSettings}
-        exUnlocked={metaProgress.exUnlocked}
         onStartSettingsChange={setStartSettings}
         onLocaleChange={setLocale}
         onPrimaryAction={triggerPrimaryAction}

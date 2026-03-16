@@ -1,11 +1,18 @@
 import type { StageModifierKey } from "../config";
-import type { StageMissionStatus, StageRoute } from "../types";
+import type { StageMissionStatus } from "../types";
 import type { VisualState } from "../uiTheme";
-import type { BossAttackKind, ItemType } from "../types";
+import type { BossAttackKind, ItemType, ScoreFocus, StagePreviewTag, ThreatLevel } from "../types";
 
 export interface HudActiveItemView {
   type: ItemType;
   count: number;
+}
+
+export interface HudScoreFeedView {
+  label: string;
+  amount: number;
+  tone: "score" | "style" | "record";
+  progress: number;
 }
 
 export interface HudViewModel {
@@ -13,11 +20,12 @@ export interface HudViewModel {
   lives: number;
   elapsedSec: number;
   comboMultiplier: number;
+  scoreFeed: HudScoreFeedView[];
   stage: {
     current: number;
     total: number;
-    route: StageRoute | null;
     modifierKey?: StageModifierKey;
+    scoreFocus: ScoreFocus;
     boss?: {
       hp: number;
       maxHp: number;
@@ -26,8 +34,8 @@ export interface HudViewModel {
       castProgress?: number;
       weakWindowProgress?: number;
     };
-    debugModeEnabled: boolean;
-    debugRecordResults: boolean;
+    threatLevel: ThreatLevel;
+    previewTags: readonly StagePreviewTag[];
   };
   missionProgress: StageMissionStatus[];
   activeItems: HudActiveItemView[];
@@ -43,6 +51,16 @@ export interface HudViewModel {
     turretLegendVisible: boolean;
   };
   progressRatio: number;
+  styleBonus: {
+    chainLevel: number;
+    lastBonusLabel: string | null;
+    lastBonusScore: number;
+  };
+  record: {
+    currentRunRecord: boolean;
+    deltaToBest: number;
+    courseBestScore: number;
+  };
   pickupToast?: {
     type: ItemType;
     color: string;

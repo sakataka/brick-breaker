@@ -1,11 +1,18 @@
 import { validateStageCatalog } from "../configSchema";
 import type {
+  EncounterTimelineEvent,
+  EnemyShotProfile,
+  ScoreFocus,
   StageArchetype,
+  StageBoardMechanic,
+  StageBonusRule,
   StageDefinition,
   StageEventKey,
-  StageRoute,
+  StageHazardScript,
+  StagePreviewTag,
   StageSpecialPlacement,
   StageTag,
+  StageVisualProfileDefinition,
 } from "../types";
 import { RATING_CONFIG } from "./gameplay";
 
@@ -52,7 +59,6 @@ export const BRICK_LAYOUT: BrickLayout = {
 
 interface StageBlueprint {
   rows: readonly string[];
-  course?: StageDefinition["course"];
   chapter: 1 | 2 | 3 | 4;
   archetype: StageArchetype;
   tags?: StageTag[];
@@ -60,6 +66,15 @@ interface StageBlueprint {
   specials?: StageSpecialPlacement[];
   elite?: StageDefinition["elite"];
   missions?: StageDefinition["missions"];
+  visualProfile?: StageVisualProfileDefinition;
+  boardMechanics?: readonly StageBoardMechanic[];
+  hazardScript?: StageHazardScript;
+  encounterTimeline?: StageDefinition["encounterTimeline"];
+  previewTags?: readonly StagePreviewTag[];
+  scoreFocus?: ScoreFocus;
+  bonusRules?: readonly StageBonusRule[];
+  enemyShotProfile?: EnemyShotProfile;
+  visualSetId?: string;
   encounter?: StageDefinition["encounter"];
 }
 
@@ -246,7 +261,6 @@ const STAGE_BLUEPRINTS: readonly StageBlueprint[] = [
 const EX_STAGE_BLUEPRINTS: readonly StageBlueprint[] = [
   {
     rows: ["0111111110", "0100010010", "0111111110", "0010101000", "0001110000", "0000000000"],
-    course: "ex",
     chapter: 4,
     archetype: "ex_arena",
     tags: ["steel", "gate", "midboss"],
@@ -263,7 +277,6 @@ const EX_STAGE_BLUEPRINTS: readonly StageBlueprint[] = [
   },
   {
     rows: ["1111111111", "1000000001", "1111011111", "0011111100", "0001100000", "0000000000"],
-    course: "ex",
     chapter: 4,
     archetype: "control",
     tags: ["generator", "turret", "enemy_pressure"],
@@ -277,7 +290,6 @@ const EX_STAGE_BLUEPRINTS: readonly StageBlueprint[] = [
   },
   {
     rows: ["1110011111", "0011111100", "1110011111", "0011111100", "0001110000", "0000000000"],
-    course: "ex",
     chapter: 4,
     archetype: "split_lane",
     tags: ["steel", "turret", "midboss"],
@@ -294,7 +306,6 @@ const EX_STAGE_BLUEPRINTS: readonly StageBlueprint[] = [
   },
   {
     rows: ["0000000000", "0010000100", "0000100000", "0010000100", "0000000000", "0000000000"],
-    course: "ex",
     chapter: 4,
     archetype: "ex_arena",
     tags: ["steel", "boss", "turret"],
@@ -330,7 +341,6 @@ function buildCatalog(blueprints: readonly StageBlueprint[]): StageDefinition[] 
     id: index + 1,
     speedScale: Number(computeStageSpeedScale(index, all.length).toFixed(3)),
     layout: parseStageLayout(blueprint.rows),
-    course: blueprint.course ?? "normal",
     chapter: blueprint.chapter,
     archetype: blueprint.archetype,
     tags: blueprint.tags,
@@ -338,14 +348,21 @@ function buildCatalog(blueprints: readonly StageBlueprint[]): StageDefinition[] 
     specials: blueprint.specials,
     elite: blueprint.elite,
     missions: blueprint.missions ?? inferStageMissions(index + 1, blueprint),
+    visualProfile: blueprint.visualProfile ?? inferVisualProfile(blueprint),
+    boardMechanics: blueprint.boardMechanics ?? inferBoardMechanics(blueprint),
+    hazardScript: blueprint.hazardScript ?? inferHazardScript(blueprint),
+    encounterTimeline: blueprint.encounterTimeline ?? inferEncounterTimeline(blueprint),
+    previewTags: blueprint.previewTags ?? inferPreviewTags(blueprint),
+    scoreFocus: blueprint.scoreFocus ?? inferScoreFocus(blueprint),
+    bonusRules: blueprint.bonusRules ?? inferBonusRules(blueprint),
+    enemyShotProfile: blueprint.enemyShotProfile ?? inferEnemyShotProfile(blueprint),
+    visualSetId: blueprint.visualSetId ?? inferVisualSetId(blueprint),
     encounter: blueprint.encounter,
   }));
 }
 
 export const STAGE_CATALOG: StageDefinition[] = buildCatalog(STAGE_BLUEPRINTS);
-export const EX_STAGE_CATALOG: StageDefinition[] = buildCatalog(EX_STAGE_BLUEPRINTS);
-
-const routeBCache = new Map<number, StageDefinition>();
+export const THREAT_TIER_2_STAGE_CATALOG: StageDefinition[] = buildCatalog(EX_STAGE_BLUEPRINTS);
 
 const STAGE_MODIFIERS: Partial<Record<number, StageModifier>> = {
   6: {
@@ -394,28 +411,6 @@ export function getStageByIndex(stageIndex: number): StageDefinition {
   return STAGE_CATALOG[safeIndex];
 }
 
-export function getExStageByIndex(stageIndex: number): StageDefinition {
-  const safeIndex = Math.max(0, Math.min(EX_STAGE_CATALOG.length - 1, stageIndex));
-  return EX_STAGE_CATALOG[safeIndex];
-}
-
-export function getStageForCampaign(stageIndex: number, route: StageRoute | null): StageDefinition {
-  const base = getStageByIndex(stageIndex);
-  if (route !== "B") {
-    return base;
-  }
-  if (stageIndex < 4 || stageIndex > 7) {
-    return base;
-  }
-  const cached = routeBCache.get(base.id);
-  if (cached) {
-    return cached;
-  }
-  const mirrored = createMirroredStage(base);
-  routeBCache.set(base.id, mirrored);
-  return mirrored;
-}
-
 export function getStageModifier(stageNumber: number): StageModifier | undefined {
   return STAGE_MODIFIERS[stageNumber];
 }
@@ -429,24 +424,6 @@ export function getStageStory(stageNumber: number): number | null {
 
 export function getStageTimeTargetSec(stageIndex: number): number {
   return RATING_CONFIG.baseTargetSec + stageIndex * RATING_CONFIG.targetSecPerStage;
-}
-
-function createMirroredStage(stage: StageDefinition): StageDefinition {
-  const maxCol = BRICK_LAYOUT.cols - 1;
-  return {
-    ...stage,
-    layout: stage.layout.map((row) => [...row].reverse()),
-    specials: stage.specials?.map((entry) => ({
-      row: entry.row,
-      col: maxCol - entry.col,
-      kind: entry.kind,
-    })),
-    elite: stage.elite?.map((entry) => ({
-      row: entry.row,
-      col: maxCol - entry.col,
-      kind: entry.kind,
-    })),
-  };
 }
 
 function inferStageMissions(
@@ -465,5 +442,259 @@ function inferStageMissions(
   return stageNumber >= 9 ? ["time_limit", "combo_x2"] : ["time_limit", "no_shop"];
 }
 
+function inferVisualProfile(blueprint: StageBlueprint): StageVisualProfileDefinition {
+  if (blueprint.encounter?.kind === "ex_boss") {
+    return {
+      depth: "fortress",
+      arenaFrame: "citadel",
+      blockMaterial: "core",
+      particleDensity: 1.3,
+      cameraIntensity: "assault",
+      bossTone: blueprint.encounter ? "overlord" : "citadel",
+    };
+  }
+  if (blueprint.encounter?.profile === "final_core") {
+    return {
+      depth: "fortress",
+      arenaFrame: "citadel",
+      blockMaterial: "core",
+      particleDensity: 1.24,
+      cameraIntensity: "assault",
+      bossTone: "citadel",
+    };
+  }
+  if (blueprint.encounter?.profile === "artillery") {
+    return {
+      depth: "orbital",
+      arenaFrame: "hazard",
+      blockMaterial: "alloy",
+      particleDensity: 1.12,
+      cameraIntensity: "alert",
+      bossTone: "artillery",
+    };
+  }
+  if (blueprint.encounter?.profile === "warden") {
+    return {
+      depth: "orbital",
+      arenaFrame: "hazard",
+      blockMaterial: "armor",
+      particleDensity: 1.05,
+      cameraIntensity: "alert",
+      bossTone: "hunter",
+    };
+  }
+  switch (blueprint.chapter) {
+    case 4:
+      return {
+        depth: "fortress",
+        arenaFrame: "hazard",
+        blockMaterial: "armor",
+        particleDensity: 1.12,
+        cameraIntensity: "alert",
+        bossTone: "citadel",
+      };
+    case 3:
+      return {
+        depth: "orbital",
+        arenaFrame: "hazard",
+        blockMaterial: "alloy",
+        particleDensity: 1,
+        cameraIntensity: "alert",
+        bossTone: "artillery",
+      };
+    case 2:
+      return {
+        depth: "orbital",
+        arenaFrame: "hazard",
+        blockMaterial: "alloy",
+        particleDensity: 0.94,
+        cameraIntensity: "alert",
+        bossTone: "hunter",
+      };
+    default:
+      return {
+        depth: "stellar",
+        arenaFrame: "clean",
+        blockMaterial: "glass",
+        particleDensity: 0.86,
+        cameraIntensity: "steady",
+        bossTone: "hunter",
+      };
+  }
+}
+
+function inferBoardMechanics(blueprint: StageBlueprint): readonly StageBoardMechanic[] {
+  const mechanics: StageBoardMechanic[] = [];
+  if (blueprint.tags?.includes("gate")) {
+    mechanics.push({ role: "shield", label: "Gate Grid", intensity: "medium" });
+  }
+  if (blueprint.tags?.includes("generator")) {
+    mechanics.push({ role: "relay", label: "Relay Core", intensity: "high" });
+  }
+  if (blueprint.tags?.includes("turret")) {
+    mechanics.push({ role: "turret", label: "Turret Lane", intensity: "high" });
+  }
+  if (blueprint.tags?.includes("enemy_pressure")) {
+    mechanics.push({ role: "hazard", label: "Pressure Wave", intensity: "high" });
+  }
+  if (blueprint.encounter) {
+    mechanics.push({
+      role: blueprint.encounter.profile === "final_core" ? "reactor" : "shield",
+      label:
+        blueprint.encounter.profile === "artillery"
+          ? "Artillery Window"
+          : blueprint.encounter.profile === "final_core"
+            ? "Fortress Core"
+            : "Boss Guard",
+      intensity: blueprint.encounter.kind === "ex_boss" ? "critical" : "high",
+    });
+  }
+  return mechanics.slice(0, 2);
+}
+
+function inferHazardScript(blueprint: StageBlueprint): StageHazardScript {
+  if (blueprint.encounter) {
+    return {
+      id: "boss_arena",
+      intensity: blueprint.encounter.kind === "ex_boss" ? "critical" : "high",
+    };
+  }
+  if (blueprint.events?.includes("turret_fire")) {
+    return { id: "turret_crossfire", intensity: "high" };
+  }
+  if (blueprint.events?.includes("gate_cycle")) {
+    return { id: "gate_pulse", intensity: "medium" };
+  }
+  if (blueprint.events?.includes("enemy_pressure")) {
+    return { id: "flux_field", intensity: "high" };
+  }
+  if (blueprint.tags?.includes("generator")) {
+    return { id: "reactor_chain", intensity: "medium" };
+  }
+  return { id: "none", intensity: "low" };
+}
+
+function inferEncounterTimeline(blueprint: StageBlueprint): StageDefinition["encounterTimeline"] {
+  const timeline: EncounterTimelineEvent[] = [
+    { trigger: "stage_start", cue: "shield_online", threatLevel: "low", durationSec: 1.2 },
+  ];
+  if (blueprint.events?.includes("turret_fire")) {
+    timeline.push({
+      trigger: "elapsed_10",
+      cue: "turret_crossfire",
+      threatLevel: "high",
+      durationSec: 1.4,
+    });
+  }
+  if (blueprint.tags?.includes("generator")) {
+    timeline.push({
+      trigger: "generator_down",
+      cue: "reactor_critical",
+      threatLevel: "medium",
+      durationSec: 1.35,
+    });
+  }
+  if (blueprint.encounter) {
+    timeline.push({
+      trigger: "boss_phase_2",
+      cue: "boss_phase_shift",
+      threatLevel: "high",
+      durationSec: 1.25,
+    });
+    timeline.push({
+      trigger: "boss_phase_3",
+      cue: "stage_breakthrough",
+      threatLevel: "critical",
+      durationSec: 1.35,
+    });
+  }
+  return timeline;
+}
+
+function inferPreviewTags(blueprint: StageBlueprint): readonly StagePreviewTag[] {
+  const tags: StagePreviewTag[] = [];
+  if (blueprint.events?.includes("gate_cycle")) {
+    tags.push("shielded_grid", "gate_pressure");
+  }
+  if (blueprint.tags?.includes("generator")) {
+    tags.push("relay_chain", "reactor_chain");
+  }
+  if (blueprint.tags?.includes("turret")) {
+    tags.push("turret_lane");
+  }
+  if (blueprint.events?.includes("enemy_pressure")) {
+    tags.push("hazard_flux", "survival_check");
+  }
+  if (blueprint.encounter) {
+    tags.push("boss_break");
+    if (
+      blueprint.encounter.profile === "final_core" ||
+      blueprint.encounter.profile === "ex_overlord"
+    ) {
+      tags.push("fortress_core");
+    }
+    if (blueprint.encounter.profile === "warden" || blueprint.encounter.profile === "ex_overlord") {
+      tags.push("sweep_alert");
+    }
+  }
+  if (tags.length <= 0) {
+    tags.push("survival_check");
+  }
+  return [...new Set(tags)].slice(0, 3);
+}
+
+function inferScoreFocus(blueprint: StageBlueprint): ScoreFocus {
+  if (blueprint.encounter) {
+    return "boss_break";
+  }
+  if (blueprint.tags?.includes("turret") || blueprint.events?.includes("turret_fire")) {
+    return "turret_cancel";
+  }
+  if (blueprint.tags?.includes("generator")) {
+    return "reactor_chain";
+  }
+  return "survival_chain";
+}
+
+function inferBonusRules(blueprint: StageBlueprint): readonly StageBonusRule[] {
+  const rules: StageBonusRule[] = [];
+  if (blueprint.events?.includes("enemy_pressure")) {
+    rules.push("hazard_first");
+  }
+  if (blueprint.tags?.includes("turret") || blueprint.events?.includes("turret_fire")) {
+    rules.push("cancel_shots");
+  }
+  if (blueprint.encounter) {
+    rules.push("weak_window_burst");
+  }
+  if (!blueprint.tags?.includes("turret") && !blueprint.encounter) {
+    rules.push("no_drop_chain");
+  }
+  return rules;
+}
+
+function inferEnemyShotProfile(blueprint: StageBlueprint): EnemyShotProfile {
+  if (
+    blueprint.encounter?.profile === "final_core" ||
+    blueprint.encounter?.profile === "ex_overlord"
+  ) {
+    return "void_core";
+  }
+  if (blueprint.tags?.includes("turret") || blueprint.events?.includes("turret_fire")) {
+    return "plasma_bolt";
+  }
+  return "spike_orb";
+}
+
+function inferVisualSetId(blueprint: StageBlueprint): string {
+  if (blueprint.encounter?.kind === "ex_boss") {
+    return "sfc-arcade-ex";
+  }
+  if (blueprint.encounter) {
+    return `sfc-arcade-${blueprint.encounter.profile}`;
+  }
+  return `sfc-arcade-ch${blueprint.chapter}`;
+}
+
 validateStageCatalog(STAGE_CATALOG);
-validateStageCatalog(EX_STAGE_CATALOG);
+validateStageCatalog(THREAT_TIER_2_STAGE_CATALOG);

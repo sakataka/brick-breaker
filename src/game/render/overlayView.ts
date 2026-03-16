@@ -4,8 +4,14 @@ import type { VisualState } from "../uiTheme";
 export interface OverlayStageView {
   current: number;
   total: number;
-  debugModeEnabled: boolean;
-  debugRecordResults: boolean;
+}
+
+export interface OverlayRecordView {
+  overallBestScore: number;
+  courseBestScore: number;
+  latestRunScore: number;
+  deltaToBest: number;
+  currentRunRecord: boolean;
 }
 
 export interface OverlayViewModel {
@@ -14,6 +20,7 @@ export interface OverlayViewModel {
   lives: number;
   stage: OverlayStageView;
   visual: VisualState;
+  record: OverlayRecordView;
   clearElapsedSec?: number;
   error?: {
     key: RuntimeErrorKey;

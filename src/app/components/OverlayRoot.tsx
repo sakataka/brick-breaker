@@ -19,7 +19,6 @@ export interface OverlayRootProps {
   locale: AppLocale;
   overlay: OverlayViewModel;
   startSettings: StartSettingsSelection;
-  exUnlocked: boolean;
   onStartSettingsChange: (patch: Partial<StartSettingsSelection>) => void;
   onLocaleChange: (locale: AppLocale) => void;
   onPrimaryAction: () => void;
@@ -29,7 +28,6 @@ export function OverlayRoot({
   locale,
   overlay,
   startSettings,
-  exUnlocked,
   onStartSettingsChange,
   onLocaleChange,
   onPrimaryAction,
@@ -41,11 +39,6 @@ export function OverlayRoot({
   const showOverlay = overlay.scene !== "playing";
   const isStartScene = overlay.scene === "start";
   const showResults = overlay.scene === "clear";
-  const debugBadge = overlay.stage.debugModeEnabled
-    ? overlay.stage.debugRecordResults
-      ? LL.hud.debug.badgeOn()
-      : LL.hud.debug.badgeOff()
-    : "";
   const tokens = overlay.visual.tokens;
   const artProfile = resolveVisualAssetProfile(
     overlay.visual.assetProfileId,
@@ -102,7 +95,19 @@ export function OverlayRoot({
           <p id="overlay-sub" className="subtle">
             {overlaySubText}
           </p>
-          {debugBadge ? <p className="subtle">{debugBadge}</p> : null}
+          {overlay.scene === "gameover" ||
+          overlay.scene === "clear" ||
+          overlay.scene === "stageclear" ? (
+            <p className="subtle overlay-record-copy">
+              {overlay.record.currentRunRecord
+                ? locale === "ja"
+                  ? `自己ベスト更新 ${overlay.record.courseBestScore}点`
+                  : `New best ${overlay.record.courseBestScore} pts`
+                : locale === "ja"
+                  ? `自己ベスト ${overlay.record.courseBestScore}点 / 前回 ${overlay.record.latestRunScore}点`
+                  : `Best ${overlay.record.courseBestScore} pts / Last ${overlay.record.latestRunScore} pts`}
+            </p>
+          ) : null}
         </div>
 
         {isStartScene ? (
@@ -110,7 +115,6 @@ export function OverlayRoot({
             <StartSettingsForm
               locale={locale}
               settings={startSettings}
-              exUnlocked={exUnlocked}
               onChange={onStartSettingsChange}
               onLocaleChange={onLocaleChange}
             />

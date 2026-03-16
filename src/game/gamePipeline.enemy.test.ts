@@ -11,7 +11,7 @@ const sfxStub = {
 } as const;
 
 function overrideSingleBall(state: ReturnType<typeof createInitialGameState>, ball: Ball): void {
-  state.balls = [ball];
+  state.combat.balls = [ball];
 }
 
 describe("gamePipeline enemy", () => {
@@ -19,9 +19,9 @@ describe("gamePipeline enemy", () => {
     const config = { ...GAME_CONFIG, width: 260, height: 180, fixedDeltaSec: 1 / 60 };
     const state = createInitialGameState(config, true, "playing");
     state.scene = "playing";
-    state.campaign.stageIndex = 9;
-    state.shop.lastOffer = null;
-    state.bricks = [];
+    state.run.progress.encounterIndex = 9;
+    state.encounter.shop.lastOffer = null;
+    state.combat.bricks = [];
     overrideSingleBall(state, {
       pos: { x: 120, y: 140 },
       vel: { x: 0, y: -100 },
@@ -39,7 +39,7 @@ describe("gamePipeline enemy", () => {
       playMagicCastSfx: () => {},
     });
 
-    const offer = state.shop.lastOffer ?? ["paddle_plus", "slow_ball"];
+    const offer = state.encounter.shop.lastOffer ?? ["paddle_plus", "slow_ball"];
     const attackTypes = new Set([
       "laser",
       "pierce",
@@ -56,7 +56,7 @@ describe("gamePipeline enemy", () => {
     const config = { ...GAME_CONFIG, width: 320, height: 220, fixedDeltaSec: 1 / 60 };
     const state = createInitialGameState(config, true, "playing");
     state.scene = "playing";
-    state.bricks = [
+    state.combat.bricks = [
       {
         id: 10,
         x: 140,
@@ -86,15 +86,15 @@ describe("gamePipeline enemy", () => {
       playMagicCastSfx: () => {},
     });
 
-    expect(state.bricks.filter((brick) => brick.alive).length).toBeGreaterThanOrEqual(2);
+    expect(state.combat.bricks.filter((brick) => brick.alive).length).toBeGreaterThanOrEqual(2);
   });
 
   test("summon elite can spawn additional enemy", () => {
     const config = { ...GAME_CONFIG, width: 320, height: 220, fixedDeltaSec: 1 / 60 };
     const state = createInitialGameState(config, true, "playing");
     state.scene = "playing";
-    state.score = 0;
-    state.bricks = [
+    state.run.score = 0;
+    state.combat.bricks = [
       { id: 1, x: 120, y: 70, width: 36, height: 12, alive: true, kind: "summon", hp: 1, maxHp: 1 },
     ];
     overrideSingleBall(state, {
@@ -114,15 +114,15 @@ describe("gamePipeline enemy", () => {
       playMagicCastSfx: () => {},
     });
 
-    expect(state.enemies.length).toBeGreaterThanOrEqual(1);
+    expect(state.combat.enemies.length).toBeGreaterThanOrEqual(1);
   });
 
   test("thorns elite applies retaliation penalty and speed boost", () => {
     const config = { ...GAME_CONFIG, width: 320, height: 220, fixedDeltaSec: 1 / 60 };
     const state = createInitialGameState(config, true, "playing");
     state.scene = "playing";
-    state.score = 0;
-    state.bricks = [
+    state.run.score = 0;
+    state.combat.bricks = [
       { id: 2, x: 170, y: 70, width: 36, height: 12, alive: true, kind: "thorns", hp: 1, maxHp: 1 },
     ];
     overrideSingleBall(state, {
@@ -142,16 +142,16 @@ describe("gamePipeline enemy", () => {
       playMagicCastSfx: () => {},
     });
 
-    expect(state.hazard.speedBoostUntilSec).toBeGreaterThan(state.elapsedSec);
+    expect(state.combat.hazard.speedBoostUntilSec).toBeGreaterThan(state.run.elapsedSec);
   });
 
   test("stage modifiers with spawnEnemy can trigger timed reinforcements", () => {
     const config = { ...GAME_CONFIG, width: 300, height: 200, fixedDeltaSec: 1 / 60 };
     const state = createInitialGameState(config, true, "playing");
     state.scene = "playing";
-    state.campaign.stageIndex = 8;
-    state.combat.enemyWaveCooldownSec = 0;
-    state.bricks = [];
+    state.run.progress.encounterIndex = 8;
+    state.encounter.enemyWaveCooldownSec = 0;
+    state.combat.bricks = [];
     overrideSingleBall(state, {
       pos: { x: 32, y: 160 },
       vel: { x: 0, y: -120 },
@@ -169,7 +169,7 @@ describe("gamePipeline enemy", () => {
       playMagicCastSfx: () => {},
     });
 
-    expect(state.enemies.length).toBeGreaterThan(0);
-    expect(state.combat.enemyWaveCooldownSec).toBeGreaterThan(0);
+    expect(state.combat.enemies.length).toBeGreaterThan(0);
+    expect(state.encounter.enemyWaveCooldownSec).toBeGreaterThan(0);
   });
 });

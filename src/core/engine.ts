@@ -42,8 +42,8 @@ export class CoreEngine {
     const frame = computeFrameDelta(this.lastFrameTime, timeSec);
     const delta = frame.delta;
     this.lastFrameTime = frame.nextFrameTime;
-    this.state.vfx.densityScale = nextDensityScale(
-      this.state.vfx.densityScale,
+    this.state.ui.vfx.densityScale = nextDensityScale(
+      this.state.ui.vfx.densityScale,
       delta,
       this.state.scene,
     );
@@ -65,7 +65,7 @@ export class CoreEngine {
       );
       return;
     }
-    updateVfxState(this.state.vfx, delta, deps.random);
+    updateVfxState(this.state.ui.vfx, delta, deps.random);
   }
 
   applyStageClear(onTransition: (event: "GAME_CLEAR" | "STAGE_CLEAR") => void): void {

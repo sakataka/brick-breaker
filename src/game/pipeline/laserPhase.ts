@@ -7,7 +7,7 @@ export interface LaserHitEvent {
   x: number;
   y: number;
   color?: string;
-  brickKind?: GameState["bricks"][number]["kind"];
+  brickKind?: GameState["combat"]["bricks"][number]["kind"];
 }
 
 export function updateLaserProjectiles(
@@ -30,7 +30,7 @@ export function updateLaserProjectiles(
     const nextY = shot.y - shot.speed * deltaSec;
     const yTop = Math.min(nextY, shot.y);
     const yBottom = Math.max(nextY, shot.y);
-    const candidates = state.bricks
+    const candidates = state.combat.bricks
       .filter(
         (brick) =>
           brick.alive &&
@@ -88,8 +88,8 @@ export function updateAutoLaserSpawner(
     if (state.combat.laserProjectiles.length < COMBAT_CONFIG.laserMaxProjectiles) {
       state.combat.laserProjectiles.push({
         id: state.combat.nextLaserId,
-        x: state.paddle.x + state.paddle.width / 2,
-        y: state.paddle.y - COMBAT_CONFIG.laserSpawnYOffset,
+        x: state.combat.paddle.x + state.combat.paddle.width / 2,
+        y: state.combat.paddle.y - COMBAT_CONFIG.laserSpawnYOffset,
         speed: ITEM_BALANCE.laserProjectileSpeed,
       });
       state.combat.nextLaserId += 1;

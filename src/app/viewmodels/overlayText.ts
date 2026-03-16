@@ -33,14 +33,10 @@ export function getOverlayButton(LL: LL, scene: OverlayViewModel["scene"]): stri
 }
 
 export function buildStageLabel(LL: LL, overlay: OverlayViewModel): string {
-  const counter = LL.hud.stageCounter({
+  return LL.hud.stageCounter({
     current: overlay.stage.current,
     total: overlay.stage.total,
   });
-  const debugPrefix = overlay.stage.debugModeEnabled
-    ? `[${overlay.stage.debugRecordResults ? LL.hud.debug.badgeOn() : LL.hud.debug.badgeOff()}] `
-    : "";
-  return `${debugPrefix}${counter}`;
 }
 
 export function buildOverlaySubText(locale: AppLocale, LL: LL, overlay: OverlayViewModel): string {

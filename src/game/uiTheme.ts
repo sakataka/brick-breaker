@@ -44,6 +44,12 @@ export interface VisualState {
   encounterEmphasis: EncounterEmphasis;
   motionProfile: MotionProfile;
   tokens: UiThemeTokens;
+  backdropDepth: "stellar" | "orbital" | "fortress";
+  arenaFrame: "clean" | "hazard" | "citadel";
+  blockMaterial: "glass" | "alloy" | "armor" | "core";
+  particleDensity: number;
+  cameraIntensity: "steady" | "alert" | "assault";
+  bossTone: "hunter" | "artillery" | "citadel" | "overlord";
   banner?: VisualBannerState;
   bossPhase?: BossPhaseBannerState;
 }

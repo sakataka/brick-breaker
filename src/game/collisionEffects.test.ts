@@ -29,8 +29,8 @@ describe("collisionEffects", () => {
 
   test("adds brick score and returns continue when nothing terminal happened", () => {
     const state = createInitialGameState(GAME_CONFIG, true, "playing");
-    state.score = 200;
-    state.lives = 3;
+    state.run.score = 200;
+    state.run.lives = 3;
     const outcome = applyPhysicsResultScore(
       state,
       {
@@ -44,13 +44,13 @@ describe("collisionEffects", () => {
     );
 
     expect(outcome).toBe("continue");
-    expect(state.score).toBe(350);
+    expect(state.run.score).toBe(350);
   });
 
   test("returns lifeLost before clear and does not add clear bonus", () => {
     const state = createInitialGameState(GAME_CONFIG, true, "playing");
-    state.score = 0;
-    state.lives = 2;
+    state.run.score = 0;
+    state.run.lives = 2;
     const outcome = applyPhysicsResultScore(
       state,
       {
@@ -64,13 +64,13 @@ describe("collisionEffects", () => {
     );
 
     expect(outcome).toBe("lifeLost");
-    expect(state.score).toBe(200);
+    expect(state.run.score).toBe(200);
   });
 
   test("returns cleared and adds clear bonus", () => {
     const state = createInitialGameState(GAME_CONFIG, true, "playing");
-    state.score = 100;
-    state.lives = 3;
+    state.run.score = 100;
+    state.run.lives = 3;
     const outcome = applyPhysicsResultScore(
       state,
       {
@@ -84,6 +84,6 @@ describe("collisionEffects", () => {
     );
 
     expect(outcome).toBe("cleared");
-    expect(state.score).toBe(1300);
+    expect(state.run.score).toBe(1300);
   });
 });

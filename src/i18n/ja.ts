@@ -1,10 +1,7 @@
-import type { BaseTranslation } from "typesafe-i18n";
-
 export const ja = {
   locales: {
     ja: "日本語",
     en: "English",
-    pseudo: "Pseudo",
   },
   app: {
     title: "Brick Breaker",
@@ -43,9 +40,7 @@ export const ja = {
         "{stageLabel} {score:number}点 / 評価 {stars} ({ratingScore:number}) ・時間 {clearTime} ・被弾 {hitsTaken:number} ・残機 {livesLeft:number} ・ミッション {missionSummary}",
     },
     stageResultsTitle: "ステージ別結果",
-    rogueTitle: "ラン強化（3回まで）",
     noResults: "結果データがありません。",
-    rogueRemaining: "残り{count:number}回",
   },
   startSettings: {
     sections: {
@@ -55,64 +50,26 @@ export const ja = {
     },
     fields: {
       language: "言語",
-      mode: "モード",
-      campaignCourse: "コース",
       difficulty: "難易度",
       initialLives: "初期残機",
       speed: "速度",
-      route: "ルート選択",
       multiballMax: "マルチ上限",
-      challengeMode: "チャレンジ固定シード",
-      riskMode: "リスク倍率モード",
+      reducedMotion: "動きを抑える",
+      highContrast: "高コントラスト",
       newItemStacks: "新アイテムのスタック",
-      ghostReplay: "ゴースト再生",
       bgm: "BGM",
       sfx: "効果音",
       debugEnabled: "有効化",
       debugStartStage: "開始ステージ",
-      debugScenario: "シナリオ",
-      debugItemPreset: "アイテムプリセット",
       debugRecordResults: "結果記録",
-      customStageJsonEnabled: "カスタムステージJSON",
-      customStageJson: "ステージJSON",
-      seedCode: "シードコード（任意）",
     },
     itemPoolHint: "アイテムを無効化すると、ドロップ・ショップ・デバッグ付与から除外されます。",
-    placeholders: {
-      seedCode: "例: C03-BOSS-777",
-      customStageJson: '[{"id":1,"speedScale":1,"layout":[[1,0]],"elite":[]}]',
-    },
     debugNote: "デバッグモードをONにすると検証用オプションを表示します。",
-    loadDefaultStageJson: "現在の標準ステージJSONを読み込む",
     values: {
-      gameMode: {
-        campaign: "キャンペーン",
-        endless: "エンドレス",
-        boss_rush: "ボスラッシュ",
-      },
-      campaignCourse: {
-        normal: "通常",
-        ex: "EX",
-      },
       difficulty: {
         casual: "カジュアル",
         standard: "スタンダード",
         hard: "ハード",
-      },
-      routePreference: {
-        auto: "自動",
-        A: "Aルート",
-        B: "Bルート",
-      },
-      debugScenario: {
-        normal: "通常",
-        enemy_check: "敵確認（9面）",
-        boss_check: "ボス確認（12面）",
-      },
-      debugItemPreset: {
-        none: "なし",
-        combat_check: "戦闘確認",
-        boss_check: "ボス確認",
       },
       debugRecordResults: {
         false: "記録しない",
@@ -139,11 +96,6 @@ export const ja = {
       gateLegend: "ゲート: 周期開閉",
       turretLegend: "砲台: 敵弾発射",
     },
-    stageMode: {
-      campaign: "ステージ",
-      endless: "エンドレス",
-      boss_rush: "ボスラッシュ",
-    },
     debug: {
       on: "🧪DEBUG",
       off: "🧪DEBUG(記録OFF)",
@@ -153,18 +105,15 @@ export const ja = {
     effect: {
       hazardBoost: "⚠危険加速中",
       pierceSlow: "✨貫通+1",
-      risk: "🔥リスク x1.35",
       magicReady: "✨魔法:準備OK",
       magicCooldown: "✨魔法:{seconds}s",
     },
     comboValue: "x{value}",
     stageCounter: "{current:number}/{total:number}",
-    endlessStageCounter: "{current:number} (∞)",
     routeValue: "ルート {route}",
     modifierValue: "{label}",
     bossValue: "{hp:number}/{maxHp:number} {phase}",
     phase: "P{phase:number}",
-    rogueProgress: "{taken:number}/{max:number}",
     bossIntent: {
       summon: "召喚予備動作",
       volley: "射撃予兆",
@@ -260,7 +209,7 @@ export const ja = {
     flux: "フラックス",
   },
   story: {
-    stage4: "第4ステージ: 深層ゲートに到達。ここから先は分岐ルートで攻略が変化します。",
+    stage4: "第4ステージ: 深層ゲートに到達。ここから先は優先破壊と危険管理の判断が重くなります。",
     stage8: "第8ステージ: 重力レンズ地帯に突入。球速と軌道が大きく変わる危険域です。",
     stage12: "最終ステージ: コア・ガーディアン起動。すべての強化を使って突破してください。",
   },
@@ -308,4 +257,4 @@ export const ja = {
     gate: "GATE",
     turret: "TURRET",
   },
-} as const satisfies BaseTranslation;
+} as const;

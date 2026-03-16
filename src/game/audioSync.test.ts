@@ -15,8 +15,10 @@ describe("audioSync", () => {
     };
 
     syncAudioScene(audio, "start", "playing", {
-      campaign: { stageIndex: 3, resolvedRoute: null },
-      options: { campaignCourse: "normal" },
+      run: {
+        progress: { encounterIndex: 3 },
+        options: { threatTier: 1 },
+      },
     } as never);
 
     expect(events).toEqual([
@@ -33,8 +35,10 @@ describe("audioSync", () => {
     };
 
     syncAudioScene(audio, "playing", "playing", {
-      campaign: { stageIndex: 5, resolvedRoute: null },
-      options: { campaignCourse: "normal" },
+      run: {
+        progress: { encounterIndex: 5 },
+        options: { threatTier: 1 },
+      },
     } as never);
 
     expect(events).toEqual([]);

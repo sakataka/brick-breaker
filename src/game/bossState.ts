@@ -1,4 +1,4 @@
-import type { BossAttackState, EncounterState } from "./types";
+import type { BossAttackState, EncounterRuntimeState } from "./types";
 
 function createBossAttackState(): BossAttackState {
   return {
@@ -11,9 +11,9 @@ function createBossAttackState(): BossAttackState {
 }
 
 export function createEncounterState(
-  kind: EncounterState["kind"] = "none",
-  profile: EncounterState["profile"] = "none",
-): EncounterState {
+  kind: EncounterRuntimeState["kind"] = "none",
+  profile: EncounterRuntimeState["profile"] = "none",
+): EncounterRuntimeState {
   return {
     ...createBossAttackState(),
     kind,
@@ -22,5 +22,11 @@ export function createEncounterState(
     summonCooldownSec: 0,
     vulnerabilitySec: 0,
     vulnerabilityMaxSec: 0,
+    stageThreatLevel: "low",
+    activeMechanics: [],
+    activeCues: [],
+    cueCursor: 0,
+    triggeredTimelineEvents: [],
+    lastTriggeredPhase: 0,
   };
 }

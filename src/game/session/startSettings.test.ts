@@ -1,6 +1,5 @@
 import { describe, expect, test } from "vite-plus/test";
 import { GAME_CONFIG } from "../config";
-import { ITEM_ORDER } from "../itemRegistry";
 import { createInitialGameState } from "../stateFactory";
 import type { RandomSource } from "../types";
 import {
@@ -13,53 +12,23 @@ import {
 const baseRandom: RandomSource = { next: () => 0.123 };
 
 describe("session/startSettings", () => {
-  test("resolveStartStageIndex only honors debug start stage when debug is enabled", () => {
+  test("resolveStartStageIndex stays at the first encounter in shipped mode", () => {
     expect(
       resolveStartStageIndex({
-        campaignCourse: "normal",
         difficulty: "standard",
-        initialLives: 4,
-        speedPreset: "1.00",
-        multiballMaxBalls: 4,
-        enableNewItemStacks: false,
-        enabledItems: [...ITEM_ORDER],
-        debugRecordResults: false,
+        reducedMotionEnabled: false,
+        highContrastEnabled: false,
         bgmEnabled: true,
         sfxEnabled: true,
-        debugModeEnabled: false,
-        debugStartStage: 12,
       }),
     ).toBe(0);
-    expect(
-      resolveStartStageIndex({
-        campaignCourse: "normal",
-        difficulty: "standard",
-        initialLives: 4,
-        speedPreset: "1.00",
-        multiballMaxBalls: 4,
-        enableNewItemStacks: false,
-        enabledItems: [...ITEM_ORDER],
-        debugRecordResults: false,
-        bgmEnabled: true,
-        sfxEnabled: true,
-        debugModeEnabled: true,
-        debugStartStage: 5,
-      }),
-    ).toBe(4);
   });
 
-  test("computeAppliedStartSettings applies config and audio without changing random source", () => {
+  test("computeAppliedStartSettings applies difficulty and audio without changing random", () => {
     const selected = {
-      campaignCourse: "ex",
       difficulty: "hard",
-      initialLives: 2,
-      speedPreset: "1.25",
-      multiballMaxBalls: 4,
-      enableNewItemStacks: true,
-      enabledItems: ITEM_ORDER.slice(0, -1),
-      debugModeEnabled: true,
-      debugStartStage: 3,
-      debugRecordResults: true,
+      reducedMotionEnabled: true,
+      highContrastEnabled: true,
       bgmEnabled: false,
       sfxEnabled: true,
     } as const;
@@ -70,42 +39,42 @@ describe("session/startSettings", () => {
       (base, setup) => ({
         ...base,
         difficulty: setup.difficulty,
-        initialLives: setup.initialLives,
+        initialLives: 2,
       }),
     );
 
     expect(applied.config.difficulty).toBe("hard");
     expect(applied.config.initialLives).toBe(2);
     expect(applied.audioSettings).toEqual({ bgmEnabled: false, sfxEnabled: true });
-    expect(applied.pendingStartStageIndex).toBe(2);
+    expect(applied.pendingStartStageIndex).toBe(0);
     expect(applied.random).toBe(baseRandom);
   });
 
-  test("applyStartSettingsToState copies reduced run options to state", () => {
-    const state = createInitialGameState(GAME_CONFIG, true, "start");
+  test("applyStartSettingsToState copies the shipped accessibility and audio surface", () => {
+    const state = createInitialGameState(GAME_CONFIG, false, "start");
+    state.run.options.threatTier = 2;
+    state.run.modulePolicy.allowExtendedStacks = true;
+    state.run.modulePolicy.enabledTypes = [];
+
     applyStartSettingsToState(state, {
-      campaignCourse: "normal",
       difficulty: "standard",
-      initialLives: 4,
-      speedPreset: "1.00",
-      multiballMaxBalls: 4,
-      enableNewItemStacks: true,
-      enabledItems: ITEM_ORDER.slice(0, -1),
-      debugModeEnabled: true,
-      debugStartStage: 4,
-      debugRecordResults: true,
+      reducedMotionEnabled: true,
+      highContrastEnabled: true,
       bgmEnabled: true,
       sfxEnabled: true,
     });
 
-    expect(state.options.campaignCourse).toBe("normal");
-    expect(state.options.enableNewItemStacks).toBe(true);
-    expect(state.options.enabledItems).toEqual(ITEM_ORDER.slice(0, -1));
-    expect(state.options.debugModeEnabled).toBe(true);
-    expect(state.options.debugRecordResults).toBe(true);
+    expect(state.run.options.threatTier).toBe(1);
+    expect(state.run.modulePolicy.allowExtendedStacks).toBe(true);
+    expect(state.run.modulePolicy.enabledTypes).toEqual([]);
+    expect(state.run.options.reducedMotionEnabled).toBe(true);
+    expect(state.run.options.highContrastEnabled).toBe(true);
+    expect(state.ui.a11y.reducedMotion).toBe(true);
+    expect(state.ui.a11y.highContrast).toBe(true);
+    expect(state.ui.vfx.reducedMotion).toBe(true);
   });
 
-  test("applyDebugPresetOnRoundStart is intentionally empty in campaign-first mode", () => {
+  test("applyDebugPresetOnRoundStart is intentionally empty in shipped mode", () => {
     expect(() => applyDebugPresetOnRoundStart()).not.toThrow();
   });
 });

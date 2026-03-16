@@ -4,7 +4,6 @@ export const en: TranslationSchema = {
   locales: {
     ja: "Japanese",
     en: "English",
-    pseudo: "Pseudo",
   },
   app: {
     title: "Brick Breaker",
@@ -43,9 +42,7 @@ export const en: TranslationSchema = {
         "{stageLabel} {score:number} pts / Rating {stars} ({ratingScore:number}) / Time {clearTime} / Hits {hitsTaken:number} / Lives {livesLeft:number} / Missions {missionSummary}",
     },
     stageResultsTitle: "Stage Results",
-    rogueTitle: "Run Upgrades (up to 3)",
     noResults: "No result data available.",
-    rogueRemaining: "{count:number} remaining",
   },
   startSettings: {
     sections: {
@@ -55,64 +52,26 @@ export const en: TranslationSchema = {
     },
     fields: {
       language: "Language",
-      mode: "Mode",
-      campaignCourse: "Course",
       difficulty: "Difficulty",
       initialLives: "Initial Lives",
       speed: "Speed",
-      route: "Route",
       multiballMax: "Multiball Cap",
-      challengeMode: "Fixed challenge seed",
-      riskMode: "Risk multiplier mode",
+      reducedMotion: "Reduced motion",
+      highContrast: "High contrast",
       newItemStacks: "New item stacking",
-      ghostReplay: "Ghost replay",
       bgm: "BGM",
       sfx: "SFX",
       debugEnabled: "Enabled",
       debugStartStage: "Start stage",
-      debugScenario: "Scenario",
-      debugItemPreset: "Item preset",
       debugRecordResults: "Save results",
-      customStageJsonEnabled: "Custom stage JSON",
-      customStageJson: "Stage JSON",
-      seedCode: "Seed code (optional)",
     },
     itemPoolHint: "Disabled items are removed from drops, shop offers, and debug presets.",
-    placeholders: {
-      seedCode: "Example: C03-BOSS-777",
-      customStageJson: '[{"id":1,"speedScale":1,"layout":[[1,0]],"elite":[]}]',
-    },
     debugNote: "Turn debug mode on to reveal verification options.",
-    loadDefaultStageJson: "Load the current default stage JSON",
     values: {
-      gameMode: {
-        campaign: "Campaign",
-        endless: "Endless",
-        boss_rush: "Boss Rush",
-      },
-      campaignCourse: {
-        normal: "Normal",
-        ex: "EX",
-      },
       difficulty: {
         casual: "Casual",
         standard: "Standard",
         hard: "Hard",
-      },
-      routePreference: {
-        auto: "Auto",
-        A: "Route A",
-        B: "Route B",
-      },
-      debugScenario: {
-        normal: "Normal",
-        enemy_check: "Enemy check (Stage 9)",
-        boss_check: "Boss check (Stage 12)",
-      },
-      debugItemPreset: {
-        none: "None",
-        combat_check: "Combat check",
-        boss_check: "Boss check",
       },
       debugRecordResults: {
         false: "Do not save",
@@ -139,11 +98,6 @@ export const en: TranslationSchema = {
       gateLegend: "Gate: open/close cycle",
       turretLegend: "Turret: fires shots",
     },
-    stageMode: {
-      campaign: "Stage",
-      endless: "Endless",
-      boss_rush: "Boss Rush",
-    },
     debug: {
       on: "🧪DEBUG",
       off: "🧪DEBUG(no save)",
@@ -153,18 +107,15 @@ export const en: TranslationSchema = {
     effect: {
       hazardBoost: "⚠ Hazard speed boost",
       pierceSlow: "✨ Pierce +1",
-      risk: "🔥 Risk x1.35",
       magicReady: "✨ Magic ready",
       magicCooldown: "✨ Magic:{seconds}s",
     },
     comboValue: "x{value}",
     stageCounter: "{current:number}/{total:number}",
-    endlessStageCounter: "{current:number} (∞)",
     routeValue: "Route {route}",
     modifierValue: "{label}",
     bossValue: "{hp:number}/{maxHp:number} {phase}",
     phase: "P{phase:number}",
-    rogueProgress: "{taken:number}/{max:number}",
     bossIntent: {
       summon: "Summon wind-up",
       volley: "Volley telegraph",
@@ -260,7 +211,8 @@ export const en: TranslationSchema = {
     flux: "Flux Field",
   },
   story: {
-    stage4: "Stage 4: You reached the deep gate. Route choices start to matter from here.",
+    stage4:
+      "Stage 4: You reached the deep gate. Priority breaks and danger control start to matter from here.",
     stage8:
       "Stage 8: You enter the gravity lens zone. Ball speed and trajectories become unstable here.",
     stage12: "Final Stage: Core Guardian engaged. Use every upgrade you have to break through.",

@@ -134,12 +134,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
   paddle_plus: {
     type: "paddle_plus",
     stackKey: "paddlePlusStacks",
-    label: ITEM_CONFIG.paddle_plus.label,
     icon: "🟦",
-    hudLabel: "🟦幅増加",
-    emoji: "🟦",
-    description: "パドル幅を増やす",
-    shortLabel: "幅",
     color: "rgba(104, 216, 255, 0.8)",
     weight: ITEM_CONFIG.paddle_plus.weight,
     maxStacks: Number.POSITIVE_INFINITY,
@@ -148,8 +143,10 @@ export const ITEM_REGISTRY: ItemRegistry = {
     startSettingsVisibleOrder: 1,
     roleTag: "control",
     sfxEvent: "item_paddle_plus",
+    synergyTags: ["control", "survival"],
+    counterplayTags: ["survival_check", "hazard_flux"],
+    previewAffinity: ["survival_check", "hazard_flux"],
     presentation: createPresentation({ flashMs: 76, auraMs: 620 }),
-    debugPresetStacks: { combat_check: 1 },
     applyPickup: noImpact(({ stacks }) => {
       stacks.paddlePlusStacks += 1;
     }),
@@ -158,12 +155,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
   slow_ball: {
     type: "slow_ball",
     stackKey: "slowBallStacks",
-    label: ITEM_CONFIG.slow_ball.label,
     icon: "🐢",
-    hudLabel: "🐢スロー",
-    emoji: "🐢",
-    description: "ボール速度を下げる",
-    shortLabel: "遅",
     color: "rgba(255, 191, 112, 0.85)",
     weight: ITEM_CONFIG.slow_ball.weight,
     maxStacks: Number.POSITIVE_INFINITY,
@@ -172,8 +164,10 @@ export const ITEM_REGISTRY: ItemRegistry = {
     startSettingsVisibleOrder: 2,
     roleTag: "control",
     sfxEvent: "item_slow_ball",
+    synergyTags: ["control", "survival"],
+    counterplayTags: ["sweep_alert", "hazard_flux", "turret_lane"],
+    previewAffinity: ["hazard_flux", "sweep_alert"],
     presentation: createPresentation({ flashMs: 92, hitFreezeMs: 18 }),
-    debugPresetStacks: { combat_check: 1 },
     applyPickup: noImpact(({ stacks, balls }) => {
       stacks.slowBallStacks += 1;
       for (const ball of balls) {
@@ -187,12 +181,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
   shield: {
     type: "shield",
     stackKey: "shieldCharges",
-    label: ITEM_CONFIG.shield.label,
     icon: "🛡",
-    hudLabel: "🛡シールド",
-    emoji: "🛡",
-    description: "落球を1回防ぐ",
-    shortLabel: "盾",
     color: "rgba(112, 255, 210, 0.78)",
     weight: ITEM_CONFIG.shield.weight,
     maxStacks: Number.POSITIVE_INFINITY,
@@ -202,8 +191,10 @@ export const ITEM_REGISTRY: ItemRegistry = {
     roleTag: "defense",
     encounterBias: "boss",
     sfxEvent: "item_shield",
+    synergyTags: ["survival"],
+    counterplayTags: ["boss_break", "sweep_alert", "survival_check"],
+    previewAffinity: ["survival_check", "boss_break"],
     presentation: createPresentation({ flashMs: 90, shakePx: 1.4, auraMs: 680 }),
-    debugPresetStacks: { combat_check: 1, boss_check: 2 },
     applyPickup: noImpact(({ stacks }) => {
       stacks.shieldCharges += 1;
     }),
@@ -212,12 +203,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
   multiball: {
     type: "multiball",
     stackKey: "multiballStacks",
-    label: ITEM_CONFIG.multiball.label,
     icon: "🎱",
-    hudLabel: "🎱マルチ",
-    emoji: "🎱",
-    description: "ボール数を増やす",
-    shortLabel: "多",
     color: "rgba(197, 143, 255, 0.82)",
     weight: ITEM_CONFIG.multiball.weight,
     maxStacks: Number.POSITIVE_INFINITY,
@@ -226,8 +212,10 @@ export const ITEM_REGISTRY: ItemRegistry = {
     startSettingsVisibleOrder: 4,
     roleTag: "attack",
     sfxEvent: "item_multiball",
+    synergyTags: ["offense"],
+    counterplayTags: ["relay_chain", "reactor_chain"],
+    previewAffinity: ["reactor_chain", "boss_break"],
     presentation: createPresentation({ flashMs: 96, auraMs: 720 }),
-    debugPresetStacks: { combat_check: 1 },
     applyPickup: noImpact(({ stacks }) => {
       stacks.multiballStacks += 1;
     }),
@@ -236,12 +224,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
   pierce: {
     type: "pierce",
     stackKey: "pierceStacks",
-    label: ITEM_CONFIG.pierce.label,
     icon: "🗡",
-    hudLabel: "🗡貫通",
-    emoji: "🗡",
-    description: "ブロックを貫通する",
-    shortLabel: "貫",
     color: "rgba(255, 130, 110, 0.86)",
     weight: ITEM_CONFIG.pierce.weight,
     maxStacks: 1,
@@ -251,8 +234,10 @@ export const ITEM_REGISTRY: ItemRegistry = {
     roleTag: "attack",
     encounterBias: "boss",
     sfxEvent: "item_pierce",
+    synergyTags: ["offense", "boss_break"],
+    counterplayTags: ["shielded_grid", "fortress_core", "boss_break"],
+    previewAffinity: ["shielded_grid", "fortress_core", "boss_break"],
     presentation: createPresentation({ flashMs: 108, hitFreezeMs: 24, shakePx: 2.2 }),
-    debugPresetStacks: { boss_check: 1 },
     applyPickup: noImpact(({ stacks }) => {
       stacks.pierceStacks = 1;
     }),
@@ -261,12 +246,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
   bomb: {
     type: "bomb",
     stackKey: "bombStacks",
-    label: ITEM_CONFIG.bomb.label,
     icon: "💣",
-    hudLabel: "💣ボム",
-    emoji: "💣",
-    description: "直撃時に範囲破壊",
-    shortLabel: "爆",
     color: "rgba(255, 95, 95, 0.88)",
     weight: ITEM_CONFIG.bomb.weight,
     maxStacks: 1,
@@ -275,8 +255,10 @@ export const ITEM_REGISTRY: ItemRegistry = {
     startSettingsVisibleOrder: 6,
     roleTag: "attack",
     sfxEvent: "item_bomb",
+    synergyTags: ["offense"],
+    counterplayTags: ["relay_chain", "reactor_chain", "turret_lane"],
+    previewAffinity: ["reactor_chain", "turret_lane"],
     presentation: createPresentation({ flashMs: 112, hitFreezeMs: 26, shakeMs: 76, shakePx: 2.6 }),
-    debugPresetStacks: { boss_check: 1 },
     applyPickup: noImpact(({ stacks }) => {
       stacks.bombStacks = 1;
     }),
@@ -285,12 +267,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
   shockwave: {
     type: "shockwave",
     stackKey: "shockwaveStacks",
-    label: ITEM_CONFIG.shockwave.label,
     icon: "🌊",
-    hudLabel: "🌊衝撃波",
-    emoji: "🌊",
-    description: "取得時に近くの通常ブロックへ衝撃波",
-    shortLabel: "波",
     color: "rgba(122, 234, 255, 0.92)",
     weight: ITEM_CONFIG.shockwave.weight,
     maxStacks: 1,
@@ -299,6 +276,9 @@ export const ITEM_REGISTRY: ItemRegistry = {
     startSettingsVisibleOrder: 7,
     roleTag: "attack",
     sfxEvent: "item_shockwave",
+    synergyTags: ["offense", "control"],
+    counterplayTags: ["relay_chain", "reactor_chain"],
+    previewAffinity: ["relay_chain", "reactor_chain"],
     presentation: createPresentation({
       flashMs: 128,
       hitFreezeMs: 30,
@@ -311,19 +291,18 @@ export const ITEM_REGISTRY: ItemRegistry = {
       if (!state) {
         return;
       }
-      return buildShockwaveImpact(balls, state.bricks, scorePerBrick ?? 0);
+      return buildShockwaveImpact(
+        balls,
+        "combat" in state ? state.combat.bricks : state.bricks,
+        scorePerBrick ?? 0,
+      );
     },
     getLabelStack: (stacks) => stacks.shockwaveStacks,
   },
   pulse: {
     type: "pulse",
     stackKey: "pulseStacks",
-    label: ITEM_CONFIG.pulse.label,
     icon: "📳",
-    hudLabel: "📳パルス",
-    emoji: "📳",
-    description: "パドル反射時に近距離へ追撃",
-    shortLabel: "脈",
     color: "rgba(166, 223, 255, 0.92)",
     weight: ITEM_CONFIG.pulse.weight,
     maxStacks: 1,
@@ -333,6 +312,9 @@ export const ITEM_REGISTRY: ItemRegistry = {
     roleTag: "attack",
     encounterBias: "midboss",
     sfxEvent: "item_pulse",
+    synergyTags: ["offense", "boss_break"],
+    counterplayTags: ["turret_lane", "boss_break"],
+    previewAffinity: ["boss_break", "turret_lane"],
     presentation: createPresentation({ flashMs: 104, auraMs: 740 }),
     applyPickup: noImpact(({ stacks }) => {
       stacks.pulseStacks = 1;
@@ -342,12 +324,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
   laser: {
     type: "laser",
     stackKey: "laserStacks",
-    label: ITEM_CONFIG.laser.label,
     icon: "🔫",
-    hudLabel: "🔫レーザー",
-    emoji: "🔫",
-    description: "自動でレーザーを発射",
-    shortLabel: "砲",
     color: "rgba(255, 122, 122, 0.88)",
     weight: ITEM_CONFIG.laser.weight,
     maxStacks: 2,
@@ -357,9 +334,11 @@ export const ITEM_REGISTRY: ItemRegistry = {
     roleTag: "attack",
     encounterBias: "boss",
     sfxEvent: "item_laser",
+    synergyTags: ["offense", "boss_break"],
+    counterplayTags: ["turret_lane", "shielded_grid", "fortress_core"],
+    previewAffinity: ["fortress_core", "boss_break", "shielded_grid"],
     presentation: createPresentation({ flashMs: 100, hitFreezeMs: 20 }),
     respectsNewStackSetting: true,
-    debugPresetStacks: { boss_check: 2 },
     applyPickup: noImpact(({ stacks }) => {
       stacks.laserStacks = Math.min(2, stacks.laserStacks + 1);
     }),
@@ -368,12 +347,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
   homing: {
     type: "homing",
     stackKey: "homingStacks",
-    label: ITEM_CONFIG.homing.label,
     icon: "🛰",
-    hudLabel: "🛰ホーミング",
-    emoji: "🛰",
-    description: "ボール軌道を近くのブロックへ補正",
-    shortLabel: "追",
     color: "rgba(136, 197, 255, 0.88)",
     weight: ITEM_CONFIG.homing.weight,
     maxStacks: 2,
@@ -382,9 +356,11 @@ export const ITEM_REGISTRY: ItemRegistry = {
     startSettingsVisibleOrder: 10,
     roleTag: "control",
     sfxEvent: "item_homing",
+    synergyTags: ["control", "offense"],
+    counterplayTags: ["relay_chain", "reactor_chain", "boss_break"],
+    previewAffinity: ["relay_chain", "boss_break"],
     presentation: createPresentation({ flashMs: 88 }),
     respectsNewStackSetting: true,
-    debugPresetStacks: { boss_check: 2 },
     applyPickup: noImpact(({ stacks }) => {
       stacks.homingStacks = Math.min(2, stacks.homingStacks + 1);
     }),
@@ -393,12 +369,7 @@ export const ITEM_REGISTRY: ItemRegistry = {
   rail: {
     type: "rail",
     stackKey: "railStacks",
-    label: ITEM_CONFIG.rail.label,
     icon: "⚡",
-    hudLabel: "⚡レール",
-    emoji: "⚡",
-    description: "レーザーが複数のブロックを貫く",
-    shortLabel: "線",
     color: "rgba(255, 206, 128, 0.9)",
     weight: ITEM_CONFIG.rail.weight,
     maxStacks: 2,
@@ -408,9 +379,11 @@ export const ITEM_REGISTRY: ItemRegistry = {
     roleTag: "attack",
     encounterBias: "boss",
     sfxEvent: "item_rail",
+    synergyTags: ["offense", "boss_break"],
+    counterplayTags: ["fortress_core", "shielded_grid", "boss_break"],
+    previewAffinity: ["fortress_core", "boss_break"],
     presentation: createPresentation({ flashMs: 96, shakePx: 2.1 }),
     respectsNewStackSetting: true,
-    debugPresetStacks: { boss_check: 2 },
     applyPickup: noImpact(({ stacks }) => {
       stacks.railStacks = Math.min(2, stacks.railStacks + 1);
     }),

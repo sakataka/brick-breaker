@@ -54,7 +54,7 @@ function spawnSplitChildren(
     if (x < 0 || x + childWidth > config.width) {
       continue;
     }
-    state.bricks.push({
+    state.combat.bricks.push({
       id: nextBrickId(state),
       x,
       y: childY,
@@ -72,7 +72,7 @@ function spawnSplitChildren(
   if (spawned <= 0) {
     return;
   }
-  state.vfx.floatingTexts.push({
+  state.ui.vfx.floatingTexts.push({
     key: "split",
     pos: { x: centerX, y: childY + childHeight / 2 },
     lifeMs: 420,
@@ -84,16 +84,16 @@ function spawnSplitChildren(
 function resolveSplitSourceBrick(
   state: GameState,
   event: CollisionEvent,
-): GameState["bricks"][number] | null {
+): GameState["combat"]["bricks"][number] | null {
   if (typeof event.brickId === "number") {
-    const byId = state.bricks.find((brick) => brick.id === event.brickId);
+    const byId = state.combat.bricks.find((brick) => brick.id === event.brickId);
     if (byId) {
       return byId;
     }
   }
-  let best: GameState["bricks"][number] | null = null;
+  let best: GameState["combat"]["bricks"][number] | null = null;
   let bestDistanceSq = Number.POSITIVE_INFINITY;
-  for (const brick of state.bricks) {
+  for (const brick of state.combat.bricks) {
     if (brick.alive || brick.kind !== "split") {
       continue;
     }
@@ -111,12 +111,12 @@ function resolveSplitSourceBrick(
 }
 
 function spawnSummonedEnemy(state: GameState, event: CollisionEvent, random: RandomSource): void {
-  if (state.enemies.length >= ENEMY_WAVE_CAP) {
+  if (state.combat.enemies.length >= ENEMY_WAVE_CAP) {
     return;
   }
-  const nextId = state.enemies.reduce((max, enemy) => Math.max(max, enemy.id), 0) + 1;
+  const nextId = state.combat.enemies.reduce((max, enemy) => Math.max(max, enemy.id), 0) + 1;
   const direction = random.next() > 0.5 ? 1 : -1;
-  state.enemies.push({
+  state.combat.enemies.push({
     id: nextId,
     x: event.x,
     y: event.y + 24,
@@ -124,7 +124,7 @@ function spawnSummonedEnemy(state: GameState, event: CollisionEvent, random: Ran
     radius: 10,
     alive: true,
   });
-  state.vfx.floatingTexts.push({
+  state.ui.vfx.floatingTexts.push({
     key: "summon",
     pos: { x: event.x, y: event.y + 20 },
     lifeMs: 360,
@@ -134,16 +134,19 @@ function spawnSummonedEnemy(state: GameState, event: CollisionEvent, random: Ran
 }
 
 function applyThornsRetaliation(state: GameState): void {
-  state.hazard.speedBoostUntilSec = Math.max(
-    state.hazard.speedBoostUntilSec,
-    state.elapsedSec + THORNS_SPEED_BOOST_SEC,
+  state.combat.hazard.speedBoostUntilSec = Math.max(
+    state.combat.hazard.speedBoostUntilSec,
+    state.run.elapsedSec + THORNS_SPEED_BOOST_SEC,
   );
-  state.vfx.flashMs = Math.max(state.vfx.flashMs, 70);
-  state.vfx.shakeMs = Math.max(state.vfx.shakeMs, 55);
-  state.vfx.shakePx = Math.max(state.vfx.shakePx, 2);
-  state.vfx.floatingTexts.push({
+  state.ui.vfx.flashMs = Math.max(state.ui.vfx.flashMs, 70);
+  state.ui.vfx.shakeMs = Math.max(state.ui.vfx.shakeMs, 55);
+  state.ui.vfx.shakePx = Math.max(state.ui.vfx.shakePx, 2);
+  state.ui.vfx.floatingTexts.push({
     key: "thorns",
-    pos: { x: state.paddle.x + state.paddle.width / 2, y: state.paddle.y - 16 },
+    pos: {
+      x: state.combat.paddle.x + state.combat.paddle.width / 2,
+      y: state.combat.paddle.y - 16,
+    },
     lifeMs: 320,
     maxLifeMs: 320,
     color: "rgba(255, 140, 140, 0.94)",
@@ -151,5 +154,5 @@ function applyThornsRetaliation(state: GameState): void {
 }
 
 function nextBrickId(state: GameState): number {
-  return state.bricks.reduce((max, brick) => Math.max(max, brick.id), 0) + 1;
+  return state.combat.bricks.reduce((max, brick) => Math.max(max, brick.id), 0) + 1;
 }

@@ -3,6 +3,7 @@ import { COMBAT_CONFIG, getGameplayBalance } from "./config";
 import { stepPlayingPipeline } from "./gamePipeline";
 import { consumeShield } from "./itemSystem";
 import { applyLifeLoss, finalizeStageStats, retryCurrentStage } from "./roundSystem";
+import { updateScoreFeedState } from "./scoreSystem";
 import type { Ball, GameConfig, GameState, ItemType, RandomSource } from "./types";
 import { triggerHitFreeze, updateVfxState } from "./vfxSystem";
 
@@ -35,8 +36,8 @@ export function runPlayingLoop(
   let nextAccumulator = accumulator + delta;
   while (nextAccumulator >= deps.config.fixedDeltaSec) {
     nextAccumulator -= deps.config.fixedDeltaSec;
-    if (state.vfx.hitFreezeMs > 0) {
-      updateVfxState(state.vfx, deps.config.fixedDeltaSec, deps.random);
+    if (state.ui.vfx.hitFreezeMs > 0) {
+      updateVfxState(state.ui.vfx, deps.config.fixedDeltaSec, deps.random);
       continue;
     }
     const outcome = stepPlayingPipeline(state, {
@@ -49,7 +50,8 @@ export function runPlayingLoop(
       playComboFillSfx: deps.playComboFillSfx,
       playMagicCastSfx: deps.playMagicCastSfx,
     });
-    updateVfxState(state.vfx, deps.config.fixedDeltaSec, deps.random);
+    updateScoreFeedState(state, deps.config.fixedDeltaSec);
+    updateVfxState(state.ui.vfx, deps.config.fixedDeltaSec, deps.random);
     if (outcome === "stageclear") {
       onStageClear();
       break;
@@ -71,11 +73,11 @@ export function handleStageClear(
   onTransition: (event: "GAME_CLEAR" | "STAGE_CLEAR") => void,
 ): void {
   const balance = getGameplayBalance(config.difficulty);
-  const persistResult = !state.options.debugModeEnabled || state.options.debugRecordResults;
-  finalizeStageStats(state, persistResult);
-  triggerHitFreeze(state.vfx, 72);
-  state.score += state.lives * balance.clearBonusPerLife;
-  const reachedFinalStage = state.campaign.stageIndex >= state.campaign.totalStages - 1;
+  finalizeStageStats(state, true);
+  triggerHitFreeze(state.ui.vfx, 72);
+  state.run.score += state.run.lives * balance.clearBonusPerLife;
+  const reachedFinalStage =
+    state.run.progress.encounterIndex >= state.run.progress.totalEncounters - 1;
   onTransition(reachedFinalStage ? "GAME_CLEAR" : "STAGE_CLEAR");
 }
 
@@ -86,9 +88,9 @@ export function handleBallLoss(
   onGameOver: () => void,
 ): void {
   if (!applyLifeLoss(state, 1, config, random)) {
-    const gameOverScore = state.score;
+    const gameOverScore = state.run.score;
     retryCurrentStage(state, config, random);
-    state.lastGameOverScore = gameOverScore;
+    state.run.lastGameOverScore = gameOverScore;
     onGameOver();
   }
 }
@@ -100,7 +102,7 @@ function tryShieldRescue(
   ball: Ball,
   fallbackSpeed: number,
 ): boolean {
-  if (!consumeShield(state.items)) {
+  if (!consumeShield(state.combat.items)) {
     return false;
   }
   state.combat.shieldBurstQueued = true;

@@ -6,7 +6,7 @@ export function syncAudioScene(
   audioDirector: Pick<AudioPort, "notifyStageChanged" | "syncScene">,
   previousScene: Scene,
   nextScene: Scene,
-  state: Pick<GameState, "campaign" | "options">,
+  state: Pick<GameState, "run">,
 ): void {
   if (previousScene === nextScene) {
     return;

@@ -1,6 +1,6 @@
 import { stepPhysicsCore } from "./physicsCore";
 import type { PhysicsConfig, PhysicsFrameResult } from "./physicsTypes";
-import type { Ball, CollisionEvent, GameConfig, GameState, Paddle } from "./types";
+import type { Ball, Brick, CollisionEvent, GameConfig, Paddle } from "./types";
 
 export interface MultiBallPhysicsResult {
   survivors: Ball[];
@@ -14,7 +14,7 @@ export interface MultiBallPhysicsResult {
 export function runPhysicsForBalls(
   balls: Ball[],
   paddle: Paddle,
-  bricks: GameState["bricks"],
+  bricks: Brick[],
   config: GameConfig,
   deltaSec: number,
   stepConfig: PhysicsConfig,

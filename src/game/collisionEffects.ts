@@ -18,13 +18,13 @@ export function applyPhysicsResultScore(
   clearBonusPerLife: number,
 ): PhysicsOutcome {
   if (result.collision.brick > 0) {
-    state.score += result.scoreGain;
+    state.run.score += result.scoreGain;
   }
   if (result.livesLost > 0) {
     return "lifeLost";
   }
   if (result.cleared) {
-    state.score += state.lives * clearBonusPerLife;
+    state.run.score += state.run.lives * clearBonusPerLife;
     return "cleared";
   }
   return "continue";

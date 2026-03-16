@@ -14,10 +14,10 @@ export interface EnemyHitResult {
 }
 
 export function updateEnemies(state: GameState, config: GameConfig, deltaSec: number): void {
-  if (state.enemies.length <= 0) {
+  if (state.combat.enemies.length <= 0) {
     return;
   }
-  for (const enemy of state.enemies) {
+  for (const enemy of state.combat.enemies) {
     if (!enemy.alive) {
       continue;
     }
@@ -42,22 +42,25 @@ export function updateEnemyWaveEvent(
   enabled: boolean,
 ): boolean {
   if (!enabled) {
-    state.combat.enemyWaveCooldownSec = 0;
+    state.encounter.enemyWaveCooldownSec = 0;
     return false;
   }
-  state.combat.enemyWaveCooldownSec = Math.max(0, state.combat.enemyWaveCooldownSec - deltaSec);
-  if (state.combat.enemyWaveCooldownSec > 0) {
+  state.encounter.enemyWaveCooldownSec = Math.max(
+    0,
+    state.encounter.enemyWaveCooldownSec - deltaSec,
+  );
+  if (state.encounter.enemyWaveCooldownSec > 0) {
     return false;
   }
-  if (state.enemies.length >= 4) {
-    state.combat.enemyWaveCooldownSec = 3.5;
+  if (state.combat.enemies.length >= 4) {
+    state.encounter.enemyWaveCooldownSec = 3.5;
     return false;
   }
-  const nextId = state.enemies.reduce((max, enemy) => Math.max(max, enemy.id), 0) + 1;
-  const stageFactor = Math.min(0.7, state.campaign.stageIndex * 0.035);
+  const nextId = state.combat.enemies.reduce((max, enemy) => Math.max(max, enemy.id), 0) + 1;
+  const stageFactor = Math.min(0.7, state.run.progress.encounterIndex * 0.035);
   const intervalSec = Math.max(3.2, 6.5 - stageFactor);
-  state.combat.enemyWaveCooldownSec = intervalSec;
-  state.enemies.push({
+  state.encounter.enemyWaveCooldownSec = intervalSec;
+  state.combat.enemies.push({
     id: nextId,
     x: 100 + random.next() * (config.width - 200),
     y: 136 + random.next() * 20,
@@ -77,7 +80,7 @@ export function resolveEnemyHits(
   const events: EnemyHitEvent[] = [];
 
   for (const ball of balls) {
-    for (const enemy of state.enemies) {
+    for (const enemy of state.combat.enemies) {
       if (!enemy.alive) {
         continue;
       }
@@ -104,6 +107,6 @@ export function resolveEnemyHits(
     }
   }
 
-  state.enemies = state.enemies.filter((enemy) => enemy.alive);
+  state.combat.enemies = state.combat.enemies.filter((enemy) => enemy.alive);
   return { scoreGain, events };
 }

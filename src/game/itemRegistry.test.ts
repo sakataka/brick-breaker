@@ -4,8 +4,9 @@ import {
   createItemModifiers,
   createItemStacks,
   getDropSuppressedTypes,
-  getItemEmoji,
+  getItemCounterplayTags,
   getItemPickupSfxEvent,
+  getItemPreviewAffinity,
   ITEM_REGISTRY,
   pickWeightedItemType,
   validateItemRegistry,
@@ -82,9 +83,9 @@ describe("itemRegistry", () => {
     expect(getItemPickupSfxEvent("shield")).toBe("item_shield");
   });
 
-  test("all item definitions expose emoji labels", () => {
-    const emojis = Object.values(ITEM_REGISTRY).map((item) => item.emoji);
-    expect(emojis.every((emoji) => emoji.length > 0)).toBe(true);
-    expect(getItemEmoji("bomb")).toBe("💣");
+  test("preview affinity and counterplay tags are exposed for shop planning", () => {
+    expect(getItemPreviewAffinity("rail")).toContain("fortress_core");
+    expect(getItemCounterplayTags("shield")).toContain("survival_check");
+    expect(ITEM_REGISTRY.laser.synergyTags).toContain("boss_break");
   });
 });

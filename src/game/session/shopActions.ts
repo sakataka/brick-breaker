@@ -9,29 +9,34 @@ export function purchaseShopOption(
   config: GameConfig,
   random: RandomSource,
 ): ItemType | null {
-  if (state.scene !== "playing" || state.shop.usedThisStage) {
+  if (state.scene !== "playing" || state.encounter.shop.usedThisStage) {
     return null;
   }
-  const offer = state.shop.lastOffer;
-  const purchaseCost = getShopPurchaseCost(state.shop.purchaseCount);
-  if (!offer || state.score < purchaseCost) {
+  const offer = state.encounter.shop.lastOffer;
+  const purchaseCost = getShopPurchaseCost(state.encounter.shop.purchaseCount);
+  if (!offer || state.run.score < purchaseCost) {
     return null;
   }
 
   const picked = offer[index];
-  state.score -= purchaseCost;
-  state.shop.usedThisStage = true;
-  state.shop.purchaseCount += 1;
-  state.shop.lastChosen = picked;
-  applyItemPickup(state.items, picked, state.balls, {
-    enableNewItemStacks: state.options.enableNewItemStacks,
+  state.run.score -= purchaseCost;
+  state.encounter.shop.usedThisStage = true;
+  state.encounter.shop.purchaseCount += 1;
+  state.encounter.shop.lastChosen = picked;
+  applyItemPickup(state.combat.items, picked, state.combat.balls, {
+    enableNewItemStacks: state.run.modulePolicy.allowExtendedStacks,
   });
   if (picked === "multiball") {
-    state.balls = ensureMultiballCount(state.items, state.balls, random, config.multiballMaxBalls);
+    state.combat.balls = ensureMultiballCount(
+      state.combat.items,
+      state.combat.balls,
+      random,
+      config.multiballMaxBalls,
+    );
   }
-  const anchor = state.balls[0];
+  const anchor = state.combat.balls[0];
   if (anchor) {
-    spawnItemPickupFeedback(state.vfx, picked, anchor.pos.x, anchor.pos.y);
+    spawnItemPickupFeedback(state.ui.vfx, picked, anchor.pos.x, anchor.pos.y);
   }
   return picked;
 }

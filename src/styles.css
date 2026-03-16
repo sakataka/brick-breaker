@@ -710,6 +710,74 @@ body::before {
   color: var(--text-2);
 }
 
+.hud-score-focus-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.hud-score-focus-pill,
+.hud-record-pill,
+.hud-score-feed-entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.34rem;
+  padding: 0.24rem 0.52rem;
+  border: 1px solid rgba(152, 218, 255, 0.24);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(15, 33, 72, 0.72), rgba(8, 20, 48, 0.72));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.hud-score-focus-pill {
+  color: #a6ecff;
+  border-color: rgba(115, 230, 255, 0.34);
+}
+
+.hud-record-pill {
+  color: #ffe2a7;
+  border-color: rgba(255, 205, 112, 0.3);
+}
+
+.hud-record-pill-muted {
+  color: var(--text-2);
+  border-color: rgba(196, 221, 255, 0.18);
+}
+
+.hud-score-feed {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.36rem;
+  align-items: center;
+  min-height: 1.9rem;
+}
+
+.hud-score-feed-entry strong {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+}
+
+.hud-score-feed-entry small {
+  color: var(--text-2);
+  font-size: 0.62rem;
+}
+
+.hud-score-feed-score {
+  color: #d0f1ff;
+}
+
+.hud-score-feed-style {
+  color: #ffd37f;
+}
+
+.hud-score-feed-record {
+  color: #ff9bb5;
+}
+
 .hud-active-items-rack {
   display: flex;
   flex-wrap: wrap;
@@ -771,14 +839,17 @@ body::before {
 .hud-stage-combat {
   display: grid;
   gap: 0.42rem;
-  padding: 0.3rem 0.45rem;
-  border-radius: 10px;
+  padding: 0.46rem 0.58rem;
+  border-radius: 12px;
   background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--hud-danger) 18%, transparent),
-    rgba(255, 206, 116, 0.06)
+    135deg,
+    color-mix(in srgb, var(--hud-danger) 16%, rgba(255, 255, 255, 0.02)),
+    color-mix(in srgb, var(--hud-accent) 10%, rgba(255, 255, 255, 0.03))
   );
-  border: 1px solid color-mix(in srgb, var(--hud-danger) 28%, rgba(255, 166, 108, 0.2));
+  border: 1px solid color-mix(in srgb, var(--hud-danger) 30%, rgba(255, 166, 108, 0.2));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 10px 24px color-mix(in srgb, var(--hud-danger) 12%, transparent);
 }
 
 .hud-stage-combat-row {
@@ -814,11 +885,16 @@ body::before {
   display: inline-flex;
   align-items: center;
   gap: 0.28rem;
-  padding: 0.12rem 0.38rem;
+  padding: 0.16rem 0.42rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(255, 255, 255, 0.1);
   overflow-wrap: anywhere;
+}
+
+.hud-item-tag-preview {
+  border-color: color-mix(in srgb, var(--hud-accent) 42%, rgba(255, 255, 255, 0.12));
+  color: color-mix(in srgb, var(--hud-accent) 80%, #fff);
 }
 
 .hud-pickup-toast {
@@ -899,6 +975,11 @@ body::before {
 
 #score {
   transform-origin: center;
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  text-shadow:
+    0 0 12px color-mix(in srgb, var(--accent-a) 45%, transparent),
+    0 0 2px rgba(255, 255, 255, 0.2);
 }
 
 #score.pop {
@@ -956,6 +1037,13 @@ body::before {
 .overlay-card-header {
   display: grid;
   gap: 0.12rem;
+}
+
+.overlay-record-copy {
+  margin-top: -0.1rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--overlay-accent) 56%, var(--overlay-text));
 }
 
 .overlay-settings-scroll {
@@ -1192,11 +1280,15 @@ body::before {
   width: 100%;
   height: 100%;
   min-height: 0;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 195, 116, 0.52);
-  background: linear-gradient(160deg, rgba(32, 20, 6, 0.78), rgba(88, 54, 12, 0.62));
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.28);
-  padding: 0.42rem 0.6rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 195, 116, 0.44);
+  background:
+    radial-gradient(circle at 10% 0%, rgba(255, 214, 122, 0.16), transparent 42%),
+    linear-gradient(160deg, rgba(16, 23, 40, 0.86), rgba(44, 26, 12, 0.72));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 16px 32px rgba(0, 0, 0, 0.34);
+  padding: 0.5rem 0.68rem;
   backdrop-filter: blur(8px);
   pointer-events: auto;
   z-index: 1;
@@ -1247,6 +1339,11 @@ body::before {
   letter-spacing: 0.06em;
 }
 
+.shop-preview-line {
+  color: rgba(215, 232, 255, 0.88);
+  font-size: 0.7rem;
+}
+
 .shop-buttons {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1275,9 +1372,22 @@ body::before {
 }
 
 .shop-option-copy {
-  display: inline-flex;
-  align-items: center;
+  display: inline-grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
   gap: 0.42rem;
+}
+
+.shop-option-copy strong {
+  display: block;
+  color: #fff4dd;
+}
+
+.shop-option-copy small {
+  display: block;
+  margin-top: 0.12rem;
+  color: rgba(226, 236, 255, 0.72);
+  font-size: 0.66rem;
 }
 
 .shop-status-copy {

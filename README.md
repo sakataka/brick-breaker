@@ -1,7 +1,7 @@
 # Brick Breaker Local
 
 Vite+ + pnpm + TypeScript を基盤に、`Phaser` をホストにした描画/入力、`React + Zustand` の UI、`Tone/WebAudio` のサウンドで構成したローカル向けブロック崩しです。  
-表示は `motion`、`@phosphor-icons/react`、`@fontsource/space-grotesk`、`@fontsource/public-sans`、`clsx`、`culori` を使った Neon Pop 系 UI で構成しています。
+表示は `motion`、`@phosphor-icons/react`、`@fontsource/space-grotesk`、`@fontsource/public-sans`、`clsx`、`culori` を使った premium SF arena 系 UI で構成しています。
 
 マウス操作を中心に、通常 12 ステージキャンペーン、EX 4 ステージ、11 種アイテム、コンボ、評価、サウンド、開始前設定を備えています。
 
@@ -113,31 +113,21 @@ vp exec playwright install chromium
 
 - 開始画面は「ヘッダー / 設定スクロール領域 / 固定フッター（開始ボタン）」の3段構成です。
 - 設定が多い場合も、カード内の設定領域だけがスクロールし、開始ボタンは常時表示されます。
-- デバッグ設定は通常設定から分離され、`デバッグモード` を ON にしたときだけ展開されます。
+- shipped UI の開始設定は `言語 / 難易度 / アクセシビリティ / オーディオ` のみに絞っています。
 - プレイ中UIは「上段情報バー（HUD+ショップ） / 下段ゲーム枠」の2分割で表示されます。
 - UIタイポグラフィは `Space Grotesk + Public Sans`、アイコンは `Phosphor`、アニメーションは `motion` に統一しています。
-- 見た目は stage ごとの `visual theme token` を React / Phaser で共有し、chapter / midboss / finalboss / EX で背景・警告色・HUD アクセントが切り替わります。
+- 見た目は stage ごとの `visual theme token + visualProfile` を React / Phaser で共有し、chapter / midboss / finalboss / EX で背景・警告色・HUD アクセント・アリーナ材質感が切り替わります。
 - 背景/UI/ブロックは `src/art/visualAssets.ts` の SVG タイル manifest を経由して組み立て、単一の大きい1枚絵には依存しません。
-- UI パネルは `panel fill + frame + badge strip` の合成、Phaser 背景は `base gradient + pattern + motif + warning overlay` の多層構成です。
+- UI パネルは `panel fill + frame + badge strip` の合成、Phaser 背景は `far field + mid structure + arena frame + warning overlay` の多層構成です。
 
 - 難易度: `カジュアル / スタンダード / ハード`（デフォルト `スタンダード`）
 - 言語: `日本語 / English`（選択はローカル保存）
-- コース: `Normal / EX`（EX は通常キャンペーンクリア後に解放、キャンペーン時のみ表示）
-- 初期残機: `1..6`
-- 速度: `75% / 100% / 125%`（初速/最高速のみに反映）
-- マルチ上限: `2..6`（デフォルト `4`）
-- 新アイテムスタック: `ON/OFF`（デフォルト `OFF`）
-- Item Pool: 11 種アイテムを `アイコン + 名前 + チェックボックス` で個別に有効/無効化（初期値は全 ON、全 OFF は不可）
-- Item Pool の並び・色・アイコンは実際の抽選と同じ item registry から解決されます。
-- デバッグモード: `ON/OFF`（デフォルト `OFF`）
-  - 開始ステージ: `1..12`
-  - 結果記録: `記録しない / 記録する`（デフォルト `記録しない`）
+- アクセシビリティ: `動きを抑える / 高コントラスト`
 - サウンド: `BGM ON/OFF` / `効果音 ON/OFF`
 
 ## ゲーム仕様
 
 - 通常 12 ステージキャンペーン + EX 4 ステージ
-- 4面クリア後の2ルート分岐（A/B）
 - EX は通常キャンペーンを `非デバッグ / 記録あり` でクリアすると解放
 - デバッグモード有効時は開始ステージを任意にスキップ可能
 - デバッグモードで「記録しない」を選んだ場合、HUD/Overlayに `DEBUG` バッジを表示し、結果一覧への保存を行わない
@@ -145,21 +135,27 @@ vp exec playwright install chromium
 - ライフ0で同ステージ再挑戦（ステージ開始スコアへ巻き戻し）
 - コンボ倍率: `1.8s` 窓、`x1.00 -> x3.00`
 - コンボ `x2.0` 到達時に1回だけ確定アイテムドロップ
+- 各ステージは `scoreFocus` を持ち、`連鎖破壊 / 弾消し / ボス弱点集中 / ノーミス継続` のどこで稼ぐ面かを HUD とショップ preview に表示
+- スコアは `通常加点 + style bonus + shot cancel` で積み上がり、HUD には `大型スコア / 加点 feed / chain 表示 / record 状態` を出す
+- ラン終了時の総合点はローカル保存し、`overallBestScore / normalBestScore / exBestScore / latestRunScore` を更新する
 - ステージ評価: ★1〜★3（時間/被弾/残機）+ ミッション補正
 - ステージクリア時にミッション（`制限時間` / `ショップ未使用` / `被弾なし` / `コンボ x2.0` / `砲台先破壊` / `発生装置停止`）の達成/未達を表示
 - 盤面アーキタイプを段階的に変更し、`steel`（破壊不能遮蔽物）/ `generator`（近傍再生成）/ `gate`（周期開閉）/ `turret`（砲撃）でレーンと優先破壊対象を作る
+- 各ステージは `boardMechanics / hazardScript / encounterTimeline / previewTags` を持ち、次ステージ対策をショップとHUDに提示する
 - 9〜11面にエリートブロック（`durable` / `armored` / `regen` / `hazard` / `split` / `summon` / `thorns`）
 - ステージ修飾子面では時限増援ウェーブが発生
 - `hazard` 破壊時は `slow_ball` 効果が解除され、3秒間だけ球速上限が上がる
 - 4 面と 8 面は中ボス戦、12 面は専用アリーナの 3 フェーズ最終ボス戦、EX4 は強化ボス戦
-- ボス戦は `telegraph -> attack -> vulnerability` のサイクルで進み、HUD に `Boss HP / cast / weak window` を表示
-- ボス側の危険演出は HUD バナー、danger lane、cast 表示、背景警告色の切替で同期されます
+- ボス戦は `telegraph -> attack -> punish window` のサイクルで進み、HUD に `Boss HP / cast / weak window / threat` を表示
+- ボス側の危険演出は HUD バナー、danger lane、cast 表示、背景警告色、encounter cue overlay で同期されます
+- 敵弾はプレイヤーボールと色と形を分離し、`spike orb / plasma bolt / void core` の 3 系統で常時区別できるようにしています
 - ステージ修飾子（ワープ / 高速球 / フラックスフィールド）を後半面に適用
   - ワープは「青=入口 / 黄=出口 + ガイド線」で移動先を明示
 - シールド救済成立時に「シールドバースト」が発動（近傍2ブロックへ反撃 + 生存ボール押し戻し）
 - 浮遊敵ユニット（後半面）を撃破して追加得点
 - ステージ中1回限定ショップ（2択購入）
 - ショップ価格はラン内購入回数で上昇（`1200 -> 1600 -> 2200 -> ...`）
+- ショップは次ステージ `previewTags` とアイテムの `previewAffinity / counterplayTags` を表示し、対策選択を支援する
 - 4/8/12面の開始前ストーリー演出
 - 右クリックの単発魔法スキル（クールダウン制）
 
@@ -185,12 +181,13 @@ vp exec playwright install chromium
 - 描画は `DPR連動（上限4）` + サブピクセルsnap補正で高解像度表示
 - プレイ中 HUD では現在所持中のアクティブアイテムを常時表示
 - ブロック描画は種類別 skin renderer に統一し、`normal / steel / generator / gate / turret / boss` で plate / rivet / core / barrier などの面表現を切り替えます
+- HUD / Overlay / Shop は `SFC + arcade` 寄りの太い数字、warning frame、score badge を使い、クリアだけでなく「どう稼いだか」を見やすくします
 
-## アクセシビリティ（自動適用）
+## アクセシビリティ
 
-- `prefers-reduced-motion: reduce` を自動反映
-- `prefers-contrast: more` を自動反映
-- HUDバッジ表示は行わず、描画・演出の挙動側へ自動反映
+- 開始画面で `動きを抑える / 高コントラスト` を手動指定できます
+- 初期値は `prefers-reduced-motion` / `prefers-contrast` のシステム設定から取得します
+- HUDバッジ表示は行わず、描画・演出の挙動側へ反映します
 
 ## サウンド
 
@@ -203,7 +200,7 @@ vp exec playwright install chromium
 - アイテム SE は取得演出と連動し、`pulse` を含む主要イベントを個別再生
 - ボス戦では `cast start / phase shift / danger lane` の accent cue を追加し、HUD 警告と同じタイミングで鳴らす
 - コンボ `x2.5` 到達時にフィルインSE
-- オーディオの切替は stage 番号直結ではなく `music cue`（chapter / encounter / course）で解決する
+- オーディオの切替は stage 番号直結ではなく `music cue`（chapter / encounter / threat tier）で解決する
 
 ## 公開（GitHub Pages）
 
@@ -235,11 +232,13 @@ GitHub Pages 公開手順:
 - 描画は `src/phaser/scenes/RuntimeScene.ts` + `src/phaser/render/PhaserRenderPort.ts` 経由で実行し、`src/phaser/render/layers/*` でレイヤー別に管理します。
 - UI は `src/app/AppUi.tsx` と `src/app/components/*` で宣言的に構成し、`uiPrimitives.tsx`、`AppIcon.tsx`、`itemVisualRegistry.tsx` を共通部品として使います。
 - 開始設定の単一定義は `src/game/startSettingsSchema.ts` に集約し、フォーム表示はこの schema と item registry を使って組み立てます。
-- ステージ解決は `src/game/stageContext.ts` に集約し、chapter / tags / events / modifier を round/pipeline/render で共通利用します。
+- ステージ解決は `src/game/stageContext.ts` に集約しつつ、上位の run/encounter 定義は `src/game/content/runDefinition.ts` と `src/game/content/encounters.ts` で管理します。
+- module choice の上位分類は `src/game/content/modules.ts` に集約し、既存 item registry は低レベル pickup 仕様として扱います。
 - UI theme token 解決は `src/game/uiTheme.ts`、Phaser 描画向けの色変換は `src/game/renderer/theme.ts` が担当します。
 - SVG タイル/枠/警告帯/ブロックスキンの manifest は `src/art/visualAssets.ts` が単一ソースで、`BootScene` が preload、React と Phaser が同じ asset profile を参照します。
 - 多言語基盤は `typesafe-i18n` を使用し、`src/i18n/*` の辞書を単一の翻訳ソースとして扱います。
 - UI 文言は React / Phaser の両方で現在ロケールから解決し、Core 側には表示文字列ではなくキーや数値を保持します。
 - 音制御は `src/audio/audioDirector.ts`（facade） -> `src/audio/toneDirector.ts` -> `src/audio/toneBgm.ts` / `src/audio/toneSfx.ts` の経路で管理します。
+- 保存は `src/game/metaProgress.ts` で `progression` と `records` に分け、旧 `meta_progress` save から migration します。
 
 未完了タスク管理は `docs/architecture.md` の `Open Backlog` に統一しています。

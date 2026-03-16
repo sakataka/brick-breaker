@@ -4,13 +4,13 @@ import { CoreEngine } from "../../core/engine";
 import type { AudioPort, RenderPort, UiPort } from "../../core/ports";
 import { GameHost } from "../../phaser/GameHost";
 import { readAccessibility } from "../a11y";
-import { syncAudioScene } from "../audioSync";
 import { GAME_CONFIG } from "../config";
 import { LifecycleController } from "../lifecycle";
 import { clamp } from "../math";
-import type { MetaProgress } from "../metaProgress";
+import { readMetaProgress, type MetaProgress } from "../metaProgress";
 import { defaultRandomSource } from "../random";
 import type { HudViewModel, OverlayViewModel, RenderViewState } from "../renderTypes";
+import { syncRecordStateFromMeta } from "../scoreSystem";
 import { type SceneEvent, SceneMachine } from "../sceneMachine";
 import { applySceneTransition, type SceneTransitionResult } from "../sceneSync";
 import { resolveStageMetadataFromState } from "../stageContext";
@@ -26,6 +26,7 @@ import type {
   Scene,
 } from "../types";
 import { createHostHandlers, createUiHandlers } from "./sessionBindings";
+import { SessionPorts } from "./SessionPorts";
 import {
   handleBallLossSession,
   handleStageClearSession,
@@ -35,9 +36,8 @@ import {
 } from "./sessionFlow";
 import { applySessionViewport } from "./sessionViewport";
 import { purchaseShopOption } from "./shopActions";
-import { syncViewPorts } from "./viewSync";
 
-export interface SessionControllerDeps {
+export interface RuntimeControllerDeps {
   config?: Partial<GameConfig>;
   random?: RandomSource;
   documentRef?: Document;
@@ -53,13 +53,14 @@ export interface SessionControllerDeps {
   setMetaProgress: (metaProgress: MetaProgress) => void;
 }
 
-export class SessionController {
+export class RuntimeController {
   private readonly baseRandom: RandomSource;
   private readonly baseConfig: GameConfig;
   private config: GameConfig;
   private readonly renderPort: RenderPort<RenderViewState>;
   private readonly uiPort: UiPort<OverlayViewModel, HudViewModel, ShopUiView>;
   private readonly audioPort: AudioPort;
+  private readonly ports: SessionPorts;
   private readonly sfx = new SfxManager();
   private readonly audioDirector = new AudioDirector(this.sfx);
   private readonly host: GameHost;
@@ -83,7 +84,7 @@ export class SessionController {
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
-    private readonly deps: SessionControllerDeps,
+    private readonly deps: RuntimeControllerDeps,
   ) {
     this.baseConfig = { ...GAME_CONFIG, ...deps.config };
     this.config = { ...this.baseConfig };
@@ -106,6 +107,12 @@ export class SessionController {
     };
     this.uiPort = deps.uiPort;
     this.audioPort = this.audioDirector;
+    this.ports = new SessionPorts({
+      renderPort: this.renderPort,
+      uiPort: this.uiPort,
+      audioPort: this.audioPort,
+      setMetaProgress: deps.setMetaProgress,
+    });
 
     const a11y = readAccessibility(this.windowRef);
     this.state = createInitialGameState(
@@ -114,6 +121,7 @@ export class SessionController {
       this.sceneMachine.value,
       a11y.highContrast,
     );
+    syncRecordStateFromMeta(this.state, readMetaProgress(this.windowRef.localStorage));
     this.engine = new CoreEngine(
       this.state,
       () => this.config,
@@ -135,7 +143,7 @@ export class SessionController {
     }
     this.runSafely(() => {
       this.isRunning = true;
-      this.syncViewPorts();
+      this.publishState();
     }, "gameStart");
   }
 
@@ -147,7 +155,7 @@ export class SessionController {
     this.isRunning = false;
     this.lifecycle.unbind();
     this.unbindA11yListeners();
-    this.audioPort.destroy();
+    this.ports.destroy();
     this.host.destroy();
     this.sceneMachine.stop();
   }
@@ -155,18 +163,18 @@ export class SessionController {
   debugForceScene(scene: Scene): void {
     const previous = this.state.scene;
     this.state.scene = scene;
-    syncAudioScene(this.audioPort, previous, this.state.scene, this.state);
-    this.syncViewPorts();
+    this.ports.syncAudioScene(previous, this.state.scene, this.state);
+    this.publishState();
   }
 
-  debugSetGameOverScore(score: number, lives = this.state.lives): void {
+  debugSetGameOverScore(score: number, lives = this.state.run.lives): void {
     const previous = this.state.scene;
-    this.state.lastGameOverScore = Math.max(0, Math.round(score));
-    this.state.score = 0;
-    this.state.lives = Math.max(0, Math.round(lives));
+    this.state.run.lastGameOverScore = Math.max(0, Math.round(score));
+    this.state.run.score = 0;
+    this.state.run.lives = Math.max(0, Math.round(lives));
     this.state.scene = "gameover";
-    syncAudioScene(this.audioPort, previous, this.state.scene, this.state);
-    this.syncViewPorts();
+    this.ports.syncAudioScene(previous, this.state.scene, this.state);
+    this.publishState();
   }
 
   private initializeSession(): void {
@@ -200,10 +208,10 @@ export class SessionController {
         this.adjustCanvasScale();
       }
     });
-    this.audioPort.setSettings(this.audioSettings);
-    this.audioPort.notifyStageChanged(resolveStageMetadataFromState(this.state).musicCue);
-    this.audioPort.syncScene(this.state.scene, this.state.scene);
-    this.syncViewPorts();
+    this.ports.setAudioSettings(this.audioSettings);
+    this.ports.audio.notifyStageChanged(resolveStageMetadataFromState(this.state).musicCue);
+    this.ports.audio.syncScene(this.state.scene, this.state.scene);
+    this.publishState();
   }
 
   private startOrResume(): void {
@@ -219,8 +227,8 @@ export class SessionController {
       pendingStartStageIndex: this.pendingStartStageIndex,
       transition: (event) => this.transition(event),
       syncAudioForTransition: (result) => this.syncAudioForTransition(result),
-      syncViewPorts: () => this.syncViewPorts(),
-      setMetaProgress: (metaProgress) => this.deps.setMetaProgress(metaProgress),
+      syncViewPorts: () => this.publishState(),
+      setMetaProgress: (metaProgress) => this.ports.setMetaProgress(metaProgress),
     });
   }
 
@@ -231,7 +239,7 @@ export class SessionController {
       this.engine.resetClock();
     }
     this.syncAudioForTransition(result);
-    this.syncViewPorts();
+    this.publishState();
   }
 
   private transition(event: SceneEvent): SceneTransitionResult {
@@ -244,9 +252,9 @@ export class SessionController {
     }
     try {
       this.syncViewportForDpi();
-      const previousBossPhase = this.state.combat.bossPhase;
-      const previousTelegraphKind = this.state.combat.bossAttackState.telegraph?.kind;
-      const previousSweepActive = Boolean(this.state.combat.bossAttackState.sweep);
+      const previousBossPhase = this.state.encounter.bossPhase;
+      const previousTelegraphKind = this.state.encounter.runtime.telegraph?.kind;
+      const previousSweepActive = Boolean(this.state.encounter.runtime.sweep);
       this.engine.tick(
         timeMs,
         {
@@ -263,7 +271,7 @@ export class SessionController {
         },
       );
       this.syncEncounterAudio(previousBossPhase, previousTelegraphKind, previousSweepActive);
-      this.syncViewPorts();
+      this.publishState();
     } catch (error) {
       this.setRuntimeError(
         "runtime",
@@ -275,13 +283,13 @@ export class SessionController {
   private syncEncounterAudio(
     previousBossPhase: number,
     previousTelegraphKind:
-      | NonNullable<GameState["combat"]["bossAttackState"]["telegraph"]>["kind"]
+      | NonNullable<GameState["encounter"]["runtime"]["telegraph"]>["kind"]
       | undefined,
     previousSweepActive: boolean,
   ): void {
-    const nextTelegraph = this.state.combat.bossAttackState.telegraph;
-    const nextSweepActive = Boolean(this.state.combat.bossAttackState.sweep);
-    if (this.state.combat.bossPhase > previousBossPhase) {
+    const nextTelegraph = this.state.encounter.runtime.telegraph;
+    const nextSweepActive = Boolean(this.state.encounter.runtime.sweep);
+    if (this.state.encounter.bossPhase > previousBossPhase) {
       this.audioPort.playBossPhaseShift();
     }
     if (nextTelegraph && previousTelegraphKind !== nextTelegraph.kind) {
@@ -305,8 +313,8 @@ export class SessionController {
       windowRef: this.windowRef,
       transition: (event) => this.transition(event),
       syncAudioForTransition: (result) => this.syncAudioForTransition(result),
-      syncViewPorts: () => this.syncViewPorts(),
-      setMetaProgress: (metaProgress) => this.deps.setMetaProgress(metaProgress),
+      syncViewPorts: () => this.publishState(),
+      setMetaProgress: (metaProgress) => this.ports.setMetaProgress(metaProgress),
     });
   }
 
@@ -317,10 +325,11 @@ export class SessionController {
       random: this.random,
       audioPort: this.audioPort,
       engine: this.engine,
+      windowRef: this.windowRef,
       transition: (event) => this.transition(event),
       syncAudioForTransition: (result) => this.syncAudioForTransition(result),
-      syncViewPorts: () => this.syncViewPorts(),
-      setMetaProgress: (metaProgress) => this.deps.setMetaProgress(metaProgress),
+      syncViewPorts: () => this.publishState(),
+      setMetaProgress: (metaProgress) => this.ports.setMetaProgress(metaProgress),
     });
   }
 
@@ -330,10 +339,10 @@ export class SessionController {
       return;
     }
     const worldX = (clientX - rect.left) * (this.config.width / rect.width);
-    this.state.paddle.x = clamp(
-      worldX - this.state.paddle.width / 2,
+    this.state.combat.paddle.x = clamp(
+      worldX - this.state.combat.paddle.width / 2,
       0,
-      this.config.width - this.state.paddle.width,
+      this.config.width - this.state.combat.paddle.width,
     );
   }
 
@@ -341,7 +350,7 @@ export class SessionController {
     if (this.state.scene !== "playing") {
       return;
     }
-    this.state.magic.requestCast = true;
+    this.state.combat.magic.requestCast = true;
   }
 
   private purchaseShopOption(index: 0 | 1): void {
@@ -350,7 +359,7 @@ export class SessionController {
       return;
     }
     this.audioPort.playItemPickup(picked);
-    this.syncViewPorts();
+    this.publishState();
   }
 
   private adjustCanvasScale(): void {
@@ -366,7 +375,7 @@ export class SessionController {
       this.windowRef.devicePixelRatio || 1,
     );
     this.lastDevicePixelRatio = currentDpr;
-    this.syncViewPorts();
+    this.publishState();
   }
 
   private syncViewportForDpi(): void {
@@ -383,14 +392,14 @@ export class SessionController {
 
   private setRuntimeError(key: RuntimeErrorKey, detail?: string): void {
     this.isRunning = false;
-    this.state.error = {
+    this.state.ui.error = {
       key,
       detail,
     };
     const result = this.transition({ type: "RUNTIME_ERROR" });
     this.syncAudioForTransition(result);
     try {
-      this.syncViewPorts();
+      this.publishState();
     } catch {}
   }
 
@@ -405,11 +414,11 @@ export class SessionController {
     this.random = applied.random;
     this.audioSettings = applied.audioSettings;
     this.pendingStartStageIndex = applied.pendingStartStageIndex;
-    this.audioPort.setSettings(this.audioSettings);
+    this.ports.setAudioSettings(this.audioSettings);
   }
 
   private syncAudioForTransition(result: SceneTransitionResult): void {
-    syncAudioScene(this.audioPort, result.previous, result.next, this.state);
+    this.ports.syncAudioScene(result.previous, result.next, this.state);
   }
 
   private bindA11yListeners(): void {
@@ -424,24 +433,23 @@ export class SessionController {
 
   private handleAccessibilityChange = (): void => {
     this.applyAccessibilitySnapshot();
-    this.syncViewPorts();
+    this.publishState();
   };
 
   private applyAccessibilitySnapshot(): void {
-    const snapshot = readAccessibility(this.windowRef);
-    this.state.a11y.reducedMotion = snapshot.reducedMotion;
-    this.state.a11y.highContrast = snapshot.highContrast;
-    this.state.vfx.reducedMotion = snapshot.reducedMotion;
+    this.state.ui.a11y.reducedMotion = this.state.run.options.reducedMotionEnabled;
+    this.state.ui.a11y.highContrast = this.state.run.options.highContrastEnabled;
+    this.state.ui.vfx.reducedMotion = this.state.run.options.reducedMotionEnabled;
   }
 
   private backToStart(): void {
     const result = this.transition({ type: "BACK_TO_START" });
     this.syncAudioForTransition(result);
-    this.syncViewPorts();
+    this.publishState();
   }
 
-  private syncViewPorts(): void {
-    syncViewPorts(this.state, this.renderPort, this.uiPort);
+  private publishState(): void {
+    this.ports.publish(this.state);
   }
 }
 

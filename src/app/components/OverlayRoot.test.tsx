@@ -17,8 +17,6 @@ const BASE_OVERLAY: OverlayViewModel = {
   stage: {
     current: 1,
     total: 12,
-    debugModeEnabled: false,
-    debugRecordResults: false,
   },
   visual: {
     themeId: "chapter1",
@@ -27,7 +25,20 @@ const BASE_OVERLAY: OverlayViewModel = {
     warningLevel: "calm",
     encounterEmphasis: "chapter",
     motionProfile: "full",
+    backdropDepth: "stellar",
+    arenaFrame: "clean",
+    blockMaterial: "glass",
+    particleDensity: 1,
+    cameraIntensity: "steady",
+    bossTone: "hunter",
     tokens: getFallbackThemeTokens(),
+  },
+  record: {
+    overallBestScore: 0,
+    courseBestScore: 0,
+    latestRunScore: 0,
+    deltaToBest: 0,
+    currentRunRecord: false,
   },
 };
 
@@ -37,7 +48,6 @@ function render(settings: StartSettingsSelection, overlay: OverlayViewModel): st
       locale="ja"
       overlay={overlay}
       startSettings={settings}
-      exUnlocked={false}
       onStartSettingsChange={() => {}}
       onLocaleChange={() => {}}
       onPrimaryAction={() => {}}
@@ -51,24 +61,14 @@ describe("OverlayRoot", () => {
     expect(markup).toContain("overlay-card-layout");
     expect(markup).toContain("overlay-settings-scroll");
     expect(markup).toContain("overlay-fixed-footer");
-    expect(markup).toContain('id="setting-item-pool"');
+    expect(markup).toContain('id="setting-reduced-motion-enabled"');
+    expect(markup).toContain('id="setting-high-contrast-enabled"');
   });
 
-  test("debug options remain collapsed when debug mode is OFF", () => {
+  test("minimal shipped settings omit item-pool and debug controls", () => {
     const markup = render(BASE_SETTINGS, BASE_OVERLAY);
+    expect(markup).not.toContain('id="setting-item-pool"');
     expect(markup).not.toContain('id="setting-debug-start-stage"');
-    expect(markup).toContain("デバッグモードをONにすると検証用オプションを表示します");
-  });
-
-  test("debug options expand with the reduced debug surface", () => {
-    const settings: StartSettingsSelection = {
-      ...BASE_SETTINGS,
-      debugModeEnabled: true,
-    };
-    const markup = render(settings, BASE_OVERLAY);
-    expect(markup).toContain('id="setting-debug-start-stage"');
-    expect(markup).toContain('id="setting-debug-record-results"');
-    expect(markup).not.toContain('id="setting-debug-scenario"');
-    expect(markup).not.toContain('id="setting-debug-item-preset"');
+    expect(markup).not.toContain('id="setting-debug-record-results"');
   });
 });

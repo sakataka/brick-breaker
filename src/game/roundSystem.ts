@@ -1,5 +1,6 @@
 import { activateAssist, applyAssistToPaddle, createAssistState } from "./assistSystem";
 import { createEncounterState } from "./bossState";
+import { getBossDefinition } from "./config/bosses";
 import { getGameplayBalance, getStageStory, getStageTimeTargetSec } from "./config";
 import { cloneActiveItemState, createItemState, ensureMultiballCount } from "./itemSystem";
 import { buildBricksFromStage } from "./level";
@@ -7,15 +8,16 @@ import {
   getStageInitialBallSpeed,
   resolveStageContextFromState,
   resolveStageMetadataFromState,
+  resolveUpcomingStagePreviewFromState,
 } from "./stageContext";
 import { createBasePaddle, createServeBall } from "./stateFactory";
-import type { EnemyUnit, GameConfig, GameState, RandomSource, StageRoute } from "./types";
+import type { EnemyUnit, GameConfig, GameState, RandomSource } from "./types";
 import { createVfxState } from "./vfxSystem";
 
 export { finalizeStageStats, getStageClearTimeSec, getStarRatingByScore } from "./stageScoring";
 
 interface BuildStageRuntimeOptions {
-  carriedActiveItems?: GameState["items"]["active"];
+  carriedActiveItems?: GameState["combat"]["items"]["active"];
   resetLives?: boolean;
 }
 
@@ -31,29 +33,25 @@ export function resetRoundState(
   options: ResetRoundOptions = {},
 ): void {
   resetRunProgress(state, reducedMotion);
-  state.campaign.stageIndex = clampStartStageIndex(state, options.startStageIndex ?? 0);
-  state.campaign.totalStages = resolveStageMetadataFromState(state).activeCatalog.length;
+  state.run.progress.encounterIndex = clampStartStageIndex(state, options.startStageIndex ?? 0);
+  state.run.progress.totalEncounters = resolveStageMetadataFromState(state).activeCatalog.length;
   buildStageRuntime(state, config, random, { resetLives: true });
-  state.campaign.stageStartScore = state.score;
+  state.run.progress.encounterStartScore = state.run.score;
 }
 
 export function advanceStage(state: GameState, config: GameConfig, random: RandomSource): boolean {
-  if (state.campaign.stageIndex >= state.campaign.totalStages - 1) {
+  if (state.run.progress.encounterIndex >= state.run.progress.totalEncounters - 1) {
     return false;
   }
 
-  if (state.campaign.stageIndex === 3 && state.campaign.resolvedRoute === null) {
-    state.campaign.resolvedRoute = resolveRoute(state, random);
-  }
-
-  const carriedActiveItems = carryActiveItems(state.items.active);
-  state.story.activeStageNumber = null;
-  state.campaign.stageIndex += 1;
+  const carriedActiveItems = carryActiveItems(state.combat.items.active);
+  state.encounter.story.activeStageNumber = null;
+  state.run.progress.encounterIndex += 1;
   buildStageRuntime(state, config, random, {
     carriedActiveItems,
     resetLives: false,
   });
-  state.campaign.stageStartScore = state.score;
+  state.run.progress.encounterStartScore = state.run.score;
   return true;
 }
 
@@ -62,8 +60,8 @@ export function retryCurrentStage(
   config: GameConfig,
   random: RandomSource,
 ): void {
-  state.score = state.campaign.stageStartScore;
-  state.story.activeStageNumber = null;
+  state.run.score = state.run.progress.encounterStartScore;
+  state.encounter.story.activeStageNumber = null;
   buildStageRuntime(state, config, random, { resetLives: true });
 }
 
@@ -74,19 +72,19 @@ export function applyLifeLoss(
   random: RandomSource,
 ): boolean {
   const balance = getGameplayBalance(config.difficulty);
-  state.lives -= livesLost;
-  state.stageStats.hitsTaken += livesLost;
-  if (state.lives <= 0) {
+  state.run.lives -= livesLost;
+  state.encounter.stats.hitsTaken += livesLost;
+  if (state.run.lives <= 0) {
     return false;
   }
 
-  activateAssist(state.assist, state.elapsedSec, config);
+  activateAssist(state.combat.assist, state.run.elapsedSec, config);
   applyAssistToPaddle(
-    state.paddle,
+    state.combat.paddle,
     balance.paddleWidth,
     config.width,
-    state.assist,
-    state.elapsedSec,
+    state.combat.assist,
+    state.run.elapsedSec,
   );
   const stageMetadata = resolveStageMetadataFromState(state);
   resetCombatState(
@@ -94,16 +92,15 @@ export function applyLifeLoss(
     (stageMetadata.stageModifier?.spawnEnemy ?? false) ||
       stageMetadata.stageEvents?.includes("enemy_pressure") === true,
   );
-  state.balls = [
+  state.combat.balls = [
     createServeBall(
       config,
-      state.paddle,
+      state.combat.paddle,
       balance.ballRadius,
       random,
       getStageInitialBallSpeed(config, {
-        stageIndex: state.campaign.stageIndex,
-        campaignCourse: state.options.campaignCourse,
-        route: state.campaign.resolvedRoute,
+        stageIndex: state.run.progress.encounterIndex,
+        threatTier: state.run.options.threatTier,
       }),
     ),
   ];
@@ -111,15 +108,15 @@ export function applyLifeLoss(
 }
 
 export function prepareStageStory(state: GameState): boolean {
-  const stageNumber = state.campaign.stageIndex + 1;
+  const stageNumber = state.run.progress.encounterIndex + 1;
   if (!getStageStory(stageNumber)) {
     return false;
   }
-  if (state.story.seenStageNumbers.includes(stageNumber)) {
+  if (state.encounter.story.seenStageNumbers.includes(stageNumber)) {
     return false;
   }
-  state.story.seenStageNumbers.push(stageNumber);
-  state.story.activeStageNumber = stageNumber;
+  state.encounter.story.seenStageNumbers.push(stageNumber);
+  state.encounter.story.activeStageNumber = stageNumber;
   return true;
 }
 
@@ -133,30 +130,40 @@ function buildStageRuntime(
   const balance = getGameplayBalance(config.difficulty);
 
   if (options.resetLives ?? true) {
-    state.lives = config.initialLives;
+    state.run.lives = config.initialLives;
   }
 
-  state.bricks = buildBricksFromStage(stageContext.stage);
+  state.encounter.currentEncounterId = `encounter-${state.run.progress.encounterIndex + 1}`;
+  state.combat.bricks = buildBricksFromStage(stageContext.stage);
   applyModeSpecificBrickTweaks(state);
-  state.items = createItemState();
+  state.combat.items = createItemState();
   if (options.carriedActiveItems) {
-    state.items.active = cloneActiveItemState(options.carriedActiveItems);
+    state.combat.items.active = cloneActiveItemState(options.carriedActiveItems);
   }
-  state.assist = createAssistState(config);
+  state.combat.assist = createAssistState(config);
   resetStageUiState(state);
-  state.vfx = createVfxState(state.vfx.reducedMotion);
-  state.paddle = createBasePaddle(config);
+  state.ui.vfx = createVfxState(state.ui.vfx.reducedMotion);
+  state.combat.paddle = createBasePaddle(config);
   resetCombatState(
     state,
     (stageContext.stageModifier?.spawnEnemy ?? false) ||
       stageContext.stageEvents?.includes("enemy_pressure") === true,
   );
-  state.balls = ensureMultiballCount(
-    state.items,
+  const bossDefinition =
+    stageContext.stage.encounter?.bossDefinition ??
+    getBossDefinition(stageContext.stage.encounter?.profile ?? "none");
+  state.combat.enemyProjectileStyle = {
+    defaultProfile: stageContext.stage.enemyShotProfile ?? "spike_orb",
+    turretProfile: "plasma_bolt",
+    bossProfile:
+      bossDefinition?.projectileSkin ?? stageContext.stage.enemyShotProfile ?? "void_core",
+  };
+  state.combat.balls = ensureMultiballCount(
+    state.combat.items,
     [
       createServeBall(
         config,
-        state.paddle,
+        state.combat.paddle,
         balance.ballRadius,
         random,
         stageContext.initialBallSpeed,
@@ -166,33 +173,36 @@ function buildStageRuntime(
     config.multiballMaxBalls,
   );
   resetStageStats(state);
-  state.enemies = createStageEnemies(
+  state.encounter.rewardPreview = resolveUpcomingStagePreviewFromState(state);
+  state.combat.enemies = createStageEnemies(
     config,
     (stageContext.stageModifier?.spawnEnemy ?? false) ||
       stageContext.stageEvents?.includes("enemy_pressure") === true,
   );
-  state.magic.requestCast = false;
+  state.combat.magic.requestCast = false;
 }
 
 function resetRunProgress(state: GameState, reducedMotion: boolean): void {
-  state.score = 0;
-  state.elapsedSec = 0;
-  state.lastGameOverScore = null;
-  state.campaign.totalStages = 0;
-  state.campaign.stageStartScore = 0;
-  state.campaign.results = [];
-  state.campaign.resolvedRoute = null;
-  state.story.activeStageNumber = null;
-  state.story.seenStageNumbers = [];
-  state.shop.purchaseCount = 0;
-  state.vfx = createVfxState(reducedMotion);
+  state.run.score = 0;
+  state.run.elapsedSec = 0;
+  state.run.lastGameOverScore = null;
+  state.run.records.currentRunRecord = false;
+  state.run.records.deltaToBest = 0;
+  state.run.progress.totalEncounters = 0;
+  state.run.progress.encounterStartScore = 0;
+  state.run.progress.results = [];
+  state.encounter.story.activeStageNumber = null;
+  state.encounter.story.seenStageNumbers = [];
+  state.encounter.shop.purchaseCount = 0;
+  state.ui.vfx = createVfxState(reducedMotion);
+  state.ui.scoreFeed = [];
 }
 
 function resetStageUiState(state: GameState): void {
-  state.shop.usedThisStage = false;
-  state.shop.lastOffer = null;
-  state.shop.lastChosen = null;
-  state.hazard.speedBoostUntilSec = 0;
+  state.encounter.shop.usedThisStage = false;
+  state.encounter.shop.lastOffer = null;
+  state.encounter.shop.lastChosen = null;
+  state.combat.hazard.speedBoostUntilSec = 0;
 }
 
 function resetCombatState(state: GameState, spawnEnemy: boolean): void {
@@ -202,28 +212,44 @@ function resetCombatState(state: GameState, spawnEnemy: boolean): void {
   state.combat.laserProjectiles = [];
   state.combat.heldBalls = [];
   state.combat.shieldBurstQueued = false;
-  state.combat.bossPhase = 0;
-  state.combat.bossPhaseSummonCooldownSec = 0;
-  state.combat.enemyWaveCooldownSec = spawnEnemy ? 6 : 0;
-  state.combat.bossAttackState = encounterState;
-  state.combat.encounterState = encounterState;
-  state.combat.forcedBallLoss = false;
+  state.encounter.bossPhase = 0;
+  state.encounter.bossPhaseSummonCooldownSec = 0;
+  state.encounter.enemyWaveCooldownSec = spawnEnemy ? 6 : 0;
+  state.encounter.runtime = encounterState;
+  state.encounter.activeTelegraphs = [];
+  state.encounter.threatLevel = "low";
+  state.combat.enemyProjectileStyle = {
+    defaultProfile: "spike_orb",
+    turretProfile: "plasma_bolt",
+    bossProfile: "void_core",
+  };
+  state.encounter.forcedBallLoss = false;
 }
 
 function resetStageStats(state: GameState): void {
-  state.combo = {
+  state.run.combo = {
     multiplier: 1,
     streak: 0,
     lastHitSec: -1,
     rewardGranted: false,
     fillTriggered: false,
   };
-  state.stageStats = {
+  state.encounter.stats = {
     hitsTaken: 0,
-    startedAtSec: state.elapsedSec,
-    missionTargetSec: getStageTimeTargetSec(state.campaign.stageIndex),
+    startedAtSec: state.run.elapsedSec,
+    missionTargetSec: getStageTimeTargetSec(state.run.progress.encounterIndex),
     missionResults: [],
     generatorShutdown: false,
+    canceledShots: 0,
+  };
+  const stage = resolveStageMetadataFromState(state).stage;
+  state.ui.styleBonus = {
+    stageFocus: stage.scoreFocus ?? "survival_chain",
+    bonusRules: stage.bonusRules ?? [],
+    chainLevel: 0,
+    lastBonusLabel: null,
+    lastBonusScore: 0,
+    noDropChainActive: true,
   };
 }
 
@@ -233,17 +259,12 @@ function clampStartStageIndex(state: GameState, stageIndex: number): number {
   return Math.max(0, Math.min(stageStartCap, stageIndex));
 }
 
-function carryActiveItems(active: GameState["items"]["active"]): GameState["items"]["active"] {
+function carryActiveItems(
+  active: GameState["combat"]["items"]["active"],
+): GameState["combat"]["items"]["active"] {
   const carried = cloneActiveItemState(active);
   carried.bombStacks = 0;
   return carried;
-}
-
-function resolveRoute(state: GameState, random: RandomSource): StageRoute {
-  if (state.score >= 2500 || state.lives >= 3) {
-    return "A";
-  }
-  return random.next() < 0.5 ? "A" : "B";
 }
 
 function createStageEnemies(config: GameConfig, spawnEnemy: boolean): EnemyUnit[] {

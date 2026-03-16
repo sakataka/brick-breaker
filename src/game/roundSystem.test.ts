@@ -23,20 +23,20 @@ describe("roundSystem", () => {
     const state = createInitialGameState(GAME_CONFIG, false, "start");
     resetRoundState(state, GAME_CONFIG, false, fixedRandom);
 
-    expect(state.campaign.stageIndex).toBe(0);
-    expect(state.campaign.totalStages).toBe(STAGE_CATALOG.length);
-    expect(state.campaign.stageStartScore).toBe(0);
-    expect(state.lives).toBe(GAME_CONFIG.initialLives);
-    expect(state.balls).toHaveLength(1);
+    expect(state.run.progress.encounterIndex).toBe(0);
+    expect(state.run.progress.totalEncounters).toBe(STAGE_CATALOG.length);
+    expect(state.run.progress.encounterStartScore).toBe(0);
+    expect(state.run.lives).toBe(GAME_CONFIG.initialLives);
+    expect(state.combat.balls).toHaveLength(1);
   });
 
   test("resetRoundState can start from a specific stage index", () => {
     const state = createInitialGameState(GAME_CONFIG, false, "start");
     resetRoundState(state, GAME_CONFIG, false, fixedRandom, { startStageIndex: 10 });
 
-    expect(state.campaign.stageIndex).toBe(10);
-    expect(state.stageStats.missionTargetSec).toBeGreaterThan(0);
-    expect(state.bricks.length).toBeGreaterThan(0);
+    expect(state.run.progress.encounterIndex).toBe(10);
+    expect(state.encounter.stats.missionTargetSec).toBeGreaterThan(0);
+    expect(state.combat.bricks.length).toBeGreaterThan(0);
   });
 
   test("advanceStage increments until final stage", () => {
@@ -47,33 +47,32 @@ describe("roundSystem", () => {
     for (let i = 0; i < STAGE_CATALOG.length - 1; i += 1) {
       progressed = advanceStage(state, GAME_CONFIG, fixedRandom);
       expect(progressed).toBe(true);
-      expect(state.campaign.stageIndex).toBe(i + 1);
+      expect(state.run.progress.encounterIndex).toBe(i + 1);
     }
 
     expect(advanceStage(state, GAME_CONFIG, fixedRandom)).toBe(false);
   });
 
-  test("route resolves automatically after stage 4 clear", () => {
+  test("campaign progression keeps a linear encounter flow", () => {
     const state = createInitialGameState(GAME_CONFIG, false, "start");
     resetRoundState(state, GAME_CONFIG, false, fixedRandom);
-    state.score = 3000;
 
     for (let i = 0; i < 4; i += 1) {
       expect(advanceStage(state, GAME_CONFIG, fixedRandom)).toBe(true);
     }
 
-    expect(state.campaign.resolvedRoute).toBe("A");
+    expect(state.run.progress.encounterIndex).toBe(4);
   });
 
   test("advanceStage carries active item effects but clears falling items", () => {
     const state = createInitialGameState(GAME_CONFIG, false, "start");
     resetRoundState(state, GAME_CONFIG, false, fixedRandom);
-    state.lives = 2;
-    state.items.active.paddlePlusStacks = 2;
-    state.items.active.shieldCharges = 1;
-    state.items.active.pierceStacks = 3;
-    state.items.active.bombStacks = 1;
-    state.items.falling.push({
+    state.run.lives = 2;
+    state.combat.items.active.paddlePlusStacks = 2;
+    state.combat.items.active.shieldCharges = 1;
+    state.combat.items.active.pierceStacks = 3;
+    state.combat.items.active.bombStacks = 1;
+    state.combat.items.falling.push({
       id: 99,
       type: "bomb",
       pos: { x: 120, y: 100 },
@@ -84,32 +83,32 @@ describe("roundSystem", () => {
     const progressed = advanceStage(state, GAME_CONFIG, fixedRandom);
 
     expect(progressed).toBe(true);
-    expect(state.items.active.paddlePlusStacks).toBe(2);
-    expect(state.items.active.shieldCharges).toBe(1);
-    expect(state.items.active.pierceStacks).toBe(3);
-    expect(state.items.active.bombStacks).toBe(0);
-    expect(state.items.falling).toHaveLength(0);
-    expect(state.lives).toBe(2);
+    expect(state.combat.items.active.paddlePlusStacks).toBe(2);
+    expect(state.combat.items.active.shieldCharges).toBe(1);
+    expect(state.combat.items.active.pierceStacks).toBe(3);
+    expect(state.combat.items.active.bombStacks).toBe(0);
+    expect(state.combat.items.falling).toHaveLength(0);
+    expect(state.run.lives).toBe(2);
   });
 
   test("retryCurrentStage rolls back to stageStartScore", () => {
     const state = createInitialGameState(GAME_CONFIG, false, "start");
     resetRoundState(state, GAME_CONFIG, false, fixedRandom);
-    state.campaign.stageStartScore = 1200;
-    state.score = 3900;
-    state.lives = 1;
+    state.run.progress.encounterStartScore = 1200;
+    state.run.score = 3900;
+    state.run.lives = 1;
 
     retryCurrentStage(state, GAME_CONFIG, fixedRandom);
 
-    expect(state.score).toBe(1200);
-    expect(state.lives).toBe(GAME_CONFIG.initialLives);
-    expect(state.balls).toHaveLength(1);
+    expect(state.run.score).toBe(1200);
+    expect(state.run.lives).toBe(GAME_CONFIG.initialLives);
+    expect(state.combat.balls).toHaveLength(1);
   });
 
   test("applyLifeLoss returns false when lives are exhausted", () => {
     const state = createInitialGameState(GAME_CONFIG, false, "start");
     resetRoundState(state, GAME_CONFIG, false, fixedRandom);
-    state.lives = 1;
+    state.run.lives = 1;
 
     const canContinue = applyLifeLoss(state, 1, GAME_CONFIG, fixedRandom);
 
@@ -126,27 +125,27 @@ describe("roundSystem", () => {
   test("finalizeStageStats stores stage clear details", () => {
     const state = createInitialGameState(GAME_CONFIG, false, "playing");
     resetRoundState(state, GAME_CONFIG, false, fixedRandom);
-    state.stageStats.startedAtSec = 10;
-    state.elapsedSec = 74;
-    state.stageStats.hitsTaken = 1;
-    state.lives = 3;
+    state.encounter.stats.startedAtSec = 10;
+    state.run.elapsedSec = 74;
+    state.encounter.stats.hitsTaken = 1;
+    state.run.lives = 3;
 
     finalizeStageStats(state);
 
-    expect(state.stageStats.starRating).toBe(3);
-    expect(typeof state.stageStats.ratingScore).toBe("number");
+    expect(state.encounter.stats.starRating).toBe(3);
+    expect(typeof state.encounter.stats.ratingScore).toBe("number");
     expect(getStageClearTimeSec(state)).toBe(64);
-    expect(state.stageStats.missionTargetSec).toBeGreaterThan(0);
-    expect(state.stageStats.missionAchieved).toBe(true);
-    expect(state.campaign.results[0]?.stageNumber).toBe(1);
+    expect(state.encounter.stats.missionTargetSec).toBeGreaterThan(0);
+    expect(state.encounter.stats.missionAchieved).toBe(true);
+    expect(state.run.progress.results[0]?.stageNumber).toBe(1);
   });
 
   test("prepareStageStory returns true once for story stages", () => {
     const state = createInitialGameState(GAME_CONFIG, false, "stageclear");
-    state.campaign.stageIndex = 3;
+    state.run.progress.encounterIndex = 3;
 
     expect(prepareStageStory(state)).toBe(true);
-    expect(state.story.activeStageNumber).toBe(4);
+    expect(state.encounter.story.activeStageNumber).toBe(4);
     expect(prepareStageStory(state)).toBe(false);
   });
 });

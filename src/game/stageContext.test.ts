@@ -6,8 +6,7 @@ describe("stageContext", () => {
   test("resolves campaign metadata from the shared stage catalog", () => {
     const stage = resolveStageMetadata({
       stageIndex: 5,
-      campaignCourse: "normal",
-      route: null,
+      threatTier: 1,
     });
 
     expect(stage.effectiveStageIndex).toBe(5);
@@ -21,26 +20,25 @@ describe("stageContext", () => {
   test("clamps stage index to the final stage", () => {
     const stage = resolveStageMetadata({
       stageIndex: 99,
-      campaignCourse: "normal",
-      route: null,
+      threatTier: 1,
     });
 
     expect(stage.effectiveStageIndex).toBe(STAGE_CATALOG.length - 1);
     expect(stage.stage.id).toBe(12);
   });
 
-  test("uses EX catalog for EX course speed resolution", () => {
+  test("uses threat tier 2 encounters for the high-threat sequence", () => {
     const stage = resolveStageContext(
       {
         stageIndex: 1,
-        campaignCourse: "ex",
-        route: null,
+        threatTier: 2,
       },
       GAME_CONFIG,
     );
 
     expect(stage.totalStages).toBe(4);
-    expect(stage.stage.course).toBe("ex");
+    expect(stage.musicCue.id).toBe("ex");
+    expect(stage.visualProfile.id).toBe("ex");
     expect(stage.initialBallSpeed).toBe(GAME_CONFIG.initialBallSpeed * stage.stage.speedScale);
     expect(stage.maxBallSpeed).toBe(GAME_CONFIG.maxBallSpeed * stage.stage.speedScale);
   });

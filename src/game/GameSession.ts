@@ -1,8 +1,9 @@
 import { appStore } from "../app/store";
+import type { MetaProgress } from "./metaProgress";
 import type { GameHost } from "../phaser/GameHost";
 import type { HudViewModel, OverlayViewModel } from "./renderTypes";
 import type { ShopUiView } from "./shopUi";
-import { SessionController } from "./session/SessionController";
+import { RuntimeController } from "./session/RuntimeController";
 import type { GameConfig, RandomSource, Scene } from "./types";
 
 export interface GameSessionDeps {
@@ -14,10 +15,10 @@ export interface GameSessionDeps {
 }
 
 export class GameSession {
-  private readonly controller: SessionController;
+  private readonly controller: RuntimeController;
 
   constructor(canvas: HTMLCanvasElement, deps: GameSessionDeps = {}) {
-    this.controller = new SessionController(canvas, {
+    this.controller = new RuntimeController(canvas, {
       ...deps,
       uiPort: {
         syncOverlay: (view: OverlayViewModel) => appStore.getState().setOverlayModel(view),
@@ -25,8 +26,12 @@ export class GameSession {
         syncShop: (view: ShopUiView) => appStore.getState().setShop(view),
       },
       getStartSettings: () => appStore.getState().startSettings,
-      setUiHandlers: (handlers) => appStore.getState().setHandlers(handlers),
-      setMetaProgress: (metaProgress) => appStore.getState().setMetaProgress(metaProgress),
+      setUiHandlers: (handlers: {
+        primaryAction: () => void;
+        shopOption: (index: 0 | 1) => void;
+      }) => appStore.getState().setHandlers(handlers),
+      setMetaProgress: (metaProgress: MetaProgress) =>
+        appStore.getState().setMetaProgress(metaProgress),
     });
   }
 

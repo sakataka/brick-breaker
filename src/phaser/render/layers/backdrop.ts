@@ -27,6 +27,8 @@ export function drawBackdropLayer(
 
   const header = parseColor(backdropTheme.top, { value: 0x161d30, alpha: 1 });
   drawTopVignette(graphics, header, width);
+  drawFarField(graphics, view, width, height, snapStep);
+  drawMidStructures(graphics, view, width, height, snapStep);
   drawAmbientBursts(graphics, view, width, height, snapStep);
   drawPattern(graphics, view, width, height, snapStep);
 
@@ -52,6 +54,51 @@ export function drawBackdropLayer(
   }
 
   drawWarpZones(graphics, view.warpZones, lineWidth, snapStep);
+}
+
+function drawFarField(
+  graphics: Phaser.GameObjects.Graphics,
+  view: RenderViewState,
+  width: number,
+  height: number,
+  snapStep: number,
+): void {
+  const accent = parseColor(view.visual.tokens.accent, { value: 0x40f4ff, alpha: 0.1 });
+  const stars = view.arena.depth === "stellar" ? 18 : view.arena.depth === "orbital" ? 14 : 10;
+  graphics.fillStyle(accent.value, accent.alpha * 0.68);
+  for (let index = 0; index < stars; index += 1) {
+    const x = (((index + 1) * 53) % width) + Math.sin(view.elapsedSec * 0.1 + index) * 8;
+    const y = (((index + 3) * 37) % (height * 0.6)) + Math.cos(view.elapsedSec * 0.14 + index) * 4;
+    graphics.fillCircle(
+      snapByStep(x, snapStep),
+      snapByStep(y, snapStep),
+      index % 3 === 0 ? 1.8 : 1.1,
+    );
+  }
+}
+
+function drawMidStructures(
+  graphics: Phaser.GameObjects.Graphics,
+  view: RenderViewState,
+  width: number,
+  height: number,
+  snapStep: number,
+): void {
+  const frame = parseColor(view.visual.tokens.frame, { value: 0x29d3ff, alpha: 0.18 });
+  const structureAlpha = view.arena.depth === "fortress" ? 0.16 : 0.1;
+  graphics.lineStyle(1.4, frame.value, structureAlpha);
+  const baseY = height * 0.24;
+  for (let index = 0; index < 4; index += 1) {
+    const x = width * (0.12 + index * 0.22);
+    const lift =
+      Math.sin(view.elapsedSec * 0.35 + index) * (view.arena.depth === "stellar" ? 6 : 10);
+    graphics.strokeRect(
+      snapByStep(x, snapStep),
+      snapByStep(baseY + lift, snapStep),
+      44 + index * 10,
+      height * (view.arena.depth === "fortress" ? 0.42 : 0.32),
+    );
+  }
 }
 
 function drawAmbientBursts(
@@ -164,6 +211,12 @@ function drawPattern(
 ): void {
   const color = parseColor(view.visual.tokens.pattern, { value: 0xffffff, alpha: 0.14 });
   graphics.lineStyle(1, color.value, color.alpha);
+  if (view.arena.frame === "citadel") {
+    for (let ring = 0; ring < 3; ring += 1) {
+      graphics.strokeCircle(width * 0.5, height * (0.18 + ring * 0.09), 92 + ring * 36);
+    }
+    return;
+  }
   if (view.visual.themeId === "chapter1") {
     for (let y = 24; y < height; y += 28) {
       graphics.beginPath();

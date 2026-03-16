@@ -1,6 +1,7 @@
 import { getDefaultBrickHp } from "../brickDamage";
 import { isGeneratorRespawnTarget } from "../brickRules";
 import { STAGE_CONTROL_CONFIG } from "../config";
+import { pushEncounterCue } from "../encounterSystem";
 import type { Brick, GameState } from "../types";
 
 export function updateStageControlBricks(
@@ -12,7 +13,7 @@ export function updateStageControlBricks(
   },
   deltaSec: number,
 ): void {
-  for (const brick of state.bricks) {
+  for (const brick of state.combat.bricks) {
     if (brick.kind === "generator" && brick.alive && options.generatorActive) {
       updateGenerator(state, brick, deltaSec);
       continue;
@@ -32,7 +33,7 @@ function updateGenerator(state: GameState, brick: Brick, deltaSec: number): void
   if ((brick.cooldownSec ?? 0) > 0) {
     return;
   }
-  const target = findGeneratorTarget(state.bricks, brick);
+  const target = findGeneratorTarget(state.combat.bricks, brick);
   brick.cooldownSec = STAGE_CONTROL_CONFIG.generatorRespawnIntervalSec;
   if (!target) {
     return;
@@ -40,15 +41,15 @@ function updateGenerator(state: GameState, brick: Brick, deltaSec: number): void
   target.alive = true;
   target.hp = getDefaultBrickHp(target);
   target.maxHp = getDefaultBrickHp(target);
-  state.stageStats.generatorShutdown = false;
-  state.vfx.floatingTexts.push({
+  state.encounter.stats.generatorShutdown = false;
+  state.ui.vfx.floatingTexts.push({
     key: "generator",
     pos: { x: target.x + target.width / 2, y: target.y + target.height / 2 },
     lifeMs: 360,
     maxLifeMs: 360,
     color: "rgba(132, 255, 196, 0.95)",
   });
-  state.vfx.impactRings.push({
+  state.ui.vfx.impactRings.push({
     pos: { x: target.x + target.width / 2, y: target.y + target.height / 2 },
     radiusStart: 4,
     radiusEnd: 24,
@@ -56,6 +57,7 @@ function updateGenerator(state: GameState, brick: Brick, deltaSec: number): void
     maxLifeMs: 200,
     color: "rgba(132, 255, 196, 0.82)",
   });
+  pushEncounterCue(state, "relay_online", "medium", 1.15);
 }
 
 function updateGate(state: GameState, brick: Brick, deltaSec: number): void {
@@ -65,13 +67,14 @@ function updateGate(state: GameState, brick: Brick, deltaSec: number): void {
   }
   brick.cooldownSec = STAGE_CONTROL_CONFIG.gateCycleSec;
   brick.alive = !brick.alive;
-  state.vfx.floatingTexts.push({
+  state.ui.vfx.floatingTexts.push({
     key: "gate",
     pos: { x: brick.x + brick.width / 2, y: brick.y + brick.height / 2 },
     lifeMs: 260,
     maxLifeMs: 260,
     color: brick.alive ? "rgba(255, 214, 142, 0.92)" : "rgba(130, 180, 255, 0.9)",
   });
+  pushEncounterCue(state, "shield_online", "medium", 0.95);
 }
 
 function updateTurret(state: GameState, brick: Brick, deltaSec: number): void {
@@ -80,14 +83,14 @@ function updateTurret(state: GameState, brick: Brick, deltaSec: number): void {
     return;
   }
   brick.cooldownSec = STAGE_CONTROL_CONFIG.turretFireIntervalSec;
-  const targetX = state.paddle.x + state.paddle.width / 2;
+  const targetX = state.combat.paddle.x + state.combat.paddle.width / 2;
   const centerX = brick.x + brick.width / 2;
   const centerY = brick.y + brick.height + 10;
   const dx = targetX - centerX;
-  const dy = state.paddle.y - centerY;
+  const dy = state.combat.paddle.y - centerY;
   const length = Math.max(1, Math.hypot(dx, dy));
-  state.combat.encounterState.projectiles.push({
-    id: state.combat.encounterState.nextProjectileId,
+  state.encounter.runtime.projectiles.push({
+    id: state.encounter.runtime.nextProjectileId,
     x: centerX,
     y: centerY,
     vx: (dx / length) * STAGE_CONTROL_CONFIG.turretProjectileSpeed,
@@ -95,8 +98,9 @@ function updateTurret(state: GameState, brick: Brick, deltaSec: number): void {
     radius: STAGE_CONTROL_CONFIG.turretProjectileRadius,
     source: "turret",
   });
-  state.combat.encounterState.nextProjectileId += 1;
-  state.vfx.floatingTexts.push({
+  state.encounter.runtime.nextProjectileId += 1;
+  pushEncounterCue(state, "warning_lane", "high", 0.9);
+  state.ui.vfx.floatingTexts.push({
     key: "turret",
     pos: { x: centerX, y: centerY },
     lifeMs: 220,

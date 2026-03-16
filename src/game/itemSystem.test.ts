@@ -269,8 +269,12 @@ describe("itemSystem", () => {
 
     const impact = applyItemPickup(items, "shockwave", balls, {
       gameState: {
-        bricks,
-        vfx: createVfxState(true),
+        combat: {
+          bricks,
+        } as never,
+        ui: {
+          vfx: createVfxState(true),
+        } as never,
       },
       scorePerBrick: 100,
     });

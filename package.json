@@ -10,6 +10,7 @@
     "deadcode": "knip --include files,dependencies,devDependencies,unlisted,binaries,unresolved --exclude exports,types",
     "deadcode:report": "knip --exclude types --no-exit-code --reporter compact",
     "check:arch": "depcruise --config .dependency-cruiser.cjs src",
+    "guard:test-state-shape": "node scripts/guard-test-state-shape.mjs",
     "verify:change-coverage": "node scripts/verify-change-coverage.mjs",
     "scaffold:feature": "node scripts/scaffold-feature.mjs",
     "prepare": "vp config",

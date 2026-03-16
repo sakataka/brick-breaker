@@ -29,13 +29,8 @@ interface DifficultyPreset {
   >;
 }
 
-export type SpeedPreset = "0.75" | "1.00" | "1.25";
-
 export interface StartSetupOptions {
   difficulty: Difficulty;
-  initialLives: number;
-  speedPreset: SpeedPreset;
-  multiballMaxBalls: number;
 }
 
 export interface ComboConfig {
@@ -110,13 +105,6 @@ export interface MissionConfig {
 }
 
 export const DEFAULT_MULTIBALL_MAX_BALLS = 4;
-
-const START_SETTING_LIMITS = {
-  minLives: 1,
-  maxLives: 6,
-  minMultiballMaxBalls: 2,
-  maxMultiballMaxBalls: 8,
-} as const;
 
 const BASE_CONFIG: Omit<
   GameConfig,
@@ -285,32 +273,15 @@ export function getGameplayBalance(difficulty: Difficulty): GameplayBalance {
   };
 }
 
-function resolveSpeedScale(speedPreset: SpeedPreset): number {
-  const parsed = Number(speedPreset);
-  if (Number.isNaN(parsed)) {
-    return 1;
-  }
-  return Math.max(0.5, Math.min(2, parsed));
-}
-
 export function buildStartConfig(base: GameConfig, setup: StartSetupOptions): GameConfig {
   const preset = DIFFICULTY_PRESETS[setup.difficulty];
-  const speedScale = resolveSpeedScale(setup.speedPreset);
-  const safeLives = Math.max(
-    START_SETTING_LIMITS.minLives,
-    Math.min(START_SETTING_LIMITS.maxLives, setup.initialLives),
-  );
-  const safeMultiballMaxBalls = Math.max(
-    START_SETTING_LIMITS.minMultiballMaxBalls,
-    Math.min(START_SETTING_LIMITS.maxMultiballMaxBalls, Math.round(setup.multiballMaxBalls)),
-  );
   return {
     ...base,
     difficulty: setup.difficulty,
-    initialLives: safeLives,
-    initialBallSpeed: preset.config.initialBallSpeed * speedScale,
-    maxBallSpeed: preset.config.maxBallSpeed * speedScale,
-    multiballMaxBalls: safeMultiballMaxBalls,
+    initialLives: preset.config.initialLives,
+    initialBallSpeed: preset.config.initialBallSpeed,
+    maxBallSpeed: preset.config.maxBallSpeed,
+    multiballMaxBalls: DEFAULT_MULTIBALL_MAX_BALLS,
     assistDurationSec: preset.config.assistDurationSec,
     assistPaddleScale: preset.config.assistPaddleScale,
     assistMaxSpeedScale: preset.config.assistMaxSpeedScale,

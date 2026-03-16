@@ -104,6 +104,41 @@ export function HudPanel({ locale, hud, scoreRef }: HudPanelProps): ReactElement
           emphasis={hud.comboMultiplier > 1 ? "accent" : "default"}
         />
       </div>
+      <div className="hud-score-focus-row">
+        <span className="hud-score-focus-pill">
+          {getScoreFocusLabel(locale, hud.stage.scoreFocus)}
+        </span>
+        {hud.record.currentRunRecord ? (
+          <span className="hud-record-pill">
+            {locale === "ja" ? "NEW RECORD" : "NEW RECORD"} +
+            {formatInteger(locale, hud.record.deltaToBest)}
+          </span>
+        ) : (
+          <span className="hud-record-pill hud-record-pill-muted">
+            {locale === "ja" ? "BEST" : "BEST"} {formatInteger(locale, hud.record.courseBestScore)}
+          </span>
+        )}
+      </div>
+      <div className="hud-score-feed">
+        {hud.scoreFeed.slice(0, 3).map((entry) => (
+          <span
+            key={`${entry.label}-${entry.amount}-${entry.progress}`}
+            className={`hud-score-feed-entry hud-score-feed-${entry.tone}`}
+            style={{ opacity: Math.max(0.24, entry.progress) }}
+          >
+            <strong>{entry.label}</strong>
+            <small>+{formatInteger(locale, entry.amount)}</small>
+          </span>
+        ))}
+        {hud.styleBonus.lastBonusLabel ? (
+          <span className="hud-score-feed-entry hud-score-feed-style">
+            <strong>{hud.styleBonus.lastBonusLabel}</strong>
+            <small>
+              {locale === "ja" ? "CHAIN" : "CHAIN"} {hud.styleBonus.chainLevel}
+            </small>
+          </span>
+        ) : null}
+      </div>
       <div className="hud-active-items-rack">
         {activeItems.length > 0 ? (
           activeItems.map((entry) => {
@@ -134,20 +169,16 @@ export function HudPanel({ locale, hud, scoreRef }: HudPanelProps): ReactElement
         <IconLabel icon={<AppIcon name="warning" className="hud-inline-icon" />}>
           {stageCounter}
         </IconLabel>
-        {hud.stage.route ? (
-          <IconLabel icon={<AppIcon name="cast" className="hud-inline-icon" />}>
-            {LL.hud.routeValue({ route: hud.stage.route })}
-          </IconLabel>
-        ) : null}
+        <DangerPill warningLevel={mapThreatToWarning(hud.stage.threatLevel)}>
+          {getThreatLabel(locale, hud.stage.threatLevel)}
+        </DangerPill>
+        <IconLabel icon={<AppIcon name="score" className="hud-inline-icon" />}>
+          {getScoreFocusLabel(locale, hud.stage.scoreFocus)}
+        </IconLabel>
         {hud.stage.modifierKey ? (
           <IconLabel icon={<AppIcon name="cast" className="hud-inline-icon" />}>
             {LL.hud.modifierValue({ label: LL.stageModifiers[hud.stage.modifierKey]() })}
           </IconLabel>
-        ) : null}
-        {hud.stage.debugModeEnabled ? (
-          <DangerPill warningLevel="elevated">
-            {hud.stage.debugRecordResults ? LL.hud.debug.on() : LL.hud.debug.off()}
-          </DangerPill>
         ) : null}
       </div>
       <div className="hud-stage-combat">
@@ -179,6 +210,11 @@ export function HudPanel({ locale, hud, scoreRef }: HudPanelProps): ReactElement
           </div>
         ) : null}
         <div className="hud-stage-combat-row hud-stage-combat-tags">
+          {hud.stage.previewTags.map((tag) => (
+            <span key={`preview-${tag}`} className="hud-item-tag hud-item-tag-preview">
+              {getPreviewTagLabel(locale, tag)}
+            </span>
+          ))}
           {buildLegendTags(locale, hud).map((segment) => (
             <span key={segment} className="hud-item-tag">
               {segment}
@@ -233,6 +269,81 @@ export function HudPanel({ locale, hud, scoreRef }: HudPanelProps): ReactElement
       ) : null}
     </div>
   );
+}
+
+function getThreatLabel(locale: AppLocale, threat: HudViewModel["stage"]["threatLevel"]): string {
+  if (locale === "ja") {
+    switch (threat) {
+      case "critical":
+        return "脅威: CRITICAL";
+      case "high":
+        return "脅威: HIGH";
+      case "medium":
+        return "脅威: MID";
+      default:
+        return "脅威: LOW";
+    }
+  }
+  return `THREAT ${threat.toUpperCase()}`;
+}
+
+function mapThreatToWarning(
+  threat: HudViewModel["stage"]["threatLevel"],
+): VisualState["warningLevel"] {
+  if (threat === "critical") {
+    return "critical";
+  }
+  if (threat === "high") {
+    return "elevated";
+  }
+  return "calm";
+}
+
+function getPreviewTagLabel(
+  locale: AppLocale,
+  tag: HudViewModel["stage"]["previewTags"][number],
+): string {
+  const ja: Record<typeof tag, string> = {
+    shielded_grid: "遮蔽グリッド",
+    relay_chain: "中継連鎖",
+    reactor_chain: "炉心連鎖",
+    turret_lane: "砲撃レーン",
+    hazard_flux: "乱流域",
+    gate_pressure: "ゲート圧迫",
+    boss_break: "ボス破壊",
+    survival_check: "生存重視",
+    fortress_core: "要塞コア",
+    sweep_alert: "掃射警戒",
+  };
+  const en: Record<typeof tag, string> = {
+    shielded_grid: "Shield Grid",
+    relay_chain: "Relay Chain",
+    reactor_chain: "Reactor Chain",
+    turret_lane: "Turret Lane",
+    hazard_flux: "Flux Hazard",
+    gate_pressure: "Gate Pressure",
+    boss_break: "Boss Break",
+    survival_check: "Survival",
+    fortress_core: "Fortress Core",
+    sweep_alert: "Sweep Alert",
+  };
+  return locale === "ja" ? ja[tag] : en[tag];
+}
+
+function getScoreFocusLabel(locale: AppLocale, focus: HudViewModel["stage"]["scoreFocus"]): string {
+  const ja: Record<typeof focus, string> = {
+    reactor_chain: "稼ぎ: 炉心連鎖",
+    turret_cancel: "稼ぎ: 弾消し",
+    boss_break: "稼ぎ: ブレイク",
+    survival_chain: "稼ぎ: ノーミス",
+  };
+  const en: Record<typeof focus, string> = {
+    reactor_chain: "FOCUS REACTOR",
+    turret_cancel: "FOCUS CANCEL",
+    boss_break: "FOCUS BREAK",
+    survival_chain: "FOCUS SURVIVE",
+  };
+  return locale === "ja" ? ja[focus] : en[focus];
 }
 
 function getBannerEyebrow(locale: AppLocale, banner: VisualState["banner"]): string {

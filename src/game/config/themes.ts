@@ -16,6 +16,12 @@ export interface StageVisualProfile {
   panelGlow: string;
   patternColor: string;
   brickPalette: BrickTheme["palette"];
+  backdropDepth: "stellar" | "orbital" | "fortress";
+  arenaFrame: "clean" | "hazard" | "citadel";
+  blockMaterial: "glass" | "alloy" | "armor" | "core";
+  particleDensity: number;
+  cameraIntensity: "steady" | "alert" | "assault";
+  bossTone: "hunter" | "artillery" | "citadel" | "overlord";
 }
 
 const BRICK_PALETTE: BrickTheme["palette"] = [
@@ -58,6 +64,12 @@ export const THEME_BANDS: StageVisualProfile[] = [
     panelGlow: "rgba(64, 244, 255, 0.34)",
     patternColor: "rgba(145, 250, 255, 0.18)",
     brickPalette: BRICK_PALETTE,
+    backdropDepth: "stellar",
+    arenaFrame: "clean",
+    blockMaterial: "glass",
+    particleDensity: 0.85,
+    cameraIntensity: "steady",
+    bossTone: "hunter",
   },
   {
     id: "chapter2",
@@ -71,6 +83,12 @@ export const THEME_BANDS: StageVisualProfile[] = [
     panelGlow: "rgba(255, 165, 78, 0.28)",
     patternColor: "rgba(255, 218, 156, 0.18)",
     brickPalette: MID_BRICK_PALETTE,
+    backdropDepth: "orbital",
+    arenaFrame: "hazard",
+    blockMaterial: "alloy",
+    particleDensity: 1,
+    cameraIntensity: "alert",
+    bossTone: "artillery",
   },
   {
     id: "chapter3",
@@ -84,6 +102,12 @@ export const THEME_BANDS: StageVisualProfile[] = [
     panelGlow: "rgba(255, 114, 200, 0.32)",
     patternColor: "rgba(249, 180, 255, 0.16)",
     brickPalette: LATE_BRICK_PALETTE,
+    backdropDepth: "fortress",
+    arenaFrame: "hazard",
+    blockMaterial: "armor",
+    particleDensity: 1.12,
+    cameraIntensity: "alert",
+    bossTone: "citadel",
   },
   {
     id: "midboss",
@@ -97,6 +121,12 @@ export const THEME_BANDS: StageVisualProfile[] = [
     panelGlow: "rgba(255, 122, 84, 0.32)",
     patternColor: "rgba(255, 188, 164, 0.18)",
     brickPalette: MID_BRICK_PALETTE,
+    backdropDepth: "orbital",
+    arenaFrame: "hazard",
+    blockMaterial: "alloy",
+    particleDensity: 1.15,
+    cameraIntensity: "alert",
+    bossTone: "hunter",
   },
   {
     id: "finalboss",
@@ -110,6 +140,12 @@ export const THEME_BANDS: StageVisualProfile[] = [
     panelGlow: "rgba(255, 116, 209, 0.36)",
     patternColor: "rgba(255, 174, 229, 0.18)",
     brickPalette: LATE_BRICK_PALETTE,
+    backdropDepth: "fortress",
+    arenaFrame: "citadel",
+    blockMaterial: "core",
+    particleDensity: 1.28,
+    cameraIntensity: "assault",
+    bossTone: "citadel",
   },
   {
     id: "ex",
@@ -123,6 +159,12 @@ export const THEME_BANDS: StageVisualProfile[] = [
     panelGlow: "rgba(84, 245, 182, 0.34)",
     patternColor: "rgba(166, 255, 210, 0.16)",
     brickPalette: MID_BRICK_PALETTE,
+    backdropDepth: "fortress",
+    arenaFrame: "citadel",
+    blockMaterial: "core",
+    particleDensity: 1.34,
+    cameraIntensity: "assault",
+    bossTone: "overlord",
   },
 ] as const;
 

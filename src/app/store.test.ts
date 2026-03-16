@@ -15,19 +15,16 @@ describe("app store", () => {
 
   test("updates start settings with partial patch", () => {
     appStore.getState().setStartSettings({
-      initialLives: 6,
-      speedPreset: "1.25",
       difficulty: "hard",
+      reducedMotionEnabled: true,
+      highContrastEnabled: true,
     });
     const state = appStore.getState();
-    expect(state.startSettings.initialLives).toBe(6);
-    expect(state.startSettings.speedPreset).toBe("1.25");
     expect(state.startSettings.difficulty).toBe("hard");
+    expect(state.startSettings.reducedMotionEnabled).toBe(true);
+    expect(state.startSettings.highContrastEnabled).toBe(true);
     expect(state.startSettings.bgmEnabled).toBe(true);
-    expect(state.startSettings.enabledItems.length).toBeGreaterThan(0);
-    expect(state.startSettings.debugModeEnabled).toBe(false);
-    expect(state.startSettings.debugStartStage).toBe(1);
-    expect(state.startSettings.debugRecordResults).toBe(false);
+    expect(state.startSettings.sfxEnabled).toBe(true);
   });
 
   test("routes UI trigger callbacks through registered handlers", () => {

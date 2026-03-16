@@ -8,22 +8,23 @@ export interface AppliedStartSettings {
   pendingStartStageIndex: number;
 }
 
-export function resolveStartStageIndex(selected: StartSettingsSelection): number {
-  if (!selected.debugModeEnabled) {
-    return 0;
-  }
-  return Math.max(0, Math.min(11, Math.round(selected.debugStartStage) - 1));
+export function resolveStartStageIndex(_selected: StartSettingsSelection): number {
+  return 0;
 }
 
 export function applyStartSettingsToState(
   state: GameState,
   selected: StartSettingsSelection,
 ): void {
-  state.options.campaignCourse = selected.campaignCourse;
-  state.options.enableNewItemStacks = selected.enableNewItemStacks;
-  state.options.enabledItems = [...selected.enabledItems];
-  state.options.debugModeEnabled = selected.debugModeEnabled;
-  state.options.debugRecordResults = selected.debugRecordResults;
+  state.run.options.threatTier = 1;
+  state.run.options.difficulty = selected.difficulty;
+  state.run.options.reducedMotionEnabled = selected.reducedMotionEnabled;
+  state.run.options.highContrastEnabled = selected.highContrastEnabled;
+  state.run.options.bgmEnabled = selected.bgmEnabled;
+  state.run.options.sfxEnabled = selected.sfxEnabled;
+  state.ui.a11y.reducedMotion = selected.reducedMotionEnabled;
+  state.ui.a11y.highContrast = selected.highContrastEnabled;
+  state.ui.vfx.reducedMotion = selected.reducedMotionEnabled;
 }
 
 export function computeAppliedStartSettings(

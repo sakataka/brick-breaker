@@ -1,9 +1,17 @@
-import { ITEM_REGISTRY, pickWeightedItemType } from "../itemRegistry";
-import type { GameState, ItemType, RandomSource } from "../types";
+import {
+  getItemCounterplayTags,
+  getItemPreviewAffinity,
+  ITEM_REGISTRY,
+  pickWeightedItemType,
+} from "../itemRegistry";
+import { resolveUpcomingStagePreviewFromState } from "../stageContext";
+import type { GameState, ItemType, RandomSource, StagePreviewTag } from "../types";
 
 interface ShopOfferContext {
   enabledItems: readonly ItemType[];
   stageIndex: number;
+  previewTags: readonly StagePreviewTag[];
+  scoreFocus: "reactor_chain" | "turret_cancel" | "boss_break" | "survival_chain";
 }
 
 export function generateShopOffer(
@@ -13,6 +21,8 @@ export function generateShopOffer(
   return generateShopOfferByContext(random, {
     enabledItems,
     stageIndex: 0,
+    previewTags: [],
+    scoreFocus: "survival_chain",
   });
 }
 
@@ -22,12 +32,14 @@ export function ensureShopOffer(
   enabledItems: readonly ItemType[],
   effectiveStageIndex: number,
 ): void {
-  if (state.shop.usedThisStage || state.shop.lastOffer) {
+  if (state.encounter.shop.usedThisStage || state.encounter.shop.lastOffer) {
     return;
   }
-  state.shop.lastOffer = generateShopOfferByContext(random, {
+  state.encounter.shop.lastOffer = generateShopOfferByContext(random, {
     enabledItems,
     stageIndex: effectiveStageIndex,
+    previewTags: resolveUpcomingStagePreviewFromState(state)?.previewTags ?? [],
+    scoreFocus: resolveUpcomingStagePreviewFromState(state)?.scoreFocus ?? "survival_chain",
   });
 }
 
@@ -37,15 +49,36 @@ function generateShopOfferByContext(
 ): [ItemType, ItemType] {
   const enabled = new Set(context.enabledItems);
   const available = (Object.keys(ITEM_REGISTRY) as ItemType[]).filter((type) => enabled.has(type));
-  const rolePriority: Array<"attack" | "defense" | "control"> =
-    context.stageIndex >= 7 ? ["attack", "defense", "control"] : ["control", "defense", "attack"];
-  const first = pickByRole(random, available, rolePriority[0]);
+  const preferredTone =
+    context.scoreFocus === "boss_break"
+      ? "offense"
+      : context.scoreFocus === "survival_chain"
+        ? "survival"
+        : context.scoreFocus === "reactor_chain"
+          ? "control"
+          : "offense";
+  const ranked = [...available].sort((left, right) => {
+    const scoreDiff = scoreItemForPreview(context, right) - scoreItemForPreview(context, left);
+    if (scoreDiff !== 0) {
+      return scoreDiff;
+    }
+    return ITEM_REGISTRY[right].weight - ITEM_REGISTRY[left].weight;
+  });
+  const first = ranked[0] ?? pickWeightedItemType(random);
+  const secondPool = ranked.filter((type) => type !== first);
+  const complementaryRole = context.stageIndex >= 7 ? "defense" : "control";
   const second =
     pickByRole(
       random,
-      available.filter((type) => type !== first),
-      rolePriority[1],
+      secondPool.filter(
+        (type) =>
+          ITEM_REGISTRY[type].roleTag === complementaryRole ||
+          ITEM_REGISTRY[type].synergyTags.includes(preferredTone) ||
+          scoreItemForPreview(context, type) > 0,
+      ),
+      complementaryRole,
     ) ??
+    secondPool[0] ??
     pickWeightedItemType(
       random,
       (Object.keys(ITEM_REGISTRY) as ItemType[]).filter(
@@ -76,4 +109,39 @@ function pickByRole(
   }
   const index = Math.floor(random.next() * available.length);
   return available[index] ?? available[available.length - 1];
+}
+
+function scoreItemForPreview(context: ShopOfferContext, type: ItemType): number {
+  const previewAffinity = getItemPreviewAffinity(type);
+  const counterplayTags = getItemCounterplayTags(type);
+  let score = ITEM_REGISTRY[type].weight * 10;
+  if (
+    (context.scoreFocus === "boss_break" &&
+      ITEM_REGISTRY[type].synergyTags.includes("boss_break")) ||
+    (context.scoreFocus === "survival_chain" &&
+      ITEM_REGISTRY[type].synergyTags.includes("survival")) ||
+    (context.scoreFocus === "reactor_chain" &&
+      ITEM_REGISTRY[type].synergyTags.includes("control")) ||
+    (context.scoreFocus === "turret_cancel" && ITEM_REGISTRY[type].synergyTags.includes("offense"))
+  ) {
+    score += 4;
+  }
+  for (const tag of context.previewTags) {
+    if (previewAffinity.includes(tag)) {
+      score += 5;
+    }
+    if (counterplayTags.includes(tag)) {
+      score += 3;
+    }
+  }
+  if (context.previewTags.includes("boss_break") && ITEM_REGISTRY[type].encounterBias === "boss") {
+    score += 3;
+  }
+  if (context.previewTags.includes("survival_check") && ITEM_REGISTRY[type].roleTag === "defense") {
+    score += 2;
+  }
+  if (context.previewTags.includes("hazard_flux") && ITEM_REGISTRY[type].roleTag === "control") {
+    score += 2;
+  }
+  return score;
 }

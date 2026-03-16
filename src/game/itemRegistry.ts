@@ -9,7 +9,7 @@ import type {
   ItemRegistry,
   ItemStackState,
 } from "./itemTypes";
-import type { Ball, GameState, ItemState, ItemType, RandomSource } from "./types";
+import type { Ball, GameState, ItemState, ItemType, RandomSource, StagePreviewTag } from "./types";
 
 export { ITEM_ORDER, ITEM_REGISTRY } from "./itemRegistryData";
 
@@ -18,15 +18,14 @@ export interface ActiveItemEntry {
   count: number;
 }
 
-export interface StartSettingsItemEntry {
-  type: ItemType;
-  icon: string;
-  color: string;
-}
-
 export interface ItemPickupPolicyOptions {
   enableNewItemStacks?: boolean;
-  gameState?: Pick<GameState, "bricks" | "vfx">;
+  gameState?:
+    | Pick<GameState, "combat" | "ui">
+    | {
+        bricks: GameState["combat"]["bricks"];
+        vfx: GameState["ui"]["vfx"];
+      };
   scorePerBrick?: number;
 }
 
@@ -121,10 +120,6 @@ export function getActiveItemEntriesFromRegistry(stacks: ItemStackState): Active
   }));
 }
 
-export function getItemEmoji(type: ItemType): string {
-  return ITEM_REGISTRY[type].emoji;
-}
-
 export function getItemColor(type: ItemType): string {
   return ITEM_REGISTRY[type].color;
 }
@@ -135,6 +130,14 @@ export function getItemPickupSfxEvent(type: ItemType): ItemPickupSfxEvent {
 
 export function getItemPickupPresentation(type: ItemType): ItemPickupPresentation {
   return ITEM_REGISTRY[type].presentation;
+}
+
+export function getItemCounterplayTags(type: ItemType): readonly StagePreviewTag[] {
+  return ITEM_REGISTRY[type].counterplayTags;
+}
+
+export function getItemPreviewAffinity(type: ItemType): readonly StagePreviewTag[] {
+  return ITEM_REGISTRY[type].previewAffinity;
 }
 
 export function getDropSuppressedTypes(stacks: ItemStackState): ItemType[] {
@@ -170,16 +173,6 @@ export function pickWeightedItemType(
   return selectable[selectable.length - 1];
 }
 
-export function getStartSettingsItemEntries(): StartSettingsItemEntry[] {
-  return ITEM_ORDER.map((type) => ITEM_REGISTRY[type])
-    .sort((a, b) => a.startSettingsVisibleOrder - b.startSettingsVisibleOrder)
-    .map((definition) => ({
-      type: definition.type,
-      icon: definition.icon,
-      color: definition.color,
-    }));
-}
-
 export function validateItemRegistry(registry: ItemRegistry = ITEM_REGISTRY): {
   valid: boolean;
   issues: string[];
@@ -204,6 +197,12 @@ export function validateItemRegistry(registry: ItemRegistry = ITEM_REGISTRY): {
     }
     if (!(definition.maxStacks > 0)) {
       issues.push(`invalid maxStacks: ${type}`);
+    }
+    if (definition.previewAffinity.length <= 0) {
+      issues.push(`missing previewAffinity: ${type}`);
+    }
+    if (definition.counterplayTags.length <= 0) {
+      issues.push(`missing counterplayTags: ${type}`);
     }
     weightSum += definition.weight;
   }
