@@ -7,11 +7,12 @@ import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { AppUi } from "./app/AppUi";
 import { GameSession } from "./game/GameSession";
+import type { BrickBreakerTestBridge } from "./game/testBridge";
 import { getRequiredElement } from "./util/dom";
 
 declare global {
   interface Window {
-    __brickBreaker?: GameSession;
+    __brickBreakerTest?: BrickBreakerTestBridge;
   }
 }
 
@@ -31,8 +32,9 @@ uiRoot.render(createElement(AppUi));
 const game = new GameSession(canvas);
 
 game.start();
-window.__brickBreaker = game;
+window.__brickBreakerTest = game.createTestBridge();
 window.addEventListener("beforeunload", () => {
+  delete window.__brickBreakerTest;
   game.destroy();
   uiRoot.unmount();
 });

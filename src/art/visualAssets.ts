@@ -10,7 +10,7 @@ export type ArtAssetId =
   | `warning-stripe:${string}`;
 
 export type ArtWarningLevel = "calm" | "elevated" | "critical";
-export type ArtEncounterEmphasis = "chapter" | "midboss" | "finalboss" | "ex";
+export type ArtEncounterEmphasis = "chapter" | "midboss" | "finalboss" | "tier2";
 
 interface TextureEntry {
   id: ArtAssetId;
@@ -143,7 +143,7 @@ const PALETTES: Record<ThemeBandId, ThemeArtPalette> = {
     motifAccent: "#ffe0f8",
     warningAccent: "#ff7f78",
   },
-  ex: {
+  tier2: {
     panelBase: "#102221",
     panelAccent: "#63f5bd",
     panelLine: "#d6fff0",
@@ -330,10 +330,10 @@ export function getArtCssVars(profile: VisualAssetProfile): Record<string, strin
 
 export function getAllArtTextureEntries(): TextureEntry[] {
   const profiles = (
-    ["chapter1", "chapter2", "chapter3", "midboss", "finalboss", "ex"] as const
+    ["chapter1", "chapter2", "chapter3", "midboss", "finalboss", "tier2"] as const
   ).flatMap((themeId) =>
     (["calm", "elevated", "critical"] as const).flatMap((warningLevel) =>
-      (["chapter", "midboss", "finalboss", "ex"] as const).map((encounterEmphasis) =>
+      (["chapter", "midboss", "finalboss", "tier2"] as const).map((encounterEmphasis) =>
         resolveVisualAssetProfile(themeId, warningLevel, encounterEmphasis),
       ),
     ),
@@ -540,7 +540,7 @@ function buildBackdropMotifSvg(themeId: ThemeBandId, palette: ThemeArtPalette): 
       128,
     );
   }
-  if (themeId === "midboss" || themeId === "finalboss" || themeId === "ex") {
+  if (themeId === "midboss" || themeId === "finalboss" || themeId === "tier2") {
     return wrapSvg(
       `
       <rect width="128" height="128" fill="transparent" />

@@ -42,7 +42,7 @@ export function buildStageIntro(
     return undefined;
   }
   if (state.run.options.threatTier === 2) {
-    return { kind: "ex", progress: sinceStart / 1.15 };
+    return { kind: "tier2", progress: sinceStart / 1.15 };
   }
   if (stageContext.stage.encounter?.kind === "boss") {
     return { kind: "boss", progress: sinceStart / 1.15 };

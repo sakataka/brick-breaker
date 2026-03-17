@@ -2,7 +2,7 @@ export interface BrickTheme {
   palette: readonly string[];
 }
 
-export type ThemeBandId = "chapter1" | "chapter2" | "chapter3" | "midboss" | "finalboss" | "ex";
+export type ThemeBandId = "chapter1" | "chapter2" | "chapter3" | "midboss" | "finalboss" | "tier2";
 
 export interface StageVisualProfile {
   id: ThemeBandId;
@@ -148,8 +148,8 @@ export const THEME_BANDS: StageVisualProfile[] = [
     bossTone: "citadel",
   },
   {
-    id: "ex",
-    label: "EX",
+    id: "tier2",
+    label: "Threat Tier 2",
     backdropStart: "rgba(134, 245, 132, 0.28)",
     backdropEnd: "rgba(33, 231, 208, 0.1)",
     backdropStroke: "rgba(191, 255, 214, 0.48)",

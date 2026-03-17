@@ -65,10 +65,11 @@ describe("OverlayRoot", () => {
     expect(markup).toContain('id="setting-high-contrast-enabled"');
   });
 
-  test("minimal shipped settings omit item-pool and debug controls", () => {
+  test("minimal shipped settings include only current public controls", () => {
     const markup = render(BASE_SETTINGS, BASE_OVERLAY);
-    expect(markup).not.toContain('id="setting-item-pool"');
-    expect(markup).not.toContain('id="setting-debug-start-stage"');
-    expect(markup).not.toContain('id="setting-debug-record-results"');
+    expect(markup).toContain('id="setting-language"');
+    expect(markup).toContain('id="setting-difficulty"');
+    expect(markup).toContain('id="setting-bgm-enabled"');
+    expect(markup).toContain('id="setting-sfx-enabled"');
   });
 });

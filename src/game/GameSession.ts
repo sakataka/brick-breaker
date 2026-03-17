@@ -4,6 +4,7 @@ import type { GameHost } from "../phaser/GameHost";
 import type { HudViewModel, OverlayViewModel } from "./renderTypes";
 import type { ShopUiView } from "./shopUi";
 import { RuntimeController } from "./session/RuntimeController";
+import type { BrickBreakerTestBridge, GameTestScenario } from "./testBridge";
 import type { GameConfig, RandomSource, Scene } from "./types";
 
 export interface GameSessionDeps {
@@ -43,11 +44,24 @@ export class GameSession {
     this.controller.destroy();
   }
 
+  createTestBridge(): BrickBreakerTestBridge {
+    return {
+      forceScene: (scene) => this.controller.forceSceneForTest(scene),
+      setGameOverScore: (score, lives) => this.controller.setGameOverScoreForTest(score, lives),
+      unlockThreatTier2: () => this.controller.unlockThreatTier2ForTest(),
+      loadScenario: (scenario) => this.controller.loadScenarioForTest(scenario),
+    };
+  }
+
   debugForceScene(scene: Scene): void {
-    this.controller.debugForceScene(scene);
+    this.controller.forceSceneForTest(scene);
   }
 
   debugSetGameOverScore(score: number, lives?: number): void {
-    this.controller.debugSetGameOverScore(score, lives);
+    this.controller.setGameOverScoreForTest(score, lives);
+  }
+
+  debugLoadScenario(scenario: GameTestScenario): void {
+    this.controller.loadScenarioForTest(scenario);
   }
 }

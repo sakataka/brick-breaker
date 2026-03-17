@@ -140,7 +140,7 @@ vp run e2e:ci
 - UI は `Space Grotesk + Public Sans`、`Phosphor`、`motion` を使った premium SF arena 方向です
 - 背景とアリーナは `far field + mid structure + arena frame + warning overlay` の多層構成です
 - ブロック、警告帯、枠、背景タイルは `src/art/visualAssets.ts` の manifest から組み立てます
-- BGM は cue ベースで `title / chapter1 / chapter2 / chapter3 / midboss / finalboss / ex` を切り替えます
+- BGM は cue ベースで `title / chapter1 / chapter2 / chapter3 / midboss / finalboss / tier2` を切り替えます
 - `Threat Tier 2` は上位 cue と visual profile を使って通常 campaign と見た目・テンションを切り替えます
 
 ## 公開

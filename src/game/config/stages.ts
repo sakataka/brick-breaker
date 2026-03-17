@@ -258,11 +258,11 @@ const STAGE_BLUEPRINTS: readonly StageBlueprint[] = [
   },
 ] as const;
 
-const EX_STAGE_BLUEPRINTS: readonly StageBlueprint[] = [
+const TIER2_STAGE_BLUEPRINTS: readonly StageBlueprint[] = [
   {
     rows: ["0111111110", "0100010010", "0111111110", "0010101000", "0001110000", "0000000000"],
     chapter: 4,
-    archetype: "ex_arena",
+    archetype: "tier2_arena",
     tags: ["steel", "gate", "midboss"],
     events: ["gate_cycle", "midboss_duel"],
     specials: [
@@ -307,7 +307,7 @@ const EX_STAGE_BLUEPRINTS: readonly StageBlueprint[] = [
   {
     rows: ["0000000000", "0010000100", "0000100000", "0010000100", "0000000000", "0000000000"],
     chapter: 4,
-    archetype: "ex_arena",
+    archetype: "tier2_arena",
     tags: ["steel", "boss", "turret"],
     events: ["boss_duel", "turret_fire"],
     specials: [
@@ -318,7 +318,7 @@ const EX_STAGE_BLUEPRINTS: readonly StageBlueprint[] = [
     ],
     elite: [{ row: 2, col: 4, kind: "boss" }],
     missions: ["time_limit", "combo_x2"],
-    encounter: { kind: "ex_boss", profile: "ex_overlord" },
+    encounter: { kind: "tier2_boss", profile: "tier2_overlord" },
   },
 ] as const;
 
@@ -362,7 +362,7 @@ function buildCatalog(blueprints: readonly StageBlueprint[]): StageDefinition[] 
 }
 
 export const STAGE_CATALOG: StageDefinition[] = buildCatalog(STAGE_BLUEPRINTS);
-export const THREAT_TIER_2_STAGE_CATALOG: StageDefinition[] = buildCatalog(EX_STAGE_BLUEPRINTS);
+export const THREAT_TIER_2_STAGE_CATALOG: StageDefinition[] = buildCatalog(TIER2_STAGE_BLUEPRINTS);
 
 const STAGE_MODIFIERS: Partial<Record<number, StageModifier>> = {
   6: {
@@ -443,7 +443,7 @@ function inferStageMissions(
 }
 
 function inferVisualProfile(blueprint: StageBlueprint): StageVisualProfileDefinition {
-  if (blueprint.encounter?.kind === "ex_boss") {
+  if (blueprint.encounter?.kind === "tier2_boss") {
     return {
       depth: "fortress",
       arenaFrame: "citadel",
@@ -546,7 +546,7 @@ function inferBoardMechanics(blueprint: StageBlueprint): readonly StageBoardMech
           : blueprint.encounter.profile === "final_core"
             ? "Fortress Core"
             : "Boss Guard",
-      intensity: blueprint.encounter.kind === "ex_boss" ? "critical" : "high",
+      intensity: blueprint.encounter.kind === "tier2_boss" ? "critical" : "high",
     });
   }
   return mechanics.slice(0, 2);
@@ -556,7 +556,7 @@ function inferHazardScript(blueprint: StageBlueprint): StageHazardScript {
   if (blueprint.encounter) {
     return {
       id: "boss_arena",
-      intensity: blueprint.encounter.kind === "ex_boss" ? "critical" : "high",
+      intensity: blueprint.encounter.kind === "tier2_boss" ? "critical" : "high",
     };
   }
   if (blueprint.events?.includes("turret_fire")) {
@@ -629,11 +629,14 @@ function inferPreviewTags(blueprint: StageBlueprint): readonly StagePreviewTag[]
     tags.push("boss_break");
     if (
       blueprint.encounter.profile === "final_core" ||
-      blueprint.encounter.profile === "ex_overlord"
+      blueprint.encounter.profile === "tier2_overlord"
     ) {
       tags.push("fortress_core");
     }
-    if (blueprint.encounter.profile === "warden" || blueprint.encounter.profile === "ex_overlord") {
+    if (
+      blueprint.encounter.profile === "warden" ||
+      blueprint.encounter.profile === "tier2_overlord"
+    ) {
       tags.push("sweep_alert");
     }
   }
@@ -676,7 +679,7 @@ function inferBonusRules(blueprint: StageBlueprint): readonly StageBonusRule[] {
 function inferEnemyShotProfile(blueprint: StageBlueprint): EnemyShotProfile {
   if (
     blueprint.encounter?.profile === "final_core" ||
-    blueprint.encounter?.profile === "ex_overlord"
+    blueprint.encounter?.profile === "tier2_overlord"
   ) {
     return "void_core";
   }
@@ -687,8 +690,8 @@ function inferEnemyShotProfile(blueprint: StageBlueprint): EnemyShotProfile {
 }
 
 function inferVisualSetId(blueprint: StageBlueprint): string {
-  if (blueprint.encounter?.kind === "ex_boss") {
-    return "sfc-arcade-ex";
+  if (blueprint.encounter?.kind === "tier2_boss") {
+    return "sfc-arcade-tier2";
   }
   if (blueprint.encounter) {
     return `sfc-arcade-${blueprint.encounter.profile}`;

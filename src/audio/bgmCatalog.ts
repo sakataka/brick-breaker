@@ -117,9 +117,9 @@ const CUES: Record<CueDefinition["id"], CueDefinition> = {
     padIntervals: [0, 7, 10, 14],
     bassOffsets: [-24, -12, -17, -12],
   },
-  ex: {
-    id: "ex",
-    title: "EX Hyper Pop",
+  tier2: {
+    id: "tier2",
+    title: "Tier 2 Hyper Pop",
     leadWave: "square",
     harmonyWave: "triangle",
     bassWave: "square",

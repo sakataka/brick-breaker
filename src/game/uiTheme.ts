@@ -4,8 +4,8 @@ import type { StageVisualProfile, ThemeBandId } from "./config/themes";
 
 export type WarningLevel = "calm" | "elevated" | "critical";
 export type MotionProfile = "full" | "reduced";
-export type EncounterEmphasis = "chapter" | "midboss" | "finalboss" | "ex";
-export type BannerKind = "stage" | "midboss" | "boss" | "ex";
+export type EncounterEmphasis = "chapter" | "midboss" | "finalboss" | "tier2";
+export type BannerKind = "stage" | "midboss" | "boss" | "tier2";
 
 export interface UiThemeTokens {
   surface: string;
@@ -135,8 +135,8 @@ export function resolveEncounterEmphasis(themeId: ThemeBandId): EncounterEmphasi
   if (themeId === "finalboss") {
     return "finalboss";
   }
-  if (themeId === "ex") {
-    return "ex";
+  if (themeId === "tier2") {
+    return "tier2";
   }
   return "chapter";
 }

@@ -47,35 +47,20 @@ export const en: TranslationSchema = {
   startSettings: {
     sections: {
       basic: "Basic Settings",
-      debug: "Debug Settings",
-      itemPool: "Item Pool",
     },
     fields: {
       language: "Language",
       difficulty: "Difficulty",
-      initialLives: "Initial Lives",
-      speed: "Speed",
-      multiballMax: "Multiball Cap",
       reducedMotion: "Reduced motion",
       highContrast: "High contrast",
-      newItemStacks: "New item stacking",
       bgm: "BGM",
       sfx: "SFX",
-      debugEnabled: "Enabled",
-      debugStartStage: "Start stage",
-      debugRecordResults: "Save results",
     },
-    itemPoolHint: "Disabled items are removed from drops, shop offers, and debug presets.",
-    debugNote: "Turn debug mode on to reveal verification options.",
     values: {
       difficulty: {
         casual: "Casual",
         standard: "Standard",
         hard: "Hard",
-      },
-      debugRecordResults: {
-        false: "Do not save",
-        true: "Save",
       },
     },
   },
@@ -89,20 +74,12 @@ export const en: TranslationSchema = {
       bossHp: "Boss HP",
       cast: "Cast",
       weakWindow: "Break",
-      upgrades: "Upgrades",
-      route: "Route",
       modifier: "Modifier",
       warpLegend: "Warp: blue=in / yellow=out",
       steelLegend: "Steel: unbreakable",
       generatorLegend: "Generator: respawns nearby",
       gateLegend: "Gate: open/close cycle",
       turretLegend: "Turret: fires shots",
-    },
-    debug: {
-      on: "🧪DEBUG",
-      off: "🧪DEBUG(no save)",
-      badgeOn: "DEBUG",
-      badgeOff: "DEBUG no save",
     },
     effect: {
       hazardBoost: "⚠ Hazard speed boost",
@@ -112,7 +89,6 @@ export const en: TranslationSchema = {
     },
     comboValue: "x{value}",
     stageCounter: "{current:number}/{total:number}",
-    routeValue: "Route {route}",
     modifierValue: "{label}",
     bossValue: "{hp:number}/{maxHp:number} {phase}",
     phase: "P{phase:number}",
@@ -216,11 +192,6 @@ export const en: TranslationSchema = {
     stage8:
       "Stage 8: You enter the gravity lens zone. Ball speed and trajectories become unstable here.",
     stage12: "Final Stage: Core Guardian engaged. Use every upgrade you have to break through.",
-  },
-  rogue: {
-    paddle_core: "Paddle Core",
-    speed_core: "Speed Core",
-    score_core: "Score Core",
   },
   stageMission: {
     achieved: "Complete",

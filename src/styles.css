@@ -99,7 +99,7 @@ body::before {
 
 #stage-wrap[data-theme="midboss"],
 #stage-wrap[data-theme="finalboss"],
-#stage-wrap[data-theme="ex"] {
+#stage-wrap[data-theme="tier2"] {
   --theme-glow: rgba(255, 120, 140, 0.28);
 }
 
@@ -609,7 +609,7 @@ body::before {
   background: linear-gradient(100deg, rgba(49, 10, 33, 0.9), rgba(126, 24, 67, 0.58));
 }
 
-#hud[data-theme="ex"] {
+#hud[data-theme="tier2"] {
   background: linear-gradient(100deg, rgba(6, 42, 34, 0.88), rgba(12, 101, 92, 0.54));
 }
 
@@ -1258,17 +1258,6 @@ body::before {
   font-size: 0.82rem;
   line-height: 1.4;
   color: var(--text-2);
-}
-
-#overlay-rogue-select {
-  width: 100%;
-  appearance: none;
-  border: 1px solid rgba(149, 211, 255, 0.48);
-  border-radius: 10px;
-  background: rgba(3, 20, 45, 0.76);
-  color: var(--text-1);
-  font-size: 0.9rem;
-  padding: 0.42rem 0.55rem;
 }
 
 .panel-hidden {

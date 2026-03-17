@@ -3,7 +3,7 @@ import type { ReactElement } from "react";
 export interface StageResultPanelProps {
   title: string;
   rows: string[];
-  sectionId: "overlay-results-section" | "overlay-rogue-section";
+  sectionId: "overlay-results-section";
   listId?: "overlay-results";
   hidden?: boolean;
   children?: ReactElement;

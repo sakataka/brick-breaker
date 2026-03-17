@@ -71,5 +71,9 @@ export class SceneMachine {
     return this.current;
   }
 
+  force(scene: Scene): void {
+    this.current = scene;
+  }
+
   stop(): void {}
 }

@@ -2,7 +2,7 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
 const root = process.cwd();
-const testsRoot = path.join(root, "src");
+const testRoots = [path.join(root, "src"), path.join(root, "e2e")];
 const forbiddenPatterns = [
   { label: "state.score", regex: /\bstate\.score\b/ },
   { label: "state.lives", regex: /\bstate\.lives\b/ },
@@ -30,21 +30,27 @@ const forbiddenPatterns = [
     label: "legacy option debugRecordResults",
     regex: /\bstate\.(?:run\.)?options\.debugRecordResults\b/,
   },
+  { label: "removed selector setting-debug-*", regex: /setting-debug-/ },
+  { label: "removed selector setting-item-pool", regex: /setting-item-pool/ },
+  { label: "removed selector setting-campaign-course", regex: /setting-campaign-course/ },
+  { label: "removed global __brickBreaker", regex: /\b__brickBreaker\b/ },
 ];
 
 const failures = [];
-for (const file of await collectTestFiles(testsRoot)) {
-  const content = await readFile(file, "utf8");
-  for (const pattern of forbiddenPatterns) {
-    const match = content.match(pattern.regex);
-    if (!match || match.index === undefined) {
-      continue;
+for (const testsRoot of testRoots) {
+  for (const file of await collectTestFiles(testsRoot)) {
+    const content = await readFile(file, "utf8");
+    for (const pattern of forbiddenPatterns) {
+      const match = content.match(pattern.regex);
+      if (!match || match.index === undefined) {
+        continue;
+      }
+      failures.push({
+        file: path.relative(root, file),
+        label: pattern.label,
+        line: 1 + content.slice(0, match.index).split("\n").length - 1,
+      });
     }
-    failures.push({
-      file: path.relative(root, file),
-      label: pattern.label,
-      line: 1 + content.slice(0, match.index).split("\n").length - 1,
-    });
   }
 }
 

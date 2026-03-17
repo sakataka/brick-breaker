@@ -7,7 +7,7 @@ import { readAccessibility } from "../a11y";
 import { GAME_CONFIG } from "../config";
 import { LifecycleController } from "../lifecycle";
 import { clamp } from "../math";
-import { readMetaProgress, type MetaProgress } from "../metaProgress";
+import { readMetaProgress, type MetaProgress, writeMetaProgress } from "../metaProgress";
 import { defaultRandomSource } from "../random";
 import type { HudViewModel, OverlayViewModel, RenderViewState } from "../renderTypes";
 import { syncRecordStateFromMeta } from "../scoreSystem";
@@ -17,6 +17,7 @@ import { resolveStageMetadataFromState } from "../stageContext";
 import type { StartSettingsSelection } from "../startSettingsSchema";
 import { createInitialGameState } from "../stateFactory";
 import type { ShopUiView } from "../shopUi";
+import type { GameTestScenario } from "../testBridge";
 import type {
   GameAudioSettings,
   GameConfig,
@@ -25,6 +26,7 @@ import type {
   RuntimeErrorKey,
   Scene,
 } from "../types";
+import { spawnItemPickupFeedback } from "../vfxSystem";
 import { createHostHandlers, createUiHandlers } from "./sessionBindings";
 import { SessionPorts } from "./SessionPorts";
 import {
@@ -34,6 +36,7 @@ import {
   runSafely as runSessionSafely,
   startOrResumeSession,
 } from "./sessionFlow";
+import { resetRoundState } from "../roundSystem";
 import { applySessionViewport } from "./sessionViewport";
 import { purchaseShopOption } from "./shopActions";
 
@@ -160,20 +163,80 @@ export class RuntimeController {
     this.sceneMachine.stop();
   }
 
-  debugForceScene(scene: Scene): void {
+  forceSceneForTest(scene: Scene): void {
     const previous = this.state.scene;
+    this.sceneMachine.force(scene);
     this.state.scene = scene;
     this.ports.syncAudioScene(previous, this.state.scene, this.state);
     this.publishState();
   }
 
-  debugSetGameOverScore(score: number, lives = this.state.run.lives): void {
+  setGameOverScoreForTest(score: number, lives = this.state.run.lives): void {
     const previous = this.state.scene;
+    this.sceneMachine.force("gameover");
     this.state.run.lastGameOverScore = Math.max(0, Math.round(score));
     this.state.run.score = 0;
     this.state.run.lives = Math.max(0, Math.round(lives));
     this.state.scene = "gameover";
     this.ports.syncAudioScene(previous, this.state.scene, this.state);
+    this.publishState();
+  }
+
+  unlockThreatTier2ForTest(): void {
+    const currentMeta = readMetaProgress(this.windowRef.localStorage);
+    const nextMeta = {
+      ...currentMeta,
+      progression: {
+        ...currentMeta.progression,
+        threatTier2Unlocked: true,
+      },
+    };
+    writeMetaProgress(this.windowRef.localStorage, nextMeta);
+    this.ports.setMetaProgress(nextMeta);
+    syncRecordStateFromMeta(this.state, nextMeta);
+    this.publishState();
+  }
+
+  loadScenarioForTest(scenario: GameTestScenario): void {
+    const previousScene = this.state.scene;
+    this.state.run.options.threatTier = 1;
+    switch (scenario) {
+      case "stage11_legends":
+        this.loadEncounterForTest(10);
+        break;
+      case "boss_telegraph":
+        this.loadEncounterForTest(11);
+        this.state.encounter.bossPhase = 3;
+        this.state.encounter.runtime.kind = "boss";
+        this.state.encounter.runtime.profile = "final_core";
+        this.state.encounter.runtime.phase = 3;
+        this.state.encounter.runtime.stageThreatLevel = "critical";
+        this.state.encounter.threatLevel = "critical";
+        this.state.encounter.runtime.telegraph = {
+          kind: "volley",
+          remainingSec: 1,
+          maxSec: 1,
+          targetX: this.state.combat.paddle.x + this.state.combat.paddle.width / 2,
+          spread: 92,
+          severity: "critical",
+        };
+        this.state.encounter.activeTelegraphs = [this.state.encounter.runtime.telegraph];
+        break;
+      case "pickup_toast":
+        this.loadEncounterForTest(0);
+        spawnItemPickupFeedback(
+          this.state.ui.vfx,
+          "shockwave",
+          this.state.combat.paddle.x + this.state.combat.paddle.width / 2,
+          this.state.combat.paddle.y - 8,
+        );
+        break;
+    }
+    this.engine.resetClock();
+    this.ports.audio.notifyStageChanged(resolveStageMetadataFromState(this.state).musicCue);
+    if (previousScene !== this.state.scene) {
+      this.ports.syncAudioScene(previousScene, this.state.scene, this.state);
+    }
     this.publishState();
   }
 
@@ -450,6 +513,15 @@ export class RuntimeController {
 
   private publishState(): void {
     this.ports.publish(this.state);
+  }
+
+  private loadEncounterForTest(startStageIndex: number): void {
+    this.sceneMachine.force("playing");
+    this.state.scene = "playing";
+    resetRoundState(this.state, this.config, this.state.ui.vfx.reducedMotion, this.random, {
+      startStageIndex,
+    });
+    this.state.encounter.story.activeStageNumber = null;
   }
 }
 

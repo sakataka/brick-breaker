@@ -141,13 +141,13 @@ function inferChapter(stageIndex: number): number {
 
 function resolveVisualProfile(stage: StageDefinition, threatTier: ThreatTier): StageVisualProfile {
   if (threatTier === 2) {
-    return getVisualProfile("ex");
+    return getVisualProfile("tier2");
   }
   if (stage.encounter?.kind === "boss") {
     return getVisualProfile("finalboss");
   }
-  if (stage.encounter?.kind === "ex_boss") {
-    return getVisualProfile("ex");
+  if (stage.encounter?.kind === "tier2_boss") {
+    return getVisualProfile("tier2");
   }
   if (stage.encounter?.kind === "midboss") {
     return getVisualProfile("midboss");
@@ -170,7 +170,7 @@ function resolveMusicCue(
   threatTier: ThreatTier,
 ): MusicCue {
   if (threatTier === 2) {
-    return { id: "ex", variant: 0 };
+    return { id: "tier2", variant: 0 };
   }
   if (stage.encounter?.kind === "boss") {
     return { id: "finalboss", variant: 0 };

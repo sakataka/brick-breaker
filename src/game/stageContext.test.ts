@@ -37,8 +37,8 @@ describe("stageContext", () => {
     );
 
     expect(stage.totalStages).toBe(4);
-    expect(stage.musicCue.id).toBe("ex");
-    expect(stage.visualProfile.id).toBe("ex");
+    expect(stage.musicCue.id).toBe("tier2");
+    expect(stage.visualProfile.id).toBe("tier2");
     expect(stage.initialBallSpeed).toBe(GAME_CONFIG.initialBallSpeed * stage.stage.speedScale);
     expect(stage.maxBallSpeed).toBe(GAME_CONFIG.maxBallSpeed * stage.stage.speedScale);
   });

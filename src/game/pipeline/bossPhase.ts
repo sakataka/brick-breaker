@@ -312,7 +312,7 @@ function resolvePunishWindowSec(
   if (configured) {
     return configured;
   }
-  return profile === "ex_overlord" ? 1.1 : 1.8;
+  return profile === "tier2_overlord" ? 1.1 : 1.8;
 }
 
 function selectBossAttack(

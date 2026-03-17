@@ -355,8 +355,8 @@ function getBannerEyebrow(locale: AppLocale, banner: VisualState["banner"]): str
       return locale === "ja" ? "中ボス接近" : "MIDBOSS INBOUND";
     case "boss":
       return locale === "ja" ? "最終ボス" : "FINAL BOSS";
-    case "ex":
-      return "EX COURSE";
+    case "tier2":
+      return locale === "ja" ? "脅威上昇" : "THREAT TIER 2";
     default:
       return "STAGE SHIFT";
   }
@@ -375,8 +375,8 @@ function getBannerTitle(
       return locale === "ja" ? "中ボス戦" : "Midboss Clash";
     case "boss":
       return locale === "ja" ? "最終決戦" : "Final Breaker";
-    case "ex":
-      return locale === "ja" ? "EX侵攻" : "EX Course";
+    case "tier2":
+      return locale === "ja" ? "Threat Tier 2" : "Threat Tier 2";
     default:
       return fallback;
   }

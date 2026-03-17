@@ -6,51 +6,10 @@ async function presetLocale(page: Page, locale: "ja" | "en") {
   }, locale);
 }
 
-async function presetExUnlocked(page: Page) {
-  await page.addInitScript(() => {
-    window.localStorage.setItem(
-      "brick_breaker:meta_progress",
-      JSON.stringify({ exUnlocked: true }),
-    );
-  });
-}
-
-async function accessDebugController<T>(page: Page, callback: () => T): Promise<T> {
-  return page.evaluate(callback);
-}
-
-interface DebugWindowHandle {
-  __brickBreaker?: {
-    session?: {
-      controller?: {
-        state: {
-          paddle: { x: number; y: number; width: number };
-          items: {
-            falling: Array<{
-              id: number;
-              type: string;
-              pos: { x: number; y: number };
-              speed: number;
-              size: number;
-            }>;
-          };
-          bricks: Array<{ kind?: string; hp?: number; maxHp?: number }>;
-          combat: {
-            bossPhase: number;
-            bossAttackState: {
-              telegraph: {
-                kind: string;
-                remainingSec: number;
-                maxSec: number;
-                targetX?: number;
-                spread?: number;
-              } | null;
-            };
-          };
-        };
-      };
-    };
-  };
+async function forceScene(page: Page, scene: "stageclear" | "gameover" | "clear" | "error") {
+  await page.evaluate((target) => {
+    window.__brickBreakerTest?.forceScene(target);
+  }, scene);
 }
 
 test("start -> playing -> paused -> playing", async ({ page }) => {
@@ -79,7 +38,6 @@ test("start -> playing -> paused -> playing", async ({ page }) => {
     expect(shopBox.y + shopBox.height).toBeLessThanOrEqual(canvasBox.y + 1);
     expect(progressBox.y + progressBox.height).toBeLessThanOrEqual(canvasBox.y + 1);
   }
-  await expect(page.locator("#shop-reroll")).toHaveCount(0);
 
   await page.keyboard.press("KeyP");
   await expect(page.locator("#overlay")).toHaveAttribute("data-scene", "paused");
@@ -93,23 +51,20 @@ test("scene overlays can be forced for regression checks", async ({ page }) => {
   await presetLocale(page, "ja");
   await page.goto("/");
 
-  const forceScene = async (scene: "stageclear" | "gameover" | "clear" | "error") => {
-    await page.evaluate((target) => {
-      window.__brickBreaker?.debugForceScene(target);
-    }, scene);
-    await expect(page.locator("#overlay")).toHaveAttribute("data-scene", scene);
-  };
-
-  await forceScene("stageclear");
+  await forceScene(page, "stageclear");
+  await expect(page.locator("#overlay")).toHaveAttribute("data-scene", "stageclear");
   await expect(page.locator("#overlay-button")).toHaveText("次へ");
 
-  await forceScene("gameover");
+  await forceScene(page, "gameover");
+  await expect(page.locator("#overlay")).toHaveAttribute("data-scene", "gameover");
   await expect(page.locator("#overlay-button")).toHaveText("もう一度");
 
-  await forceScene("clear");
+  await forceScene(page, "clear");
+  await expect(page.locator("#overlay")).toHaveAttribute("data-scene", "clear");
   await expect(page.locator("#overlay-button")).toHaveText("タイトルへ戻る");
 
-  await forceScene("error");
+  await forceScene(page, "error");
+  await expect(page.locator("#overlay")).toHaveAttribute("data-scene", "error");
   await expect(page.locator("#overlay-button")).toHaveText("再読み込み");
 });
 
@@ -117,24 +72,26 @@ test("gameover overlay shows preserved final score", async ({ page }) => {
   await presetLocale(page, "ja");
   await page.goto("/");
   await page.evaluate(() => {
-    window.__brickBreaker?.debugSetGameOverScore(2400, 1);
+    window.__brickBreakerTest?.setGameOverScore(2400, 1);
   });
   await expect(page.locator("#overlay")).toHaveAttribute("data-scene", "gameover");
   await expect(page.locator("#overlay-sub")).toContainText("最終スコア 2400 / 残機 1");
 });
 
-test("start screen locale switch keeps CTA visible for long translations", async ({ page }) => {
+test("start screen locale switch keeps CTA visible with shipped settings only", async ({
+  page,
+}) => {
   await page.goto("/");
 
   await expect(page.locator("#setting-language option")).toHaveCount(2);
-  await expect(page.locator("#setting-language")).not.toContainText("Pseudo");
+  await expect(page.locator("#setting-difficulty")).toBeVisible();
+  await expect(page.locator("#setting-reduced-motion-enabled")).toBeVisible();
+  await expect(page.locator("#setting-high-contrast-enabled")).toBeVisible();
+  await expect(page.locator("#setting-bgm-enabled")).toBeVisible();
+  await expect(page.locator("#setting-sfx-enabled")).toBeVisible();
 
   await page.locator("#setting-language").selectOption("en");
   await expect(page.locator("#overlay-button")).toHaveText("Start Game");
-  await expect(page.locator("#setting-item-pool")).toContainText("Item Pool");
-  await expect(page.locator("#setting-item-pool input[type='checkbox']")).toHaveCount(11);
-  await expect(page.locator("#setting-campaign-course")).toHaveCount(0);
-  await expect(page.locator("#daily-challenge-label")).toHaveCount(0);
   await expect
     .poll(async () =>
       page.locator("#overlay").evaluate((element) => {
@@ -153,23 +110,42 @@ test("start screen locale switch keeps CTA visible for long translations", async
   }
 });
 
-test("ex course selector appears after unlock", async ({ page }) => {
+test("threat tier 2 unlock persists in saved progression", async ({ page }) => {
   await presetLocale(page, "en");
-  await presetExUnlocked(page);
   await page.goto("/");
 
-  await expect(page.locator("#setting-campaign-course")).toBeVisible();
-  await page.locator("#setting-campaign-course").selectOption("ex");
-  await expect(page.locator("#setting-campaign-course")).toHaveValue("ex");
+  await page.evaluate(() => {
+    window.__brickBreakerTest?.unlockThreatTier2();
+  });
+
+  await expect
+    .poll(async () =>
+      page.evaluate(() => {
+        const raw = window.localStorage.getItem("brick_breaker:progression");
+        return raw ? JSON.parse(raw).threatTier2Unlocked === true : false;
+      }),
+    )
+    .toBe(true);
+
+  await page.reload();
+  await expect
+    .poll(async () =>
+      page.evaluate(() => {
+        const raw = window.localStorage.getItem("brick_breaker:progression");
+        return raw ? JSON.parse(raw).threatTier2Unlocked === true : false;
+      }),
+    )
+    .toBe(true);
 });
 
-test("debug stage 11 shows steel, generator, and turret legends in HUD", async ({ page }) => {
+test("stage 11 legends appear in HUD via test scenario", async ({ page }) => {
   await presetLocale(page, "ja");
   await page.goto("/");
 
-  await page.locator("#setting-debug-mode").click();
-  await page.locator("#setting-debug-start-stage").selectOption("11");
-  await page.locator("#overlay-button").click();
+  await page.evaluate(() => {
+    window.__brickBreakerTest?.loadScenario("stage11_legends");
+  });
+
   await expect(page.locator("#overlay")).toHaveClass(/hidden/);
   await expect(page.locator("#items")).toContainText("鋼壁: 破壊不可");
   await expect(page.locator("#items")).toContainText("発生装置: 周辺再生");
@@ -179,23 +155,9 @@ test("debug stage 11 shows steel, generator, and turret legends in HUD", async (
 test("item pickup toast does not block pause input", async ({ page }) => {
   await presetLocale(page, "ja");
   await page.goto("/");
-  await page.locator("#overlay-button").click();
-  await expect(page.locator("#overlay")).toHaveClass(/hidden/);
 
-  await accessDebugController(page, () => {
-    const game = (window as Window & DebugWindowHandle).__brickBreaker;
-    const controller = game?.session?.controller;
-    if (!controller) {
-      throw new Error("debug controller unavailable");
-    }
-    const state = controller.state;
-    state.items.falling.push({
-      id: 999,
-      type: "shockwave",
-      pos: { x: state.paddle.x + state.paddle.width / 2, y: state.paddle.y - 6 },
-      speed: 0,
-      size: 16,
-    });
+  await page.evaluate(() => {
+    window.__brickBreakerTest?.loadScenario("pickup_toast");
   });
 
   await expect(page.locator(".hud-pickup-toast")).toBeVisible();
@@ -203,38 +165,15 @@ test("item pickup toast does not block pause input", async ({ page }) => {
   await expect(page.locator("#overlay")).toHaveAttribute("data-scene", "paused");
 });
 
-test("boss telegraph appears during debug boss fight", async ({ page }) => {
+test("boss telegraph appears during boss scenario", async ({ page }) => {
   await presetLocale(page, "ja");
   await page.goto("/");
 
-  await page.locator("#setting-debug-mode").click();
-  await page.locator("#setting-debug-scenario").selectOption("boss_check");
-  await page.locator("#overlay-button").click();
-  await expect(page.locator("#overlay")).toHaveClass(/hidden/);
-
-  await accessDebugController(page, () => {
-    const game = (window as Window & DebugWindowHandle).__brickBreaker;
-    const controller = game?.session?.controller;
-    if (!controller) {
-      throw new Error("debug controller unavailable");
-    }
-    const state = controller.state;
-    const boss = state.bricks.find((brick: { kind?: string }) => brick.kind === "boss");
-    if (!boss) {
-      throw new Error("boss unavailable");
-    }
-    boss.hp = 5;
-    boss.maxHp = 18;
-    state.combat.bossPhase = 3;
-    state.combat.bossAttackState.telegraph = {
-      kind: "volley",
-      remainingSec: 1,
-      maxSec: 1,
-      targetX: state.paddle.x + state.paddle.width / 2,
-      spread: 92,
-    };
+  await page.evaluate(() => {
+    window.__brickBreakerTest?.loadScenario("boss_telegraph");
   });
 
+  await expect(page.locator("#overlay")).toHaveClass(/hidden/);
   await expect(page.locator(".hud-stage-combat")).toContainText(
     /射撃予兆|制圧予兆|集中弾予兆|遮断掃射予兆/,
   );
@@ -247,30 +186,6 @@ test("boss telegraph appears during debug boss fight", async ({ page }) => {
       }),
     )
     .toContain("data:image/svg+xml");
-});
-
-test("item pool can disable drops but keeps at least one item enabled", async ({ page }) => {
-  await presetLocale(page, "en");
-  await page.goto("/");
-
-  const itemPool = page.locator("#setting-item-pool");
-  const paddlePlus = page.locator("#setting-item-paddle_plus");
-  await expect(itemPool).toBeVisible();
-  await expect(page.locator("#setting-item-sticky")).toHaveCount(0);
-
-  const checkboxes = itemPool.locator("input[type='checkbox']");
-  const count = await checkboxes.count();
-  expect(count).toBe(11);
-  for (let index = 1; index < count; index += 1) {
-    const checkbox = checkboxes.nth(index);
-    if (await checkbox.isChecked()) {
-      await checkbox.uncheck();
-    }
-  }
-  await expect(paddlePlus).toBeChecked();
-
-  await paddlePlus.click();
-  await expect(paddlePlus).toBeChecked();
 });
 
 test.describe("dpi regression", () => {

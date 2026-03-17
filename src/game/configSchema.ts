@@ -113,7 +113,7 @@ const stageDefinitionSchema = z.object({
       z.literal("control"),
       z.literal("split_lane"),
       z.literal("boss_arena"),
-      z.literal("ex_arena"),
+      z.literal("tier2_arena"),
     ])
     .optional(),
   tags: z
@@ -204,14 +204,14 @@ const stageDefinitionSchema = z.object({
         z.literal("none"),
         z.literal("midboss"),
         z.literal("boss"),
-        z.literal("ex_boss"),
+        z.literal("tier2_boss"),
       ]),
       profile: z.union([
         z.literal("none"),
         z.literal("warden"),
         z.literal("artillery"),
         z.literal("final_core"),
-        z.literal("ex_overlord"),
+        z.literal("tier2_overlord"),
       ]),
       bossDefinition: z
         .object({
@@ -220,7 +220,7 @@ const stageDefinitionSchema = z.object({
             z.literal("warden"),
             z.literal("artillery"),
             z.literal("final_core"),
-            z.literal("ex_overlord"),
+            z.literal("tier2_overlord"),
           ]),
           label: z.string().min(1),
           telegraphSet: z.array(z.string().min(1)).min(1),

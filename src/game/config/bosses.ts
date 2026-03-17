@@ -77,8 +77,8 @@ const BOSS_DEFINITIONS: Record<EncounterProfile, BossDefinition | null> = {
       { phase: 3, bonusPerWeakHit: 90 },
     ],
   },
-  ex_overlord: {
-    profile: "ex_overlord",
+  tier2_overlord: {
+    profile: "tier2_overlord",
     label: "Overlord Prime",
     telegraphSet: ["burst", "volley", "sweep", "gate_sweep", "summon"],
     phaseRules: [

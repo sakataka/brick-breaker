@@ -126,7 +126,7 @@ export type StageArchetype =
   | "control"
   | "split_lane"
   | "boss_arena"
-  | "ex_arena";
+  | "tier2_arena";
 
 export type StageTag =
   | "steel"
@@ -240,8 +240,8 @@ export type StageMissionKey =
   | "destroy_turret_first"
   | "shutdown_generator";
 
-export type EncounterKind = "none" | "midboss" | "boss" | "ex_boss";
-export type EncounterProfile = "none" | "warden" | "artillery" | "final_core" | "ex_overlord";
+export type EncounterKind = "none" | "midboss" | "boss" | "tier2_boss";
+export type EncounterProfile = "none" | "warden" | "artillery" | "final_core" | "tier2_overlord";
 
 export interface StageEncounterDefinition {
   kind: EncounterKind;
@@ -287,7 +287,7 @@ export type MusicCueId =
   | "chapter3"
   | "midboss"
   | "finalboss"
-  | "ex";
+  | "tier2";
 
 export interface MusicCue {
   id: MusicCueId;

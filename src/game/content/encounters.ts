@@ -24,7 +24,7 @@ export interface EncounterDefinition {
   mechanicSet: readonly string[];
   scoreObjective: ScoreFocus;
   previewTags: readonly StagePreviewTag[];
-  climax: "none" | "midboss" | "boss" | "ex_boss";
+  climax: "none" | "midboss" | "boss" | "tier2_boss";
   rewardChoice: "module_pair";
   visualTheme: string;
   threatLevel: ThreatLevel;
@@ -83,11 +83,11 @@ function buildThreatTier2Encounters(): EncounterDefinition[] {
     mechanicSet: (stage.boardMechanics ?? []).map((entry) => entry.role),
     scoreObjective: stage.scoreFocus ?? "boss_break",
     previewTags: stage.previewTags ?? [],
-    climax: stage.encounter?.kind ?? "ex_boss",
+    climax: stage.encounter?.kind ?? "tier2_boss",
     rewardChoice: "module_pair",
     visualTheme: stage.visualSetId ?? "threat-tier-2",
     threatLevel: "critical",
-    encounterProfile: stage.encounter?.profile ?? "ex_overlord",
+    encounterProfile: stage.encounter?.profile ?? "tier2_overlord",
     objective: inferObjective(stage),
   }));
 }
