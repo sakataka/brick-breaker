@@ -5,19 +5,18 @@ import type { AudioPort, RenderPort, UiPort } from "../../core/ports";
 import { GameHost } from "../../phaser/GameHost";
 import { readAccessibility } from "../a11y";
 import { GAME_CONFIG } from "../config";
+import { assertValidGameContent } from "../content/validation";
 import { LifecycleController } from "../lifecycle";
 import { clamp } from "../math";
-import { readMetaProgress, type MetaProgress, writeMetaProgress } from "../metaProgress";
+import { readMetaProgress, type MetaProgress } from "../metaProgress";
 import { defaultRandomSource } from "../random";
 import type { HudViewModel, OverlayViewModel, RenderViewState } from "../renderTypes";
 import { syncRecordStateFromMeta } from "../scoreSystem";
 import { type SceneEvent, SceneMachine } from "../sceneMachine";
 import { applySceneTransition, type SceneTransitionResult } from "../sceneSync";
-import { resolveStageMetadataFromState } from "../stageContext";
 import type { StartSettingsSelection } from "../startSettingsSchema";
 import { createInitialGameState } from "../stateFactory";
 import type { ShopUiView } from "../shopUi";
-import type { GameTestScenario } from "../testBridge";
 import type {
   GameAudioSettings,
   GameConfig,
@@ -26,8 +25,14 @@ import type {
   RuntimeErrorKey,
   Scene,
 } from "../types";
-import { spawnItemPickupFeedback } from "../vfxSystem";
-import { createHostHandlers, createUiHandlers } from "./sessionBindings";
+import { initializeRuntimeSession } from "./runtimeBootstrap";
+import { runRuntimeFrame } from "./runtimeLoop";
+import {
+  forceSceneForTest,
+  loadScenarioForTest,
+  setGameOverScoreForTest,
+  unlockThreatTier2ForTest,
+} from "./runtimeTestSupport";
 import { SessionPorts } from "./SessionPorts";
 import {
   handleBallLossSession,
@@ -36,7 +41,6 @@ import {
   runSafely as runSessionSafely,
   startOrResumeSession,
 } from "./sessionFlow";
-import { resetRoundState } from "../roundSystem";
 import { applySessionViewport } from "./sessionViewport";
 import { purchaseShopOption } from "./shopActions";
 
@@ -89,6 +93,7 @@ export class RuntimeController {
     private readonly canvas: HTMLCanvasElement,
     private readonly deps: RuntimeControllerDeps,
   ) {
+    assertValidGameContent();
     this.baseConfig = { ...GAME_CONFIG, ...deps.config };
     this.config = { ...this.baseConfig };
     this.baseRandom = deps.random ?? defaultRandomSource;
@@ -164,117 +169,43 @@ export class RuntimeController {
   }
 
   forceSceneForTest(scene: Scene): void {
-    const previous = this.state.scene;
-    this.sceneMachine.force(scene);
-    this.state.scene = scene;
-    this.ports.syncAudioScene(previous, this.state.scene, this.state);
-    this.publishState();
+    forceSceneForTest(scene, this.createTestContext());
   }
 
   setGameOverScoreForTest(score: number, lives = this.state.run.lives): void {
-    const previous = this.state.scene;
-    this.sceneMachine.force("gameover");
-    this.state.run.lastGameOverScore = Math.max(0, Math.round(score));
-    this.state.run.score = 0;
-    this.state.run.lives = Math.max(0, Math.round(lives));
-    this.state.scene = "gameover";
-    this.ports.syncAudioScene(previous, this.state.scene, this.state);
-    this.publishState();
+    setGameOverScoreForTest(score, lives, this.createTestContext());
   }
 
   unlockThreatTier2ForTest(): void {
-    const currentMeta = readMetaProgress(this.windowRef.localStorage);
-    const nextMeta = {
-      ...currentMeta,
-      progression: {
-        ...currentMeta.progression,
-        threatTier2Unlocked: true,
-      },
-    };
-    writeMetaProgress(this.windowRef.localStorage, nextMeta);
-    this.ports.setMetaProgress(nextMeta);
-    syncRecordStateFromMeta(this.state, nextMeta);
-    this.publishState();
+    unlockThreatTier2ForTest(this.createTestContext());
   }
 
-  loadScenarioForTest(scenario: GameTestScenario): void {
-    const previousScene = this.state.scene;
-    this.state.run.options.threatTier = 1;
-    switch (scenario) {
-      case "stage11_legends":
-        this.loadEncounterForTest(10);
-        break;
-      case "boss_telegraph":
-        this.loadEncounterForTest(11);
-        this.state.encounter.bossPhase = 3;
-        this.state.encounter.runtime.kind = "boss";
-        this.state.encounter.runtime.profile = "final_core";
-        this.state.encounter.runtime.phase = 3;
-        this.state.encounter.runtime.stageThreatLevel = "critical";
-        this.state.encounter.threatLevel = "critical";
-        this.state.encounter.runtime.telegraph = {
-          kind: "volley",
-          remainingSec: 1,
-          maxSec: 1,
-          targetX: this.state.combat.paddle.x + this.state.combat.paddle.width / 2,
-          spread: 92,
-          severity: "critical",
-        };
-        this.state.encounter.activeTelegraphs = [this.state.encounter.runtime.telegraph];
-        break;
-      case "pickup_toast":
-        this.loadEncounterForTest(0);
-        spawnItemPickupFeedback(
-          this.state.ui.vfx,
-          "shockwave",
-          this.state.combat.paddle.x + this.state.combat.paddle.width / 2,
-          this.state.combat.paddle.y - 8,
-        );
-        break;
-    }
-    this.engine.resetClock();
-    this.ports.audio.notifyStageChanged(resolveStageMetadataFromState(this.state).musicCue);
-    if (previousScene !== this.state.scene) {
-      this.ports.syncAudioScene(previousScene, this.state.scene, this.state);
-    }
-    this.publishState();
+  loadScenarioForTest(scenario: import("../testBridge").GameTestScenario): void {
+    loadScenarioForTest(scenario, this.createTestContext());
   }
 
   private initializeSession(): void {
-    this.deps.setUiHandlers(
-      createUiHandlers({
-        onErrorReload: () => this.windowRef.location.reload(),
-        onBackToStart: () => this.backToStart(),
-        onStartOrResume: () => this.startOrResume(),
-        onShopOption: (index) => this.purchaseShopOption(index),
-        runSafely: (action, key) => this.runSafely(action, key),
-        unlockAudio: () => {
-          void this.audioPort.unlock().catch(() => {});
-        },
-        getScene: () => this.state.scene,
-      }),
-    );
-    this.host.setHandlers(
-      createHostHandlers({
-        onFrame: (timeMs) => this.loop(timeMs),
-        onMove: (clientX) => this.movePaddleByMouse(clientX),
-        onPauseToggle: () => this.togglePause(),
-        onStartOrRestart: () => this.startOrResume(),
-        onCastMagic: () => this.castMagic(),
-      }),
-    );
-    this.bindA11yListeners();
-    this.lifecycle.bind();
-    this.adjustCanvasScale();
-    this.windowRef.requestAnimationFrame(() => {
-      if (!this.destroyed) {
-        this.adjustCanvasScale();
-      }
+    initializeRuntimeSession({
+      deps: this.deps,
+      host: this.host,
+      lifecycle: this.lifecycle,
+      windowRef: this.windowRef,
+      destroyed: this.destroyed,
+      ports: this.ports,
+      state: this.state,
+      audioSettings: this.audioSettings,
+      bindA11yListeners: () => this.bindA11yListeners(),
+      adjustCanvasScale: () => this.adjustCanvasScale(),
+      publishState: () => this.publishState(),
+      backToStart: () => this.backToStart(),
+      startOrResume: () => this.startOrResume(),
+      purchaseShopOption: (index) => this.purchaseShopOption(index),
+      runSafely: (action, key) => this.runSafely(action, key),
+      togglePause: () => this.togglePause(),
+      castMagic: () => this.castMagic(),
+      onFrame: (timeMs) => this.loop(timeMs),
+      onMove: (clientX) => this.movePaddleByMouse(clientX),
     });
-    this.ports.setAudioSettings(this.audioSettings);
-    this.ports.audio.notifyStageChanged(resolveStageMetadataFromState(this.state).musicCue);
-    this.ports.audio.syncScene(this.state.scene, this.state.scene);
-    this.publishState();
   }
 
   private startOrResume(): void {
@@ -310,61 +241,22 @@ export class RuntimeController {
   }
 
   private loop = (timeMs: number): void => {
-    if (!this.isRunning || this.destroyed) {
-      return;
-    }
-    try {
-      this.syncViewportForDpi();
-      const previousBossPhase = this.state.encounter.bossPhase;
-      const previousTelegraphKind = this.state.encounter.runtime.telegraph?.kind;
-      const previousSweepActive = Boolean(this.state.encounter.runtime.sweep);
-      this.engine.tick(
-        timeMs,
-        {
-          config: this.config,
-          random: this.random,
-          sfx: this.sfx,
-          playPickupSfx: (itemType) => this.audioPort.playItemPickup(itemType),
-          playComboFillSfx: () => this.audioPort.playComboFill(),
-          playMagicCastSfx: () => this.audioPort.playMagicCast(),
-        },
-        {
-          onStageClear: () => this.handleStageClear(),
-          onBallLoss: () => this.handleBallLoss(),
-        },
-      );
-      this.syncEncounterAudio(previousBossPhase, previousTelegraphKind, previousSweepActive);
-      this.publishState();
-    } catch (error) {
-      this.setRuntimeError(
-        "runtime",
-        error instanceof Error && error.message ? error.message : undefined,
-      );
-    }
+    runRuntimeFrame(timeMs, {
+      state: this.state,
+      config: this.config,
+      random: this.random,
+      sfx: this.sfx,
+      audioPort: this.audioPort,
+      engine: this.engine,
+      isRunning: this.isRunning,
+      destroyed: this.destroyed,
+      syncViewportForDpi: () => this.syncViewportForDpi(),
+      publishState: () => this.publishState(),
+      handleStageClear: () => this.handleStageClear(),
+      handleBallLoss: () => this.handleBallLoss(),
+      setRuntimeError: (key, detail) => this.setRuntimeError(key, detail),
+    });
   };
-
-  private syncEncounterAudio(
-    previousBossPhase: number,
-    previousTelegraphKind:
-      | NonNullable<GameState["encounter"]["runtime"]["telegraph"]>["kind"]
-      | undefined,
-    previousSweepActive: boolean,
-  ): void {
-    const nextTelegraph = this.state.encounter.runtime.telegraph;
-    const nextSweepActive = Boolean(this.state.encounter.runtime.sweep);
-    if (this.state.encounter.bossPhase > previousBossPhase) {
-      this.audioPort.playBossPhaseShift();
-    }
-    if (nextTelegraph && previousTelegraphKind !== nextTelegraph.kind) {
-      this.audioPort.playBossCast();
-      if (typeof nextTelegraph.lane === "number") {
-        this.audioPort.playDangerLane();
-      }
-    }
-    if (!previousSweepActive && nextSweepActive) {
-      this.audioPort.playDangerLane();
-    }
-  }
 
   private handleStageClear(): void {
     handleStageClearSession({
@@ -514,14 +406,17 @@ export class RuntimeController {
   private publishState(): void {
     this.ports.publish(this.state);
   }
-
-  private loadEncounterForTest(startStageIndex: number): void {
-    this.sceneMachine.force("playing");
-    this.state.scene = "playing";
-    resetRoundState(this.state, this.config, this.state.ui.vfx.reducedMotion, this.random, {
-      startStageIndex,
-    });
-    this.state.encounter.story.activeStageNumber = null;
+  private createTestContext() {
+    return {
+      state: this.state,
+      sceneMachine: this.sceneMachine,
+      windowRef: this.windowRef,
+      ports: this.ports,
+      engine: this.engine,
+      config: this.config,
+      random: this.random,
+      publishState: () => this.publishState(),
+    };
   }
 }
 

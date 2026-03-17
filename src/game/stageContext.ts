@@ -1,5 +1,5 @@
-import type { StageModifier } from "./config/stages";
-import { getStageModifier, STAGE_CATALOG } from "./config/stages";
+import type { StageModifier } from "./config/stageTemplateRuntime";
+import { getStageModifier, STAGE_CATALOG } from "./config/stageTemplateRuntime";
 import type { StageVisualProfile } from "./config/themes";
 import { getVisualProfile } from "./config/themes";
 import { getEncounterDefinition, getRunDefinition, type ThreatTier } from "./content/runDefinition";

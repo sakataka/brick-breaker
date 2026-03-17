@@ -1,0 +1,93 @@
+@keyframes card-in {
+  from {
+    transform: translateY(8px) scale(0.985);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes scanline {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(3px);
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --play-topbar-height: 224px;
+  }
+
+  #hud {
+    font-size: 0.83rem;
+  }
+
+  .hud-primary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hud-stage-intro,
+  .hud-boss-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  #play-topbar {
+    grid-template-columns: 1fr;
+    gap: 0.52rem;
+    padding: 10px;
+  }
+
+  #overlay-button {
+    width: min(280px, 72vw);
+  }
+
+  .overlay[data-scene="start"] .overlay-card-layout {
+    max-height: min(94vh, 700px);
+    width: min(620px, 94vw);
+    padding: 1rem 0.9rem 0.85rem;
+    gap: 0.62rem;
+  }
+
+  .overlay-settings-scroll {
+    padding-right: 0.32rem;
+  }
+
+  .overlay-fixed-footer #overlay-button {
+    width: min(300px, 84%);
+  }
+
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .shop-buttons {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
+    scroll-behavior: auto;
+  }
+
+  body::before {
+    display: none;
+  }
+
+  .overlay .card {
+    animation: none;
+  }
+}

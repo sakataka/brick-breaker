@@ -1,5 +1,4 @@
-import { ITEM_ORDER, ITEM_REGISTRY } from "../itemRegistryData";
-import type { ItemDefinition } from "../itemTypes";
+import { ITEM_ORDER, ITEM_REGISTRY } from "../itemRegistry";
 import type { ItemType, StagePreviewTag } from "../types";
 
 export type ModuleRole = "offense" | "control" | "survival" | "break";
@@ -9,7 +8,10 @@ export interface ModuleDefinition {
   type: ItemType;
   category: ModuleCategory;
   role: ModuleRole;
-  pickup: ItemDefinition;
+  color: string;
+  encounterBias?: "midboss" | "boss" | "any";
+  synergyTags: readonly ("offense" | "control" | "survival" | "boss_break")[];
+  counterplayTags: readonly StagePreviewTag[];
   previewTags: readonly StagePreviewTag[];
 }
 
@@ -53,7 +55,10 @@ function buildDefinitions(): ModuleDefinition[] {
     type,
     category: resolveModuleCategory(type),
     role: resolveModuleRole(type),
-    pickup: ITEM_REGISTRY[type],
+    color: ITEM_REGISTRY[type].color,
+    encounterBias: ITEM_REGISTRY[type].encounterBias,
+    synergyTags: ITEM_REGISTRY[type].synergyTags,
+    counterplayTags: ITEM_REGISTRY[type].counterplayTags,
     previewTags: ITEM_REGISTRY[type].previewAffinity,
   }));
 }

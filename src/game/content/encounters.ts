@@ -1,4 +1,5 @@
-import { STAGE_CATALOG, THREAT_TIER_2_STAGE_CATALOG } from "../config/stages";
+import { buildStageDefinitionFromCatalogEntry } from "../config/stageTemplateRuntime";
+import { getStageBlueprintCatalog } from "./stageBlueprintCatalog";
 import type {
   EncounterProfile,
   ScoreFocus,
@@ -53,43 +54,51 @@ function inferThreat(stage: StageDefinition): ThreatLevel {
 }
 
 function buildCampaignEncounters(): EncounterDefinition[] {
-  return STAGE_CATALOG.map((stage, index) => ({
-    id: `campaign-${index + 1}`,
-    act: (Math.floor(index / 4) + 1) as EncounterAct,
-    stageNumber: index + 1,
-    stageIndex: index,
-    label: `Encounter ${index + 1}`,
-    stage,
-    mechanicSet: (stage.boardMechanics ?? []).map((entry) => entry.role),
-    scoreObjective: stage.scoreFocus ?? "survival_chain",
-    previewTags: stage.previewTags ?? [],
-    climax: stage.encounter?.kind ?? "none",
-    rewardChoice: "module_pair",
-    visualTheme: stage.visualSetId ?? `chapter-${stage.chapter ?? 1}`,
-    threatLevel: inferThreat(stage),
-    encounterProfile: stage.encounter?.profile ?? "none",
-    objective: inferObjective(stage),
-  }));
+  const catalog = getStageBlueprintCatalog(1);
+  return catalog.map((entry, index, allEntries) => {
+    const stage = buildStageDefinitionFromCatalogEntry(entry, index, allEntries);
+    return {
+      id: entry.encounterId,
+      act: (Math.floor(index / 4) + 1) as EncounterAct,
+      stageNumber: index + 1,
+      stageIndex: index,
+      label: `Encounter ${index + 1}`,
+      stage,
+      mechanicSet: (stage.boardMechanics ?? []).map((mechanic) => mechanic.role),
+      scoreObjective: stage.scoreFocus ?? "survival_chain",
+      previewTags: stage.previewTags ?? [],
+      climax: stage.encounter?.kind ?? "none",
+      rewardChoice: "module_pair",
+      visualTheme: stage.visualSetId ?? `chapter-${stage.chapter ?? 1}`,
+      threatLevel: inferThreat(stage),
+      encounterProfile: stage.encounter?.profile ?? "none",
+      objective: inferObjective(stage),
+    };
+  });
 }
 
 function buildThreatTier2Encounters(): EncounterDefinition[] {
-  return THREAT_TIER_2_STAGE_CATALOG.map((stage, index) => ({
-    id: `threat-tier-2-${index + 1}`,
-    act: 4,
-    stageNumber: index + 1,
-    stageIndex: index,
-    label: `Threat Tier 2 - ${index + 1}`,
-    stage,
-    mechanicSet: (stage.boardMechanics ?? []).map((entry) => entry.role),
-    scoreObjective: stage.scoreFocus ?? "boss_break",
-    previewTags: stage.previewTags ?? [],
-    climax: stage.encounter?.kind ?? "tier2_boss",
-    rewardChoice: "module_pair",
-    visualTheme: stage.visualSetId ?? "threat-tier-2",
-    threatLevel: "critical",
-    encounterProfile: stage.encounter?.profile ?? "tier2_overlord",
-    objective: inferObjective(stage),
-  }));
+  const catalog = getStageBlueprintCatalog(2);
+  return catalog.map((entry, index, allEntries) => {
+    const stage = buildStageDefinitionFromCatalogEntry(entry, index, allEntries);
+    return {
+      id: entry.encounterId,
+      act: 4,
+      stageNumber: index + 1,
+      stageIndex: index,
+      label: `Threat Tier 2 - ${index + 1}`,
+      stage,
+      mechanicSet: (stage.boardMechanics ?? []).map((mechanic) => mechanic.role),
+      scoreObjective: stage.scoreFocus ?? "boss_break",
+      previewTags: stage.previewTags ?? [],
+      climax: stage.encounter?.kind ?? "tier2_boss",
+      rewardChoice: "module_pair",
+      visualTheme: stage.visualSetId ?? "threat-tier-2",
+      threatLevel: "critical",
+      encounterProfile: stage.encounter?.profile ?? "tier2_overlord",
+      objective: inferObjective(stage),
+    };
+  });
 }
 
 export const CAMPAIGN_ENCOUNTERS = buildCampaignEncounters();

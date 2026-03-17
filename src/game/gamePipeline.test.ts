@@ -2,7 +2,7 @@ import { describe, expect, test } from "vite-plus/test";
 
 import { GAME_CONFIG } from "./config";
 import { generateShopOffer, stepPlayingPipeline } from "./gamePipeline";
-import { ITEM_ORDER } from "./itemRegistryData";
+import { ITEM_ORDER } from "./itemRegistry";
 import { createInitialGameState } from "./stateFactory";
 import type { Ball, RandomSource } from "./types";
 

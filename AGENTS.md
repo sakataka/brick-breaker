@@ -48,6 +48,9 @@
 4. shipped 開始設定は `difficulty / reducedMotionEnabled / highContrastEnabled / bgmEnabled / sfxEnabled` を前提に扱う
 5. run 進行は `threatTier: 1 | 2` を前提にする
 6. ショップ仕様は「1 encounter 1 回の 2 択購入」を維持し、無料交換は追加しない
+7. 新 encounter は `src/game/content/encounters.ts` + `src/game/content/stageBlueprints.ts` + `src/game/content/stageBlueprintCatalog.ts` を入口に追加する
+8. 新 module は `src/game/content/modules.ts` を入口にし、低レベル effect は `src/game/itemRegistry.ts` / `src/game/itemSystem.ts` に追加する
+9. 新 theme は `src/game/content/themes.ts` と `src/art/themePalettes.ts` を入口にし、palette を `src/art/visualAssets.ts` に戻さない
 
 ## 5. 変更時のチェックリスト
 
@@ -67,6 +70,7 @@ vp run typecheck
 vp run check:arch
 vp run deadcode:report
 vp run guard:test-state-shape
+vp run guard:ai-first-boundaries
 vp run e2e
 ```
 

@@ -1,4 +1,4 @@
-import type { WarpZone } from "../config/stages";
+import type { WarpZone } from "../config/stageTemplateRuntime";
 import type { Ball } from "../types";
 
 const WARP_COOLDOWN_SEC = 0.24;
