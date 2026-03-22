@@ -10,6 +10,16 @@ const isGameplaySourceFile = (path) =>
   /\.(ts|tsx)$/.test(path) &&
   !isTestFile(path);
 
+const isSessionSourceFile = (path) =>
+  path.startsWith("src/game/session/") && /\.(ts|tsx)$/.test(path) && !isTestFile(path);
+
+const isContentSourceFile = (path) =>
+  path.startsWith("src/game/content/") && /\.(ts|tsx)$/.test(path) && !isTestFile(path);
+
+const isStageTemplateRuntimeFile = (path) => path === "src/game/config/stageTemplateRuntime.ts";
+
+const isStageProgressionConfigFile = (path) => path === "src/game/config/stageProgressionConfig.ts";
+
 const isConfigSourceFile = (path) =>
   path.startsWith("src/game/config/") || path === "src/game/itemRegistry.ts";
 
@@ -66,6 +76,10 @@ function main() {
   const hasConfigChange = changedFiles.some(isConfigSourceFile);
   const hasDocChange = changedFiles.some((file) => DOC_FILES.has(file));
   const hasCoreChange = changedFiles.some(isCoreSourceFile);
+  const hasSessionChange = changedFiles.some(isSessionSourceFile);
+  const hasContentChange = changedFiles.some(isContentSourceFile);
+  const hasStageTemplateRuntimeChange = changedFiles.some(isStageTemplateRuntimeFile);
+  const hasStageProgressionConfigChange = changedFiles.some(isStageProgressionConfigFile);
 
   if (hasGameplaySourceChange && !hasTestChange) {
     violations.push(
@@ -76,6 +90,18 @@ function main() {
   if (hasConfigChange && !hasDocChange) {
     violations.push(
       "src/game/config/* or src/game/itemRegistry.ts changed, but README.md/docs/architecture.md were not updated.",
+    );
+  }
+
+  if (
+    (hasSessionChange ||
+      hasContentChange ||
+      hasStageTemplateRuntimeChange ||
+      hasStageProgressionConfigChange) &&
+    !hasDocChange
+  ) {
+    violations.push(
+      "src/game/session/*, src/game/content/*, or stage template/progression config changed, but docs/architecture.md was not updated.",
     );
   }
 

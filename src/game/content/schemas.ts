@@ -1,27 +1,26 @@
 import { z } from "zod";
+import {
+  BOSS_ATTACK_KINDS,
+  ENCOUNTER_CUE_KINDS,
+  ENCOUNTER_KINDS,
+  ENCOUNTER_PROFILES,
+  ENEMY_SHOT_PROFILES,
+  SCORE_FOCUSES,
+  STAGE_ARENA_FRAMES,
+  STAGE_BLOCK_MATERIALS,
+  STAGE_BOSS_TONES,
+  STAGE_CAMERA_INTENSITIES,
+  STAGE_MECHANIC_ROLES,
+  STAGE_PREVIEW_TAGS,
+  STAGE_VISUAL_DEPTHS,
+  THREAT_LEVELS,
+} from "../domain/contentTypes";
 
-const threatLevelSchema = z.enum(["low", "medium", "high", "critical"]);
-const scoreFocusSchema = z.enum(["reactor_chain", "turret_cancel", "boss_break", "survival_chain"]);
-const previewTagSchema = z.enum([
-  "shielded_grid",
-  "relay_chain",
-  "reactor_chain",
-  "turret_lane",
-  "hazard_flux",
-  "gate_pressure",
-  "boss_break",
-  "survival_check",
-  "fortress_core",
-  "sweep_alert",
-]);
-const encounterProfileSchema = z.enum([
-  "none",
-  "warden",
-  "artillery",
-  "final_core",
-  "tier2_overlord",
-]);
-const encounterClimaxSchema = z.enum(["none", "midboss", "boss", "tier2_boss"]);
+const threatLevelSchema = z.enum(THREAT_LEVELS);
+const scoreFocusSchema = z.enum(SCORE_FOCUSES);
+const previewTagSchema = z.enum(STAGE_PREVIEW_TAGS);
+const encounterProfileSchema = z.enum(ENCOUNTER_PROFILES);
+const encounterClimaxSchema = z.enum(ENCOUNTER_KINDS);
 const encounterObjectiveSchema = z.enum([
   "stop-first-threat",
   "route-control",
@@ -31,19 +30,10 @@ const encounterObjectiveSchema = z.enum([
 const moduleRoleSchema = z.enum(["offense", "control", "survival", "break"]);
 const moduleCategorySchema = z.enum(["core", "tactical", "active"]);
 const themeIdSchema = z.enum(["chapter1", "chapter2", "chapter3", "midboss", "finalboss", "tier2"]);
-const bossAttackKindSchema = z.enum(["summon", "volley", "sweep", "burst", "gate_sweep"]);
-const cueKindSchema = z.enum([
-  "boss_phase_shift",
-  "shield_online",
-  "reactor_critical",
-  "warning_lane",
-  "stage_breakthrough",
-  "hazard_surge",
-  "turret_crossfire",
-  "punish_window",
-]);
-const enemyShotProfileSchema = z.enum(["spike_orb", "plasma_bolt", "void_core"]);
-const stageMechanicRoleSchema = z.enum(["shield", "relay", "reactor", "turret", "hazard"]);
+const bossAttackKindSchema = z.enum(BOSS_ATTACK_KINDS);
+const cueKindSchema = z.enum(ENCOUNTER_CUE_KINDS);
+const enemyShotProfileSchema = z.enum(ENEMY_SHOT_PROFILES);
+const stageMechanicRoleSchema = z.enum(STAGE_MECHANIC_ROLES);
 const moduleSynergyTagSchema = z.enum(["offense", "control", "survival", "boss_break"]);
 const encounterBiasSchema = z.enum(["midboss", "boss", "any"]);
 
@@ -137,12 +127,12 @@ export const themeDefinitionSchema = z.object({
   panelGlow: z.string().min(1),
   patternColor: z.string().min(1),
   brickPalette: z.array(z.string().min(1)).min(1),
-  backdropDepth: z.enum(["stellar", "orbital", "fortress"]),
-  arenaFrame: z.enum(["clean", "hazard", "citadel"]),
-  blockMaterial: z.enum(["glass", "alloy", "armor", "core"]),
+  backdropDepth: z.enum(STAGE_VISUAL_DEPTHS),
+  arenaFrame: z.enum(STAGE_ARENA_FRAMES),
+  blockMaterial: z.enum(STAGE_BLOCK_MATERIALS),
   particleDensity: z.number().positive(),
-  cameraIntensity: z.enum(["steady", "alert", "assault"]),
-  bossTone: z.enum(["hunter", "artillery", "citadel", "overlord"]),
+  cameraIntensity: z.enum(STAGE_CAMERA_INTENSITIES),
+  bossTone: z.enum(STAGE_BOSS_TONES),
 });
 
 export const bossDefinitionSchema = z.object({

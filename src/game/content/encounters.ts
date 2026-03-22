@@ -1,4 +1,4 @@
-import { buildStageDefinitionFromCatalogEntry } from "../config/stageTemplateRuntime";
+import { buildStageDefinitionFromCatalogEntry } from "./stageDefinitionCompiler";
 import { getStageBlueprintCatalog } from "./stageBlueprintCatalog";
 import type {
   EncounterProfile,

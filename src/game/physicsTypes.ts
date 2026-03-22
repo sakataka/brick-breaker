@@ -1,5 +1,5 @@
 import type { GameplayBalance } from "./config/gameplay";
-import type { WarpZone } from "./config/stageTemplateRuntime";
+import type { WarpZone } from "./config/stageProgressionConfig";
 import type { Ball, Brick, CollisionEvent, GameConfig, Paddle } from "./types";
 
 export interface PhysicsConfig {
