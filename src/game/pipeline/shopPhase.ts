@@ -1,5 +1,6 @@
 import {
   getItemCounterplayTags,
+  ITEM_ORDER,
   getItemPreviewAffinity,
   ITEM_REGISTRY,
   pickWeightedItemType,
@@ -48,7 +49,7 @@ function generateShopOfferByContext(
   context: ShopOfferContext,
 ): [ItemType, ItemType] {
   const enabled = new Set(context.enabledItems);
-  const available = (Object.keys(ITEM_REGISTRY) as ItemType[]).filter((type) => enabled.has(type));
+  const available = ITEM_ORDER.filter((type) => enabled.has(type));
   const preferredTone =
     context.scoreFocus === "boss_break"
       ? "offense"
@@ -81,16 +82,12 @@ function generateShopOfferByContext(
     secondPool[0] ??
     pickWeightedItemType(
       random,
-      (Object.keys(ITEM_REGISTRY) as ItemType[]).filter(
-        (type) => !enabled.has(type) || type === first,
-      ),
+      ITEM_ORDER.filter((type) => !enabled.has(type) || type === first),
     );
   if (first === second) {
     const fallback = pickWeightedItemType(
       random,
-      (Object.keys(ITEM_REGISTRY) as ItemType[]).filter(
-        (type) => !enabled.has(type) || type === first,
-      ),
+      ITEM_ORDER.filter((type) => !enabled.has(type) || type === first),
     );
     return [first, fallback];
   }

@@ -3,7 +3,7 @@ export function getRequiredElement<T extends Element>(
   selector: string,
   message: string,
 ): T {
-  const element = root.querySelector(selector) as T | null;
+  const element = root.querySelector<T>(selector);
   if (!element) {
     throw new Error(message);
   }

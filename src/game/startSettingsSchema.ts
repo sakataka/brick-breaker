@@ -59,26 +59,23 @@ export const BASIC_TOGGLE_FIELDS: readonly StartSettingsToggleField[] = [
   { id: "setting-sfx-enabled", field: "sfxEnabled" },
 ];
 
-export function buildStartSettingsPatch<K extends keyof StartSettingsSelection>(
-  field: K,
-  value: string | boolean,
-): Partial<StartSettingsSelection> {
-  return {
-    [field]: coerceStartSettingsValue(field, value),
-  } as Partial<StartSettingsSelection>;
+export function isDifficulty(value: string): value is Difficulty {
+  return START_SETTINGS_OPTIONS.difficulty.some((option) => option.value === value);
 }
 
-function coerceStartSettingsValue<K extends keyof StartSettingsSelection>(
+export function buildStartSettingsPatch<K extends SelectFieldKey>(
   field: K,
-  value: string | boolean,
-): StartSettingsSelection[K] {
-  switch (field) {
-    case "reducedMotionEnabled":
-    case "highContrastEnabled":
-    case "bgmEnabled":
-    case "sfxEnabled":
-      return Boolean(value) as StartSettingsSelection[K];
-    default:
-      return value as StartSettingsSelection[K];
-  }
+  value: StartSettingsSelection[K],
+): Pick<StartSettingsSelection, K>;
+export function buildStartSettingsPatch<K extends ToggleFieldKey>(
+  field: K,
+  value: StartSettingsSelection[K],
+): Pick<StartSettingsSelection, K>;
+export function buildStartSettingsPatch<K extends keyof StartSettingsSelection>(
+  field: K,
+  value: StartSettingsSelection[K],
+): Pick<StartSettingsSelection, K> {
+  return {
+    [field]: value,
+  } as Pick<StartSettingsSelection, K>;
 }

@@ -1,6 +1,6 @@
 # Brick Breaker Local
 
-Vite+ + TypeScript を基盤に、`Phaser` の描画/入力、`React + Zustand` の UI、`Tone/WebAudio` のサウンドで構成した browser-first のブロック崩しです。  
+Vite+ + TypeScript 6.0 を基盤に、`Phaser` の描画/入力、`React + Zustand` の UI、`Tone/WebAudio` のサウンドで構成した browser-first のブロック崩しです。  
 公開仕様は `12 encounter の campaign` を中心に設計しており、Tier 1 クリア後に `Threat Tier 2` が解放されます。
 
 ## 前提環境
@@ -46,6 +46,9 @@ vp preview
 
 ツールチェーンの詳細は `docs/toolchain.md` を参照してください。
 
+`TypeScript 7` の native preview は `vp run typecheck:ts7` で advisory に確認します。  
+`knip` など既存の TypeScript API に依存するツールは、引き続き `typescript` package を基準に扱います。
+
 ## 開発コマンド
 
 ```bash
@@ -55,8 +58,11 @@ vp check
 # unit tests
 vp test
 
-# app/test の型検証
+# app/test/node の型検証
 vp run typecheck
+
+# TS7 native preview の advisory check
+vp run typecheck:ts7
 
 # 翻訳辞書の型検証 / 生成
 vp run typesafe-i18n

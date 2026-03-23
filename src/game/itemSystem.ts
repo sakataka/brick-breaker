@@ -6,7 +6,7 @@ import {
   createItemStacks,
   getActiveItemEntriesFromRegistry,
   getDropSuppressedTypes,
-  ITEM_REGISTRY,
+  ITEM_ORDER,
   pickWeightedItemType,
 } from "./itemRegistry";
 import type { ItemPickupImpact } from "./itemTypes";
@@ -117,7 +117,7 @@ export function spawnDropsFromBrickEvents(
 ): void {
   const excludedTypes: ItemType[] = getDropSuppressedTypes(items.active);
   const enabledItems = options.enabledItems ?? [];
-  for (const type of Object.keys(ITEM_REGISTRY) as ItemType[]) {
+  for (const type of ITEM_ORDER) {
     if (enabledItems.length > 0 && !enabledItems.includes(type)) {
       excludedTypes.push(type);
     }
@@ -163,7 +163,7 @@ export function spawnGuaranteedDrop(
   }
   const excludedTypes: ItemType[] = getDropSuppressedTypes(items.active);
   const enabledItems = options.enabledItems ?? [];
-  for (const type of Object.keys(ITEM_REGISTRY) as ItemType[]) {
+  for (const type of ITEM_ORDER) {
     if (enabledItems.length > 0 && !enabledItems.includes(type)) {
       excludedTypes.push(type);
     }

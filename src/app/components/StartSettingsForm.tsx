@@ -3,12 +3,13 @@ import {
   BASIC_SELECT_FIELDS,
   BASIC_TOGGLE_FIELDS,
   buildStartSettingsPatch,
+  isDifficulty,
   START_SETTINGS_OPTIONS,
   type StartSettingsSelectField,
   type StartSettingsSelection,
   type StartSettingsToggleField,
 } from "../../game/startSettingsSchema";
-import { type AppLocale, getLL, supportedLocales } from "../../i18n";
+import { type AppLocale, getLL, isAppLocale, supportedLocales } from "../../i18n";
 import { AppIcon } from "./AppIcon";
 import { SectionHeader, Surface } from "./uiPrimitives";
 
@@ -52,7 +53,10 @@ export function StartSettingsForm({
             id="setting-language"
             value={locale}
             onChange={(event) => {
-              onLocaleChange(event.target.value as AppLocale);
+              const nextLocale = event.currentTarget.value;
+              if (isAppLocale(nextLocale)) {
+                onLocaleChange(nextLocale);
+              }
             }}
           >
             {supportedLocales.map((value) => (
@@ -71,7 +75,10 @@ export function StartSettingsForm({
                 id={field.id}
                 value={String(settings[field.field])}
                 onChange={(event) => {
-                  onChange(buildStartSettingsPatch(field.field, event.target.value));
+                  const nextValue = event.currentTarget.value;
+                  if (isDifficulty(nextValue)) {
+                    onChange(buildStartSettingsPatch(field.field, nextValue));
+                  }
                 }}
               >
                 {START_SETTINGS_OPTIONS[field.optionsKey].map((option) => (
@@ -93,7 +100,7 @@ export function StartSettingsForm({
                 type="checkbox"
                 checked={Boolean(settings[field.field])}
                 onChange={(event) => {
-                  onChange(buildStartSettingsPatch(field.field, event.target.checked));
+                  onChange(buildStartSettingsPatch(field.field, event.currentTarget.checked));
                 }}
               />
             </label>
@@ -117,11 +124,11 @@ function getSelectFieldLabel(
 function getSelectOptionLabel(
   LL: ReturnType<typeof getLL>,
   field: StartSettingsSelectField,
-  value: string | number,
+  value: StartSettingsSelection["difficulty"],
 ): string {
   switch (field.field) {
     case "difficulty":
-      return LL.startSettings.values.difficulty[value as StartSettingsSelection["difficulty"]]();
+      return LL.startSettings.values.difficulty[value]();
   }
 }
 

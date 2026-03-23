@@ -3,14 +3,13 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "jsx": "react-jsx",
     "strict": true,
-    "rootDir": "./src",
+    "rootDir": ".",
     "skipLibCheck": true,
     "allowJs": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "types": ["node", "vite/client"],
+    "types": ["node"],
     "resolveJsonModule": true,
     "noEmit": true,
     "noUncheckedSideEffectImports": true,
@@ -19,6 +18,6 @@
     "isolatedModules": true,
     "moduleDetection": "force"
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts"],
-  "exclude": ["node_modules", "src/**/*.test.ts", "src/**/*.test.tsx"]
+  "include": ["vite.config.ts"],
+  "exclude": ["node_modules"]
 }

@@ -5,6 +5,9 @@
 このリポジトリは `Vite+` を開発コマンドの入口として採用しています。  
 日常操作は `vp` を使い、package manager は `pnpm`、unit test は `vp test`、E2E は `Playwright` を使います。
 
+サポート対象の compiler は `TypeScript 6.0` です。  
+`TypeScript 7` native preview は `tsgo` による advisory check のみを担当し、`knip` など既存 API 依存ツールは `typescript` package を継続利用します。
+
 ローカルの標準シェルは `zsh` を前提とし、この文書のコマンド例も `zsh` 互換で記述します。
 
 ## セットアップ
@@ -26,6 +29,7 @@
 - `vp fmt`
 - `vp test`
 - `vp run typecheck`
+- `vp run typecheck:ts7`
 - `vp run deadcode`
 - `vp run deadcode:report`
 - `vp run check:arch`
@@ -46,7 +50,9 @@
 - `vp test`
   - unit test の入口
 - `vp run typecheck`
-  - app/test の TypeScript 型検証
+  - app/test/node の TypeScript 型検証
+- `vp run typecheck:ts7`
+  - `tsgo` による TypeScript 7 native preview の advisory check
 - `vp run deadcode` / `vp run deadcode:report`
   - `knip` ベースの dead code 確認
 - `vp run check:arch`
@@ -69,6 +75,8 @@
 - `vite.config.ts`
   - primary config
   - `lint / test / staged / run.tasks / build` を集約
+- `tsconfig.app.json` / `tsconfig.test.json` / `tsconfig.node.json`
+  - app / test / Node-side config の TypeScript 境界
 - `package.json`
   - project 固有 script の定義
 - `.node-version`

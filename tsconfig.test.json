@@ -3,6 +3,6 @@
   "compilerOptions": {
     "types": ["node", "vite/client", "vite-plus/test/importMeta"]
   },
-  "include": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/**/*.d.ts", "*.d.ts"],
+  "include": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/**/*.d.ts"],
   "exclude": ["node_modules", "e2e"]
 }

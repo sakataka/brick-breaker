@@ -16,15 +16,15 @@ function createTranslator(locale: AppLocale) {
 
 export type LL = ReturnType<typeof createTranslator>;
 
-function isSupportedLocale(value: string): value is SupportedLocale {
-  return supportedLocales.includes(value as SupportedLocale);
+export function isAppLocale(value: string): value is AppLocale {
+  return supportedLocales.some((locale) => locale === value);
 }
 
 function resolveStoredLocale(
   storage: Pick<Storage, "getItem"> | null | undefined,
 ): AppLocale | null {
   const stored = storage?.getItem(STORAGE_KEY);
-  return stored && isSupportedLocale(stored) ? stored : null;
+  return stored && isAppLocale(stored) ? stored : null;
 }
 
 function resolveBrowserLocale(

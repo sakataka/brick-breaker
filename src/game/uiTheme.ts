@@ -1,4 +1,3 @@
-// @ts-expect-error culori does not ship types in this environment.
 import { formatHex, formatRgb, interpolate, parse } from "culori";
 import type { StageVisualProfile, ThemeBandId } from "./config/themes";
 
@@ -63,7 +62,6 @@ const WHITE = "#f8fbff";
 const SOFT_WHITE = "#dce9ff";
 const DEEP_BG = "#050814";
 const SUCCESS = "#66ffb3";
-const interpolateRgb = interpolate([WHITE, DEEP_BG], "rgb");
 
 export function resolveUiThemeTokens(
   profile: StageVisualProfile,
@@ -172,7 +170,7 @@ export function getFallbackThemeTokens(): UiThemeTokens {
     muted: SOFT_WHITE,
     glow: rgba(accent, 0.32),
     backdrop: "#071224",
-    backdropTop: interpolateRgb(0.12) ?? "#16253a",
+    backdropTop: mixColors(WHITE, DEEP_BG, 0.12),
     pattern: "rgba(170, 240, 255, 0.16)",
     frame: accent,
     shadow: "rgba(0, 0, 0, 0.36)",
