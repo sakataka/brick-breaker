@@ -8,9 +8,6 @@ const untrackedTaskEnvs = ["PLAYWRIGHT_WEB_SERVER_COMMAND"];
 
 export default defineConfig({
   plugins: [react()],
-  lint: {
-    ignorePatterns: ["dist/**", "node_modules/**", "playwright-report/**", "test-results/**"],
-  },
   test: {
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
     exclude: ["e2e/**", "dist/**", "node_modules/**"],
@@ -20,7 +17,7 @@ export default defineConfig({
     fileParallelism: false,
   },
   staged: {
-    "*": "vp check --fix",
+    "*": "vp fmt --write",
   },
   base: process.env.GITHUB_ACTIONS === "true" ? githubPagesBase : "/",
   build: {
@@ -47,7 +44,7 @@ export default defineConfig({
   run: {
     tasks: {
       "check:fast": {
-        command: "vp check && vp test && vp run deadcode",
+        command: "vp run typecheck && vp test && vp run deadcode",
         env: trackedTaskEnvs,
         untrackedEnv: untrackedTaskEnvs,
       },

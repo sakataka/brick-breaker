@@ -19,14 +19,15 @@ vp install
 vp dev
 ```
 
-依存解決、hook 設定、日常的な dev/build/test/check は `vp` を基準に使います。  
+依存解決、hook 設定、日常的な dev/build/test/typecheck/format は `vp` を基準に使います。  
 project 固有 script は `vp run ...` で呼びます。
 
 ## 標準ループ
 
 ```bash
 vp install
-vp check
+vp fmt . --check
+vp run typecheck
 vp test
 vp build
 ```
@@ -52,8 +53,8 @@ vp preview
 ## 開発コマンド
 
 ```bash
-# 型 + lint + format check
-vp check
+# format check
+vp fmt . --check
 
 # unit tests
 vp test

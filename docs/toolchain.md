@@ -24,9 +24,8 @@
 - `vp dev`
 - `vp build`
 - `vp preview`
-- `vp check`
-- `vp lint`
-- `vp fmt`
+- `vp fmt . --check`
+- `vp fmt . --write`
 - `vp test`
 - `vp run typecheck`
 - `vp run typecheck:ts7`
@@ -41,14 +40,15 @@
 - `vp run e2e`
 - `vp run e2e:ci`
 - `vp run typesafe-i18n`
-- `vp staged`
 
 ## 役割分担
 
-- `vp dev / build / preview / check / lint / fmt`
+- `vp dev / build / preview / fmt`
   - Vite+ の統合コマンド
 - `vp test`
   - unit test の入口
+- `vp fmt . --check` / `vp fmt . --write`
+  - formatter の check / write
 - `vp run typecheck`
   - app/test/node の TypeScript 型検証
 - `vp run typecheck:ts7`
@@ -58,7 +58,7 @@
 - `vp run check:arch`
   - `dependency-cruiser` による依存境界チェック
 - `vp run check:fast`
-  - `vp check + vp test + vp run deadcode`
+  - `vp run typecheck + vp test + vp run deadcode`
 - `vp run guard:local`
   - `check:fast + check:arch`
 - `vp run guard:ci`
@@ -74,7 +74,7 @@
 
 - `vite.config.ts`
   - primary config
-  - `lint / test / staged / run.tasks / build` を集約
+  - `test / run.tasks / build` を集約
 - `tsconfig.app.json` / `tsconfig.test.json` / `tsconfig.node.json`
   - app / test / Node-side config の TypeScript 境界
 - `package.json`
@@ -89,6 +89,6 @@
 ## 運用ルール
 
 - `pnpm` を直接使うより `vp` を優先する
-- formatter / lint / test / staged-file workflow は `vite.config.ts` を基準に扱う
+- formatter / test / task workflow は `vite.config.ts` を基準に扱う
 - CI とローカルで使う task 名は README / AGENTS / architecture と一致させる
 - docs に存在しない script 名を書かない
