@@ -140,7 +140,7 @@ vp run e2e:ci
   - `tier1BestScore`
   - `tier2BestScore`
   - `latestRunScore`
-- progression と records は `src/game/metaProgress.ts` で別保存します
+- progression と records は `src/game-v2/public/metaProgress.ts` で別保存します
 
 ## ビジュアルとサウンド
 
@@ -165,10 +165,9 @@ vp run e2e:ci
 
 ## 実装メモ
 
-- 実行エントリは `src/game/GameSession.ts`
-- runtime orchestration は `src/game/session/RuntimeController.ts`
-- frame 進行は `src/game/gamePipeline.ts` と `src/game/pipeline/*`
-- run / encounter 定義は `src/game/content/runDefinition.ts` と `src/game/content/encounters.ts`
-- module catalog は `src/game/content/modules.ts`
+- 実行エントリは `src/game-v2/session/GameSession.ts`
+- UI / host / main が参照する public contract は `src/game-v2/public/*` に集約しています
+- v2 の public content contract は `src/game-v2/content/runDefinition.ts`, `encounters.ts`, `modules.ts`, `themes.ts`
 - runtime state の正式 shape は `scene / run / encounter / combat / ui`
-- 保存は `src/game/metaProgress.ts`、表示変換は `src/game/presenter/*`
+- runtime orchestration は `src/game-v2/session/RuntimeController.ts` が持ちます
+- 保存は `src/game-v2/public/metaProgress.ts`、store 初期 view は `src/game-v2/presenter/defaultViews.ts` を使います

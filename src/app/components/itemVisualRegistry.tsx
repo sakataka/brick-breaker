@@ -1,5 +1,5 @@
-import { ITEM_REGISTRY } from "../../game/itemRegistry";
-import type { ItemType } from "../../game/types";
+import { ITEM_REGISTRY } from "../../game-v2/public/items";
+import type { ItemType } from "../../game-v2/public/types";
 import type { AppIconName } from "./AppIcon";
 
 export interface ItemVisualSpec {

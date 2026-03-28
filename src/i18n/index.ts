@@ -1,5 +1,5 @@
 import { i18nObject } from "typesafe-i18n";
-import type { ItemType, StageMissionKey } from "../game/types";
+import type { ItemType, StageMissionKey } from "../game-v2/public/types";
 import { translationCatalog } from "./translations";
 
 export const supportedLocales = ["ja", "en"] as const;

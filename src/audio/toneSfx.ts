@@ -1,5 +1,5 @@
-import { getItemPickupSfxEvent } from "../game/itemRegistry";
-import type { ItemType } from "../game/types";
+import { getItemPickupSfxEvent } from "../game-v2/public/items";
+import type { ItemType } from "../game-v2/public/types";
 import type { SfxManager } from "./sfx";
 
 export class ToneSfx {

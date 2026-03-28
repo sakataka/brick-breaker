@@ -1,4 +1,4 @@
-import type { RenderViewState } from "../../../../game/renderTypes";
+import type { RenderViewState } from "../../../../game-v2/public/renderTypes";
 import { parseColor } from "../../color";
 import type { WorldGraphics } from "./types";
 

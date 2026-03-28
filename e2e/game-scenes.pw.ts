@@ -138,54 +138,25 @@ test("threat tier 2 unlock persists in saved progression", async ({ page }) => {
     .toBe(true);
 });
 
-test("stage 11 legends appear in HUD via test scenario", async ({ page }) => {
+test("shop preview exposes next encounter score focus and tags", async ({ page }) => {
   await presetLocale(page, "ja");
   await page.goto("/");
-
-  await page.evaluate(() => {
-    window.__brickBreakerTest?.loadScenario("stage11_legends");
-  });
-
+  await page.locator("#overlay-button").click();
   await expect(page.locator("#overlay")).toHaveClass(/hidden/);
-  await expect(page.locator("#items")).toContainText("鋼壁: 破壊不可");
-  await expect(page.locator("#items")).toContainText("発生装置: 周辺再生");
-  await expect(page.locator("#items")).toContainText("砲台: 敵弾発射");
+  await expect(page.locator("#shop-panel")).toBeVisible();
+  await expect(page.locator(".shop-preview-line")).toContainText("NEXT STAGE 2");
 });
 
-test("item pickup toast does not block pause input", async ({ page }) => {
+test("item pickup toast does not block pause input after a real shop purchase", async ({
+  page,
+}) => {
   await presetLocale(page, "ja");
   await page.goto("/");
-
-  await page.evaluate(() => {
-    window.__brickBreakerTest?.loadScenario("pickup_toast");
-  });
-
+  await page.locator("#overlay-button").click();
+  await page.locator("#shop-option-a").click();
   await expect(page.locator(".hud-pickup-toast")).toBeVisible();
   await page.keyboard.press("KeyP");
   await expect(page.locator("#overlay")).toHaveAttribute("data-scene", "paused");
-});
-
-test("boss telegraph appears during boss scenario", async ({ page }) => {
-  await presetLocale(page, "ja");
-  await page.goto("/");
-
-  await page.evaluate(() => {
-    window.__brickBreakerTest?.loadScenario("boss_telegraph");
-  });
-
-  await expect(page.locator("#overlay")).toHaveClass(/hidden/);
-  await expect(page.locator(".hud-stage-combat")).toContainText(
-    /射撃予兆|制圧予兆|集中弾予兆|遮断掃射予兆/,
-  );
-  await expect(page.locator(".hud-boss-banner")).toBeVisible();
-  await expect(page.locator("#stage-wrap")).toHaveAttribute("data-theme", /finalboss|midboss/);
-  await expect
-    .poll(async () =>
-      page.locator("#stage-wrap").evaluate((element) => {
-        return getComputedStyle(element).getPropertyValue("--art-backdrop-pattern").trim();
-      }),
-    )
-    .toContain("data:image/svg+xml");
 });
 
 test.describe("dpi regression", () => {

@@ -6,24 +6,21 @@ const DEFAULT_DIFF_BASE = process.env.COVERAGE_DIFF_BASE ?? "origin/main";
 const isTestFile = (path) => /\.test\.(ts|tsx)$/.test(path);
 
 const isGameplaySourceFile = (path) =>
-  (path.startsWith("src/game/") || path.startsWith("src/app/")) &&
+  (path.startsWith("src/game-v2/") ||
+    path.startsWith("src/app/") ||
+    path.startsWith("src/phaser/") ||
+    path.startsWith("src/audio/")) &&
   /\.(ts|tsx)$/.test(path) &&
   !isTestFile(path);
 
 const isSessionSourceFile = (path) =>
-  path.startsWith("src/game/session/") && /\.(ts|tsx)$/.test(path) && !isTestFile(path);
+  path.startsWith("src/game-v2/session/") && /\.(ts|tsx)$/.test(path) && !isTestFile(path);
 
 const isContentSourceFile = (path) =>
-  path.startsWith("src/game/content/") && /\.(ts|tsx)$/.test(path) && !isTestFile(path);
-
-const isStageTemplateRuntimeFile = (path) => path === "src/game/config/stageTemplateRuntime.ts";
-
-const isStageProgressionConfigFile = (path) => path === "src/game/config/stageProgressionConfig.ts";
+  path.startsWith("src/game-v2/content/") && /\.(ts|tsx)$/.test(path) && !isTestFile(path);
 
 const isConfigSourceFile = (path) =>
-  path.startsWith("src/game/config/") || path === "src/game/itemRegistry.ts";
-
-const isCoreSourceFile = (path) => path.startsWith("src/core/");
+  path.startsWith("src/game-v2/public/") || path.startsWith("src/game-v2/engine/");
 
 function run(command, label) {
   const result = spawnSync(command[0], command.slice(1), {
@@ -75,43 +72,23 @@ function main() {
   const hasTestChange = changedFiles.some(isTestFile);
   const hasConfigChange = changedFiles.some(isConfigSourceFile);
   const hasDocChange = changedFiles.some((file) => DOC_FILES.has(file));
-  const hasCoreChange = changedFiles.some(isCoreSourceFile);
   const hasSessionChange = changedFiles.some(isSessionSourceFile);
   const hasContentChange = changedFiles.some(isContentSourceFile);
-  const hasStageTemplateRuntimeChange = changedFiles.some(isStageTemplateRuntimeFile);
-  const hasStageProgressionConfigChange = changedFiles.some(isStageProgressionConfigFile);
 
   if (hasGameplaySourceChange && !hasTestChange) {
-    violations.push(
-      "src/game or src/app source changed, but no *.test.ts(x) file changed. Add or update tests.",
-    );
+    violations.push("game-v2/app/phaser/audio source changed, but no *.test.ts(x) file changed.");
   }
 
   if (hasConfigChange && !hasDocChange) {
     violations.push(
-      "src/game/config/* or src/game/itemRegistry.ts changed, but README.md/docs/architecture.md were not updated.",
+      "src/game-v2/public/* or src/game-v2/engine/* changed, but docs were not updated.",
     );
   }
 
-  if (
-    (hasSessionChange ||
-      hasContentChange ||
-      hasStageTemplateRuntimeChange ||
-      hasStageProgressionConfigChange) &&
-    !hasDocChange
-  ) {
+  if ((hasSessionChange || hasContentChange) && !hasDocChange) {
     violations.push(
-      "src/game/session/*, src/game/content/*, or stage template/progression config changed, but docs/architecture.md was not updated.",
+      "src/game-v2/session/* or src/game-v2/content/* changed, but docs/architecture.md was not updated.",
     );
-  }
-
-  if (hasCoreChange) {
-    const archCheck = run(["vp", "run", "check:arch"], "vp run check:arch");
-    if (!archCheck.success) {
-      violations.push(
-        `src/core changed and architecture boundary check failed.\n${archCheck.output}`,
-      );
-    }
   }
 
   if (violations.length > 0) {

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from "vite-plus/test";
-import { START_SETTINGS_DEFAULT } from "../game/startSettingsSchema";
+import { START_SETTINGS_DEFAULT } from "../game-v2/public/startSettings";
 import { appStore, useAppStore } from "./store";
 
 describe("app store", () => {

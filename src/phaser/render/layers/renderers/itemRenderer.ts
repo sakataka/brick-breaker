@@ -1,5 +1,5 @@
-import { getItemColor } from "../../../../game/itemRegistry";
-import type { RenderViewState } from "../../../../game/renderTypes";
+import { getItemColor } from "../../../../game-v2/public/items";
+import type { RenderViewState } from "../../../../game-v2/public/renderTypes";
 import { parseColor, snapPixel } from "../../color";
 import type { WorldGraphics } from "./types";
 

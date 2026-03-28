@@ -1,4 +1,4 @@
-import type { MusicCue } from "../game/types";
+import type { MusicCue } from "../game-v2/public/types";
 import { getCueBgmTrack, getTitleBgmTrack } from "./bgmCatalog";
 import type { BgmController } from "./bgmSequencer";
 import { BgmSequencer } from "./bgmSequencer";

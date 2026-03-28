@@ -6,8 +6,8 @@ import "./styles.css";
 import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { AppUi } from "./app/AppUi";
-import { GameSession } from "./game/GameSession";
-import type { BrickBreakerTestBridge } from "./game/testBridge";
+import { GameSession } from "./game-v2/session/GameSession";
+import type { BrickBreakerTestBridge } from "./game-v2/public/testBridge";
 import { getRequiredElement } from "./util/dom";
 
 declare global {

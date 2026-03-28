@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactElement } from "react";
 import { getArtCssVars, resolveVisualAssetProfile } from "../../art/visualAssets";
-import type { OverlayViewModel } from "../../game/renderTypes";
-import type { StartSettingsSelection } from "../../game/startSettingsSchema";
+import type { OverlayViewModel } from "../../game-v2/public/renderTypes";
+import type { StartSettingsSelection } from "../../game-v2/public/startSettings";
 import { type AppLocale, getLL } from "../../i18n";
 import {
   buildCampaignResultRows,

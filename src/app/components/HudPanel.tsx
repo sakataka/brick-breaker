@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactElement, RefObject } from "react";
 import { getArtCssVars, resolveVisualAssetProfile } from "../../art/visualAssets";
-import type { HudViewModel } from "../../game/renderTypes";
+import type { HudViewModel } from "../../game-v2/public/renderTypes";
 import { type AppLocale, getLL } from "../../i18n";
 import { AppIcon } from "./AppIcon";
 import { Banner, DangerPill, ProgressBar } from "./uiPrimitives";

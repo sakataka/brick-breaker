@@ -1,6 +1,6 @@
 import type Phaser from "phaser";
 import type { VisualAssetProfile } from "../../../../art/visualAssets";
-import type { RenderTheme } from "../../../../game/renderer/theme";
+import type { RenderTheme } from "../../../../game-v2/public/renderTheme";
 
 export interface DrawWorldOptions {
   offsetX: number;

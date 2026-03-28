@@ -1,4 +1,4 @@
-import { clamp } from "../../game/math";
+import { clamp } from "../../game-v2/public/math";
 
 export interface DpiRenderProfile {
   dpr: number;

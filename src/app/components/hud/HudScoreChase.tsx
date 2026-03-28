@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import type { HudViewModel } from "../../../game/renderTypes";
+import type { HudViewModel } from "../../../game-v2/public/renderTypes";
 import { formatInteger, type AppLocale } from "../../../i18n";
 import { getScoreFocusLabel } from "./hudText";
 

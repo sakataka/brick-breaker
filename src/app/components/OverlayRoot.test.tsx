@@ -1,11 +1,11 @@
 import { describe, expect, test } from "vite-plus/test";
 import { renderToStaticMarkup } from "react-dom/server";
-import type { OverlayViewModel } from "../../game/renderTypes";
+import type { OverlayViewModel } from "../../game-v2/public/renderTypes";
 import {
   START_SETTINGS_DEFAULT,
   type StartSettingsSelection,
-} from "../../game/startSettingsSchema";
-import { getFallbackThemeTokens } from "../../game/uiTheme";
+} from "../../game-v2/public/startSettings";
+import { getFallbackThemeTokens } from "../../game-v2/public/uiTheme";
 import { OverlayRoot } from "./OverlayRoot";
 
 const BASE_SETTINGS: StartSettingsSelection = { ...START_SETTINGS_DEFAULT };

@@ -1,4 +1,4 @@
-import type { MusicCue, MusicCueId } from "../game/types";
+import type { MusicCue, MusicCueId } from "../game-v2/public/types";
 
 export interface BgmStep {
   leadMidi?: number;

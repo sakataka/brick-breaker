@@ -8,7 +8,7 @@ import {
   type StartSettingsSelectField,
   type StartSettingsSelection,
   type StartSettingsToggleField,
-} from "../../game/startSettingsSchema";
+} from "../../game-v2/public/startSettings";
 import { type AppLocale, getLL, isAppLocale, supportedLocales } from "../../i18n";
 import { AppIcon } from "./AppIcon";
 import { SectionHeader, Surface } from "./uiPrimitives";

@@ -22,20 +22,18 @@ async function scanSourceTree(dir) {
     const content = await readFile(file, "utf8");
     const relativePath = path.relative(root, file);
 
-    if (
-      relativePath !== "src/game/config/stages.ts" &&
-      relativePath !== "src/game/config/stageTemplateRuntime.ts"
-    ) {
-      pushImportFailures(relativePath, content, /\bfrom\s+["'][^"']*config\/stages["']/g, [
-        "direct import from config/stages",
-      ]);
-    }
+    pushImportFailures(relativePath, content, /\bfrom\s+["'][^"']*src\/(game|core)\//g, [
+      "absolute import from removed legacy runtime paths",
+    ]);
+    pushImportFailures(relativePath, content, /\bfrom\s+["'][^"']*(?:\.\.\/)+(game|core)\//g, [
+      "relative import from removed legacy runtime paths",
+    ]);
 
     if (
       relativePath.startsWith("src/app/") ||
       relativePath.startsWith("src/phaser/") ||
-      relativePath.startsWith("src/game/presenter/") ||
-      relativePath.startsWith("src/game/content/")
+      relativePath.startsWith("src/game-v2/presenter/") ||
+      relativePath.startsWith("src/game-v2/content/")
     ) {
       pushImportFailures(relativePath, content, /\bfrom\s+["'][^"']*itemRegistryData["']/g, [
         "direct import from itemRegistryData outside low-level runtime",
@@ -58,8 +56,8 @@ async function scanTextRoots(dirs) {
       if (relativePath === "scripts/guard-ai-first-boundaries.mjs") {
         continue;
       }
-      pushImportFailures(relativePath, content, /config\/stages\.ts`\s+に追加する/g, [
-        "stale docs or scripts reference config/stages.ts as content entrypoint",
+      pushImportFailures(relativePath, content, /src\/(game|core)\//g, [
+        "stale docs or scripts reference removed legacy runtime paths",
       ]);
     }
   }

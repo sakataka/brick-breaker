@@ -2,27 +2,38 @@
 module.exports = {
   forbidden: [
     {
-      name: "core-no-ui-host-audio",
-      comment: "Core should remain framework-agnostic and side-effect free.",
+      name: "game-v2-no-app",
+      comment: "The v2 runtime stays app-agnostic outside the dedicated store bridge adapter.",
       severity: "error",
       from: {
-        path: "^src/core/",
-      },
-      to: {
-        path: "^src/(app|phaser|audio)/",
-      },
-    },
-    {
-      name: "game-no-app",
-      comment:
-        "Game layer should not directly import app UI modules (except current GameSession->store bridge).",
-      severity: "error",
-      from: {
-        path: "^src/game/",
-        pathNot: "^src/game/GameSession.ts$",
+        path: "^src/game-v2/",
+        pathNot: "^src/game-v2/adapters/storeBridge.ts$",
       },
       to: {
         path: "^src/app/",
+      },
+    },
+    {
+      name: "no-legacy-game-or-core",
+      comment: "All runtime ownership lives in src/game-v2; legacy paths must not be reintroduced.",
+      severity: "error",
+      from: {
+        path: "^src/",
+      },
+      to: {
+        path: "^src/(game|core)/",
+      },
+    },
+    {
+      name: "ui-host-no-legacy-game",
+      comment:
+        "App, Phaser, and main entrypoints should depend on v2 public contracts instead of legacy paths.",
+      severity: "error",
+      from: {
+        path: "^src/(app/|phaser/|main\\.ts$)",
+      },
+      to: {
+        path: "^src/(game|core)/",
       },
     },
   ],

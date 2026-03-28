@@ -31,7 +31,7 @@ const toPascalCase = (value) =>
 
 const pascalName = toPascalCase(slug);
 const functionName = `create${pascalName}`;
-const directory = "src/game/features";
+const directory = "src/game-v2/features";
 const sourcePath = `${directory}/${slug}.ts`;
 const testPath = `${directory}/${slug}.test.ts`;
 

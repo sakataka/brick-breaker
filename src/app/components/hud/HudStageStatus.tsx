@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactElement } from "react";
-import type { HudViewModel } from "../../../game/renderTypes";
+import type { HudViewModel } from "../../../game-v2/public/renderTypes";
 import { getItemTranslation, getLL, type AppLocale } from "../../../i18n";
 import { AppIcon } from "../AppIcon";
 import { getItemVisualSpec } from "../itemVisualRegistry";

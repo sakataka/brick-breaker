@@ -1,4 +1,4 @@
-import type { RenderViewState } from "../../../game/renderTypes";
+import type { RenderViewState } from "../../../game-v2/public/renderTypes";
 import { drawArenaFrame } from "./renderers/arenaFrameRenderer";
 import { drawBossTelegraph, drawEnemies } from "./renderers/bossRenderer";
 import { drawBricks } from "./renderers/bricksRenderer";

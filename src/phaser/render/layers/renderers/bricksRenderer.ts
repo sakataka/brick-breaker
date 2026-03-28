@@ -1,5 +1,5 @@
 import { getBrickSkin } from "../../../../art/visualAssets";
-import type { RenderViewState } from "../../../../game/renderTypes";
+import type { RenderViewState } from "../../../../game-v2/public/renderTypes";
 import { parseColor, snapPixel } from "../../color";
 import { snapByStep } from "../../dpiProfile";
 import type { DrawWorldOptions, WorldGraphics } from "./types";

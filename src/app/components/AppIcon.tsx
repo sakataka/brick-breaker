@@ -21,7 +21,7 @@ import {
   Waveform,
 } from "@phosphor-icons/react";
 import type { ReactElement } from "react";
-import type { ItemType } from "../../game/types";
+import type { ItemType } from "../../game-v2/public/types";
 
 export type AppIconName =
   | ItemType

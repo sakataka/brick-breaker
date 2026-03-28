@@ -1,6 +1,6 @@
-import type { HudViewModel } from "../../../game/renderTypes";
+import type { HudViewModel } from "../../../game-v2/public/renderTypes";
 import { formatDecimal, getLL, type AppLocale } from "../../../i18n";
-import type { VisualState } from "../../../game/uiTheme";
+import type { VisualState } from "../../../game-v2/public/uiTheme";
 
 export function getThreatLabel(
   locale: AppLocale,

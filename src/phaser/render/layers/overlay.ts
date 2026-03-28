@@ -1,6 +1,6 @@
 import type Phaser from "phaser";
-import type { RenderTheme } from "../../../game/renderer/theme";
-import type { RenderViewState } from "../../../game/renderTypes";
+import type { RenderTheme } from "../../../game-v2/public/renderTheme";
+import type { RenderViewState } from "../../../game-v2/public/renderTypes";
 import { parseColor } from "../color";
 
 export function drawOverlayLayer(

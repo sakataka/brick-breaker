@@ -1,7 +1,7 @@
 import type { ReactElement, RefObject } from "react";
-import type { HudViewModel } from "../../../game/renderTypes";
+import type { HudViewModel } from "../../../game-v2/public/renderTypes";
 import { formatDecimal, formatInteger, getLL, type AppLocale } from "../../../i18n";
-import { formatTime } from "../../../game/time";
+import { formatTime } from "../../../game-v2/public/time";
 import { AppIcon } from "../AppIcon";
 import { StatChip } from "../uiPrimitives";
 

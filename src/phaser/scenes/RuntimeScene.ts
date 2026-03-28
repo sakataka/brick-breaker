@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import type { RenderViewState } from "../../game/renderTypes";
+import type { RenderViewState } from "../../game-v2/public/renderTypes";
 import { PhaserRenderPort } from "../render/PhaserRenderPort";
 
 export interface RuntimeSceneHandlers {

@@ -1,5 +1,5 @@
 import type Phaser from "phaser";
-import type { RenderViewState } from "../../../game/renderTypes";
+import type { RenderViewState } from "../../../game-v2/public/renderTypes";
 import { parseColor } from "../color";
 import { snapByStep } from "../dpiProfile";
 

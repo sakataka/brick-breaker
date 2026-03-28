@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { AnimatePresence, motion } from "motion/react";
 import type { CSSProperties, ElementType, ReactElement, ReactNode } from "react";
-import type { MotionProfile, WarningLevel } from "../../game/uiTheme";
+import type { MotionProfile, WarningLevel } from "../../game-v2/public/uiTheme";
 
 interface MotionConfig {
   initial: Record<string, number>;

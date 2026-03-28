@@ -1,4 +1,4 @@
-import type { GameAudioSettings, ItemType, MusicCue, Scene } from "../game/types";
+import type { GameAudioSettings, ItemType, MusicCue, Scene } from "../game-v2/public/types";
 import type { BgmController } from "./bgmSequencer";
 import type { SfxManager } from "./sfx";
 import { ToneBgm } from "./toneBgm";

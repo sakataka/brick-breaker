@@ -1,5 +1,5 @@
-import type { ThemeBandId } from "../game/config/themes";
-import type { BrickKind } from "../game/types";
+import type { ThemeBandId } from "../game-v2/public/themes";
+import type { BrickKind } from "../game-v2/public/types";
 import { THEME_ART_PALETTES, type ThemeArtPalette } from "./themePalettes";
 import {
   buildBackdropMotifSvg,

@@ -4,11 +4,14 @@ import {
   resolveVisualAssetProfile,
   type VisualAssetProfile,
 } from "../../art/visualAssets";
-import { THEME_BANDS } from "../../game/config";
-import { getItemColor } from "../../game/itemRegistry";
-import { DEFAULT_RENDER_THEME, resolveRenderThemeFromTokens } from "../../game/renderer/theme";
-import type { RenderViewState } from "../../game/renderTypes";
-import type { GameConfig } from "../../game/types";
+import { getItemColor } from "../../game-v2/public/items";
+import {
+  DEFAULT_RENDER_THEME,
+  resolveRenderThemeFromTokens,
+} from "../../game-v2/public/renderTheme";
+import type { RenderViewState } from "../../game-v2/public/renderTypes";
+import { THEME_BANDS } from "../../game-v2/public/themes";
+import type { GameConfig } from "../../game-v2/public/types";
 import { getCurrentLocale, getItemTranslation, getLL } from "../../i18n";
 import { parseColor, readDevicePixelRatio, snapPixel } from "./color";
 import { resolveDpiRenderProfile } from "./dpiProfile";

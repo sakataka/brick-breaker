@@ -1,4 +1,4 @@
-import type { ThemeBandId } from "../game/content/themes";
+import type { ThemeBandId } from "../game-v2/public/themes";
 import type { ArtEncounterEmphasis } from "./visualAssets";
 import type { ThemeArtPalette } from "./themePalettes";
 

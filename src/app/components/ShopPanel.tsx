@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactElement } from "react";
-import type { ShopUiView } from "../../game/shopUi";
+import type { ShopUiView } from "../../game-v2/public/shopView";
 import { type AppLocale, formatPoints, getItemTranslation, getLL } from "../../i18n";
 import { AppIcon } from "./AppIcon";
 import { getItemVisualSpec } from "./itemVisualRegistry";
