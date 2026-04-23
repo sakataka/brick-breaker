@@ -1,8 +1,48 @@
-import { getBrickSkin } from "../../../../art/visualAssets";
+import { getBrickSkin, type BrickSkinSpec } from "../../../../art/visualAssets";
 import type { RenderViewState } from "../../../../game-v2/public/renderTypes";
 import { parseColor, snapPixel } from "../../color";
 import { snapByStep } from "../../dpiProfile";
 import type { DrawWorldOptions, WorldGraphics } from "./types";
+
+type BrickSurfacePattern = BrickSkinSpec["pattern"];
+type BrickPatternRenderer = (
+  graphics: WorldGraphics,
+  brick: RenderViewState["bricks"][number],
+  brickX: number,
+  brickY: number,
+  snapStep: number,
+  accent: ReturnType<typeof parseColor>,
+) => void;
+
+export const BRICK_SURFACE_PATTERN_ORDER: readonly BrickSurfacePattern[] = [
+  "panel",
+  "plate",
+  "circuit",
+  "rivets",
+  "core",
+  "barrier",
+  "turret",
+  "hazard",
+  "armor",
+  "split",
+  "summon",
+  "thorns",
+] as const;
+
+const BRICK_PATTERN_RENDERERS: Record<BrickSurfacePattern, BrickPatternRenderer> = {
+  panel: drawPanelPattern,
+  plate: drawPlatePattern,
+  circuit: drawCircuitPattern,
+  rivets: drawRivetsPattern,
+  core: drawCorePattern,
+  barrier: drawBarrierPattern,
+  turret: drawTurretPattern,
+  hazard: drawHazardPattern,
+  armor: drawArmorPattern,
+  split: drawSplitPattern,
+  summon: drawSummonPattern,
+  thorns: drawThornsPattern,
+};
 
 export function drawBricks(
   graphics: WorldGraphics,
@@ -169,129 +209,211 @@ function drawBrickSurfacePattern(
   const accent = parseColor(skin.glowColor, { value: 0xffffff, alpha: 0.3 });
   const thin = Math.max(1, brick.width >= 32 ? 1.4 : 1);
   graphics.lineStyle(thin, accent.value, Math.max(0.14, accent.alpha * 0.72));
-  switch (skin.pattern) {
-    case "panel":
-      graphics.strokeRect(
-        brickX + 4,
-        brickY + 4,
-        Math.max(0, brick.width - 8),
-        Math.max(0, brick.height - 8),
-      );
-      graphics.beginPath();
-      graphics.moveTo(brickX + brick.width * 0.5, brickY + 4);
-      graphics.lineTo(brickX + brick.width * 0.5, brickY + brick.height - 4);
-      graphics.strokePath();
-      break;
-    case "plate":
-      graphics.beginPath();
-      graphics.moveTo(brickX + 4, brickY + brick.height * 0.5);
-      graphics.lineTo(brickX + brick.width - 4, brickY + brick.height * 0.5);
-      graphics.strokePath();
-      graphics.fillStyle(accent.value, 0.22);
-      graphics.fillCircle(brickX + 6, brickY + 6, 1.8);
-      graphics.fillCircle(brickX + brick.width - 6, brickY + brick.height - 6, 1.8);
-      break;
-    case "circuit":
-      graphics.beginPath();
-      graphics.moveTo(brickX + 4, brickY + brick.height * 0.35);
-      graphics.lineTo(brickX + brick.width * 0.42, brickY + brick.height * 0.35);
-      graphics.lineTo(brickX + brick.width * 0.42, brickY + brick.height * 0.68);
-      graphics.lineTo(brickX + brick.width - 4, brickY + brick.height * 0.68);
-      graphics.strokePath();
-      graphics.fillStyle(accent.value, 0.28);
-      graphics.fillCircle(brickX + brick.width * 0.42, brickY + brick.height * 0.35, 2);
-      graphics.fillCircle(brickX + brick.width * 0.42, brickY + brick.height * 0.68, 2);
-      break;
-    case "rivets":
-      graphics.fillStyle(accent.value, 0.24);
-      graphics.fillCircle(brickX + 6, brickY + 6, 2.2);
-      graphics.fillCircle(brickX + brick.width - 6, brickY + 6, 2.2);
-      graphics.fillCircle(brickX + 6, brickY + brick.height - 6, 2.2);
-      graphics.fillCircle(brickX + brick.width - 6, brickY + brick.height - 6, 2.2);
-      graphics.beginPath();
-      graphics.moveTo(brickX + 4, brickY + brick.height * 0.5);
-      graphics.lineTo(brickX + brick.width - 4, brickY + brick.height * 0.5);
-      graphics.strokePath();
-      break;
-    case "core":
-      graphics.strokeRoundedRect(
-        brickX + 6,
-        brickY + 4,
-        Math.max(0, brick.width - 12),
-        Math.max(0, brick.height - 8),
-        4,
-      );
-      graphics.fillStyle(accent.value, 0.24);
-      graphics.fillCircle(
-        brickX + brick.width * 0.5,
-        brickY + brick.height * 0.5,
-        Math.min(brick.width, brick.height) * 0.18,
-      );
-      break;
-    case "barrier":
-      for (let stripe = -1; stripe < 5; stripe += 1) {
-        const startX = brickX + stripe * 10;
-        graphics.beginPath();
-        graphics.moveTo(snapByStep(startX, snapStep), snapByStep(brickY + brick.height, snapStep));
-        graphics.lineTo(snapByStep(startX + 16, snapStep), snapByStep(brickY, snapStep));
-        graphics.strokePath();
-      }
-      break;
-    case "turret":
-      graphics.fillStyle(accent.value, 0.24);
-      graphics.fillRect(brickX + brick.width * 0.42, brickY + 2, 5, brick.height - 8);
-      graphics.fillRect(
-        brickX + brick.width * 0.32,
-        brickY + brick.height * 0.42,
-        brick.width * 0.36,
-        4,
-      );
-      break;
-    case "hazard":
-      for (let stripe = -1; stripe < 4; stripe += 1) {
-        const startX = brickX + stripe * 12;
-        graphics.beginPath();
-        graphics.moveTo(startX, brickY + brick.height);
-        graphics.lineTo(startX + 14, brickY);
-        graphics.strokePath();
-      }
-      break;
-    case "armor":
-      graphics.beginPath();
-      graphics.moveTo(brickX + 4, brickY + brick.height * 0.65);
-      graphics.lineTo(brickX + brick.width * 0.5, brickY + 4);
-      graphics.lineTo(brickX + brick.width - 4, brickY + brick.height * 0.65);
-      graphics.strokePath();
-      break;
-    case "split":
-      graphics.beginPath();
-      graphics.moveTo(brickX + brick.width * 0.5, brickY + 4);
-      graphics.lineTo(brickX + brick.width * 0.5, brickY + brick.height - 4);
-      graphics.strokePath();
-      graphics.beginPath();
-      graphics.moveTo(brickX + brick.width * 0.5 - 6, brickY + brick.height * 0.5);
-      graphics.lineTo(brickX + brick.width * 0.5 + 6, brickY + brick.height * 0.5);
-      graphics.strokePath();
-      break;
-    case "summon":
-      graphics.beginPath();
-      graphics.moveTo(brickX + brick.width * 0.5, brickY + 4);
-      graphics.lineTo(brickX + brick.width - 6, brickY + brick.height * 0.5);
-      graphics.lineTo(brickX + brick.width * 0.5, brickY + brick.height - 4);
-      graphics.lineTo(brickX + 6, brickY + brick.height * 0.5);
-      graphics.closePath();
-      graphics.strokePath();
-      break;
-    case "thorns":
-      graphics.beginPath();
-      graphics.moveTo(brickX + 4, brickY + brick.height - 4);
-      graphics.lineTo(brickX + brick.width * 0.28, brickY + 6);
-      graphics.lineTo(brickX + brick.width * 0.5, brickY + brick.height - 4);
-      graphics.lineTo(brickX + brick.width * 0.72, brickY + 6);
-      graphics.lineTo(brickX + brick.width - 4, brickY + brick.height - 4);
-      graphics.strokePath();
-      break;
+  BRICK_PATTERN_RENDERERS[skin.pattern](graphics, brick, brickX, brickY, snapStep, accent);
+}
+
+function drawPanelPattern(
+  graphics: WorldGraphics,
+  brick: RenderViewState["bricks"][number],
+  brickX: number,
+  brickY: number,
+): void {
+  graphics.strokeRect(
+    brickX + 4,
+    brickY + 4,
+    Math.max(0, brick.width - 8),
+    Math.max(0, brick.height - 8),
+  );
+  graphics.beginPath();
+  graphics.moveTo(brickX + brick.width * 0.5, brickY + 4);
+  graphics.lineTo(brickX + brick.width * 0.5, brickY + brick.height - 4);
+  graphics.strokePath();
+}
+
+function drawPlatePattern(
+  graphics: WorldGraphics,
+  brick: RenderViewState["bricks"][number],
+  brickX: number,
+  brickY: number,
+  _snapStep: number,
+  accent: ReturnType<typeof parseColor>,
+): void {
+  graphics.beginPath();
+  graphics.moveTo(brickX + 4, brickY + brick.height * 0.5);
+  graphics.lineTo(brickX + brick.width - 4, brickY + brick.height * 0.5);
+  graphics.strokePath();
+  graphics.fillStyle(accent.value, 0.22);
+  graphics.fillCircle(brickX + 6, brickY + 6, 1.8);
+  graphics.fillCircle(brickX + brick.width - 6, brickY + brick.height - 6, 1.8);
+}
+
+function drawCircuitPattern(
+  graphics: WorldGraphics,
+  brick: RenderViewState["bricks"][number],
+  brickX: number,
+  brickY: number,
+  _snapStep: number,
+  accent: ReturnType<typeof parseColor>,
+): void {
+  graphics.beginPath();
+  graphics.moveTo(brickX + 4, brickY + brick.height * 0.35);
+  graphics.lineTo(brickX + brick.width * 0.42, brickY + brick.height * 0.35);
+  graphics.lineTo(brickX + brick.width * 0.42, brickY + brick.height * 0.68);
+  graphics.lineTo(brickX + brick.width - 4, brickY + brick.height * 0.68);
+  graphics.strokePath();
+  graphics.fillStyle(accent.value, 0.28);
+  graphics.fillCircle(brickX + brick.width * 0.42, brickY + brick.height * 0.35, 2);
+  graphics.fillCircle(brickX + brick.width * 0.42, brickY + brick.height * 0.68, 2);
+}
+
+function drawRivetsPattern(
+  graphics: WorldGraphics,
+  brick: RenderViewState["bricks"][number],
+  brickX: number,
+  brickY: number,
+  _snapStep: number,
+  accent: ReturnType<typeof parseColor>,
+): void {
+  graphics.fillStyle(accent.value, 0.24);
+  graphics.fillCircle(brickX + 6, brickY + 6, 2.2);
+  graphics.fillCircle(brickX + brick.width - 6, brickY + 6, 2.2);
+  graphics.fillCircle(brickX + 6, brickY + brick.height - 6, 2.2);
+  graphics.fillCircle(brickX + brick.width - 6, brickY + brick.height - 6, 2.2);
+  graphics.beginPath();
+  graphics.moveTo(brickX + 4, brickY + brick.height * 0.5);
+  graphics.lineTo(brickX + brick.width - 4, brickY + brick.height * 0.5);
+  graphics.strokePath();
+}
+
+function drawCorePattern(
+  graphics: WorldGraphics,
+  brick: RenderViewState["bricks"][number],
+  brickX: number,
+  brickY: number,
+  _snapStep: number,
+  accent: ReturnType<typeof parseColor>,
+): void {
+  graphics.strokeRoundedRect(
+    brickX + 6,
+    brickY + 4,
+    Math.max(0, brick.width - 12),
+    Math.max(0, brick.height - 8),
+    4,
+  );
+  graphics.fillStyle(accent.value, 0.24);
+  graphics.fillCircle(
+    brickX + brick.width * 0.5,
+    brickY + brick.height * 0.5,
+    Math.min(brick.width, brick.height) * 0.18,
+  );
+}
+
+function drawBarrierPattern(
+  graphics: WorldGraphics,
+  brick: RenderViewState["bricks"][number],
+  brickX: number,
+  brickY: number,
+  snapStep: number,
+): void {
+  for (let stripe = -1; stripe < 5; stripe += 1) {
+    const startX = brickX + stripe * 10;
+    graphics.beginPath();
+    graphics.moveTo(snapByStep(startX, snapStep), snapByStep(brickY + brick.height, snapStep));
+    graphics.lineTo(snapByStep(startX + 16, snapStep), snapByStep(brickY, snapStep));
+    graphics.strokePath();
   }
+}
+
+function drawTurretPattern(
+  graphics: WorldGraphics,
+  brick: RenderViewState["bricks"][number],
+  brickX: number,
+  brickY: number,
+  _snapStep: number,
+  accent: ReturnType<typeof parseColor>,
+): void {
+  graphics.fillStyle(accent.value, 0.24);
+  graphics.fillRect(brickX + brick.width * 0.42, brickY + 2, 5, brick.height - 8);
+  graphics.fillRect(
+    brickX + brick.width * 0.32,
+    brickY + brick.height * 0.42,
+    brick.width * 0.36,
+    4,
+  );
+}
+
+function drawHazardPattern(
+  graphics: WorldGraphics,
+  brick: RenderViewState["bricks"][number],
+  brickX: number,
+  brickY: number,
+): void {
+  for (let stripe = -1; stripe < 4; stripe += 1) {
+    const startX = brickX + stripe * 12;
+    graphics.beginPath();
+    graphics.moveTo(startX, brickY + brick.height);
+    graphics.lineTo(startX + 14, brickY);
+    graphics.strokePath();
+  }
+}
+
+function drawArmorPattern(
+  graphics: WorldGraphics,
+  brick: RenderViewState["bricks"][number],
+  brickX: number,
+  brickY: number,
+): void {
+  graphics.beginPath();
+  graphics.moveTo(brickX + 4, brickY + brick.height * 0.65);
+  graphics.lineTo(brickX + brick.width * 0.5, brickY + 4);
+  graphics.lineTo(brickX + brick.width - 4, brickY + brick.height * 0.65);
+  graphics.strokePath();
+}
+
+function drawSplitPattern(
+  graphics: WorldGraphics,
+  brick: RenderViewState["bricks"][number],
+  brickX: number,
+  brickY: number,
+): void {
+  graphics.beginPath();
+  graphics.moveTo(brickX + brick.width * 0.5, brickY + 4);
+  graphics.lineTo(brickX + brick.width * 0.5, brickY + brick.height - 4);
+  graphics.strokePath();
+  graphics.beginPath();
+  graphics.moveTo(brickX + brick.width * 0.5 - 6, brickY + brick.height * 0.5);
+  graphics.lineTo(brickX + brick.width * 0.5 + 6, brickY + brick.height * 0.5);
+  graphics.strokePath();
+}
+
+function drawSummonPattern(
+  graphics: WorldGraphics,
+  brick: RenderViewState["bricks"][number],
+  brickX: number,
+  brickY: number,
+): void {
+  graphics.beginPath();
+  graphics.moveTo(brickX + brick.width * 0.5, brickY + 4);
+  graphics.lineTo(brickX + brick.width - 6, brickY + brick.height * 0.5);
+  graphics.lineTo(brickX + brick.width * 0.5, brickY + brick.height - 4);
+  graphics.lineTo(brickX + 6, brickY + brick.height * 0.5);
+  graphics.closePath();
+  graphics.strokePath();
+}
+
+function drawThornsPattern(
+  graphics: WorldGraphics,
+  brick: RenderViewState["bricks"][number],
+  brickX: number,
+  brickY: number,
+): void {
+  graphics.beginPath();
+  graphics.moveTo(brickX + 4, brickY + brick.height - 4);
+  graphics.lineTo(brickX + brick.width * 0.28, brickY + 6);
+  graphics.lineTo(brickX + brick.width * 0.5, brickY + brick.height - 4);
+  graphics.lineTo(brickX + brick.width * 0.72, brickY + 6);
+  graphics.lineTo(brickX + brick.width - 4, brickY + brick.height - 4);
+  graphics.strokePath();
 }
 
 function getBrickMarkerColor(kind: NonNullable<RenderViewState["bricks"][number]["kind"]>): string {

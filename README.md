@@ -169,8 +169,9 @@ vp run e2e:ci
 - 実行エントリは `src/game-v2/session/GameSession.ts`
 - UI / host / main が参照する public contract は `src/game-v2/public/*` に集約しています
 - v2 の public content contract は `src/game-v2/content/runDefinition.ts`, `encounters.ts`, `modules.ts`, `themes.ts`
+- stage 固有の brick layout / modifier / boss / music cue は `src/game-v2/content/stageBlueprints.ts` で authoring します
 - runtime state の正式 shape は `scene / run / encounter / combat / ui`
 - `run.elapsedSec` は campaign 累計時間、`encounter.elapsedSec` は現在 encounter の時間として扱います
-- runtime orchestration は `src/game-v2/session/RuntimeController.ts` が持ちます
+- runtime orchestration は `src/game-v2/session/RuntimeController.ts` が持ち、scene state の更新は `src/game-v2/engine/transitions.ts` に寄せます
 - 保存は `src/game-v2/public/metaProgress.ts`、store 初期 view は `src/game-v2/presenter/defaultViews.ts` を使います
 - E2E 用 test bridge は `VITE_BRICK_BREAKER_TEST_BRIDGE=1` の明示時だけ公開します

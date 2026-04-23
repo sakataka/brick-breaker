@@ -73,6 +73,11 @@ export interface BrickSkinSpec {
     | "thorns";
 }
 
+type BrickSkinFactory = (input: {
+  normal: BrickSkinSpec;
+  palette: ThemeArtPalette;
+}) => BrickSkinSpec;
+
 export interface VisualAssetProfile {
   id: ThemeBandId;
   panelSet: string;
@@ -88,6 +93,117 @@ export interface VisualAssetProfile {
 
 const PROFILE_CACHE = new Map<string, VisualAssetProfile>();
 const TEXTURE_CACHE = new Map<ArtAssetId, TextureEntry>();
+
+export const BRICK_SKIN_KIND_ORDER: readonly BrickKind[] = [
+  "normal",
+  "steel",
+  "generator",
+  "gate",
+  "turret",
+  "durable",
+  "armored",
+  "regen",
+  "hazard",
+  "boss",
+  "split",
+  "summon",
+  "thorns",
+] as const;
+
+const BRICK_SKIN_FACTORIES: Record<BrickKind, BrickSkinFactory> = {
+  normal: ({ normal }) => normal,
+  steel: () => ({
+    baseColor: "#74879e",
+    insetColor: "#a9bfd9",
+    edgeColor: "#eff7ff",
+    glowColor: "#adcfff",
+    markerColor: "#edf5ff",
+    pattern: "rivets",
+  }),
+  generator: () => ({
+    baseColor: "#1f4157",
+    insetColor: "#2c6c7e",
+    edgeColor: "#c9fff1",
+    glowColor: "#73ffd2",
+    markerColor: "#e1fff0",
+    pattern: "core",
+  }),
+  gate: () => ({
+    baseColor: "#56453b",
+    insetColor: "#7f5f50",
+    edgeColor: "#fff1c7",
+    glowColor: "#ffd975",
+    markerColor: "#fff0be",
+    pattern: "barrier",
+  }),
+  turret: () => ({
+    baseColor: "#57362f",
+    insetColor: "#8b5242",
+    edgeColor: "#ffd6b5",
+    glowColor: "#ffab70",
+    markerColor: "#ffe5c8",
+    pattern: "turret",
+  }),
+  durable: ({ normal }) => ({
+    ...normal,
+    edgeColor: "#ffe27e",
+    glowColor: "#ffd36d",
+    markerColor: "#ffe89f",
+    pattern: "plate",
+  }),
+  armored: ({ normal }) => ({
+    ...normal,
+    edgeColor: "#dce8ff",
+    glowColor: "#a8c8ff",
+    markerColor: "#edf4ff",
+    pattern: "armor",
+  }),
+  regen: ({ normal }) => ({
+    ...normal,
+    edgeColor: "#c7ffdd",
+    glowColor: "#70f7a7",
+    markerColor: "#e6fff0",
+    pattern: "core",
+  }),
+  hazard: () => ({
+    baseColor: "#5b1f24",
+    insetColor: "#8d3742",
+    edgeColor: "#ffd0a6",
+    glowColor: "#ff8061",
+    markerColor: "#ffe7be",
+    pattern: "hazard",
+  }),
+  boss: () => ({
+    baseColor: "#431839",
+    insetColor: "#74305a",
+    edgeColor: "#ffd7f4",
+    glowColor: "#ff75ca",
+    markerColor: "#fff0fb",
+    pattern: "summon",
+  }),
+  split: ({ normal }) => ({
+    ...normal,
+    edgeColor: "#fff2b0",
+    glowColor: "#ffe57f",
+    markerColor: "#fff7d3",
+    pattern: "split",
+  }),
+  summon: ({ normal }) => ({
+    ...normal,
+    edgeColor: "#ffd6ae",
+    glowColor: "#ffb57a",
+    markerColor: "#fff0dc",
+    pattern: "summon",
+  }),
+  thorns: () => ({
+    baseColor: "#4e183b",
+    insetColor: "#7f2d60",
+    edgeColor: "#ffd7ef",
+    glowColor: "#ff9bd6",
+    markerColor: "#ffeaf7",
+    pattern: "thorns",
+  }),
+};
 
 export function resolveVisualAssetProfile(
   themeId: ThemeBandId,
@@ -134,113 +250,7 @@ export function getBrickSkin(
 ): BrickSkinSpec {
   const palette = THEME_ART_PALETTES[profile.id];
   const normal = createNormalBrickSkin(profile.id, fallbackColor, palette);
-  switch (kind ?? "normal") {
-    case "steel":
-      return {
-        baseColor: "#74879e",
-        insetColor: "#a9bfd9",
-        edgeColor: "#eff7ff",
-        glowColor: "#adcfff",
-        markerColor: "#edf5ff",
-        pattern: "rivets",
-      };
-    case "generator":
-      return {
-        baseColor: "#1f4157",
-        insetColor: "#2c6c7e",
-        edgeColor: "#c9fff1",
-        glowColor: "#73ffd2",
-        markerColor: "#e1fff0",
-        pattern: "core",
-      };
-    case "gate":
-      return {
-        baseColor: "#56453b",
-        insetColor: "#7f5f50",
-        edgeColor: "#fff1c7",
-        glowColor: "#ffd975",
-        markerColor: "#fff0be",
-        pattern: "barrier",
-      };
-    case "turret":
-      return {
-        baseColor: "#57362f",
-        insetColor: "#8b5242",
-        edgeColor: "#ffd6b5",
-        glowColor: "#ffab70",
-        markerColor: "#ffe5c8",
-        pattern: "turret",
-      };
-    case "durable":
-      return {
-        ...normal,
-        edgeColor: "#ffe27e",
-        glowColor: "#ffd36d",
-        markerColor: "#ffe89f",
-        pattern: "plate",
-      };
-    case "armored":
-      return {
-        ...normal,
-        edgeColor: "#dce8ff",
-        glowColor: "#a8c8ff",
-        markerColor: "#edf4ff",
-        pattern: "armor",
-      };
-    case "regen":
-      return {
-        ...normal,
-        edgeColor: "#c7ffdd",
-        glowColor: "#70f7a7",
-        markerColor: "#e6fff0",
-        pattern: "core",
-      };
-    case "hazard":
-      return {
-        baseColor: "#5b1f24",
-        insetColor: "#8d3742",
-        edgeColor: "#ffd0a6",
-        glowColor: "#ff8061",
-        markerColor: "#ffe7be",
-        pattern: "hazard",
-      };
-    case "boss":
-      return {
-        baseColor: "#431839",
-        insetColor: "#74305a",
-        edgeColor: "#ffd7f4",
-        glowColor: "#ff75ca",
-        markerColor: "#fff0fb",
-        pattern: "summon",
-      };
-    case "split":
-      return {
-        ...normal,
-        edgeColor: "#fff2b0",
-        glowColor: "#ffe57f",
-        markerColor: "#fff7d3",
-        pattern: "split",
-      };
-    case "summon":
-      return {
-        ...normal,
-        edgeColor: "#ffd6ae",
-        glowColor: "#ffb57a",
-        markerColor: "#fff0dc",
-        pattern: "summon",
-      };
-    case "thorns":
-      return {
-        baseColor: "#4e183b",
-        insetColor: "#7f2d60",
-        edgeColor: "#ffd7ef",
-        glowColor: "#ff9bd6",
-        markerColor: "#ffeaf7",
-        pattern: "thorns",
-      };
-    default:
-      return normal;
-  }
+  return BRICK_SKIN_FACTORIES[kind ?? "normal"]({ normal, palette });
 }
 
 export function getArtCssVars(profile: VisualAssetProfile): Record<string, string> {

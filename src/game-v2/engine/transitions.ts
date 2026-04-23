@@ -1,8 +1,14 @@
 import { getPublicEncounterCatalog } from "../content";
 import { applyRunScoreToMeta, writeMetaProgress, type MetaProgress } from "../public/metaProgress";
 import type { GameConfig, GameState, StageMissionStatus } from "../public/types";
+import type { StartSettingsSelection } from "../public/startSettings";
 import { buildShopOffer } from "./shop";
-import { createCombatState, createEncounterState, getStageModifier } from "./stateFactory";
+import {
+  createCombatState,
+  createEncounterState,
+  createInitialGameState,
+  getStageModifier,
+} from "./stateFactory";
 
 function createMissionResults(): StageMissionStatus[] {
   return [
@@ -16,6 +22,51 @@ export function prepareEncounter(state: GameState): void {
     options: buildShopOffer(state.encounter.stageNumber),
     cost: 1200,
   };
+}
+
+export function createStartedRunState(
+  config: GameConfig,
+  settings: StartSettingsSelection,
+): GameState {
+  const state = createInitialGameState(
+    config,
+    settings.reducedMotionEnabled,
+    "playing",
+    settings.highContrastEnabled,
+  );
+  prepareEncounter(state);
+  return state;
+}
+
+export function createTitleState(config: GameConfig, settings: StartSettingsSelection): GameState {
+  return createInitialGameState(
+    config,
+    settings.reducedMotionEnabled,
+    "start",
+    settings.highContrastEnabled,
+  );
+}
+
+export function pausePlaying(state: GameState): boolean {
+  if (state.scene !== "playing") {
+    return false;
+  }
+  state.scene = "paused";
+  return true;
+}
+
+export function resumePaused(state: GameState): boolean {
+  if (state.scene !== "paused") {
+    return false;
+  }
+  state.scene = "playing";
+  return true;
+}
+
+export function setGameOverScore(state: GameState, score: number, lives = 0): void {
+  state.run.score = Math.max(0, Math.round(score));
+  state.run.lives = Math.max(0, Math.round(lives));
+  state.scene = "gameover";
 }
 
 export function advanceEncounter(state: GameState, config: GameConfig): boolean {
@@ -38,7 +89,7 @@ export function advanceEncounter(state: GameState, config: GameConfig): boolean 
   };
   state.encounter = {
     ...createEncounterState(next),
-    modifierKey: getStageModifier(next.stageNumber).key,
+    modifierKey: getStageModifier(next.threatTier, next.stageNumber).key,
   };
   state.combat = createCombatState(config, next);
   state.ui.warningLevel = "calm";
@@ -46,7 +97,7 @@ export function advanceEncounter(state: GameState, config: GameConfig): boolean 
   return true;
 }
 
-export function completeStage(state: GameState): void {
+function completeStage(state: GameState): void {
   const stageNumber = state.encounter.stageNumber;
   const clearTimeSec = Math.max(1, Math.round(state.encounter.elapsedSec));
   const ratingScore = Math.max(55, Math.min(100, 100 - clearTimeSec + state.run.lives * 5));
@@ -63,6 +114,21 @@ export function completeStage(state: GameState): void {
   } as const;
   state.run.stageResults.push(stageResult);
   state.scene = "stageclear";
+}
+
+export function completePlayingFrame(
+  state: GameState,
+  meta: MetaProgress,
+  storage: Pick<Storage, "setItem"> | null | undefined,
+): MetaProgress | null {
+  if (state.scene === "stageclear") {
+    completeStage(state);
+    return null;
+  }
+  if (state.scene === "gameover") {
+    return finalizeRun(state, meta, storage);
+  }
+  return null;
 }
 
 export function finalizeRun(

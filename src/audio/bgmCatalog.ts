@@ -1,4 +1,5 @@
 import type { MusicCue, MusicCueId } from "../game-v2/public/types";
+import { PUBLIC_STAGE_BLUEPRINTS, getStageMusicCue } from "../game-v2/content/stageBlueprints";
 
 export interface BgmStep {
   leadMidi?: number;
@@ -182,27 +183,13 @@ export function getCueBgmTrack(cue: MusicCue): BgmTrack {
 }
 
 export function getStageBgmTrack(stageNumber: number): BgmTrack {
-  const stage = Math.max(1, Math.min(12, Math.round(stageNumber)));
-  if (stage <= 3) {
-    return getCueBgmTrack({ id: "chapter1", variant: stage });
-  }
-  if (stage === 4) {
-    return getCueBgmTrack({ id: "midboss", variant: 1 });
-  }
-  if (stage <= 7) {
-    return getCueBgmTrack({ id: "chapter2", variant: stage - 4 });
-  }
-  if (stage === 8) {
-    return getCueBgmTrack({ id: "midboss", variant: 2 });
-  }
-  if (stage <= 11) {
-    return getCueBgmTrack({ id: "chapter3", variant: stage - 8 });
-  }
-  return getCueBgmTrack({ id: "finalboss", variant: 1 });
+  const maxStage = PUBLIC_STAGE_BLUEPRINTS[1].length;
+  const stage = Math.max(1, Math.min(maxStage, Math.round(stageNumber)));
+  return getCueBgmTrack(getStageMusicCue(1, stage));
 }
 
 export function getAllStageBgmTracks(): BgmTrack[] {
-  return Array.from({ length: 12 }, (_, index) => getStageBgmTrack(index + 1));
+  return PUBLIC_STAGE_BLUEPRINTS[1].map((blueprint) => getCueBgmTrack(blueprint.musicCue));
 }
 
 interface StepBuilderInput {

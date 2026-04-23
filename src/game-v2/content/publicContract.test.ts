@@ -9,6 +9,7 @@ import {
   PUBLIC_THEME_DEFINITIONS,
   validatePublicEncounterCatalog,
   validatePublicRunDefinition,
+  validateStageBlueprints,
 } from "./index";
 
 describe("game-v2 public content contract", () => {
@@ -52,5 +53,9 @@ describe("game-v2 public content contract", () => {
       "tier2",
     ]);
     expect(getPublicThemeDefinition("tier2").label).toBe("Threat Tier 2");
+  });
+
+  test("keeps stage blueprints aligned with shipped encounters", () => {
+    expect(validateStageBlueprints()).toEqual([]);
   });
 });

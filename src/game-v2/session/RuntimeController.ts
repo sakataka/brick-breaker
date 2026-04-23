@@ -24,10 +24,15 @@ import { applyShopSelection } from "../engine/shop";
 import { createInitialGameState } from "../engine/stateFactory";
 import {
   finalizeRun,
-  prepareEncounter,
   advanceEncounter,
-  completeStage,
+  completePlayingFrame,
+  createStartedRunState,
+  createTitleState,
+  pausePlaying,
+  resumePaused,
+  setGameOverScore,
 } from "../engine/transitions";
+import { getStageMusicCue } from "../content/stageBlueprints";
 import { tickGame } from "../engine/tick";
 import {
   projectHudView,
@@ -138,9 +143,7 @@ class RuntimeController implements RuntimeControllerPort {
   }
 
   setGameOverScoreForTest(score: number, lives = 0): void {
-    this.state.run.score = Math.max(0, Math.round(score));
-    this.state.run.lives = Math.max(0, Math.round(lives));
-    this.state.scene = "gameover";
+    setGameOverScore(this.state, score, lives);
     this.metaProgress = finalizeRun(this.state, this.metaProgress, this.windowRef.localStorage);
     this.deps.setMetaProgress(this.metaProgress);
     this.publishAll();
@@ -167,9 +170,10 @@ class RuntimeController implements RuntimeControllerPort {
       return;
     }
     if (this.state.scene === "paused") {
-      this.state.scene = "playing";
-      this.audio.syncScene("playing", "paused");
-      this.publishAll();
+      if (resumePaused(this.state)) {
+        this.audio.syncScene("playing", "paused");
+        this.publishAll();
+      }
       return;
     }
     if (this.state.scene === "stageclear") {
@@ -186,7 +190,7 @@ class RuntimeController implements RuntimeControllerPort {
         this.publishAll();
         return;
       }
-      this.audio.notifyStageChanged({ id: this.state.encounter.themeId, variant: 1 });
+      this.notifyCurrentStageChanged();
       this.audio.syncScene("playing", previous);
       this.publishAll();
       return;
@@ -225,14 +229,12 @@ class RuntimeController implements RuntimeControllerPort {
   }
 
   private togglePause(): void {
-    if (this.state.scene === "playing") {
-      this.state.scene = "paused";
+    if (pausePlaying(this.state)) {
       this.audio.syncScene("paused", "playing");
       this.publishAll();
       return;
     }
-    if (this.state.scene === "paused") {
-      this.state.scene = "playing";
+    if (resumePaused(this.state)) {
       this.audio.syncScene("playing", "paused");
       this.publishAll();
     }
@@ -260,11 +262,15 @@ class RuntimeController implements RuntimeControllerPort {
     this.lastFrameMs = timeMs;
     tickGame(this.state, buildGameConfig(this.baseConfig, this.deps.getStartSettings()), deltaSec);
     const nextScene = this.state.scene as Scene;
+    const nextMetaProgress = completePlayingFrame(
+      this.state,
+      this.metaProgress,
+      this.windowRef.localStorage,
+    );
     if (nextScene === "stageclear") {
-      completeStage(this.state);
       this.audio.syncScene("stageclear", "playing");
     } else if (nextScene === "gameover") {
-      this.metaProgress = finalizeRun(this.state, this.metaProgress, this.windowRef.localStorage);
+      this.metaProgress = nextMetaProgress ?? this.metaProgress;
       this.deps.setMetaProgress(this.metaProgress);
       this.audio.syncScene("gameover", "playing");
     }
@@ -275,28 +281,23 @@ class RuntimeController implements RuntimeControllerPort {
     const settings = this.deps.getStartSettings();
     const config = buildGameConfig(this.baseConfig, settings);
     this.audio.setSettings(settings);
-    this.state = createInitialGameState(
-      config,
-      settings.reducedMotionEnabled,
-      "playing",
-      settings.highContrastEnabled,
-    );
-    prepareEncounter(this.state);
-    this.audio.notifyStageChanged({ id: this.state.encounter.themeId, variant: 1 });
+    this.state = createStartedRunState(config, settings);
+    this.notifyCurrentStageChanged();
     this.audio.syncScene("playing", "start");
     this.publishAll();
   }
 
   private resetToTitle(): void {
     const settings = this.deps.getStartSettings();
-    this.state = createInitialGameState(
-      buildGameConfig(this.baseConfig, settings),
-      settings.reducedMotionEnabled,
-      "start",
-      settings.highContrastEnabled,
-    );
+    this.state = createTitleState(buildGameConfig(this.baseConfig, settings), settings);
     this.audio.syncScene("start", "clear");
     this.publishAll();
+  }
+
+  private notifyCurrentStageChanged(): void {
+    this.audio.notifyStageChanged(
+      getStageMusicCue(this.state.run.threatTier, this.state.encounter.stageNumber),
+    );
   }
 
   private publishAll(): void {

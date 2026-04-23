@@ -27,8 +27,8 @@
 
 ## 3. アーキテクチャ責務
 
-- Core ロジック: `src/core/*`, `src/game/gamePipeline.ts`, `src/game/physicsCore.ts`, `src/game/itemSystem.ts`, `src/game/roundSystem.ts`
-- Orchestrator: `src/game/GameSession.ts`, `src/game/session/RuntimeController.ts`, `src/game/session/SessionPorts.ts`
+- Core ロジック: `src/game-v2/engine/*`, `src/game-v2/content/*`, `src/game-v2/public/*`
+- Orchestrator: `src/game-v2/session/GameSession.ts`, `src/game-v2/session/RuntimeController.ts`
 - 描画 host: `src/phaser/*`
 - UI: `src/app/*`
 - Audio: `src/audio/*`
@@ -36,7 +36,7 @@
 ルール:
 
 1. ゲームルールを React コンポーネントへ直接書かない
-2. Core は DOM / Phaser / Audio API を直接触らない
+2. `src/game-v2/engine/*` は DOM / Phaser / Audio API を直接触らない
 3. 仕様分岐は `content` / `config` / presenter に寄せる
 4. runtime state は `scene / run / encounter / combat / ui` を正式 contract とする
 
@@ -48,9 +48,9 @@
 4. shipped 開始設定は `difficulty / reducedMotionEnabled / highContrastEnabled / bgmEnabled / sfxEnabled` を前提に扱う
 5. run 進行は `threatTier: 1 | 2` を前提にする
 6. ショップ仕様は「1 encounter 1 回の 2 択購入」を維持し、無料交換は追加しない
-7. 新 encounter は `src/game/content/encounters.ts` + `src/game/content/stageBlueprints.ts` + `src/game/content/stageBlueprintCatalog.ts` を入口に追加する
-8. 新 module は `src/game/content/modules.ts` を入口にし、低レベル effect は `src/game/itemRegistry.ts` / `src/game/itemSystem.ts` に追加する
-9. 新 theme は `src/game/content/themes.ts` と `src/art/themePalettes.ts` を入口にし、palette を `src/art/visualAssets.ts` に戻さない
+7. 新 encounter は `src/game-v2/content/encounters.ts` + `src/game-v2/content/stageBlueprints.ts` を入口に追加する
+8. 新 module は `src/game-v2/content/modules.ts` を入口にし、低レベル effect は `src/game-v2/public/items.ts` / `src/game-v2/engine/*` に追加する
+9. 新 theme は `src/game-v2/content/themes.ts` と `src/art/themePalettes.ts` を入口にし、palette を `src/art/visualAssets.ts` に戻さない
 
 ## 5. 変更時のチェックリスト
 

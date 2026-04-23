@@ -3,7 +3,16 @@ import { getPublicEncounterCatalog } from "../content";
 import { DEFAULT_GAME_CONFIG } from "./config";
 import { createCombatState, createEncounterState, createInitialGameState } from "./stateFactory";
 import { tickGame } from "./tick";
-import { advanceEncounter } from "./transitions";
+import {
+  advanceEncounter,
+  completePlayingFrame,
+  createStartedRunState,
+  pausePlaying,
+  resumePaused,
+  setGameOverScore,
+} from "./transitions";
+import { DEFAULT_META_PROGRESS } from "../public/metaProgress";
+import { START_SETTINGS_DEFAULT } from "../public/startSettings";
 
 describe("game-v2 boss cycle", () => {
   test("projects telegraph -> attack -> punish window for boss encounters", () => {
@@ -87,5 +96,31 @@ describe("game-v2 stage and combo timing", () => {
     tickGame(state, DEFAULT_GAME_CONFIG, 0.2);
     expect(state.run.comboMultiplier).toBe(1);
     expect(state.run.comboWindowRemainingSec).toBe(0);
+  });
+
+  test("keeps scene actions in transition helpers", () => {
+    const state = createStartedRunState(DEFAULT_GAME_CONFIG, START_SETTINGS_DEFAULT);
+
+    expect(state.scene).toBe("playing");
+    expect(state.encounter.shop.lastOffer).toBeTruthy();
+    expect(pausePlaying(state)).toBe(true);
+    expect(state.scene).toBe("paused");
+    expect(resumePaused(state)).toBe(true);
+    expect(state.scene).toBe("playing");
+
+    setGameOverScore(state, 4200.4, 1.6);
+    expect(state.scene).toBe("gameover");
+    expect(state.run.score).toBe(4200);
+    expect(state.run.lives).toBe(2);
+  });
+
+  test("finalizes meta progress from frame transition helper", () => {
+    const state = createInitialGameState(DEFAULT_GAME_CONFIG, false, "playing");
+    setGameOverScore(state, 3200, 0);
+
+    const meta = completePlayingFrame(state, DEFAULT_META_PROGRESS, null);
+
+    expect(meta?.records.latestRunScore).toBe(3200);
+    expect(meta?.records.overallBestScore).toBe(3200);
   });
 });

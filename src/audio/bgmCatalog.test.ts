@@ -6,6 +6,7 @@ import {
   getStageBgmTrack,
   getTitleBgmTrack,
 } from "./bgmCatalog";
+import { PUBLIC_STAGE_BLUEPRINTS } from "../game-v2/content/stageBlueprints";
 
 describe("bgmCatalog", () => {
   test("provides title and 12 unique campaign tracks", () => {
@@ -15,6 +16,11 @@ describe("bgmCatalog", () => {
     expect(title.id).toBe("title");
     expect(title.tempo).toBe(118);
     expect(stages).toHaveLength(12);
+    expect(stages.map((track) => track.id)).toEqual(
+      PUBLIC_STAGE_BLUEPRINTS[1].map(
+        (blueprint) => `${blueprint.musicCue.id}-${blueprint.musicCue.variant}`,
+      ),
+    );
 
     const ids = new Set(stages.map((track) => track.id));
     expect(ids.size).toBe(12);
