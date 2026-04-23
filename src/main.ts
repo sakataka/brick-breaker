@@ -7,7 +7,7 @@ import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { AppUi } from "./app/AppUi";
 import { GameSession } from "./game-v2/session/GameSession";
-import type { BrickBreakerTestBridge } from "./game-v2/public/testBridge";
+import { shouldExposeTestBridge, type BrickBreakerTestBridge } from "./game-v2/public/testBridge";
 import { getRequiredElement } from "./util/dom";
 
 declare global {
@@ -30,9 +30,14 @@ const uiRoot = createRoot(uiRootElement);
 uiRoot.render(createElement(AppUi));
 
 const game = new GameSession(canvas);
+const testBridgeEnabled = shouldExposeTestBridge({
+  VITE_BRICK_BREAKER_TEST_BRIDGE: import.meta.env.VITE_BRICK_BREAKER_TEST_BRIDGE,
+});
 
 game.start();
-window.__brickBreakerTest = game.createTestBridge();
+if (testBridgeEnabled) {
+  window.__brickBreakerTest = game.createTestBridge();
+}
 window.addEventListener("beforeunload", () => {
   delete window.__brickBreakerTest;
   game.destroy();

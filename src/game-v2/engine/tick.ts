@@ -4,7 +4,10 @@ import { clamp } from "../public/math";
 
 export function tickGame(state: GameState, config: GameConfig, deltaSec: number): void {
   state.run.elapsedSec += deltaSec;
+  state.encounter.elapsedSec += deltaSec;
   state.combat.flashMs = Math.max(0, state.combat.flashMs - deltaSec * 1000);
+  tickActiveSkill(state, deltaSec);
+  tickComboWindow(state, deltaSec);
   if (state.ui.pickupToast) {
     state.ui.pickupToast.progress = Math.max(0, state.ui.pickupToast.progress - deltaSec * 0.9);
     if (state.ui.pickupToast.progress <= 0) {
@@ -77,6 +80,7 @@ function tickBalls(state: GameState, config: GameConfig, deltaSec: number): void
       ball.vel.y *= -1;
       state.run.score += Math.round(100 * state.run.comboMultiplier);
       state.run.comboMultiplier = Math.min(3, state.run.comboMultiplier + 0.25);
+      state.run.comboWindowRemainingSec = state.run.comboWindowSec;
       state.combat.impactRings.push({
         pos: { x: brick.x + brick.width / 2, y: brick.y + brick.height / 2 },
         color: brick.kind === "boss" ? "#ff74d1" : "#ffffff",
@@ -100,7 +104,7 @@ function tickBalls(state: GameState, config: GameConfig, deltaSec: number): void
   const objectiveBricks = state.combat.bricks.filter(
     (brick) => brick.alive && brick.kind !== "steel" && brick.kind !== "gate",
   );
-  if (objectiveBricks.length === 0 || state.run.elapsedSec >= 10) {
+  if (objectiveBricks.length === 0) {
     state.scene = "stageclear";
   }
 }
@@ -112,7 +116,7 @@ function tickBossCycle(state: GameState): void {
   if (!boss) {
     return;
   }
-  const cycle = state.run.elapsedSec % 6;
+  const cycle = state.encounter.elapsedSec % 6;
   const lane: BossLane = cycle < 2 ? "left" : cycle < 4 ? "center" : "right";
   boss.lane = lane;
   boss.intent = cycle < 2 ? "volley" : cycle < 3.4 ? "sweep" : "burst";
@@ -131,6 +135,24 @@ function tickBossCycle(state: GameState): void {
       source: "boss",
       style: boss.shotProfile,
     });
+  }
+}
+
+function tickActiveSkill(state: GameState, deltaSec: number): void {
+  state.combat.activeSkill.remainingCooldownSec = Math.max(
+    0,
+    state.combat.activeSkill.remainingCooldownSec - deltaSec,
+  );
+}
+
+function tickComboWindow(state: GameState, deltaSec: number): void {
+  if (state.run.comboWindowRemainingSec <= 0) {
+    state.run.comboMultiplier = 1;
+    return;
+  }
+  state.run.comboWindowRemainingSec = Math.max(0, state.run.comboWindowRemainingSec - deltaSec);
+  if (state.run.comboWindowRemainingSec <= 0) {
+    state.run.comboMultiplier = 1;
   }
 }
 

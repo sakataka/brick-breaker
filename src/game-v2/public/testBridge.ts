@@ -5,3 +5,7 @@ export interface BrickBreakerTestBridge {
   setGameOverScore: (score: number, lives?: number) => void;
   unlockThreatTier2: () => void;
 }
+
+export function shouldExposeTestBridge(env: { VITE_BRICK_BREAKER_TEST_BRIDGE?: string }): boolean {
+  return env.VITE_BRICK_BREAKER_TEST_BRIDGE === "1";
+}

@@ -66,6 +66,7 @@ export function createEncounterState(encounter: PublicEncounterDefinition): Game
     id: encounter.id,
     stageNumber: encounter.stageNumber,
     label: encounter.label,
+    elapsedSec: 0,
     scoreFocus: encounter.scoreFocus,
     previewTags: encounter.previewTags,
     threatLevel: encounter.threatLevel,
@@ -111,6 +112,10 @@ export function createCombatState(
         speed: ballSpeed,
       },
     ],
+    activeSkill: {
+      cooldownSec: 6,
+      remainingCooldownSec: 0,
+    },
     bricks: createEncounterBricks(config, encounter),
     trail: [],
     particles: [],
@@ -183,6 +188,7 @@ export function createInitialGameState(
       elapsedSec: 0,
       comboMultiplier: 1,
       comboWindowSec: 1.8,
+      comboWindowRemainingSec: 0,
       activeItems: [],
       record: {
         currentRunRecord: false,

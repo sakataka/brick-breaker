@@ -39,7 +39,7 @@ function createVisualState(state: GameState): VisualState {
     cameraIntensity: profile.cameraIntensity,
     bossTone: profile.bossTone,
     banner:
-      state.scene === "playing" && state.run.elapsedSec < 1.5
+      state.scene === "playing" && state.encounter.elapsedSec < 1.5
         ? {
             kind:
               profile.id === "midboss"
@@ -49,7 +49,7 @@ function createVisualState(state: GameState): VisualState {
                   : profile.id === "tier2"
                     ? "tier2"
                     : "stage",
-            progress: clampBannerProgress(1 - state.run.elapsedSec / 1.5),
+            progress: clampBannerProgress(1 - state.encounter.elapsedSec / 1.5),
           }
         : undefined,
     bossPhase: state.encounter.boss
@@ -105,7 +105,7 @@ export function projectHudView(state: GameState, meta: MetaProgress): HudViewMod
       pierceSlowSynergy:
         state.run.activeItems.some((item) => item.type === "pierce") &&
         state.run.activeItems.some((item) => item.type === "slow_ball"),
-      magicCooldownSec: 0,
+      magicCooldownSec: state.combat.activeSkill.remainingCooldownSec,
       warpLegendVisible: state.encounter.modifierKey === "warp_zone",
       steelLegendVisible: state.combat.bricks.some((brick) => brick.kind === "steel"),
       generatorLegendVisible: state.combat.bricks.some((brick) => brick.kind === "generator"),

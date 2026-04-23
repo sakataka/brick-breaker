@@ -48,7 +48,7 @@ export function advanceEncounter(state: GameState, config: GameConfig): boolean 
 
 export function completeStage(state: GameState): void {
   const stageNumber = state.encounter.stageNumber;
-  const clearTimeSec = Math.max(1, Math.round(state.run.elapsedSec));
+  const clearTimeSec = Math.max(1, Math.round(state.encounter.elapsedSec));
   const ratingScore = Math.max(55, Math.min(100, 100 - clearTimeSec + state.run.lives * 5));
   const stageResult = {
     stageNumber,

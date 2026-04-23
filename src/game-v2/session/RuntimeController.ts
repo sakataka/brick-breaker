@@ -18,6 +18,7 @@ import type {
   ShopUiView,
 } from "../public";
 import type { StartSettingsSelection } from "../public/startSettings";
+import { castActiveSkill } from "../engine/activeSkill";
 import { buildGameConfig, DEFAULT_GAME_CONFIG } from "../engine/config";
 import { applyShopSelection } from "../engine/shop";
 import { createInitialGameState } from "../engine/stateFactory";
@@ -241,13 +242,7 @@ class RuntimeController implements RuntimeControllerPort {
     if (this.state.scene !== "playing") {
       return;
     }
-    const brick = this.state.combat.bricks.find(
-      (candidate) => candidate.alive && candidate.kind !== "steel",
-    );
-    if (brick) {
-      brick.alive = false;
-      brick.hp = 0;
-      this.state.run.score += 250;
+    if (castActiveSkill(this.state)) {
       this.audio.playMagicCast();
     }
     this.publishAll();

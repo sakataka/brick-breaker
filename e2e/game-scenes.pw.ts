@@ -15,6 +15,7 @@ async function forceScene(page: Page, scene: "stageclear" | "gameover" | "clear"
 test("start -> playing -> paused -> playing", async ({ page }) => {
   await presetLocale(page, "ja");
   await page.goto("/");
+  await expect.poll(async () => page.evaluate(() => Boolean(window.__brickBreakerTest))).toBe(true);
 
   await expect(page.locator("#overlay")).toBeVisible();
   await expect(page.locator("#overlay")).toHaveAttribute("data-scene", "start");

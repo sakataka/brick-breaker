@@ -1,7 +1,8 @@
 import { defineConfig } from "@playwright/test";
 
 const webServerCommand =
-  process.env.PLAYWRIGHT_WEB_SERVER_COMMAND ?? "vp dev --host 127.0.0.1 --port 4173";
+  process.env.PLAYWRIGHT_WEB_SERVER_COMMAND ??
+  "VITE_BRICK_BREAKER_TEST_BRIDGE=1 vp dev --host 127.0.0.1 --port 4173";
 
 export default defineConfig({
   testDir: "./e2e",

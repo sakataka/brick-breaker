@@ -196,6 +196,7 @@ export interface RunState {
   elapsedSec: number;
   comboMultiplier: number;
   comboWindowSec: number;
+  comboWindowRemainingSec: number;
   activeItems: ActiveItemState[];
   record: RunRecordState;
   stageResults: StageResultState[];
@@ -224,6 +225,7 @@ export interface EncounterState {
   id: string;
   stageNumber: number;
   label: string;
+  elapsedSec: number;
   scoreFocus: ScoreFocus;
   previewTags: readonly StagePreviewTag[];
   threatLevel: ThreatLevel;
@@ -242,6 +244,10 @@ export interface CombatState {
   paddle: Paddle;
   balls: Ball[];
   bricks: Brick[];
+  activeSkill: {
+    cooldownSec: number;
+    remainingCooldownSec: number;
+  };
   trail: Vector2[];
   particles: Particle[];
   impactRings: ImpactRing[];
