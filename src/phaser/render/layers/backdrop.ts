@@ -29,7 +29,7 @@ export function drawBackdropLayer(
   drawTopVignette(graphics, header, width);
   drawFarField(graphics, view, width, height, snapStep);
   drawMidStructures(graphics, view, width, height, snapStep);
-  drawAmbientBursts(graphics, view, width, height, snapStep);
+  drawAmbientHaze(graphics, view, width, height, snapStep);
   drawPattern(graphics, view, width, height, snapStep);
 
   const frame = parseColor(backdropTheme.frame, { value: 0x29d3ff, alpha: 1 });
@@ -101,7 +101,7 @@ function drawMidStructures(
   }
 }
 
-function drawAmbientBursts(
+function drawAmbientHaze(
   graphics: Phaser.GameObjects.Graphics,
   view: RenderViewState,
   width: number,
@@ -113,20 +113,22 @@ function drawAmbientBursts(
   const pulse =
     0.5 +
     Math.sin(view.elapsedSec * (view.visual.encounterEmphasis === "chapter" ? 1.1 : 2.6)) * 0.5;
-  graphics.fillStyle(accent.value, accent.alpha * (0.08 + pulse * 0.08));
-  graphics.fillCircle(
-    snapByStep(width * 0.18, snapStep),
-    snapByStep(height * 0.24, snapStep),
-    82 + pulse * 26,
+  graphics.fillStyle(accent.value, accent.alpha * (0.035 + pulse * 0.03));
+  graphics.fillRect(
+    snapByStep(width * 0.08, snapStep),
+    snapByStep(height * 0.2, snapStep),
+    snapByStep(width * 0.48, snapStep),
+    snapByStep(20 + pulse * 8, snapStep),
   );
   graphics.fillStyle(
     danger.value,
-    danger.alpha * (view.visual.warningLevel === "critical" ? 0.16 : 0.08),
+    danger.alpha * (view.visual.warningLevel === "critical" ? 0.08 : 0.04),
   );
-  graphics.fillCircle(
-    snapByStep(width * 0.78, snapStep),
-    snapByStep(height * 0.78, snapStep),
-    64 + pulse * 18,
+  graphics.fillRect(
+    snapByStep(width * 0.58, snapStep),
+    snapByStep(height * 0.76, snapStep),
+    snapByStep(width * 0.34, snapStep),
+    snapByStep(16 + pulse * 6, snapStep),
   );
 }
 
