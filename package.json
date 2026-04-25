@@ -15,7 +15,6 @@
     "guard:ai-first-boundaries": "node scripts/guard-ai-first-boundaries.mjs",
     "verify:change-coverage": "node scripts/verify-change-coverage.mjs",
     "scaffold:feature": "node scripts/scaffold-feature.mjs",
-    "prepare": "vp config",
     "typesafe-i18n": "typesafe-i18n"
   },
   "dependencies": {
@@ -25,25 +24,26 @@
     "clsx": "^2.1.1",
     "culori": "^4.0.2",
     "motion": "^12.38.0",
-    "phaser": "^3.90.0",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
+    "phaser": "^4.0.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
     "tone": "^15.1.22",
     "typesafe-i18n": "^5.27.1",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
-    "@playwright/test": "^1.58.2",
-    "@types/node": "^25.5.0",
+    "@playwright/test": "^1.59.1",
+    "@types/node": "^25.6.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@typescript/native-preview": "7.0.0-dev.20260323.1",
+    "@typescript/native-preview": "7.0.0-dev.20260423.1",
     "@vitejs/plugin-react": "^6.0.1",
-    "dependency-cruiser": "^17.3.9",
-    "knip": "^6.0.4",
-    "typescript": "^6.0.2",
-    "vite": "^8.0.2",
-    "vite-plus": "0.1.11"
+    "@voidzero-dev/vite-plus-core": "0.1.19",
+    "dependency-cruiser": "^17.3.10",
+    "knip": "^6.6.2",
+    "typescript": "^6.0.3",
+    "vite": "8.0.10",
+    "vite-plus": "0.1.19"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
@@ -54,10 +54,16 @@
       "src/types/culori.d.ts"
     ],
     "ignoreDependencies": [
+      "@voidzero-dev/vite-plus-core",
       "@typescript/native-preview"
     ],
     "ignoreBinaries": [
       "tsgo"
     ]
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "@voidzero-dev/vite-plus-core@0.1.19": "patches/@voidzero-dev__vite-plus-core@0.1.19.patch"
+    }
   }
 }

@@ -16,7 +16,7 @@
 2. `vp install` を実行する
 3. `vp dev` で起動する
 
-`vp install` は依存解決に加えて `prepare` を通して `vp config` を実行し、`.vite-hooks/` を生成します。
+`vp install` は依存解決を実行します。
 
 ## 主要コマンド
 
@@ -24,8 +24,6 @@
 - `vp dev`
 - `vp build`
 - `vp preview`
-- `vp fmt . --check`
-- `vp fmt . --write`
 - `vp test`
 - `vp run typecheck`
 - `vp run typecheck:ts7`
@@ -43,12 +41,10 @@
 
 ## 役割分担
 
-- `vp dev / build / preview / fmt`
+- `vp dev / build / preview`
   - Vite+ の統合コマンド
 - `vp test`
   - unit test の入口
-- `vp fmt . --check` / `vp fmt . --write`
-  - formatter の check / write
 - `vp run typecheck`
   - app/test/node の TypeScript 型検証
 - `vp run typecheck:ts7`
@@ -75,6 +71,8 @@
 - `vite.config.ts`
   - primary config
   - `test / run.tasks / build` を集約
+- `patches/@voidzero-dev__vite-plus-core@0.1.19.patch`
+  - `vite-plus@0.1.19` 実行時に hoisted `vite-plus-core` と Rolldown binding の `TsconfigCache` 生成が不整合を起こすための最小 patch
 - `tsconfig.app.json` / `tsconfig.test.json` / `tsconfig.node.json`
   - app / test / Node-side config の TypeScript 境界
 - `package.json`
@@ -83,12 +81,10 @@
   - Node バージョンの基準
 - `playwright.config.ts`
   - E2E 設定
-- `.vite-hooks/`
-  - `vp config` が生成する hook 設定
 
 ## 運用ルール
 
 - `pnpm` を直接使うより `vp` を優先する
-- formatter / test / task workflow は `vite.config.ts` を基準に扱う
+- test / task workflow は `vite.config.ts` を基準に扱う
 - CI とローカルで使う task 名は README / AGENTS / architecture と一致させる
 - docs に存在しない script 名を書かない

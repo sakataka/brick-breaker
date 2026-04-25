@@ -102,7 +102,7 @@ class RuntimeController implements RuntimeControllerPort {
         canvas,
         width: this.baseConfig.width,
         height: this.baseConfig.height,
-        zoom: Math.max(1, Math.min(2, this.windowRef.devicePixelRatio || 1)),
+        zoom: 1,
       });
     this.audio = new AudioDirector(this.sfx);
     this.deps.setUiHandlers({

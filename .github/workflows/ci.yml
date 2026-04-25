@@ -27,8 +27,8 @@ jobs:
       - name: Install
         run: vp install
 
-      - name: Vite+ Check
-        run: vp check
+      - name: Typecheck
+        run: vp run typecheck
 
       - name: Deadcode
         run: vp run deadcode

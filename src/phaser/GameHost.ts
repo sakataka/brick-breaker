@@ -1,4 +1,4 @@
-import Phaser from "phaser";
+import * as Phaser from "phaser";
 import type { RenderViewState } from "../game-v2/public/renderTypes";
 import { BootScene, RuntimeScene, type RuntimeSceneHandlers } from "./scenes";
 

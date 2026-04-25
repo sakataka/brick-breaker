@@ -1,0 +1,17 @@
+diff --git a/dist/vite/node/chunks/node.js b/dist/vite/node/chunks/node.js
+index ee95e3eea37bcdbbe3aa2ac773220dc5a58204a4..e8d53614546939101ec1473752189f756039ff0f 100644
+--- a/dist/vite/node/chunks/node.js
++++ b/dist/vite/node/chunks/node.js	
+@@ -4647,10 +4647,10 @@ function prettifyMessage(m, code) {
+ let globalTSConfigResolutionCache;
+ const tsconfigResolutionCacheMap = /* @__PURE__ */ new WeakMap();
+ function getTSConfigResolutionCache(config) {
+-	if (!config) return globalTSConfigResolutionCache ??= new TsconfigCache();
++	if (!config) return globalTSConfigResolutionCache ??= new TsconfigCache(false);
+ 	let cache = tsconfigResolutionCacheMap.get(config);
+ 	if (!cache) {
+-		cache = new TsconfigCache();
++		cache = new TsconfigCache(false);
+ 		tsconfigResolutionCacheMap.set(config, cache);
+ 	}
+ 	return cache;

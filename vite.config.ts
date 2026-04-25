@@ -16,9 +16,6 @@ export default defineConfig({
     pool: "forks",
     fileParallelism: false,
   },
-  staged: {
-    "*": "vp fmt --write",
-  },
   base: process.env.GITHUB_ACTIONS === "true" ? githubPagesBase : "/",
   build: {
     rolldownOptions: {

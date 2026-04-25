@@ -64,7 +64,6 @@
 ## 6. 品質ゲート
 
 ```bash
-vp fmt . --check
 vp test
 vp run typecheck
 vp run check:arch
@@ -92,4 +91,4 @@ vp run e2e
 
 - 変更は機能単位でまとめる
 - コミットメッセージは「何を変えたか」を明確にする
-- コミット前に最低限 `vp fmt . --check` と `vp test` を通す
+- コミット前に最低限 `vp test` を通す
