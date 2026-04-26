@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vite-plus/test";
+import { describe, expect, test } from "vitest";
 import type Phaser from "phaser";
 import { getFallbackThemeTokens } from "../../../game-v2/public/uiTheme";
 import type { RenderViewState } from "../../../game-v2/public/renderTypes";

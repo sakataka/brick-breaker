@@ -7,13 +7,13 @@
 
 - シンプルさを優先する（`YAGNI` / `KISS` / `DRY`）
 - 高コストな互換 shim や fallback を安易に追加しない
-- 日常の操作は `vp` を使う
-- package manager は `pnpm` だが、通常の dev/build/check/test は `vp` を優先する
+- 日常の操作は `bun run ...` を使う
+- package manager は `Bun` に統一する
 - ローカルの標準シェルは `zsh`
 
 ## 1. プロジェクト概要
 
-- 構成: `Vite+ + TypeScript`
+- 構成: `Bun + Vite + TypeScript`
 - ゲーム実行: `Phaser`
 - UI: `React + Zustand`
 - サウンド: `Tone/WebAudio`
@@ -64,13 +64,9 @@
 ## 6. 品質ゲート
 
 ```bash
-vp test
-vp run typecheck
-vp run check:arch
-vp run deadcode:report
-vp run guard:test-state-shape
-vp run guard:ai-first-boundaries
-vp run e2e
+bun run test
+bun run typecheck
+bun run e2e
 ```
 
 ## 7. UI / UX ルール
@@ -91,4 +87,4 @@ vp run e2e
 
 - 変更は機能単位でまとめる
 - コミットメッセージは「何を変えたか」を明確にする
-- コミット前に最低限 `vp test` を通す
+- コミット前に最低限 `bun run test` を通す

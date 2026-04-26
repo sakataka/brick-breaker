@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vite-plus/test";
+import { describe, expect, test } from "vitest";
 import { castActiveSkill } from "./activeSkill";
 import { DEFAULT_GAME_CONFIG } from "./config";
 import { createInitialGameState } from "./stateFactory";

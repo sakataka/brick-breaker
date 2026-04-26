@@ -1,98 +1,63 @@
 # Brick Breaker Local
 
-Vite+ + TypeScript 6.0 を基盤に、`Phaser` の描画/入力、`React + Zustand` の UI、`Tone/WebAudio` のサウンドで構成した browser-first のブロック崩しです。  
+Bun + Vite + TypeScript 6.0 を基盤に、`Phaser` の描画/入力、`React + Zustand` の UI、`Tone/WebAudio` のサウンドで構成した browser-first のブロック崩しです。  
 公開仕様は `12 encounter の campaign` を中心に設計しており、Tier 1 クリア後に `Threat Tier 2` が解放されます。
 
 ## 前提環境
 
-- `vp`（Vite+ CLI）
-- `pnpm 10.x`（`vp install` から利用）
-- `Node.js 20.19+` または `22.12+`
-- 推奨 Node: `.node-version` に合わせた版
+- `Bun 1.3.13`
 - 想定シェル: `zsh`
 
 ## セットアップ
 
 ```bash
-curl -fsSL https://vite.plus | bash
-vp install
-vp dev
+bun install
+bun run dev
 ```
 
-依存解決、日常的な dev/build/test/typecheck は `vp` を基準に使います。  
-project 固有 script は `vp run ...` で呼びます。
+依存解決、日常的な dev/build/test/typecheck は `bun` を基準に使います。
 
 ## 標準ループ
 
 ```bash
-vp install
-vp run typecheck
-vp test
-vp build
+bun install
+bun run typecheck
+bun run test
+bun run build
 ```
 
 E2E を含める場合は初回にブラウザを入れてから実行します。
 
 ```bash
-vp exec playwright install chromium
-vp run e2e:ci
+bun x playwright install chromium
+bun run e2e:ci
 ```
 
 ローカル確認用の preview:
 
 ```bash
-vp preview
+bun run preview
 ```
 
 ツールチェーンの詳細は `docs/toolchain.md` を参照してください。
-
-`TypeScript 7` の native preview は `vp run typecheck:ts7` で advisory に確認します。  
-`knip` など既存の TypeScript API に依存するツールは、引き続き `typescript` package を基準に扱います。
 
 ## 開発コマンド
 
 ```bash
 # unit tests
-vp test
+bun run test
 
 # app/test/node の型検証
-vp run typecheck
-
-# TS7 native preview の advisory check
-vp run typecheck:ts7
+bun run typecheck
 
 # 翻訳辞書の型検証 / 生成
-vp run typesafe-i18n
-
-# deadcode scan
-vp run deadcode
-
-# deadcode report only
-vp run deadcode:report
-
-# レイヤー依存の境界チェック
-vp run check:arch
-
-# 反復開発向けの高速ゲート
-vp run check:fast
-
-# ローカル品質ゲート
-vp run guard:local
-
-# CI 相当の品質ゲート
-vp run guard:ci
-
-# テストが旧 flat runtime state に戻っていないかを確認
-vp run guard:test-state-shape
-
-# 差分に応じた対応漏れ検知
-vp run verify:change-coverage
+bun run typesafe-i18n
 
 # e2e tests
-vp run e2e
+bun run e2e
 
 # preview サーバ利用の e2e
-vp run e2e:ci
+bun run e2e:ci
 ```
 
 ## 操作
@@ -151,7 +116,7 @@ vp run e2e:ci
 
 - `vite.config.ts` は GitHub Actions 上で `base: /brick-breaker/` を自動適用します
 - build は `Rolldown` 前提で、`phaser` を専用 chunk に分離します
-- unit test は `vp test`、E2E は `vp run e2e:ci` を使います
+- unit test は `bun run test`、E2E は `bun run e2e:ci` を使います
 
 ## 設計ドキュメント
 

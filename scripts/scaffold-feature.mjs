@@ -65,7 +65,7 @@ export function ${functionName}(input: ${pascalName}FeatureInput): void {
 }
 `;
 
-const testCode = `import { describe, expect, test } from "vite-plus/test";
+const testCode = `import { describe, expect, test } from "vitest";
 import { ${functionName} } from "./${slug}";
 
 describe("${slug}", () => {

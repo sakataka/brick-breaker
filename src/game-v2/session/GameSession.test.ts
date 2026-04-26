@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vite-plus/test";
+import { describe, expect, test, vi } from "vitest";
 import type { Scene } from "../public/types";
 vi.mock("./RuntimeController", () => ({
   createRuntimeController: vi.fn(),

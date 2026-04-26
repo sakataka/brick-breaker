@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vite-plus/test";
+import { describe, expect, test } from "vitest";
 import { getPublicEncounterCatalog } from "../content";
 import { DEFAULT_GAME_CONFIG } from "./config";
 import { createCombatState, createEncounterState, createInitialGameState } from "./stateFactory";

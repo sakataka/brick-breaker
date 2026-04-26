@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "vite-plus/test";
+import { beforeEach, describe, expect, test } from "vitest";
 import { START_SETTINGS_DEFAULT } from "../game-v2/public/startSettings";
 import { appStore, useAppStore } from "./store";
 

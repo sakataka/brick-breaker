@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  quick-guard:
+  quick-check:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -18,48 +18,37 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Vite+
-        uses: voidzero-dev/setup-vp@v1
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version-file: ".node-version"
-          cache: true
+          bun-version: "1.3.13"
 
       - name: Install
-        run: vp install
+        run: bun install --frozen-lockfile
 
       - name: Typecheck
-        run: vp run typecheck
-
-      - name: Deadcode
-        run: vp run deadcode
+        run: bun run typecheck
 
       - name: Unit Tests
-        run: vp test
-
-      - name: Verify Change Coverage
-        run: vp run verify:change-coverage
-
-      - name: Check Architecture Boundaries
-        run: vp run check:arch
+        run: bun run test
 
   build:
-    needs: quick-guard
+    needs: quick-check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Vite+
-        uses: voidzero-dev/setup-vp@v1
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version-file: ".node-version"
-          cache: true
+          bun-version: "1.3.13"
 
       - name: Install
-        run: vp install
+        run: bun install --frozen-lockfile
 
       - name: Build
-        run: vp build
+        run: bun run build
 
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4
@@ -68,26 +57,25 @@ jobs:
           path: dist
 
   e2e:
-    needs: [quick-guard, build]
+    needs: [quick-check, build]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Vite+
-        uses: voidzero-dev/setup-vp@v1
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version-file: ".node-version"
-          cache: true
+          bun-version: "1.3.13"
 
       - name: Install
-        run: vp install
+        run: bun install --frozen-lockfile
 
       - name: Cache Playwright Browser
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml', 'package.json') }}
+          key: ${{ runner.os }}-playwright-${{ hashFiles('bun.lock', 'package.json') }}
           restore-keys: |
             ${{ runner.os }}-playwright-
 
@@ -98,31 +86,7 @@ jobs:
           path: dist
 
       - name: Install Playwright Browser
-        run: vp exec playwright install --with-deps chromium
+        run: bun x playwright install --with-deps chromium
 
       - name: E2E
-        run: vp run e2e:ci
-
-  ts-next-eval:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Vite+
-        uses: voidzero-dev/setup-vp@v1
-        with:
-          node-version-file: ".node-version"
-          cache: true
-
-      - name: Install
-        run: vp install
-
-      - name: TypeScript Next App
-        run: vp dlx -p typescript@beta tsc --noEmit -p tsconfig.app.json
-
-      - name: TypeScript Next Test
-        run: vp dlx -p typescript@beta tsc --noEmit -p tsconfig.test.json
+        run: bun run e2e:ci

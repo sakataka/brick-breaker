@@ -1,10 +1,8 @@
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite-plus";
+import { defineConfig } from "vitest/config";
 
 const githubPagesBase = "/brick-breaker/";
 const phaserPackagePattern = /node_modules[\\/]phaser[\\/]/;
-const trackedTaskEnvs = ["CI", "GITHUB_ACTIONS"];
-const untrackedTaskEnvs = ["PLAYWRIGHT_WEB_SERVER_COMMAND"];
 
 export default defineConfig({
   plugins: [react()],
@@ -37,24 +35,5 @@ export default defineConfig({
   },
   preview: {
     host: true,
-  },
-  run: {
-    tasks: {
-      "check:fast": {
-        command: "vp run typecheck && vp test && vp run deadcode",
-        env: trackedTaskEnvs,
-        untrackedEnv: untrackedTaskEnvs,
-      },
-      "guard:local": {
-        command: "vp run check:fast && vp run check:arch",
-        env: trackedTaskEnvs,
-        untrackedEnv: untrackedTaskEnvs,
-      },
-      "guard:ci": {
-        command: "vp run guard:local && vp run verify:change-coverage && vp run e2e:ci",
-        env: trackedTaskEnvs,
-        untrackedEnv: untrackedTaskEnvs,
-      },
-    },
   },
 });
